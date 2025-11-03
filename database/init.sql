@@ -27,12 +27,13 @@ CREATE TABLE users (
     id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
     username CITEXT COLLATE case_insensitive_ai UNIQUE,
     email CITEXT COLLATE case_insensitive_ai UNIQUE,
-    gender VARCHAR(255),
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     -- active INTEGER NOT NULL DEFAULT 1,
-    age VARCHAR(255),
+    date_of_birth DATE NOT NULL,
     avatar VARCHAR(255),
+    about_me TEXT, 
+    profile_public BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
     CONSTRAINT email_or_username_required CHECK (
@@ -40,6 +41,8 @@ CREATE TABLE users (
         OR (email IS NOT NULL AND email <> '')
     )
 );
+
+--TODO how to store followers and following
 
 -- Auth users table
 CREATE TABLE auth_user (
@@ -56,17 +59,29 @@ CREATE TABLE auth_user (
 );
 
 
--- Categories table
-CREATE TABLE categories (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE
-);
 
--- Conversations table
+-- Conversations table 
+--TODO check if better as two separate tables
 CREATE TABLE conversations (
     id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
     dm BOOLEAN NOT NULL,
+    group_id BIGINT REFERENCES groups(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    CONSTRAINT dm_group_constraint
+        CHECK (
+            (dm = TRUE AND group_id IS NULL) OR
+            (dm = FALSE AND group_id IS NOT NULL)
+        )
+);
+
+-- Groups table 
+CREATE TABLE groups (
+    id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
+    group_admin BIGINT NOT NULL REFERENCES users(id) ON DELETE NO ACTION,
+    group_title TEXT NOT NULL,
+    group_description TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+
 );
 
 -- Messages table
@@ -91,6 +106,14 @@ CREATE TABLE conversation_member (
 CREATE INDEX idx_conversation_member_conversation ON conversation_member(conversation_id);
 CREATE INDEX idx_conversation_member_user ON conversation_member(user_id);
 
+-- Group members table
+-- TODO where to store pending membership (invite received, request sent)
+CREATE TABLE group_member (
+    id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT group_member_unique UNIQUE (group_id, user_id)
+);
+
 -- Schema migrations table
 CREATE TABLE IF NOT EXISTS schema_migrations (
     id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
@@ -98,12 +121,29 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TYPE post_visibility AS ENUM ('public', 'almost_private', 'private');
+
 -- Posts table
 CREATE TABLE posts (
     id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
     post_title TEXT NOT NULL,
     post_body TEXT NOT NULL,
     post_creator BIGINT NOT NULL REFERENCES users(id) ON DELETE NO ACTION,
+    group_id BIGINT REFERENCES groups(id) ON DELETE SET NULL,
+    visibility post_visibility NOT NULL DEFAULT 'public',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Events table
+-- TODO where to store going/not going
+CREATE TABLE events (
+    id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
+    event_title TEXT NOT NULL,
+    event_body TEXT NOT NULL,
+    event_creator BIGINT NOT NULL REFERENCES users(id) ON DELETE NO ACTION,
+    group_id BIGINT REFERENCES groups(id) ON DELETE SET NULL,
+    event_date DATE NOT NULL,
+    still_valid BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -113,16 +153,11 @@ CREATE TABLE comments (
     comment_creator_id BIGINT NOT NULL REFERENCES users(id) ON DELETE NO ACTION,
     parent_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     comment_body TEXT NOT NULL,
+    group_id BIGINT REFERENCES groups(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Post categories table (many-to-many)
-CREATE TABLE post_categories (
-    post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-    PRIMARY KEY (post_id, category_id)
-);
-CREATE INDEX idx_post_categories_category ON post_categories(category_id);
+
 
 -- Reactions table
 CREATE TABLE reactions (
