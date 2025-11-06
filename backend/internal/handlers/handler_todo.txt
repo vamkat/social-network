@@ -1,4 +1,0 @@
-extract repeating code from handlers
-    request unmarshaling
-
-change all request structs to work with minimal structs with zero trust from client

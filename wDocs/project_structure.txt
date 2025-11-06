@@ -1,0 +1,86 @@
+.
+├── cmd
+│   ├── api-gateway
+│   │   └── main.go
+│   ├── auth-service
+│   │   └── main.go
+│   ├── chat-service
+│   │   └── main.go
+│   ├── groups-service
+│   │   └── main.go
+│   ├── notify-service
+│   │   └── main.go
+│   ├── posts-service
+│   │   └── main.go
+│   └── profile-service
+│       └── main.go
+├── deployments
+│   ├── docker-compose.yml
+│   ├── Dockerfile.auth
+│   ├── Dockerfile.chat
+│   ├── Dockerfile.gateway
+│   ├── Dockerfile.groups
+│   ├── Dockerfile.notify
+│   ├── Dockerfile.posts
+│   └── Dockerfile.profile
+├── go.mod
+├── go.sum
+├── internal
+│   ├── 1auth
+│   │   ├── handlers
+│   │   ├── models
+│   │   ├── repository
+│   │   └── service
+│   ├── 2chat
+│   │   ├── handlers
+│   │   ├── repository
+│   │   └── service
+│   ├── 3groups
+│   │   ├── handlers
+│   │   ├── repository
+│   │   └── service
+│   ├── 4notifications
+│   │   ├── handlers
+│   │   ├── repository
+│   │   └── service
+│   ├── 5posts
+│   │   ├── handlers
+│   │   ├── repository
+│   │   └── service
+│   ├── 6profiles
+│   │   ├── handlers
+│   │   ├── repository
+│   │   └── service
+│   ├── middleware
+│   │   ├── auth_middleware.go
+│   │   ├── cors.go
+│   │   ├── logging_middleware.go
+│   │   └── requestid.go
+│   └── utils
+│       ├── errors.go
+│       ├── helpers.go
+│       └── validators.go
+├── LICENSE
+├── makefile
+├── pkg
+│   ├── auth
+│   │   └── jwt.go
+│   ├── config
+│   │   └── config.go
+│   ├── db
+│   │   ├── migrate.go
+│   │   ├── migrations
+│   │   ├── postgres.go
+│   │   └── redis.go
+│   ├── gateway
+│   │   └── router.go
+│   ├── logger
+│   │   └── logger.go
+│   ├── response
+│   │   └── response.go
+│   └── websocket
+│       └── websocket.go
+├── project_structure.txt
+└── README.md
+
+47 directories, 37 files
