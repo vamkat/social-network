@@ -41,6 +41,7 @@ INSERT INTO users (
 CREATE TABLE auth_user (
     user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
     failed_attempts INTEGER NOT NULL DEFAULT 0,
