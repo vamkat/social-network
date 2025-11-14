@@ -1,41 +1,27 @@
 ------------------------------------------
--- Stub tables for external references
-------------------------------------------
-CREATE TABLE ext_users (
-    id BIGINT PRIMARY KEY,
-    username TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE ext_groups (
-    id BIGINT PRIMARY KEY,
-    title TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-------------------------------------------
 -- Conversations
 ------------------------------------------
-CREATE TABLE conversations (
+CREATE TABLE IF NOT EXISTS conversations (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    dm BOOLEAN NOT NULL,
-    group_id BIGINT NOT NULL REFERENCES ext_groups(id), 
+    group_id BIGINT, -- in users service, null implies DM
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ
 );
+
+CREATE INDEX idx_conversations_group ON conversations(group_id);
 
 ------------------------------------------
 -- Messages
 ------------------------------------------
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    sender_id BIGINT NOT NULL REFERENCES ext_users(id) ON DELETE NO ACTION,
+    sender_id BIGINT, -- in users service
     message_text TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
@@ -45,30 +31,96 @@ CREATE INDEX idx_messages_created_at ON messages(created_at);
 ------------------------------------------
 -- Conversation Members
 ------------------------------------------
-CREATE TABLE conversation_members (
+CREATE TABLE IF NOT EXISTS conversation_members (
     conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    user_id BIGINT NOT NULL REFERENCES ext_users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL, -- in users service
     last_read_message_id BIGINT REFERENCES messages(id) ON DELETE SET NULL,
     joined_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ,
     PRIMARY KEY (conversation_id, user_id)
 );
 
--- Indexes for fast lookups
 CREATE INDEX idx_conversation_members_user ON conversation_members(user_id);
 CREATE INDEX idx_conversation_members_last_read ON conversation_members(last_read_message_id);
 
+------------------------------------------
+-- Triggers to auto-update updated_at
+------------------------------------------
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply to main tables
+CREATE TRIGGER trg_update_conversations_modtime
+BEFORE UPDATE ON conversations
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER trg_update_messages_modtime
+BEFORE UPDATE ON messages
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER trg_update_conversation_members_modtime
+BEFORE UPDATE ON conversation_members
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
 
 ------------------------------------------
--- Reactions
+-- Soft delete triggers
 ------------------------------------------
-CREATE TABLE reactions (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    message_id BIGINT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-    reaction_type TEXT NOT NULL,
-    user_id BIGINT NOT NULL, -- in users service
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_user_reaction_per_content UNIQUE (user_id, message_id, reaction_type)
-);
+-- Soft delete a conversation: cascade to members and messages
+CREATE OR REPLACE FUNCTION soft_delete_conversation()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.deleted_at := CURRENT_TIMESTAMP;
 
-CREATE INDEX idx_reactions_user ON reactions(user_id);
+    -- Soft delete all messages in the conversation
+    UPDATE messages SET deleted_at = CURRENT_TIMESTAMP WHERE conversation_id = OLD.id;
+
+    -- Soft delete all members
+    UPDATE conversation_members SET deleted_at = CURRENT_TIMESTAMP WHERE conversation_id = OLD.id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_soft_delete_conversation
+BEFORE UPDATE ON conversations
+FOR EACH ROW
+WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
+EXECUTE FUNCTION soft_delete_conversation();
+
+-- Soft delete a message
+CREATE OR REPLACE FUNCTION soft_delete_message()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.deleted_at := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_soft_delete_message
+BEFORE UPDATE ON messages
+FOR EACH ROW
+WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
+EXECUTE FUNCTION soft_delete_message();
+
+-- Soft delete a conversation member
+CREATE OR REPLACE FUNCTION soft_delete_conversation_member()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.deleted_at := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_soft_delete_conversation_member
+BEFORE UPDATE ON conversation_members
+FOR EACH ROW
+WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
+EXECUTE FUNCTION soft_delete_conversation_member();
