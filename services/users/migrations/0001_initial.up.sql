@@ -56,8 +56,10 @@ CREATE TABLE IF NOT EXISTS follows (
     follower_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     following_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (follower_id, following_id)
+    PRIMARY KEY (follower_id, following_id),
+    CONSTRAINT no_self_follow CHECK (follower_id <> following_id)
 );
+
 
 CREATE INDEX idx_follows_follower ON follows(follower_id);
 CREATE INDEX idx_follows_following ON follows(following_id);
