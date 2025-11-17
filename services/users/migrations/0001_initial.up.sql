@@ -249,3 +249,30 @@ BEFORE UPDATE ON users
 FOR EACH ROW
 WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
 EXECUTE FUNCTION soft_delete_user_cascade();
+
+-----------------------------------------
+-- Function to follow a user regardless of privacy setting
+-----------------------------------------
+
+CREATE OR REPLACE FUNCTION follow_user(p_follower BIGINT, p_target BIGINT)
+RETURNS TEXT AS $$
+DECLARE
+    is_public BOOLEAN;
+BEGIN
+    SELECT profile_public INTO is_public FROM users WHERE id = p_target;
+
+    IF is_public THEN
+        INSERT INTO follows (follower_id, following_id)
+        VALUES (p_follower, p_target)
+        ON CONFLICT DO NOTHING;
+
+        RETURN 'followed';
+    ELSE
+        INSERT INTO follow_requests (requester_id, target_id, status)
+        VALUES (p_follower, p_target, 'pending')
+        ON CONFLICT DO NOTHING;
+
+        RETURN 'requested';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
