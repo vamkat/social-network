@@ -2,12 +2,12 @@
 # Works on Windows (with Git Bash/WSL), Linux, Mac
 
 DOCKER_COMPOSE=docker-compose
-SEED_SCRIPT=./seeds/seed.sh
+SEED_SCRIPT=/app/seeds/seed.sh
 USERS_CONTAINER=users
 USERS_DB_CONTAINER=users-db
 SHELL=/bin/sh
 
-.PHONY: up down seed clear clear-users clear-forum clear-chat clear-notifications reset-users
+.PHONY: up down build rebuild seed clear clear-users clear-forum clear-chat clear-notifications reset-users
 
 # ---------------------------
 # Start all containers
@@ -24,6 +24,20 @@ down:
 	@echo "Stopping all containers..."
 	$(DOCKER_COMPOSE) down
 	@echo "All containers stopped."
+
+# ---------------------------
+# Build all images
+# ---------------------------
+build:
+	@echo "Building all service images..."
+	$(DOCKER_COMPOSE) build
+	@echo "Build complete."
+
+# ---------------------------
+# Rebuild (down + build + up)
+# ---------------------------
+rebuild: down build up
+	@echo "Rebuild complete."
 
 # ---------------------------
 # Seed dev database (users only)

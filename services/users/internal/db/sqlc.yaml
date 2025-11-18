@@ -1,8 +1,8 @@
 version: "1"
 packages:
   - name: "db"                     # Go package name for generated code
-    path: "./db/sqlc"    # folder for generated Go files
-    queries: "./db/queries/*.sql"
+    path: "./sqlc"    # folder for generated Go files
+    queries: "./queries/*.sql"
     schema: "./migrations/*.sql"
     engine: "postgresql"
     emit_json_tags: true            # include JSON tags in structs

@@ -11,7 +11,7 @@ RUN go mod download
 COPY ../../ .
 
 # Build users service binary
-RUN go build -o users_service ./services/users
+RUN go build -o users_service ./services/users/cmd/server
 
 # ---- Runtime stage ----
 FROM alpine:latest
@@ -20,8 +20,8 @@ WORKDIR /app
 
 # Copy built binary and migrations
 COPY --from=build /app/users_service .
-COPY --from=build /app/services/users/migrations ./migrations
-COPY --from=build /app/services/users/seeds ./seeds
+COPY --from=build /app/services/users/internal/db/migrations ./migrations
+COPY --from=build /app/services/users/internal/db/seeds ./seeds
 
 # Install PostgreSQL client so `psql` is available for the seed script
 RUN apk add --no-cache postgresql-client

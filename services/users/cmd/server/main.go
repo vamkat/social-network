@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"social-network/services/users/server"
+	"social-network/services/users/internal/server"
 	"social-network/shared/db"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"

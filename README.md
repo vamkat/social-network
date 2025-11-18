@@ -19,6 +19,8 @@ Available targets:
 
 |Target|	Description|
 |--|--|
+|make build	|Build all images|
+|make rebuild	|Run down + build + up|
 |make up	|Start all containers in detached mode|
 |make down|	Stop all containers|
 |make seed|	Seed the dev database (currently seeds users only)|
@@ -30,6 +32,9 @@ Available targets:
 |make reset-users	|Clear users DB and seed it in one command (convenience target)|
 
 ## Typical Dev Workflow
+
+### Build all images 
+```make build```
 
 ### Start all services 
 ```make up```
@@ -69,6 +74,10 @@ Clear the users database (DROP SCHEMA public CASCADE; CREATE SCHEMA public)
 Restart the users container so migrations are applied
 
 Seed the dev data
+
+### Stop containers, rebuild images and run containers
+
+```make rebuild```
 
 ## Notes / Best Practices
 
