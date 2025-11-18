@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "social-network/shared/gen/users;users";
+
+import "common.proto";
+
+service UserService {
+  rpc GetBasicUserInfo (common.UserId) returns (BasicUserInfo);
+}
+
+message BasicUserInfo {
+  string user_name = 1;
+  string avatar = 2;
+  bool public_profile = 3;
+}

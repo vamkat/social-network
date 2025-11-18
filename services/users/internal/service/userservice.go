@@ -1,5 +1,9 @@
 package userservice
 
+import (
+	"context"
+)
+
 func RegisterUser() {
 	//called with: username, first_name, last_name, date_of_birth, avatar, about_me, profile_public(bool), email, password hash, salt
 	//returns: user_id or error
@@ -46,11 +50,18 @@ func UnbanUser() {
 	//UnbanUser(id)
 }
 
-func GetBasicUserInfo() {
+type BasicUserInfo struct {
+	UserName      string
+	Avatar        string
+	PublicProfile bool
+}
+
+func GetBasicUserInfo(ctx context.Context, userID int64) (resp BasicUserInfo, err error) {
 	//called with: user_id
 	//returns username, avatar, profile_public(bool)
 	//---------------------------------------------------------------------
 	// GetUserBasic(id)
+	return BasicUserInfo{}, nil
 }
 
 func GetUserProfile() {
