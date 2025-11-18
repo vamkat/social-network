@@ -16,38 +16,14 @@ func RegisterUser() {
 
 func LoginUser() {
 	//called with: username (and/or email?), password
-	//returns user_id or error
+	//returns user_id,username,avatar,profile_public, or error
 	//---------------------------------------------------------------------
 	//BY EMAIL OR ONLY USERNAME???? (discuss with front)
 	//GetUserForLogin (id, username, password hash, salt), check status=active (maybe also email TODO)
 	//check password correct
 	//if failed login IncrementFailedLoginAttempts
 	//if success ResetFailedLoginAttempts
-}
-
-func DeleteUser() {
-	//called with: user_id
-	//returns success or error
-	//request needs to come from same user or admin (not implemented)
-	//---------------------------------------------------------------------
-	//softDeleteUser(id)
-}
-
-func BanUser() {
-	//called with: user_id
-	//returns success or error
-	//request needs to come from admin (not implemented)
-	//---------------------------------------------------------------------
-	//BanUser(id, liftBanDate)
-	//TODO logic to automatically unban after liftBanDate
-}
-
-func UnbanUser() {
-	//called with: user_id
-	//returns success or error
-	//request needs to come from admin (not implemented) or automatic on expiration
-	//---------------------------------------------------------------------
-	//UnbanUser(id)
+	//issue token (user service or api gateway?)
 }
 
 type BasicUserInfo struct {
@@ -139,12 +115,12 @@ func GetGroupMembers() {
 	//getGroupMembers
 }
 
-func SeachByUserrnameOrName() {
+func SeachByUsers() {
 	//called with search term
 	//returns list of users containing user_id, username, avatar, profile_public(bool)
 	//---------------------------------------------------------------------
 
-	//SearchUsers
+	//SearchUsers by username or name
 }
 
 func SearchGroup() {
@@ -228,7 +204,7 @@ func CancelGroupJoinRequest() {
 }
 
 func LeaveGroup() {
-	//called with group_id,user_id, bool
+	//called with group_id,user_id
 	//returns success or error
 	//request needs to come from same user
 	//---------------------------------------------------------------------
@@ -256,7 +232,7 @@ func CreateGroup() {
 	//AddGroupOwnerAsMember
 }
 
-func DeleteGroup() {
+func DeleteGroup() { //low priorty
 	//called with group_id, owner_id
 	//returns success or error
 	//request needs to come from owner
@@ -266,7 +242,7 @@ func DeleteGroup() {
 	//SoftDeleteGroup
 }
 
-func TranferGroupOwnerShip() {
+func TranferGroupOwnerShip() { //low priority
 	//called with group_id,previous_owner_id, new_owner_id
 	//returns success or error
 	//request needs to come from previous owner (or admin - not implemented)
@@ -274,7 +250,7 @@ func TranferGroupOwnerShip() {
 
 }
 
-func hashPasswordWithSalt() {
+func hashPasswordWithSalt() { //here or in gateway?
 
 }
 
@@ -282,10 +258,35 @@ func comparePasswords() {
 
 }
 
-func issueToken() {
+func issueToken() { //here or in gateway?
 
 }
 
-func checkToken() {
+func checkToken() { //in shared?
 
+}
+
+func DeleteUser() { //low priority
+	//called with: user_id
+	//returns success or error
+	//request needs to come from same user or admin (not implemented)
+	//---------------------------------------------------------------------
+	//softDeleteUser(id)
+}
+
+func BanUser() { //low priority
+	//called with: user_id
+	//returns success or error
+	//request needs to come from admin (not implemented)
+	//---------------------------------------------------------------------
+	//BanUser(id, liftBanDate)
+	//TODO logic to automatically unban after liftBanDate
+}
+
+func UnbanUser() { //low priority
+	//called with: user_id
+	//returns success or error
+	//request needs to come from admin (not implemented) or automatic on expiration
+	//---------------------------------------------------------------------
+	//UnbanUser(id)
 }
