@@ -7,8 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getUserBasic = `-- name: GetUserBasic :one
@@ -21,13 +21,13 @@ WHERE id = $1
 `
 
 type GetUserBasicRow struct {
-	Username      string         `json:"username"`
-	Avatar        sql.NullString `json:"avatar"`
-	ProfilePublic bool           `json:"profile_public"`
+	Username      string
+	Avatar        *string
+	ProfilePublic bool
 }
 
 func (q *Queries) GetUserBasic(ctx context.Context, id int64) (GetUserBasicRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserBasic, id)
+	row := q.db.QueryRow(ctx, getUserBasic, id)
 	var i GetUserBasicRow
 	err := row.Scan(&i.Username, &i.Avatar, &i.ProfilePublic)
 	return i, err
@@ -49,17 +49,17 @@ WHERE id = $1
 `
 
 type GetUserProfileRow struct {
-	ID            int64          `json:"id"`
-	Username      string         `json:"username"`
-	FirstName     string         `json:"first_name"`
-	LastName      string         `json:"last_name"`
-	Avatar        time.Time      `json:"avatar"`
-	AboutMe       sql.NullString `json:"about_me"`
-	ProfilePublic bool           `json:"profile_public"`
+	ID            int64
+	Username      string
+	FirstName     string
+	LastName      string
+	Avatar        pgtype.Date
+	AboutMe       *string
+	ProfilePublic bool
 }
 
 func (q *Queries) GetUserProfile(ctx context.Context, id int64) (GetUserProfileRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserProfile, id)
+	row := q.db.QueryRow(ctx, getUserProfile, id)
 	var i GetUserProfileRow
 	err := row.Scan(
 		&i.ID,
@@ -93,24 +93,24 @@ LIMIT $2
 `
 
 type SearchUsersParams struct {
-	Username string `json:"username"`
-	Limit    int32  `json:"limit"`
+	Username string
+	Limit    int32
 }
 
 type SearchUsersRow struct {
-	ID            int64          `json:"id"`
-	Username      string         `json:"username"`
-	Avatar        sql.NullString `json:"avatar"`
-	ProfilePublic bool           `json:"profile_public"`
+	ID            int64
+	Username      string
+	Avatar        *string
+	ProfilePublic bool
 }
 
 func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, searchUsers, arg.Username, arg.Limit)
+	rows, err := q.db.Query(ctx, searchUsers, arg.Username, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []SearchUsersRow
+	items := []SearchUsersRow{}
 	for rows.Next() {
 		var i SearchUsersRow
 		if err := rows.Scan(
@@ -122,9 +122,6 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]Sea
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -141,12 +138,12 @@ WHERE user_id = $1
 `
 
 type UpdateUserEmailParams struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
+	UserID int64
+	Email  string
 }
 
 func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.UserID, arg.Email)
+	_, err := q.db.Exec(ctx, updateUserEmail, arg.UserID, arg.Email)
 	return err
 }
 
@@ -160,13 +157,13 @@ WHERE user_id = $1
 `
 
 type UpdateUserPasswordParams struct {
-	UserID       int64  `json:"user_id"`
-	PasswordHash string `json:"password_hash"`
-	Salt         string `json:"salt"`
+	UserID       int64
+	PasswordHash string
+	Salt         string
 }
 
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserPassword, arg.UserID, arg.PasswordHash, arg.Salt)
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.UserID, arg.PasswordHash, arg.Salt)
 	return err
 }
 
@@ -185,16 +182,16 @@ RETURNING id, username, first_name, last_name, date_of_birth, avatar, about_me, 
 `
 
 type UpdateUserProfileParams struct {
-	ID          int64          `json:"id"`
-	FirstName   string         `json:"first_name"`
-	LastName    string         `json:"last_name"`
-	DateOfBirth time.Time      `json:"date_of_birth"`
-	Avatar      sql.NullString `json:"avatar"`
-	AboutMe     sql.NullString `json:"about_me"`
+	ID          int64
+	FirstName   string
+	LastName    string
+	DateOfBirth pgtype.Date
+	Avatar      *string
+	AboutMe     *string
 }
 
 func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUserProfile,
+	row := q.db.QueryRow(ctx, updateUserProfile,
 		arg.ID,
 		arg.FirstName,
 		arg.LastName,

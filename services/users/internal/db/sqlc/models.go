@@ -5,10 +5,10 @@
 package db
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type FollowRequestStatus string
@@ -32,8 +32,8 @@ func (e *FollowRequestStatus) Scan(src interface{}) error {
 }
 
 type NullFollowRequestStatus struct {
-	FollowRequestStatus FollowRequestStatus `json:"follow_request_status"`
-	Valid               bool                `json:"valid"` // Valid is true if FollowRequestStatus is not NULL
+	FollowRequestStatus FollowRequestStatus
+	Valid               bool // Valid is true if FollowRequestStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -52,6 +52,16 @@ func (ns NullFollowRequestStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.FollowRequestStatus), nil
+}
+
+func (e FollowRequestStatus) Valid() bool {
+	switch e {
+	case FollowRequestStatusPending,
+		FollowRequestStatusAccepted,
+		FollowRequestStatusRejected:
+		return true
+	}
+	return false
 }
 
 type GroupInviteStatus string
@@ -76,8 +86,8 @@ func (e *GroupInviteStatus) Scan(src interface{}) error {
 }
 
 type NullGroupInviteStatus struct {
-	GroupInviteStatus GroupInviteStatus `json:"group_invite_status"`
-	Valid             bool              `json:"valid"` // Valid is true if GroupInviteStatus is not NULL
+	GroupInviteStatus GroupInviteStatus
+	Valid             bool // Valid is true if GroupInviteStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -96,6 +106,17 @@ func (ns NullGroupInviteStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.GroupInviteStatus), nil
+}
+
+func (e GroupInviteStatus) Valid() bool {
+	switch e {
+	case GroupInviteStatusPending,
+		GroupInviteStatusAccepted,
+		GroupInviteStatusDeclined,
+		GroupInviteStatusExpired:
+		return true
+	}
+	return false
 }
 
 type GroupRole string
@@ -118,8 +139,8 @@ func (e *GroupRole) Scan(src interface{}) error {
 }
 
 type NullGroupRole struct {
-	GroupRole GroupRole `json:"group_role"`
-	Valid     bool      `json:"valid"` // Valid is true if GroupRole is not NULL
+	GroupRole GroupRole
+	Valid     bool // Valid is true if GroupRole is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -138,6 +159,15 @@ func (ns NullGroupRole) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.GroupRole), nil
+}
+
+func (e GroupRole) Valid() bool {
+	switch e {
+	case GroupRoleMember,
+		GroupRoleOwner:
+		return true
+	}
+	return false
 }
 
 type JoinRequestStatus string
@@ -161,8 +191,8 @@ func (e *JoinRequestStatus) Scan(src interface{}) error {
 }
 
 type NullJoinRequestStatus struct {
-	JoinRequestStatus JoinRequestStatus `json:"join_request_status"`
-	Valid             bool              `json:"valid"` // Valid is true if JoinRequestStatus is not NULL
+	JoinRequestStatus JoinRequestStatus
+	Valid             bool // Valid is true if JoinRequestStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -181,6 +211,16 @@ func (ns NullJoinRequestStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.JoinRequestStatus), nil
+}
+
+func (e JoinRequestStatus) Valid() bool {
+	switch e {
+	case JoinRequestStatusPending,
+		JoinRequestStatusAccepted,
+		JoinRequestStatusRejected:
+		return true
+	}
+	return false
 }
 
 type UserStatus string
@@ -204,8 +244,8 @@ func (e *UserStatus) Scan(src interface{}) error {
 }
 
 type NullUserStatus struct {
-	UserStatus UserStatus `json:"user_status"`
-	Valid      bool       `json:"valid"` // Valid is true if UserStatus is not NULL
+	UserStatus UserStatus
+	Valid      bool // Valid is true if UserStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -226,82 +266,92 @@ func (ns NullUserStatus) Value() (driver.Value, error) {
 	return string(ns.UserStatus), nil
 }
 
+func (e UserStatus) Valid() bool {
+	switch e {
+	case UserStatusActive,
+		UserStatusBanned,
+		UserStatusDeleted:
+		return true
+	}
+	return false
+}
+
 type AuthUser struct {
-	UserID         int64        `json:"user_id"`
-	Email          string       `json:"email"`
-	PasswordHash   string       `json:"password_hash"`
-	Salt           string       `json:"salt"`
-	CreatedAt      time.Time    `json:"created_at"`
-	UpdatedAt      sql.NullTime `json:"updated_at"`
-	FailedAttempts int32        `json:"failed_attempts"`
-	LastLoginAt    sql.NullTime `json:"last_login_at"`
+	UserID         int64
+	Email          string
+	PasswordHash   string
+	Salt           string
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	FailedAttempts int32
+	LastLoginAt    pgtype.Timestamptz
 }
 
 type Follow struct {
-	FollowerID  int64        `json:"follower_id"`
-	FollowingID int64        `json:"following_id"`
-	CreatedAt   sql.NullTime `json:"created_at"`
+	FollowerID  int64
+	FollowingID int64
+	CreatedAt   pgtype.Timestamptz
 }
 
 type FollowRequest struct {
-	RequesterID int64               `json:"requester_id"`
-	TargetID    int64               `json:"target_id"`
-	Status      FollowRequestStatus `json:"status"`
-	CreatedAt   sql.NullTime        `json:"created_at"`
-	UpdatedAt   sql.NullTime        `json:"updated_at"`
-	DeletedAt   sql.NullTime        `json:"deleted_at"`
+	RequesterID int64
+	TargetID    int64
+	Status      FollowRequestStatus
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
 }
 
 type Group struct {
-	ID               int64         `json:"id"`
-	GroupOwner       int64         `json:"group_owner"`
-	GroupTitle       string        `json:"group_title"`
-	GroupDescription string        `json:"group_description"`
-	MembersCount     sql.NullInt32 `json:"members_count"`
-	CreatedAt        time.Time     `json:"created_at"`
-	UpdatedAt        sql.NullTime  `json:"updated_at"`
-	DeletedAt        sql.NullTime  `json:"deleted_at"`
+	ID               int64
+	GroupOwner       int64
+	GroupTitle       string
+	GroupDescription string
+	MembersCount     *int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	DeletedAt        pgtype.Timestamptz
 }
 
 type GroupInvite struct {
-	GroupID    int64             `json:"group_id"`
-	SenderID   sql.NullInt64     `json:"sender_id"`
-	ReceiverID int64             `json:"receiver_id"`
-	Status     GroupInviteStatus `json:"status"`
-	CreatedAt  sql.NullTime      `json:"created_at"`
-	UpdatedAt  sql.NullTime      `json:"updated_at"`
-	DeletedAt  sql.NullTime      `json:"deleted_at"`
+	GroupID    int64
+	SenderID   *int64
+	ReceiverID int64
+	Status     GroupInviteStatus
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	DeletedAt  pgtype.Timestamptz
 }
 
 type GroupJoinRequest struct {
-	GroupID   int64             `json:"group_id"`
-	UserID    int64             `json:"user_id"`
-	Status    JoinRequestStatus `json:"status"`
-	CreatedAt sql.NullTime      `json:"created_at"`
-	UpdatedAt sql.NullTime      `json:"updated_at"`
-	DeletedAt sql.NullTime      `json:"deleted_at"`
+	GroupID   int64
+	UserID    int64
+	Status    JoinRequestStatus
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
 }
 
 type GroupMember struct {
-	GroupID   int64         `json:"group_id"`
-	UserID    int64         `json:"user_id"`
-	Role      NullGroupRole `json:"role"`
-	JoinedAt  sql.NullTime  `json:"joined_at"`
-	DeletedAt sql.NullTime  `json:"deleted_at"`
+	GroupID   int64
+	UserID    int64
+	Role      NullGroupRole
+	JoinedAt  pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
 }
 
 type User struct {
-	ID            int64          `json:"id"`
-	Username      string         `json:"username"`
-	FirstName     string         `json:"first_name"`
-	LastName      string         `json:"last_name"`
-	DateOfBirth   time.Time      `json:"date_of_birth"`
-	Avatar        sql.NullString `json:"avatar"`
-	AboutMe       sql.NullString `json:"about_me"`
-	ProfilePublic bool           `json:"profile_public"`
-	CurrentStatus UserStatus     `json:"current_status"`
-	BanEndsAt     sql.NullTime   `json:"ban_ends_at"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
-	DeletedAt     sql.NullTime   `json:"deleted_at"`
+	ID            int64
+	Username      string
+	FirstName     string
+	LastName      string
+	DateOfBirth   pgtype.Date
+	Avatar        *string
+	AboutMe       *string
+	ProfilePublic bool
+	CurrentStatus UserStatus
+	BanEndsAt     pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	DeletedAt     pgtype.Timestamptz
 }

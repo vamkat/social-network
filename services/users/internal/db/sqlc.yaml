@@ -1,8 +1,16 @@
-version: "1"
-packages:
-  - name: "db"                     # Go package name for generated code
-    path: "./sqlc"    # folder for generated Go files
-    queries: "./queries/*.sql"
-    schema: "./migrations/*.sql"
+version: "2"
+sql:
+  - name: "users"                    
     engine: "postgresql"
-    emit_json_tags: true            # include JSON tags in structs
+    schema: "./migrations/*.sql"
+    queries: "./queries/*.sql"
+    gen:
+      go:
+        package: db
+        out: "./sqlc"
+        sql_package: pgx/v5
+        emit_empty_slices: true 
+        emit_pointers_for_null_types: true
+        emit_enum_valid_method: true
+    
+

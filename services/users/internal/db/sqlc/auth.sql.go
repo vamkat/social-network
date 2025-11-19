@@ -7,8 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const banUser = `-- name: BanUser :exec
@@ -20,12 +20,12 @@ WHERE id = $1
 `
 
 type BanUserParams struct {
-	ID        int64        `json:"id"`
-	BanEndsAt sql.NullTime `json:"ban_ends_at"`
+	ID        int64
+	BanEndsAt pgtype.Timestamptz
 }
 
 func (q *Queries) BanUser(ctx context.Context, arg BanUserParams) error {
-	_, err := q.db.ExecContext(ctx, banUser, arg.ID, arg.BanEndsAt)
+	_, err := q.db.Exec(ctx, banUser, arg.ID, arg.BanEndsAt)
 	return err
 }
 
@@ -43,14 +43,14 @@ WHERE u.username = $1
 `
 
 type GetUserForLoginRow struct {
-	ID           int64  `json:"id"`
-	Username     string `json:"username"`
-	PasswordHash string `json:"password_hash"`
-	Salt         string `json:"salt"`
+	ID           int64
+	Username     string
+	PasswordHash string
+	Salt         string
 }
 
 func (q *Queries) GetUserForLogin(ctx context.Context, username string) (GetUserForLoginRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserForLogin, username)
+	row := q.db.QueryRow(ctx, getUserForLogin, username)
 	var i GetUserForLoginRow
 	err := row.Scan(
 		&i.ID,
@@ -68,7 +68,7 @@ WHERE user_id = $1
 `
 
 func (q *Queries) IncrementFailedLoginAttempts(ctx context.Context, userID int64) error {
-	_, err := q.db.ExecContext(ctx, incrementFailedLoginAttempts, userID)
+	_, err := q.db.Exec(ctx, incrementFailedLoginAttempts, userID)
 	return err
 }
 
@@ -88,17 +88,17 @@ RETURNING id
 `
 
 type InsertNewUserParams struct {
-	Username      string         `json:"username"`
-	FirstName     string         `json:"first_name"`
-	LastName      string         `json:"last_name"`
-	DateOfBirth   time.Time      `json:"date_of_birth"`
-	Avatar        sql.NullString `json:"avatar"`
-	AboutMe       sql.NullString `json:"about_me"`
-	ProfilePublic bool           `json:"profile_public"`
+	Username      string
+	FirstName     string
+	LastName      string
+	DateOfBirth   pgtype.Date
+	Avatar        *string
+	AboutMe       *string
+	ProfilePublic bool
 }
 
 func (q *Queries) InsertNewUser(ctx context.Context, arg InsertNewUserParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertNewUser,
+	row := q.db.QueryRow(ctx, insertNewUser,
 		arg.Username,
 		arg.FirstName,
 		arg.LastName,
@@ -124,14 +124,14 @@ INSERT INTO auth_user (
 `
 
 type InsertNewUserAuthParams struct {
-	UserID       int64  `json:"user_id"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash"`
-	Salt         string `json:"salt"`
+	UserID       int64
+	Email        string
+	PasswordHash string
+	Salt         string
 }
 
 func (q *Queries) InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthParams) error {
-	_, err := q.db.ExecContext(ctx, insertNewUserAuth,
+	_, err := q.db.Exec(ctx, insertNewUserAuth,
 		arg.UserID,
 		arg.Email,
 		arg.PasswordHash,
@@ -148,7 +148,7 @@ WHERE user_id = $1
 `
 
 func (q *Queries) ResetFailedLoginAttempts(ctx context.Context, userID int64) error {
-	_, err := q.db.ExecContext(ctx, resetFailedLoginAttempts, userID)
+	_, err := q.db.Exec(ctx, resetFailedLoginAttempts, userID)
 	return err
 }
 
@@ -162,7 +162,7 @@ WHERE id = $1
 `
 
 func (q *Queries) SoftDeleteUser(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, softDeleteUser, id)
+	_, err := q.db.Exec(ctx, softDeleteUser, id)
 	return err
 }
 
@@ -175,6 +175,6 @@ WHERE id = $1
 `
 
 func (q *Queries) UnbanUser(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, unbanUser, id)
+	_, err := q.db.Exec(ctx, unbanUser, id)
 	return err
 }

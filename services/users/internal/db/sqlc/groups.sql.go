@@ -7,7 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const acceptGroupInvite = `-- name: AcceptGroupInvite :exec
@@ -18,12 +19,12 @@ WHERE group_id = $1
 `
 
 type AcceptGroupInviteParams struct {
-	GroupID    int64 `json:"group_id"`
-	ReceiverID int64 `json:"receiver_id"`
+	GroupID    int64
+	ReceiverID int64
 }
 
 func (q *Queries) AcceptGroupInvite(ctx context.Context, arg AcceptGroupInviteParams) error {
-	_, err := q.db.ExecContext(ctx, acceptGroupInvite, arg.GroupID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, acceptGroupInvite, arg.GroupID, arg.ReceiverID)
 	return err
 }
 
@@ -35,12 +36,12 @@ WHERE group_id = $1
 `
 
 type AcceptGroupJoinRequestParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) AcceptGroupJoinRequest(ctx context.Context, arg AcceptGroupJoinRequestParams) error {
-	_, err := q.db.ExecContext(ctx, acceptGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, acceptGroupJoinRequest, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -50,12 +51,12 @@ VALUES ($1, $2, 'owner')
 `
 
 type AddGroupOwnerAsMemberParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) AddGroupOwnerAsMember(ctx context.Context, arg AddGroupOwnerAsMemberParams) error {
-	_, err := q.db.ExecContext(ctx, addGroupOwnerAsMember, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, addGroupOwnerAsMember, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -66,12 +67,12 @@ ON CONFLICT DO NOTHING
 `
 
 type AddUserToGroupParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error {
-	_, err := q.db.ExecContext(ctx, addUserToGroup, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, addUserToGroup, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -82,12 +83,12 @@ WHERE group_id = $1
 `
 
 type CancelGroupInviteParams struct {
-	GroupID    int64 `json:"group_id"`
-	ReceiverID int64 `json:"receiver_id"`
+	GroupID    int64
+	ReceiverID int64
 }
 
 func (q *Queries) CancelGroupInvite(ctx context.Context, arg CancelGroupInviteParams) error {
-	_, err := q.db.ExecContext(ctx, cancelGroupInvite, arg.GroupID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, cancelGroupInvite, arg.GroupID, arg.ReceiverID)
 	return err
 }
 
@@ -98,12 +99,12 @@ WHERE group_id = $1
 `
 
 type CancelGroupJoinRequestParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) CancelGroupJoinRequest(ctx context.Context, arg CancelGroupJoinRequestParams) error {
-	_, err := q.db.ExecContext(ctx, cancelGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, cancelGroupJoinRequest, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -114,13 +115,13 @@ RETURNING id
 `
 
 type CreateGroupParams struct {
-	GroupOwner       int64  `json:"group_owner"`
-	GroupTitle       string `json:"group_title"`
-	GroupDescription string `json:"group_description"`
+	GroupOwner       int64
+	GroupTitle       string
+	GroupDescription string
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createGroup, arg.GroupOwner, arg.GroupTitle, arg.GroupDescription)
+	row := q.db.QueryRow(ctx, createGroup, arg.GroupOwner, arg.GroupTitle, arg.GroupDescription)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -134,12 +135,12 @@ WHERE group_id = $1
 `
 
 type DeclineGroupInviteParams struct {
-	GroupID    int64 `json:"group_id"`
-	ReceiverID int64 `json:"receiver_id"`
+	GroupID    int64
+	ReceiverID int64
 }
 
 func (q *Queries) DeclineGroupInvite(ctx context.Context, arg DeclineGroupInviteParams) error {
-	_, err := q.db.ExecContext(ctx, declineGroupInvite, arg.GroupID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, declineGroupInvite, arg.GroupID, arg.ReceiverID)
 	return err
 }
 
@@ -154,19 +155,19 @@ WHERE deleted_at IS NULL
 `
 
 type GetAllGroupsRow struct {
-	ID               int64         `json:"id"`
-	GroupTitle       string        `json:"group_title"`
-	GroupDescription string        `json:"group_description"`
-	MembersCount     sql.NullInt32 `json:"members_count"`
+	ID               int64
+	GroupTitle       string
+	GroupDescription string
+	MembersCount     *int32
 }
 
 func (q *Queries) GetAllGroups(ctx context.Context) ([]GetAllGroupsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllGroups)
+	rows, err := q.db.Query(ctx, getAllGroups)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllGroupsRow
+	items := []GetAllGroupsRow{}
 	for rows.Next() {
 		var i GetAllGroupsRow
 		if err := rows.Scan(
@@ -178,9 +179,6 @@ func (q *Queries) GetAllGroups(ctx context.Context) ([]GetAllGroupsRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -201,15 +199,15 @@ WHERE id=$1
 `
 
 type GetGroupInfoRow struct {
-	ID               int64         `json:"id"`
-	GroupOwner       int64         `json:"group_owner"`
-	GroupTitle       string        `json:"group_title"`
-	GroupDescription string        `json:"group_description"`
-	MembersCount     sql.NullInt32 `json:"members_count"`
+	ID               int64
+	GroupOwner       int64
+	GroupTitle       string
+	GroupDescription string
+	MembersCount     *int32
 }
 
 func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, error) {
-	row := q.db.QueryRowContext(ctx, getGroupInfo, id)
+	row := q.db.QueryRow(ctx, getGroupInfo, id)
 	var i GetGroupInfoRow
 	err := row.Scan(
 		&i.ID,
@@ -237,21 +235,21 @@ WHERE gm.group_id = $1
 `
 
 type GetGroupMembersRow struct {
-	UserID        int64          `json:"user_id"`
-	Username      string         `json:"username"`
-	Avatar        sql.NullString `json:"avatar"`
-	ProfilePublic bool           `json:"profile_public"`
-	Role          NullGroupRole  `json:"role"`
-	JoinedAt      sql.NullTime   `json:"joined_at"`
+	UserID        int64
+	Username      string
+	Avatar        *string
+	ProfilePublic bool
+	Role          NullGroupRole
+	JoinedAt      pgtype.Timestamptz
 }
 
 func (q *Queries) GetGroupMembers(ctx context.Context, groupID int64) ([]GetGroupMembersRow, error) {
-	rows, err := q.db.QueryContext(ctx, getGroupMembers, groupID)
+	rows, err := q.db.Query(ctx, getGroupMembers, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetGroupMembersRow
+	items := []GetGroupMembersRow{}
 	for rows.Next() {
 		var i GetGroupMembersRow
 		if err := rows.Scan(
@@ -265,9 +263,6 @@ func (q *Queries) GetGroupMembers(ctx context.Context, groupID int64) ([]GetGrou
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -295,20 +290,20 @@ WHERE g.deleted_at IS NULL
 `
 
 type GetUserGroupsRow struct {
-	GroupID          int64         `json:"group_id"`
-	GroupTitle       string        `json:"group_title"`
-	GroupDescription string        `json:"group_description"`
-	MembersCount     sql.NullInt32 `json:"members_count"`
-	Role             interface{}   `json:"role"`
+	GroupID          int64
+	GroupTitle       string
+	GroupDescription string
+	MembersCount     *int32
+	Role             interface{}
 }
 
 func (q *Queries) GetUserGroups(ctx context.Context, groupOwner int64) ([]GetUserGroupsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserGroups, groupOwner)
+	rows, err := q.db.Query(ctx, getUserGroups, groupOwner)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUserGroupsRow
+	items := []GetUserGroupsRow{}
 	for rows.Next() {
 		var i GetUserGroupsRow
 		if err := rows.Scan(
@@ -321,9 +316,6 @@ func (q *Queries) GetUserGroups(ctx context.Context, groupOwner int64) ([]GetUse
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -340,12 +332,12 @@ WHERE group_id = $1
 `
 
 type LeaveGroupParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) LeaveGroup(ctx context.Context, arg LeaveGroupParams) error {
-	_, err := q.db.ExecContext(ctx, leaveGroup, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, leaveGroup, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -357,12 +349,12 @@ WHERE group_id = $1
 `
 
 type RejectGroupJoinRequestParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoinRequestParams) error {
-	_, err := q.db.ExecContext(ctx, rejectGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, rejectGroupJoinRequest, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -380,19 +372,19 @@ ORDER BY GREATEST(similarity(group_title, $1), similarity(group_description, $1)
 `
 
 type SearchGroupsFuzzyRow struct {
-	ID               int64         `json:"id"`
-	GroupTitle       string        `json:"group_title"`
-	GroupDescription string        `json:"group_description"`
-	MembersCount     sql.NullInt32 `json:"members_count"`
+	ID               int64
+	GroupTitle       string
+	GroupDescription string
+	MembersCount     *int32
 }
 
 func (q *Queries) SearchGroupsFuzzy(ctx context.Context, similarity string) ([]SearchGroupsFuzzyRow, error) {
-	rows, err := q.db.QueryContext(ctx, searchGroupsFuzzy, similarity)
+	rows, err := q.db.Query(ctx, searchGroupsFuzzy, similarity)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []SearchGroupsFuzzyRow
+	items := []SearchGroupsFuzzyRow{}
 	for rows.Next() {
 		var i SearchGroupsFuzzyRow
 		if err := rows.Scan(
@@ -404,9 +396,6 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, similarity string) ([]S
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -422,13 +411,13 @@ DO UPDATE SET status = 'pending'
 `
 
 type SendGroupInviteParams struct {
-	GroupID    int64         `json:"group_id"`
-	SenderID   sql.NullInt64 `json:"sender_id"`
-	ReceiverID int64         `json:"receiver_id"`
+	GroupID    int64
+	SenderID   *int64
+	ReceiverID int64
 }
 
 func (q *Queries) SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error {
-	_, err := q.db.ExecContext(ctx, sendGroupInvite, arg.GroupID, arg.SenderID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, sendGroupInvite, arg.GroupID, arg.SenderID, arg.ReceiverID)
 	return err
 }
 
@@ -440,12 +429,12 @@ DO UPDATE SET status = 'pending'
 `
 
 type SendGroupJoinRequestParams struct {
-	GroupID int64 `json:"group_id"`
-	UserID  int64 `json:"user_id"`
+	GroupID int64
+	UserID  int64
 }
 
 func (q *Queries) SendGroupJoinRequest(ctx context.Context, arg SendGroupJoinRequestParams) error {
-	_, err := q.db.ExecContext(ctx, sendGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, sendGroupJoinRequest, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -456,7 +445,7 @@ WHERE id = $1
 `
 
 func (q *Queries) SoftDeleteGroup(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, softDeleteGroup, id)
+	_, err := q.db.Exec(ctx, softDeleteGroup, id)
 	return err
 }
 
@@ -481,13 +470,13 @@ SELECT 1
 `
 
 type TransferOwnershipParams struct {
-	GroupID  int64 `json:"group_id"`
-	UserID   int64 `json:"user_id"`
-	UserID_2 int64 `json:"user_id_2"`
+	GroupID  int64
+	UserID   int64
+	UserID_2 int64
 }
 
 // owners cannot leave the group (transfer ownership logic? TODO)
 func (q *Queries) TransferOwnership(ctx context.Context, arg TransferOwnershipParams) error {
-	_, err := q.db.ExecContext(ctx, transferOwnership, arg.GroupID, arg.UserID, arg.UserID_2)
+	_, err := q.db.Exec(ctx, transferOwnership, arg.GroupID, arg.UserID, arg.UserID_2)
 	return err
 }

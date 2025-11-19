@@ -7,7 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const acceptFollowRequest = `-- name: AcceptFollowRequest :exec
@@ -24,12 +25,12 @@ ON CONFLICT DO NOTHING
 `
 
 type AcceptFollowRequestParams struct {
-	RequesterID int64 `json:"requester_id"`
-	TargetID    int64 `json:"target_id"`
+	RequesterID int64
+	TargetID    int64
 }
 
 func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, acceptFollowRequest, arg.RequesterID, arg.TargetID)
+	_, err := q.db.Exec(ctx, acceptFollowRequest, arg.RequesterID, arg.TargetID)
 	return err
 }
 
@@ -38,12 +39,12 @@ SELECT follow_user($1, $2)
 `
 
 type FollowUserParams struct {
-	PFollower int64 `json:"p_follower"`
-	PTarget   int64 `json:"p_target"`
+	PFollower int64
+	PTarget   int64
 }
 
 func (q *Queries) FollowUser(ctx context.Context, arg FollowUserParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, followUser, arg.PFollower, arg.PTarget)
+	row := q.db.QueryRow(ctx, followUser, arg.PFollower, arg.PTarget)
 	var follow_user string
 	err := row.Scan(&follow_user)
 	return follow_user, err
@@ -56,7 +57,7 @@ WHERE following_id = $1
 `
 
 func (q *Queries) GetFollowerCount(ctx context.Context, followingID int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getFollowerCount, followingID)
+	row := q.db.QueryRow(ctx, getFollowerCount, followingID)
 	var follower_count int64
 	err := row.Scan(&follower_count)
 	return follower_count, err
@@ -72,26 +73,26 @@ LIMIT $2 OFFSET $3
 `
 
 type GetFollowersParams struct {
-	FollowingID int64 `json:"following_id"`
-	Limit       int32 `json:"limit"`
-	Offset      int32 `json:"offset"`
+	FollowingID int64
+	Limit       int32
+	Offset      int32
 }
 
 type GetFollowersRow struct {
-	ID         int64        `json:"id"`
-	Username   string       `json:"username"`
-	FirstName  string       `json:"first_name"`
-	LastName   string       `json:"last_name"`
-	FollowedAt sql.NullTime `json:"followed_at"`
+	ID         int64
+	Username   string
+	FirstName  string
+	LastName   string
+	FollowedAt pgtype.Timestamptz
 }
 
 func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]GetFollowersRow, error) {
-	rows, err := q.db.QueryContext(ctx, getFollowers, arg.FollowingID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getFollowers, arg.FollowingID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetFollowersRow
+	items := []GetFollowersRow{}
 	for rows.Next() {
 		var i GetFollowersRow
 		if err := rows.Scan(
@@ -104,9 +105,6 @@ func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]G
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -124,26 +122,26 @@ LIMIT $2 OFFSET $3
 `
 
 type GetFollowingParams struct {
-	FollowerID int64 `json:"follower_id"`
-	Limit      int32 `json:"limit"`
-	Offset     int32 `json:"offset"`
+	FollowerID int64
+	Limit      int32
+	Offset     int32
 }
 
 type GetFollowingRow struct {
-	ID         int64        `json:"id"`
-	Username   string       `json:"username"`
-	FirstName  string       `json:"first_name"`
-	LastName   string       `json:"last_name"`
-	FollowedAt sql.NullTime `json:"followed_at"`
+	ID         int64
+	Username   string
+	FirstName  string
+	LastName   string
+	FollowedAt pgtype.Timestamptz
 }
 
 func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]GetFollowingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getFollowing, arg.FollowerID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getFollowing, arg.FollowerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetFollowingRow
+	items := []GetFollowingRow{}
 	for rows.Next() {
 		var i GetFollowingRow
 		if err := rows.Scan(
@@ -156,9 +154,6 @@ func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]G
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -173,7 +168,7 @@ WHERE follower_id = $1
 `
 
 func (q *Queries) GetFollowingCount(ctx context.Context, followerID int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getFollowingCount, followerID)
+	row := q.db.QueryRow(ctx, getFollowingCount, followerID)
 	var following_count int64
 	err := row.Scan(&following_count)
 	return following_count, err
@@ -189,31 +184,28 @@ WHERE f1.following_id = $1
 `
 
 type GetMutualFollowersParams struct {
-	FollowingID   int64 `json:"following_id"`
-	FollowingID_2 int64 `json:"following_id_2"`
+	FollowingID   int64
+	FollowingID_2 int64
 }
 
 type GetMutualFollowersRow struct {
-	ID       int64  `json:"id"`
-	Username string `json:"username"`
+	ID       int64
+	Username string
 }
 
 func (q *Queries) GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMutualFollowers, arg.FollowingID, arg.FollowingID_2)
+	rows, err := q.db.Query(ctx, getMutualFollowers, arg.FollowingID, arg.FollowingID_2)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetMutualFollowersRow
+	items := []GetMutualFollowersRow{}
 	for rows.Next() {
 		var i GetMutualFollowersRow
 		if err := rows.Scan(&i.ID, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -229,12 +221,12 @@ SELECT EXISTS (
 `
 
 type IsFollowingParams struct {
-	FollowerID  int64 `json:"follower_id"`
-	FollowingID int64 `json:"following_id"`
+	FollowerID  int64
+	FollowingID int64
 }
 
 func (q *Queries) IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, isFollowing, arg.FollowerID, arg.FollowingID)
+	row := q.db.QueryRow(ctx, isFollowing, arg.FollowerID, arg.FollowingID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
@@ -250,12 +242,12 @@ SELECT EXISTS (
 `
 
 type IsFollowingEitherParams struct {
-	FollowerID  int64 `json:"follower_id"`
-	FollowingID int64 `json:"following_id"`
+	FollowerID  int64
+	FollowingID int64
 }
 
 func (q *Queries) IsFollowingEither(ctx context.Context, arg IsFollowingEitherParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, isFollowingEither, arg.FollowerID, arg.FollowingID)
+	row := q.db.QueryRow(ctx, isFollowingEither, arg.FollowerID, arg.FollowingID)
 	var is_following_either bool
 	err := row.Scan(&is_following_either)
 	return is_following_either, err
@@ -268,12 +260,12 @@ WHERE requester_id = $1 AND target_id = $2
 `
 
 type RejectFollowRequestParams struct {
-	RequesterID int64 `json:"requester_id"`
-	TargetID    int64 `json:"target_id"`
+	RequesterID int64
+	TargetID    int64
 }
 
 func (q *Queries) RejectFollowRequest(ctx context.Context, arg RejectFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, rejectFollowRequest, arg.RequesterID, arg.TargetID)
+	_, err := q.db.Exec(ctx, rejectFollowRequest, arg.RequesterID, arg.TargetID)
 	return err
 }
 
@@ -286,15 +278,15 @@ RETURNING follower_id, following_id, created_at
 `
 
 type UnfollowUserParams struct {
-	FollowerID  int64 `json:"follower_id"`
-	FollowingID int64 `json:"following_id"`
+	FollowerID  int64
+	FollowingID int64
 }
 
 // 1: follower_id
 // 2: following_id
 // returns followed or requested depending on target's privacy settings
 func (q *Queries) UnfollowUser(ctx context.Context, arg UnfollowUserParams) (Follow, error) {
-	row := q.db.QueryRowContext(ctx, unfollowUser, arg.FollowerID, arg.FollowingID)
+	row := q.db.QueryRow(ctx, unfollowUser, arg.FollowerID, arg.FollowingID)
 	var i Follow
 	err := row.Scan(&i.FollowerID, &i.FollowingID, &i.CreatedAt)
 	return i, err
