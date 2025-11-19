@@ -5,6 +5,7 @@ import (
 )
 
 func RegisterUser() {
+
 	//called with: username, first_name, last_name, date_of_birth, avatar, about_me, profile_public(bool), email, password hash, salt
 	//returns: user_id or error
 	//---------------------------------------------------------------------

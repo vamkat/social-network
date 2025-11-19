@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"social-network/services/forum/server"
 	"social-network/shared/db"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -27,4 +28,7 @@ func main() {
 	}
 
 	log.Println("Service ready!")
+
+	// Start gRPC server and block
+	server.RunGRPCServer(":50052")
 }

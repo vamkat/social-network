@@ -2,120 +2,132 @@ package userservice
 
 import "time"
 
-//returned by login, basicUser,getGroupMembers([]),searchUsers([]), getFollowers([]), getFollowing([])
-type user struct {
-	userId    int64
-	username  string
-	avatar    string
-	public    bool
-	groupRole string //only applicable in group members
+type UserId int64
+
+type GroupId int64
+
+//returned by login, basicUser,searchUsers([]), getFollowers([]), getFollowing([])
+type User struct {
+	UserId   int64
+	Username string
+	Avatar   string
+	Public   bool
+}
+
+//getGroupMembers([])
+type GroupUser struct {
+	UserId    int64
+	Username  string
+	Avatar    string
+	Public    bool
+	GroupRole string //only applicable in group members
 }
 
 //returned by getAllGroups([]), getUserGroups([]),getGroupInfo, searchGroup([])
-type group struct {
-	groupId          int64
-	ownerId          int64
-	groupTitle       string
-	groupDescription string
-	membersCount     int
+type Group struct {
+	GroupId          int64
+	OwnerId          int64
+	GroupTitle       string
+	GroupDescription string
+	MembersCount     int
 }
 
-type registerUserRequest struct {
-	username    string
-	firstName   string
-	lastName    string
-	dateOfBirth time.Time
-	avatar      string
-	about       string
-	public      bool
-	email       string
-	password    string
+type RegisterUserRequest struct {
+	Username    string
+	FirstName   string
+	LastName    string
+	DateOfBirth time.Time
+	Avatar      string
+	About       string
+	Public      bool
+	Email       string
+	Password    string
 }
 
-type registerUserResponse struct {
-	userId string
+type RegisterUserResponse struct {
+	UserId string
 }
 
-type loginRequest struct {
-	identifier string //username or email
-	password   string
+type LoginRequest struct {
+	Identifier string //username or email
+	Password   string
 }
 
-type userProfileRequest struct {
-	userId      int64
-	requesterId int64
+type UserProfileRequest struct {
+	UserId      int64
+	RequesterId int64
 }
 
 //returned by getUserProfile, updateUserProfile
-type userProfileResponse struct {
-	userId         int64
-	username       string
-	firstName      string
-	lastName       string
-	dateOfBirth    time.Time
-	avatar         string
-	about          string
-	public         bool
-	followersCount int
-	followingCount int
-	groups         []group
+type UserProfileResponse struct {
+	UserId         int64
+	Username       string
+	FirstName      string
+	LastName       string
+	DateOfBirth    time.Time
+	Avatar         string
+	About          string
+	Public         bool
+	FollowersCount int
+	FollowingCount int
+	Groups         []Group
 }
 
-type updateProfileRequest struct {
-	username    string
-	firstName   string
-	lastName    string
-	dateOfBirth time.Time
-	avatar      string
-	about       string
-	public      bool
+type UpdateProfileRequest struct {
+	Username    string
+	FirstName   string
+	LastName    string
+	DateOfBirth time.Time
+	Avatar      string
+	About       string
+	Public      bool
 }
 
-type updatePasswordRequest struct {
-	userId      int64
-	oldPassword string
-	password    string
+type UpdatePasswordRequest struct {
+	UserId      int64
+	OldPassword string
+	Password    string
 }
 
-type updateEmailRequest struct {
-	userId int64
-	email  string
+type UpdateEmailRequest struct {
+	UserId int64
+	Email  string
 }
 
-type inviteToGroupOrCancelRequest struct {
-	inviterId int64
-	invitedId int64
-	groupId   int64
-	cancel    bool
+type InviteToGroupOrCancelRequest struct {
+	InviterId int64
+	InvitedId int64
+	GroupId   int64
+	Cancel    bool
 }
 
-type handleGroupInviteRequest struct {
-	groupId   int64
-	invitedId int64
-	accepted  bool
+type HandleGroupInviteRequest struct {
+	GroupId   int64
+	InvitedId int64
+	Accepted  bool
 }
 
-type groupJoinOrCancelRequest struct {
-	groupId     int64
-	requesterId int64
-	cancel      bool
+type GroupJoinOrCancelRequest struct {
+	GroupId     int64
+	RequesterId int64
+	Cancel      bool
 }
 
-type handleGroupJoinRequest struct {
-	groupId     int64
-	requesterId int64
-	ownerId     int64
-	accepted    bool
+type HandleJoinRequest struct {
+	GroupId     int64
+	RequesterId int64
+	OwnerId     int64
+	Accepted    bool
 }
 
-type leaveGroupRequest struct {
-	groupId  int64
-	memberId int64
-	ownerId  int64 //nil if initiated by member
+type LeaveGroupRequest struct {
+	GroupId  int64
+	MemberId int64
+	OwnerId  int64 //nil if initiated by member
 }
 
-type createGroupRequest struct {
-	ownerId          int64
-	groupTitle       string
-	groupDescription string
+type CreateGroupRequest struct {
+	OwnerId          int64
+	GroupTitle       string
+	GroupDescription string
 }
