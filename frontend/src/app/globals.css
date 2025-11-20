@@ -530,4 +530,89 @@
   .emoji-icon-small {
     @apply text-3xl mb-2;
   }
+
+  /* Form Components */
+  .form-container {
+    @apply mt-8 space-y-6 text-left;
+  }
+
+  .form-container-center {
+    @apply mt-6 text-center;
+  }
+
+  .form-grid {
+    @apply grid grid-cols-2 gap-6 md:grid-cols-3;
+  }
+
+  .form-label {
+    @apply flex flex-col text-sm text-white;
+  }
+
+  .form-label-full {
+    @apply md:col-span-3;
+  }
+
+  .form-label-text {
+    @apply font-semibold;
+  }
+
+  .form-required {
+    @apply text-red-500;
+  }
+
+  .form-input {
+    @apply mt-2 rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-white placeholder-white/60 focus:border-white focus:outline-none;
+  }
+
+  .form-input-center {
+    @apply mt-2 w-1/5 rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/60 focus:border-white focus:outline-none;
+  }
+
+  .form-input-date {
+    @apply text-white;
+  }
+
+  .form-select {
+    @apply mt-2 w-32 rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-sm text-white focus:border-white focus:outline-none;
+  }
+
+  .form-select option {
+    @apply text-black;
+  }
+
+  .form-textarea {
+    @apply mt-2 w-full rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-white placeholder-white/60 focus:border-white focus:outline-none;
+  }
+
+  .form-label-span-2 {
+    @apply md:col-span-2;
+  }
+
+  .form-input-error {
+    @apply border-red-500/60;
+  }
+
+  .form-error {
+    @apply text-red-400 text-xs mt-1;
+  }
+
+  .form-error-general {
+    @apply bg-red-500/20 border border-red-500/40 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm;
+  }
+
+  .form-input-file {
+    @apply mt-2 text-white/70 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:cursor-pointer hover:file:bg-white/20;
+  }
+
+  .form-image-preview {
+    @apply mt-3;
+  }
+
+  .form-avatar-preview {
+    @apply w-24 h-24 rounded-lg object-cover border-2 border-white/20;
+  }
+
+  .form-char-count {
+    @apply text-white/50 text-xs mt-1;
+  }
 }
