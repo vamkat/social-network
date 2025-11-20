@@ -144,9 +144,9 @@ CREATE INDEX idx_group_join_requests_status ON group_join_requests(status);
 CREATE TYPE group_invite_status AS ENUM ('pending','accepted','declined','expired');
 
 CREATE TABLE IF NOT EXISTS group_invites (
-    group_id BIGINT REFERENCES groups(id) ON DELETE CASCADE,
-    sender_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    receiver_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    group_id BIGINT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    sender_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     status group_invite_status NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,

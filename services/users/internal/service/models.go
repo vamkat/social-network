@@ -1,17 +1,21 @@
 package userservice
 
-import "time"
+import (
+	"time"
+)
 
 type UserId int64
 
 type GroupId int64
+
+type GroupRole string
 
 type LoginReq struct {
 	Identifier string
 	Password   string
 }
 
-//returned by login, basicUser,searchUsers([]), getFollowers([]), getFollowing([])
+// returned by login, basicUser,searchUsers([]), getFollowers([]), getFollowing([])
 type User struct {
 	UserId   int64
 	Username string
@@ -19,7 +23,7 @@ type User struct {
 	Public   bool
 }
 
-//getGroupMembers([])
+// getGroupMembers([])
 type GroupUser struct {
 	UserId    int64
 	Username  string
@@ -28,7 +32,7 @@ type GroupUser struct {
 	GroupRole string //only applicable in group members
 }
 
-//returned by getAllGroups([]), getUserGroups([]),getGroupInfo, searchGroup([])
+// returned by getAllGroups([]), getUserGroups([]),getGroupInfo, searchGroup([])
 type Group struct {
 	GroupId          int64
 	GroupTitle       string
@@ -63,7 +67,7 @@ type UserProfileRequest struct {
 	RequesterId int64
 }
 
-//returned by getUserProfile, updateUserProfile
+// returned by getUserProfile, updateUserProfile
 type UserProfileResponse struct {
 	UserId         int64
 	Username       string
@@ -97,6 +101,12 @@ type GetFollowersReq struct {
 	FollowingID int64
 	Limit       int32
 	Offset      int32
+}
+
+type GetFollowingReq struct {
+	FollowerID int64
+	Limit      int32
+	Offset     int32
 }
 
 type UpdatePasswordRequest struct {
@@ -146,4 +156,9 @@ type CreateGroupRequest struct {
 	OwnerId          int64
 	GroupTitle       string
 	GroupDescription string
+}
+
+type GroupRoleReq struct {
+	GroupId int64
+	UserId  int64
 }

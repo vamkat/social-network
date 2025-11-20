@@ -65,7 +65,8 @@ WHERE group_id = $1
 -- name: CancelGroupInvite :exec
 DELETE FROM group_invites
 WHERE group_id = $1
-  AND receiver_id = $2;
+  AND receiver_id = $2
+  AND sender_id=$3;
 
 -- name: LeaveGroup :exec
 UPDATE group_members
@@ -156,3 +157,10 @@ WHERE deleted_at IS NULL
   AND (similarity(group_title, $1) > 0.3
        OR similarity(group_description, $1) > 0.3)
 ORDER BY GREATEST(similarity(group_title, $1), similarity(group_description, $1)) DESC;
+
+-- name: GetUserGroupRole :one
+SELECT role
+FROM group_members
+WHERE group_id = $1
+  AND user_id = $2
+  AND deleted_at IS NULL;

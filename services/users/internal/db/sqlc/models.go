@@ -314,7 +314,7 @@ type Group struct {
 
 type GroupInvite struct {
 	GroupID    int64
-	SenderID   *int64
+	SenderID   int64
 	ReceiverID int64
 	Status     GroupInviteStatus
 	CreatedAt  pgtype.Timestamptz

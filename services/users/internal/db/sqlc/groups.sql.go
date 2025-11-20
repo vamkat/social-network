@@ -80,15 +80,17 @@ const cancelGroupInvite = `-- name: CancelGroupInvite :exec
 DELETE FROM group_invites
 WHERE group_id = $1
   AND receiver_id = $2
+  AND sender_id=$3
 `
 
 type CancelGroupInviteParams struct {
 	GroupID    int64
 	ReceiverID int64
+	SenderID   int64
 }
 
 func (q *Queries) CancelGroupInvite(ctx context.Context, arg CancelGroupInviteParams) error {
-	_, err := q.db.Exec(ctx, cancelGroupInvite, arg.GroupID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, cancelGroupInvite, arg.GroupID, arg.ReceiverID, arg.SenderID)
 	return err
 }
 
@@ -270,6 +272,26 @@ func (q *Queries) GetGroupMembers(ctx context.Context, groupID int64) ([]GetGrou
 	return items, nil
 }
 
+const getUserGroupRole = `-- name: GetUserGroupRole :one
+SELECT role
+FROM group_members
+WHERE group_id = $1
+  AND user_id = $2
+  AND deleted_at IS NULL
+`
+
+type GetUserGroupRoleParams struct {
+	GroupID int64
+	UserID  int64
+}
+
+func (q *Queries) GetUserGroupRole(ctx context.Context, arg GetUserGroupRoleParams) (NullGroupRole, error) {
+	row := q.db.QueryRow(ctx, getUserGroupRole, arg.GroupID, arg.UserID)
+	var role NullGroupRole
+	err := row.Scan(&role)
+	return role, err
+}
+
 const getUserGroups = `-- name: GetUserGroups :many
 SELECT DISTINCT
     g.id AS group_id,
@@ -412,7 +434,7 @@ DO UPDATE SET status = 'pending'
 
 type SendGroupInviteParams struct {
 	GroupID    int64
-	SenderID   *int64
+	SenderID   int64
 	ReceiverID int64
 }
 

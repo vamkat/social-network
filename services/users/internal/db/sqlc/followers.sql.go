@@ -113,7 +113,7 @@ func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]G
 }
 
 const getFollowing = `-- name: GetFollowing :many
-SELECT u.id, u.username, u.first_name, u.last_name, f.created_at AS followed_at
+SELECT u.id, u.username,u.avatar,u.profile_public, f.created_at AS followed_at
 FROM follows f
 JOIN users u ON u.id = f.following_id
 WHERE f.follower_id = $1
@@ -128,11 +128,11 @@ type GetFollowingParams struct {
 }
 
 type GetFollowingRow struct {
-	ID         int64
-	Username   string
-	FirstName  string
-	LastName   string
-	FollowedAt pgtype.Timestamptz
+	ID            int64
+	Username      string
+	Avatar        *string
+	ProfilePublic bool
+	FollowedAt    pgtype.Timestamptz
 }
 
 func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]GetFollowingRow, error) {
@@ -147,8 +147,8 @@ func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]G
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
-			&i.FirstName,
-			&i.LastName,
+			&i.Avatar,
+			&i.ProfilePublic,
 			&i.FollowedAt,
 		); err != nil {
 			return nil, err
