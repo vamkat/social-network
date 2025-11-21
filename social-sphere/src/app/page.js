@@ -32,7 +32,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="hero animate-fade-in">
           <h1 className="hero-title">
-            Connect without<br />the noise.
+            Connect without<br />the noise
           </h1>
           <p className="hero-subtitle">
             A sanctuary for your social life. Meaningful conversations,
@@ -42,6 +42,8 @@ export default function LandingPage() {
             Start your journey
           </Link>
         </section>
+
+        <div className="section-divider" />
 
         {/* Feature 1: Real-time */}
         <section className="section animate-fade-in delay-100">
@@ -66,6 +68,8 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <div className="section-divider" />
+
         {/* Feature 2: Groups */}
         <section className="section flex-col-reverse md:flex-row-reverse animate-fade-in delay-200">
           <div className="section-content">
@@ -83,6 +87,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <div className="section-divider" />
 
         {/* Feature 3: Privacy */}
         <section className="section animate-fade-in delay-300">

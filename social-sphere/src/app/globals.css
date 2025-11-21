@@ -109,6 +109,11 @@ body {
   @apply text-lg text-(--muted) leading-relaxed;
 }
 
+.section-divider {
+  @apply w-full max-w-[1000px] mx-auto h-px border-0 my-0;
+  background: linear-gradient(to right, transparent, var(--muted), transparent);
+}
+
 /* Footer */
 .footer {
   @apply py-12 mt-auto border-t border-black/5 dark:border-white/5;
