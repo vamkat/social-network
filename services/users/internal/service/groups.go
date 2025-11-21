@@ -6,7 +6,7 @@ import (
 )
 
 func (s *UserService) GetAllGroupsPaginated(ctx context.Context) ([]Group, error) {
-	//TODO add pagination (sort how?)
+	//TODO add pagination (sorting by most members first)
 	rows, err := s.db.GetAllGroups(ctx)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (s *UserService) GetAllGroupsPaginated(ctx context.Context) ([]Group, error
 }
 
 func (s *UserService) GetUserGroupsPaginated(ctx context.Context, userId int64) ([]Group, error) {
-	//TODO add pagination (sort how?)
+	//TODO add pagination (joined latest first)
 	rows, err := s.db.GetUserGroups(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *UserService) GetGroupInfo(ctx context.Context, groupId int64) (Group, e
 }
 
 func (s *UserService) GetGroupMembers(ctx context.Context, groupId int64) ([]GroupUser, error) {
-	//TODO add pagination (sort how?)
+	//TODO add pagination (newest first)
 	rows, err := s.db.GetGroupMembers(ctx, groupId)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *UserService) GetGroupMembers(ctx context.Context, groupId int64) ([]Gro
 }
 
 func (s *UserService) SearchGroups(ctx context.Context, searchTerm string) ([]Group, error) {
-	//TODO add pagination? (sort how?)
+	//TODO add pagination? (most members first)
 	rows, err := s.db.SearchGroupsFuzzy(ctx, searchTerm)
 	if err != nil {
 		return []Group{}, err
@@ -105,7 +105,7 @@ func (s *UserService) SearchGroups(ctx context.Context, searchTerm string) ([]Gr
 	}
 
 	return groups, nil
-	//Do we want to include userId so that we also have the info if the user is a member, owner, or nothing?
+	//YES Do we want to include userId so that we also have the info if the user is a member, owner, or nothing?
 }
 
 func (s *UserService) InviteToGroupOrCancel(ctx context.Context, req InviteToGroupOrCancelRequest) error {

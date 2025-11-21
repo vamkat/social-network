@@ -8,6 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// username becomes FirstName_Lastname
+// uuid to send to front
+// get time.Time instead of string
+// register returns basicUserInfo (id, username, avatar) --public (remove)
+// API GATEWAY checks password at least 8 characters,check email
+// make token
+//add owner to group
+
 func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest) (UserId, error) {
 
 	// convert date
@@ -90,7 +98,7 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginRequest) (User, er
 		return User{}, ErrWrongCredentials
 	}
 
-	//TODO what happens when eg failed login attempts > 3? Add logic?
+	//TODO what happens when eg failed login attempts > 3? Add logic? //remove
 
 	return u, nil
 }

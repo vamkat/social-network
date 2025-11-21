@@ -70,6 +70,10 @@ func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest
 		return UserProfileResponse{}, err
 	}
 
+	//count for groups (member)
+	//count for groups (owner)
+
+	//different calls
 	profile.Groups, err = s.GetUserGroupsPaginated(ctx, profile.UserId) //if pagination then it should be separate call and I should probably have a groups count
 	if err != nil {
 		return UserProfileResponse{}, err

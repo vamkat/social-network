@@ -107,6 +107,7 @@ type GroupUser struct {
 	GroupRole string
 }
 
+// add owner to group
 type Group struct {
 	GroupId          int64
 	GroupTitle       string
