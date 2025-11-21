@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
-
+import Link from "next/link";
 import { register } from "@/actions/auth";
 
 export default function RegisterForm() {
