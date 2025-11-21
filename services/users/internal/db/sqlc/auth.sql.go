@@ -46,7 +46,7 @@ WHERE (u.username = $1 OR au.email = $1)
 type GetUserForLoginRow struct {
 	ID            int64
 	Username      string
-	Avatar        *string
+	Avatar        string
 	ProfilePublic bool
 	PasswordHash  string
 }
@@ -110,8 +110,8 @@ type InsertNewUserParams struct {
 	FirstName     string
 	LastName      string
 	DateOfBirth   pgtype.Date
-	Avatar        *string
-	AboutMe       *string
+	Avatar        string
+	AboutMe       string
 	ProfilePublic bool
 }
 

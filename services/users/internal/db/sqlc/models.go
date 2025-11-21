@@ -306,7 +306,7 @@ type Group struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	MembersCount     *int32
+	MembersCount     int32
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 	DeletedAt        pgtype.Timestamptz
@@ -345,8 +345,8 @@ type User struct {
 	FirstName     string
 	LastName      string
 	DateOfBirth   pgtype.Date
-	Avatar        *string
-	AboutMe       *string
+	Avatar        string
+	AboutMe       string
 	ProfilePublic bool
 	CurrentStatus UserStatus
 	BanEndsAt     pgtype.Timestamptz

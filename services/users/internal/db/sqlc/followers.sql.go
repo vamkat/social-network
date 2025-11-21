@@ -81,7 +81,7 @@ type GetFollowersParams struct {
 type GetFollowersRow struct {
 	ID            int64
 	Username      string
-	Avatar        *string
+	Avatar        string
 	ProfilePublic bool
 	FollowedAt    pgtype.Timestamptz
 }
@@ -130,7 +130,7 @@ type GetFollowingParams struct {
 type GetFollowingRow struct {
 	ID            int64
 	Username      string
-	Avatar        *string
+	Avatar        string
 	ProfilePublic bool
 	FollowedAt    pgtype.Timestamptz
 }

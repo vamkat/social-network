@@ -13,8 +13,8 @@ type RegisterUserRequest struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth string
-	Avatar      *string
-	About       *string
+	Avatar      string
+	About       string
 	Public      bool
 	Email       string
 	Password    string
@@ -49,7 +49,7 @@ type UserId int64
 type User struct {
 	UserId   int64
 	Username string
-	Avatar   *string
+	Avatar   string
 	Public   bool
 }
 
@@ -69,8 +69,8 @@ type UserProfileResponse struct {
 	FirstName      string
 	LastName       string
 	DateOfBirth    time.Time
-	Avatar         *string
-	About          *string
+	Avatar         string
+	About          string
 	Public         bool
 	FollowersCount int64
 	FollowingCount int64
@@ -79,12 +79,12 @@ type UserProfileResponse struct {
 
 type UpdateProfileRequest struct {
 	UserId      int64
-	Username    *string
-	FirstName   *string
-	LastName    *string
-	DateOfBirth *string
-	Avatar      *string
-	About       *string
+	Username    string
+	FirstName   string
+	LastName    string
+	DateOfBirth string
+	Avatar      string
+	About       string
 }
 
 type UpdateProfilePrivacyRequest struct {
@@ -102,7 +102,7 @@ type GroupRole string
 type GroupUser struct {
 	UserId    int64
 	Username  string
-	Avatar    *string
+	Avatar    string
 	Public    bool
 	GroupRole string
 }
@@ -111,7 +111,7 @@ type Group struct {
 	GroupId          int64
 	GroupTitle       string
 	GroupDescription string
-	MembersCount     *int32
+	MembersCount     int32
 	Role             string
 }
 

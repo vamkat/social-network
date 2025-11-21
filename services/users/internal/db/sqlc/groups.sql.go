@@ -160,7 +160,7 @@ type GetAllGroupsRow struct {
 	ID               int64
 	GroupTitle       string
 	GroupDescription string
-	MembersCount     *int32
+	MembersCount     int32
 }
 
 func (q *Queries) GetAllGroups(ctx context.Context) ([]GetAllGroupsRow, error) {
@@ -205,7 +205,7 @@ type GetGroupInfoRow struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	MembersCount     *int32
+	MembersCount     int32
 }
 
 func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, error) {
@@ -239,7 +239,7 @@ WHERE gm.group_id = $1
 type GetGroupMembersRow struct {
 	UserID        int64
 	Username      string
-	Avatar        *string
+	Avatar        string
 	ProfilePublic bool
 	Role          NullGroupRole
 	JoinedAt      pgtype.Timestamptz
@@ -315,7 +315,7 @@ type GetUserGroupsRow struct {
 	GroupID          int64
 	GroupTitle       string
 	GroupDescription string
-	MembersCount     *int32
+	MembersCount     int32
 	Role             string
 }
 
@@ -438,7 +438,7 @@ type SearchGroupsFuzzyRow struct {
 	ID               int64
 	GroupTitle       string
 	GroupDescription string
-	MembersCount     *int32
+	MembersCount     int32
 }
 
 func (q *Queries) SearchGroupsFuzzy(ctx context.Context, similarity string) ([]SearchGroupsFuzzyRow, error) {

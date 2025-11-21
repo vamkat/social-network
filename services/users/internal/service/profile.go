@@ -106,27 +106,25 @@ func (s *UserService) SearchUsers(ctx context.Context, req UserSearchReq) ([]Use
 	return users, nil
 }
 
-// TODO This doesn't work (stupid sqlc). Need to see how to update only changed fields, preferably without having a different query for each one
 func (s *UserService) UpdateUserProfile(ctx context.Context, req UpdateProfileRequest) (UserProfileResponse, error) {
-	var dob *pgtype.Date
-	if req.DateOfBirth != nil {
-		dobTime, err := time.Parse("2006-01-02", *req.DateOfBirth)
-		if err != nil {
-			return UserProfileResponse{}, ErrInvalidDateFormat
-		}
+	//NOTE front needs to send everything, not just changed fields
+	var dob pgtype.Date
+	dobTime, err := time.Parse("2006-01-02", req.DateOfBirth)
+	if err != nil {
+		return UserProfileResponse{}, ErrInvalidDateFormat
+	}
 
-		dob = &pgtype.Date{
-			Time:  dobTime,
-			Valid: true,
-		}
+	dob = pgtype.Date{
+		Time:  dobTime,
+		Valid: true,
 	}
 
 	row, err := s.db.UpdateUserProfile(ctx, sqlc.UpdateUserProfileParams{
 		ID:          req.UserId,
-		Username:    *req.Username,
-		FirstName:   *req.FirstName,
-		LastName:    *req.LastName,
-		DateOfBirth: *dob,
+		Username:    req.Username,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		DateOfBirth: dob,
 		Avatar:      req.Avatar,
 		AboutMe:     req.About,
 	})

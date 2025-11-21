@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     date_of_birth DATE NOT NULL,
-    avatar VARCHAR(255),
-    about_me TEXT, 
+    avatar VARCHAR(255) NOT NULL,
+    about_me TEXT NOT NULL, 
     profile_public BOOLEAN NOT NULL DEFAULT TRUE,
     current_status user_status NOT NULL DEFAULT 'active',
     ban_ends_at TIMESTAMPTZ,
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS groups (
     group_owner BIGINT NOT NULL REFERENCES users(id) ON DELETE NO ACTION,
     group_title TEXT NOT NULL,
     group_description TEXT NOT NULL,
-    members_count INT DEFAULT 0, --TODO add trigger
+    members_count INT NOT NULL DEFAULT 0, 
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ

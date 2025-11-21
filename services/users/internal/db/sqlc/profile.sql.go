@@ -24,7 +24,7 @@ WHERE id = $1
 type GetUserBasicRow struct {
 	ID            int64
 	Username      string
-	Avatar        *string
+	Avatar        string
 	ProfilePublic bool
 }
 
@@ -61,8 +61,8 @@ type GetUserProfileRow struct {
 	FirstName     string
 	LastName      string
 	DateOfBirth   pgtype.Date
-	Avatar        *string
-	AboutMe       *string
+	Avatar        string
+	AboutMe       string
 	ProfilePublic bool
 }
 
@@ -109,7 +109,7 @@ type SearchUsersParams struct {
 type SearchUsersRow struct {
 	ID            int64
 	Username      string
-	Avatar        *string
+	Avatar        string
 	ProfilePublic bool
 }
 
@@ -193,15 +193,14 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 const updateUserProfile = `-- name: UpdateUserProfile :one
 UPDATE users
 SET
-    username      = COALESCE($2, username),
-    first_name    = COALESCE($3, first_name),
-    last_name     = COALESCE($4, last_name),
-    date_of_birth = COALESCE($5, date_of_birth),
-    avatar        = COALESCE($6, avatar),
-    about_me      = COALESCE($7, about_me),
+    username      = $2,
+    first_name    = $3,
+    last_name     = $4,
+    date_of_birth = $5,
+    avatar        = $6,
+    about_me      = $7,
     updated_at    = CURRENT_TIMESTAMP
-WHERE id = $1
-  AND deleted_at IS NULL
+WHERE id = $1 AND deleted_at IS NULL
 RETURNING id, username, first_name, last_name, date_of_birth, avatar, about_me, profile_public, current_status, ban_ends_at, created_at, updated_at, deleted_at
 `
 
@@ -211,8 +210,8 @@ type UpdateUserProfileParams struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth pgtype.Date
-	Avatar      *string
-	AboutMe     *string
+	Avatar      string
+	AboutMe     string
 }
 
 func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
