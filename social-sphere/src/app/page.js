@@ -9,7 +9,7 @@ export default function LandingPage() {
         <div className="nav-content">
           <Link href="/" className="nav-logo flex items-center gap-2">
             <Image
-              src="/logos.png"
+              src="/logo.png"
               alt="SocialSphere Logo"
               width={32}
               height={32}

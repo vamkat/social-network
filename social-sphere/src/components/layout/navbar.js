@@ -14,7 +14,7 @@ export default function Navbar() {
 
     // Mock user data - replace with actual auth context later
     const user = {
-        username: "johndoe",
+        username: "ychaniot",
         avatar: null, // Placeholder for avatar
     };
 
@@ -63,7 +63,7 @@ export default function Navbar() {
                 {/* Logo */}
                 <Link href="/feed/public" className="flex items-center gap-2 font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity">
                     <Image
-                        src="/logos.png"
+                        src="/logo.png"
                         alt="SocialSphere Logo"
                         width={32}
                         height={32}
