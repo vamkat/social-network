@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"social-network/services/users/internal/db/sqlc"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -43,4 +44,15 @@ func hashPassword(password string) (string, error) {
 func checkPassword(hashedPassword, plainPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
+}
+
+// StringToUUID converts a string to pgtype.UUID
+// Returns an error if the string is not a valid UUID
+func stringToUUID(s string) (pgtype.UUID, error) {
+	var uuid pgtype.UUID
+	err := uuid.Scan(s)
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("invalid UUID string: %w", err)
+	}
+	return uuid, nil
 }

@@ -12,7 +12,7 @@ type RegisterUserRequest struct {
 	Username    string
 	FirstName   string
 	LastName    string
-	DateOfBirth string
+	DateOfBirth time.Time
 	Avatar      string
 	About       string
 	Public      bool
@@ -30,13 +30,13 @@ type LoginRequest struct {
 }
 
 type UpdatePasswordRequest struct {
-	UserId      int64
+	UserId      string
 	OldPassword string
 	NewPassword string
 }
 
 type UpdateEmailRequest struct {
-	UserId int64
+	UserId string
 	Email  string
 }
 
@@ -44,13 +44,12 @@ type UpdateEmailRequest struct {
 // Profile
 //-------------------------------------------
 
-type UserId int64
+type UserId string
 
 type User struct {
-	UserId   int64
+	UserId   string
 	Username string
 	Avatar   string
-	Public   bool
 }
 
 type UserSearchReq struct {
@@ -59,36 +58,40 @@ type UserSearchReq struct {
 }
 
 type UserProfileRequest struct {
-	UserId      int64
-	RequesterId int64
+	UserId      string
+	RequesterId string
 }
 
 type UserProfileResponse struct {
-	UserId         int64
-	Username       string
-	FirstName      string
-	LastName       string
-	DateOfBirth    time.Time
-	Avatar         string
-	About          string
-	Public         bool
-	FollowersCount int64
-	FollowingCount int64
-	Groups         []Group
+	UserId            string
+	Username          string
+	FirstName         string
+	LastName          string
+	DateOfBirth       time.Time
+	Avatar            string
+	About             string
+	Public            bool
+	CreatedAt         time.Time
+	FollowersCount    int64
+	FollowingCount    int64
+	GroupsCount       int64
+	OwnedGroupsCount  int64
+	ViewerIsFollowing bool
+	OwnProfile        bool
 }
 
 type UpdateProfileRequest struct {
-	UserId      int64
+	UserId      string
 	Username    string
 	FirstName   string
 	LastName    string
-	DateOfBirth string
+	DateOfBirth time.Time
 	Avatar      string
 	About       string
 }
 
 type UpdateProfilePrivacyRequest struct {
-	UserId int64
+	UserId string
 	Public bool
 }
 
@@ -100,7 +103,7 @@ type GroupId int64
 type GroupRole string
 
 type GroupUser struct {
-	UserId    int64
+	UserId    string
 	Username  string
 	Avatar    string
 	Public    bool
@@ -117,44 +120,44 @@ type Group struct {
 }
 
 type InviteToGroupOrCancelRequest struct {
-	InviterId int64
-	InvitedId int64
+	InviterId string
+	InvitedId string
 	GroupId   int64
 	Cancel    bool
 }
 
 type HandleGroupInviteRequest struct {
 	GroupId   int64
-	InvitedId int64
+	InvitedId string
 	Accepted  bool
 }
 
 type GroupJoinOrCancelRequest struct {
 	GroupId     int64
-	RequesterId int64
+	RequesterId string
 	Cancel      bool
 }
 
 type HandleJoinRequest struct {
 	GroupId     int64
-	RequesterId int64
-	OwnerId     int64
+	RequesterId string
+	OwnerId     string
 	Accepted    bool
 }
 
 type GeneralGroupReq struct {
 	GroupId int64
-	UserId  int64
+	UserId  string
 }
 
 type RemoveFromGroupRequest struct {
 	GroupId  int64
-	MemberId int64
-	OwnerId  int64
+	MemberId string
+	OwnerId  string
 }
 
 type CreateGroupRequest struct {
-	OwnerId          int64
+	OwnerId          string
 	GroupTitle       string
 	GroupDescription string
 }
@@ -164,24 +167,24 @@ type CreateGroupRequest struct {
 // -------------------------------------------
 
 type FollowUserReq struct {
-	FollowerId   int64
-	TargetUserId int64
+	FollowerId   string
+	TargetUserId string
 }
 
 type HandleFollowRequestReq struct {
-	UserId      int64
-	RequesterId int64
+	UserId      string
+	RequesterId string
 	Accept      bool
 }
 
 type GetFollowersReq struct {
-	FollowingID int64
+	FollowingID string
 	Limit       int32
 	Offset      int32
 }
 
 type GetFollowingReq struct {
-	FollowerID int64
+	FollowerID string
 	Limit      int32
 	Offset     int32
 }

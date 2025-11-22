@@ -15,16 +15,16 @@ const acceptGroupInvite = `-- name: AcceptGroupInvite :exec
 UPDATE group_invites
 SET status = 'accepted'
 WHERE group_id = $1
-  AND receiver_id = $2
+  AND receiver_id = get_internal_user_id($2)
 `
 
 type AcceptGroupInviteParams struct {
-	GroupID    int64
-	ReceiverID int64
+	GroupID int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) AcceptGroupInvite(ctx context.Context, arg AcceptGroupInviteParams) error {
-	_, err := q.db.Exec(ctx, acceptGroupInvite, arg.GroupID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, acceptGroupInvite, arg.GroupID, arg.Pub)
 	return err
 }
 
@@ -32,98 +32,98 @@ const acceptGroupJoinRequest = `-- name: AcceptGroupJoinRequest :exec
 UPDATE group_join_requests
 SET status = 'accepted'
 WHERE group_id = $1
-  AND user_id = $2
+  AND user_id = get_internal_user_id($2)
 `
 
 type AcceptGroupJoinRequestParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) AcceptGroupJoinRequest(ctx context.Context, arg AcceptGroupJoinRequestParams) error {
-	_, err := q.db.Exec(ctx, acceptGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, acceptGroupJoinRequest, arg.GroupID, arg.Pub)
 	return err
 }
 
 const addGroupOwnerAsMember = `-- name: AddGroupOwnerAsMember :exec
 INSERT INTO group_members (group_id, user_id, role)
-VALUES ($1, $2, 'owner')
+VALUES ($1, get_internal_user_id($2), 'owner')
 `
 
 type AddGroupOwnerAsMemberParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) AddGroupOwnerAsMember(ctx context.Context, arg AddGroupOwnerAsMemberParams) error {
-	_, err := q.db.Exec(ctx, addGroupOwnerAsMember, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, addGroupOwnerAsMember, arg.GroupID, arg.Pub)
 	return err
 }
 
 const addUserToGroup = `-- name: AddUserToGroup :exec
 INSERT INTO group_members (group_id, user_id)
-VALUES ($1, $2)
+VALUES ($1, get_internal_user_id($2))
 ON CONFLICT DO NOTHING
 `
 
 type AddUserToGroupParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error {
-	_, err := q.db.Exec(ctx, addUserToGroup, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, addUserToGroup, arg.GroupID, arg.Pub)
 	return err
 }
 
 const cancelGroupInvite = `-- name: CancelGroupInvite :exec
 DELETE FROM group_invites
 WHERE group_id = $1
-  AND receiver_id = $2
-  AND sender_id=$3
+  AND receiver_id = get_internal_user_id($2)
+  AND sender_id=get_internal_user_id($3)
 `
 
 type CancelGroupInviteParams struct {
-	GroupID    int64
-	ReceiverID int64
-	SenderID   int64
+	GroupID int64
+	Pub     pgtype.UUID
+	Pub_2   pgtype.UUID
 }
 
 func (q *Queries) CancelGroupInvite(ctx context.Context, arg CancelGroupInviteParams) error {
-	_, err := q.db.Exec(ctx, cancelGroupInvite, arg.GroupID, arg.ReceiverID, arg.SenderID)
+	_, err := q.db.Exec(ctx, cancelGroupInvite, arg.GroupID, arg.Pub, arg.Pub_2)
 	return err
 }
 
 const cancelGroupJoinRequest = `-- name: CancelGroupJoinRequest :exec
 DELETE FROM group_join_requests
 WHERE group_id = $1
-  AND user_id = $2
+  AND user_id = get_internal_user_id($2)
 `
 
 type CancelGroupJoinRequestParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) CancelGroupJoinRequest(ctx context.Context, arg CancelGroupJoinRequestParams) error {
-	_, err := q.db.Exec(ctx, cancelGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, cancelGroupJoinRequest, arg.GroupID, arg.Pub)
 	return err
 }
 
 const createGroup = `-- name: CreateGroup :one
 INSERT INTO groups (group_owner, group_title, group_description)
-VALUES ($1, $2, $3)
+VALUES (get_internal_user_id($1), $2, $3)
 RETURNING id
 `
 
 type CreateGroupParams struct {
-	GroupOwner       int64
+	Pub              pgtype.UUID
 	GroupTitle       string
 	GroupDescription string
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (int64, error) {
-	row := q.db.QueryRow(ctx, createGroup, arg.GroupOwner, arg.GroupTitle, arg.GroupDescription)
+	row := q.db.QueryRow(ctx, createGroup, arg.Pub, arg.GroupTitle, arg.GroupDescription)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -133,16 +133,16 @@ const declineGroupInvite = `-- name: DeclineGroupInvite :exec
 UPDATE group_invites
 SET status = 'declined'
 WHERE group_id = $1
-  AND receiver_id = $2
+  AND receiver_id = get_internal_user_id($2)
 `
 
 type DeclineGroupInviteParams struct {
-	GroupID    int64
-	ReceiverID int64
+	GroupID int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) DeclineGroupInvite(ctx context.Context, arg DeclineGroupInviteParams) error {
-	_, err := q.db.Exec(ctx, declineGroupInvite, arg.GroupID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, declineGroupInvite, arg.GroupID, arg.Pub)
 	return err
 }
 
@@ -223,7 +223,7 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 
 const getGroupMembers = `-- name: GetGroupMembers :many
 SELECT
-    gm.user_id,
+    u.public_id,
     u.username,
     u.avatar,
     u.profile_public,
@@ -237,7 +237,7 @@ WHERE gm.group_id = $1
 `
 
 type GetGroupMembersRow struct {
-	UserID        int64
+	PublicID      pgtype.UUID
 	Username      string
 	Avatar        string
 	ProfilePublic bool
@@ -255,7 +255,7 @@ func (q *Queries) GetGroupMembers(ctx context.Context, groupID int64) ([]GetGrou
 	for rows.Next() {
 		var i GetGroupMembersRow
 		if err := rows.Scan(
-			&i.UserID,
+			&i.PublicID,
 			&i.Username,
 			&i.Avatar,
 			&i.ProfilePublic,
@@ -276,17 +276,17 @@ const getUserGroupRole = `-- name: GetUserGroupRole :one
 SELECT role
 FROM group_members
 WHERE group_id = $1
-  AND user_id = $2
+  AND user_id = get_internal_user_id($2)
   AND deleted_at IS NULL
 `
 
 type GetUserGroupRoleParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) GetUserGroupRole(ctx context.Context, arg GetUserGroupRoleParams) (NullGroupRole, error) {
-	row := q.db.QueryRow(ctx, getUserGroupRole, arg.GroupID, arg.UserID)
+	row := q.db.QueryRow(ctx, getUserGroupRole, arg.GroupID, arg.Pub)
 	var role NullGroupRole
 	err := row.Scan(&role)
 	return role, err
@@ -299,16 +299,16 @@ SELECT DISTINCT
     g.group_description,
     g.members_count,
     CASE 
-        WHEN g.group_owner = $1 THEN 'owner'
+        WHEN g.group_owner = get_internal_user_id($1) THEN 'owner'
         ELSE 'member'
     END AS role
 FROM groups g
 LEFT JOIN group_members gm
     ON gm.group_id = g.id
-    AND gm.user_id = $1
+    AND gm.user_id = get_internal_user_id($1)
     AND gm.deleted_at IS NULL
 WHERE g.deleted_at IS NULL
-  AND (g.group_owner = $1 OR gm.user_id = $1)
+  AND (g.group_owner = get_internal_user_id($1) OR gm.user_id = get_internal_user_id($1))
 `
 
 type GetUserGroupsRow struct {
@@ -319,8 +319,8 @@ type GetUserGroupsRow struct {
 	Role             string
 }
 
-func (q *Queries) GetUserGroups(ctx context.Context, groupOwner int64) ([]GetUserGroupsRow, error) {
-	rows, err := q.db.Query(ctx, getUserGroups, groupOwner)
+func (q *Queries) GetUserGroups(ctx context.Context, pub pgtype.UUID) ([]GetUserGroupsRow, error) {
+	rows, err := q.db.Query(ctx, getUserGroups, pub)
 	if err != nil {
 		return nil, err
 	}
@@ -350,37 +350,37 @@ SELECT EXISTS (
     SELECT 1
     FROM group_members
     WHERE group_id = $1
-      AND user_id = $2
+      AND user_id = get_internal_user_id($2)
       AND deleted_at IS NULL
 ) AS is_member
 `
 
 type IsUserGroupMemberParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) IsUserGroupMember(ctx context.Context, arg IsUserGroupMemberParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isUserGroupMember, arg.GroupID, arg.UserID)
+	row := q.db.QueryRow(ctx, isUserGroupMember, arg.GroupID, arg.Pub)
 	var is_member bool
 	err := row.Scan(&is_member)
 	return is_member, err
 }
 
 const isUserGroupOwner = `-- name: IsUserGroupOwner :one
-SELECT (group_owner = $2) AS is_owner
+SELECT (group_owner = get_internal_user_id($2)) AS is_owner
 FROM groups
 WHERE id = $1
   AND deleted_at IS NULL
 `
 
 type IsUserGroupOwnerParams struct {
-	ID         int64
-	GroupOwner int64
+	ID  int64
+	Pub pgtype.UUID
 }
 
 func (q *Queries) IsUserGroupOwner(ctx context.Context, arg IsUserGroupOwnerParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isUserGroupOwner, arg.ID, arg.GroupOwner)
+	row := q.db.QueryRow(ctx, isUserGroupOwner, arg.ID, arg.Pub)
 	var is_owner bool
 	err := row.Scan(&is_owner)
 	return is_owner, err
@@ -390,17 +390,17 @@ const leaveGroup = `-- name: LeaveGroup :exec
 UPDATE group_members
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE group_id = $1
-  AND user_id = $2
+  AND user_id = get_internal_user_id($2)
   AND role <> 'owner'
 `
 
 type LeaveGroupParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) LeaveGroup(ctx context.Context, arg LeaveGroupParams) error {
-	_, err := q.db.Exec(ctx, leaveGroup, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, leaveGroup, arg.GroupID, arg.Pub)
 	return err
 }
 
@@ -408,16 +408,16 @@ const rejectGroupJoinRequest = `-- name: RejectGroupJoinRequest :exec
 UPDATE group_join_requests
 SET status = 'rejected'
 WHERE group_id = $1
-  AND user_id = $2
+  AND user_id = get_internal_user_id($2)
 `
 
 type RejectGroupJoinRequestParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoinRequestParams) error {
-	_, err := q.db.Exec(ctx, rejectGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, rejectGroupJoinRequest, arg.GroupID, arg.Pub)
 	return err
 }
 
@@ -468,36 +468,36 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, similarity string) ([]S
 
 const sendGroupInvite = `-- name: SendGroupInvite :exec
 INSERT INTO group_invites (group_id, sender_id, receiver_id, status)
-VALUES ($1, $2, $3, 'pending') 
+VALUES ($1, get_internal_user_id($2), get_internal_user_id($3), 'pending') 
 ON CONFLICT (group_id, receiver_id)
 DO UPDATE SET status = 'pending'
 `
 
 type SendGroupInviteParams struct {
-	GroupID    int64
-	SenderID   int64
-	ReceiverID int64
+	GroupID int64
+	Pub     pgtype.UUID
+	Pub_2   pgtype.UUID
 }
 
 func (q *Queries) SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error {
-	_, err := q.db.Exec(ctx, sendGroupInvite, arg.GroupID, arg.SenderID, arg.ReceiverID)
+	_, err := q.db.Exec(ctx, sendGroupInvite, arg.GroupID, arg.Pub, arg.Pub_2)
 	return err
 }
 
 const sendGroupJoinRequest = `-- name: SendGroupJoinRequest :exec
 INSERT INTO group_join_requests (group_id, user_id, status)
-VALUES ($1, $2, 'pending')
+VALUES ($1, get_internal_user_id($2), 'pending')
 ON CONFLICT (group_id, user_id)
 DO UPDATE SET status = 'pending'
 `
 
 type SendGroupJoinRequestParams struct {
 	GroupID int64
-	UserID  int64
+	Pub     pgtype.UUID
 }
 
 func (q *Queries) SendGroupJoinRequest(ctx context.Context, arg SendGroupJoinRequestParams) error {
-	_, err := q.db.Exec(ctx, sendGroupJoinRequest, arg.GroupID, arg.UserID)
+	_, err := q.db.Exec(ctx, sendGroupJoinRequest, arg.GroupID, arg.Pub)
 	return err
 }
 
@@ -519,27 +519,52 @@ WITH demote AS (
     UPDATE group_members AS gm_old
     SET role = 'member'
     WHERE gm_old.group_id = $1
-      AND gm_old.user_id = $2
+      AND gm_old.user_id = get_internal_user_id($2)
       AND gm_old.role = 'owner'
 ),
 promote AS (
     UPDATE group_members AS gm_new
     SET role = 'owner'
     WHERE gm_new.group_id = $1
-      AND gm_new.user_id = $3
+      AND gm_new.user_id = get_internal_user_id($3)
       AND gm_new.role = 'member'
 )
 SELECT 1
 `
 
 type TransferOwnershipParams struct {
-	GroupID  int64
-	UserID   int64
-	UserID_2 int64
+	GroupID int64
+	Pub     pgtype.UUID
+	Pub_2   pgtype.UUID
 }
 
 // owners cannot leave the group (transfer ownership logic? TODO)
 func (q *Queries) TransferOwnership(ctx context.Context, arg TransferOwnershipParams) error {
-	_, err := q.db.Exec(ctx, transferOwnership, arg.GroupID, arg.UserID, arg.UserID_2)
+	_, err := q.db.Exec(ctx, transferOwnership, arg.GroupID, arg.Pub, arg.Pub_2)
 	return err
+}
+
+const userGroupCountsPerRole = `-- name: UserGroupCountsPerRole :one
+SELECT
+    COUNT(*) FILTER (WHERE g.group_owner = get_internal_user_id($1)) AS owner_count,
+    COUNT(*) FILTER (WHERE gm.role = 'member' AND g.group_owner <> get_internal_user_id($1)) AS member_only_count,
+    COUNT(*) AS total_memberships
+FROM group_members gm
+JOIN groups g ON gm.group_id = g.id
+WHERE gm.user_id = get_internal_user_id($1)
+  AND gm.deleted_at IS NULL
+  AND g.deleted_at IS NULL
+`
+
+type UserGroupCountsPerRoleRow struct {
+	OwnerCount       int64
+	MemberOnlyCount  int64
+	TotalMemberships int64
+}
+
+func (q *Queries) UserGroupCountsPerRole(ctx context.Context, pub pgtype.UUID) (UserGroupCountsPerRoleRow, error) {
+	row := q.db.QueryRow(ctx, userGroupCountsPerRole, pub)
+	var i UserGroupCountsPerRoleRow
+	err := row.Scan(&i.OwnerCount, &i.MemberOnlyCount, &i.TotalMemberships)
+	return i, err
 }

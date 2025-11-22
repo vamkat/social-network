@@ -18,16 +18,16 @@ func TestGetBasicUserInfo_Success(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	userID := int64(1)
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	userUUID, _ := stringToUUID(userID)
 
 	expectedRow := sqlc.GetUserBasicRow{
-		ID:            userID,
-		Username:      "testuser",
-		Avatar:        "avatar.jpg",
-		ProfilePublic: true,
+		PublicID: userUUID,
+		Username: "testuser",
+		Avatar:   "avatar.jpg",
 	}
 
-	mockDB.On("GetUserBasic", ctx, userID).Return(expectedRow, nil)
+	mockDB.On("GetUserBasic", ctx, userUUID).Return(expectedRow, nil)
 
 	user, err := service.GetBasicUserInfo(ctx, userID)
 
@@ -35,7 +35,6 @@ func TestGetBasicUserInfo_Success(t *testing.T) {
 	assert.Equal(t, userID, user.UserId)
 	assert.Equal(t, "testuser", user.Username)
 	assert.Equal(t, "avatar.jpg", user.Avatar)
-	assert.Equal(t, true, user.Public)
 	mockDB.AssertExpectations(t)
 }
 
@@ -44,9 +43,10 @@ func TestGetBasicUserInfo_NotFound(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	userID := int64(999)
+	userID := "550e8400-e29b-41d4-a716-446655440999"
+	userUUID, _ := stringToUUID(userID)
 
-	mockDB.On("GetUserBasic", ctx, userID).Return(nil, errors.New("user not found"))
+	mockDB.On("GetUserBasic", ctx, userUUID).Return(nil, errors.New("user not found"))
 
 	_, err := service.GetBasicUserInfo(ctx, userID)
 
@@ -60,8 +60,10 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	userID := int64(1)
-	requesterID := int64(2)
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	requesterID := "550e8400-e29b-41d4-a716-446655440001"
+	userUUID, _ := stringToUUID(userID)
+	requesterUUID, _ := stringToUUID(requesterID)
 
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
 	dobDate := pgtype.Date{
@@ -70,7 +72,7 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 	}
 
 	expectedRow := sqlc.GetUserProfileRow{
-		ID:            userID,
+		PublicID:      userUUID,
 		Username:      "testuser",
 		FirstName:     "Test",
 		LastName:      "User",
@@ -78,6 +80,10 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 		Avatar:        "avatar.jpg",
 		AboutMe:       "About me",
 		ProfilePublic: true,
+		CreatedAt: pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: true,
+		},
 	}
 
 	req := UserProfileRequest{
@@ -85,10 +91,16 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 		RequesterId: requesterID,
 	}
 
-	mockDB.On("GetUserProfile", ctx, userID).Return(expectedRow, nil)
-	mockDB.On("GetFollowerCount", ctx, userID).Return(int64(10), nil)
-	mockDB.On("GetFollowingCount", ctx, userID).Return(int64(5), nil)
-	mockDB.On("GetUserGroups", ctx, userID).Return([]sqlc.GetUserGroupsRow{}, nil)
+	mockDB.On("GetUserProfile", ctx, userUUID).Return(expectedRow, nil)
+	mockDB.On("IsFollowing", ctx, mock.MatchedBy(func(arg sqlc.IsFollowingParams) bool {
+		return arg.Pub == requesterUUID && arg.Pub_2 == userUUID
+	})).Return(false, nil)
+	mockDB.On("GetFollowerCount", ctx, userUUID).Return(int64(10), nil)
+	mockDB.On("GetFollowingCount", ctx, userUUID).Return(int64(5), nil)
+	mockDB.On("UserGroupCountsPerRole", ctx, userUUID).Return(sqlc.UserGroupCountsPerRoleRow{
+		TotalMemberships: 3,
+		OwnerCount:       1,
+	}, nil)
 
 	profile, err := service.GetUserProfile(ctx, req)
 
@@ -105,8 +117,10 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	userID := int64(1)
-	requesterID := int64(2)
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	requesterID := "550e8400-e29b-41d4-a716-446655440001"
+	userUUID, _ := stringToUUID(userID)
+	requesterUUID, _ := stringToUUID(requesterID)
 
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
 	dobDate := pgtype.Date{
@@ -115,7 +129,7 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 	}
 
 	expectedRow := sqlc.GetUserProfileRow{
-		ID:            userID,
+		PublicID:      userUUID,
 		Username:      "testuser",
 		FirstName:     "Test",
 		LastName:      "User",
@@ -130,11 +144,10 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 		RequesterId: requesterID,
 	}
 
-	mockDB.On("GetUserProfile", ctx, userID).Return(expectedRow, nil)
-	mockDB.On("IsFollowing", ctx, sqlc.IsFollowingParams{
-		FollowerID:  requesterID,
-		FollowingID: userID,
-	}).Return(false, nil)
+	mockDB.On("GetUserProfile", ctx, userUUID).Return(expectedRow, nil)
+	mockDB.On("IsFollowing", ctx, mock.MatchedBy(func(arg sqlc.IsFollowingParams) bool {
+		return arg.Pub == requesterUUID && arg.Pub_2 == userUUID
+	})).Return(false, nil)
 
 	_, err := service.GetUserProfile(ctx, req)
 
@@ -147,8 +160,10 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	userID := int64(1)
-	requesterID := int64(2)
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	requesterID := "550e8400-e29b-41d4-a716-446655440001"
+	userUUID, _ := stringToUUID(userID)
+	requesterUUID, _ := stringToUUID(requesterID)
 
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
 	dobDate := pgtype.Date{
@@ -157,7 +172,7 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 	}
 
 	expectedRow := sqlc.GetUserProfileRow{
-		ID:            userID,
+		PublicID:      userUUID,
 		Username:      "testuser",
 		FirstName:     "Test",
 		LastName:      "User",
@@ -165,6 +180,10 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 		Avatar:        "avatar.jpg",
 		AboutMe:       "About me",
 		ProfilePublic: false,
+		CreatedAt: pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: true,
+		},
 	}
 
 	req := UserProfileRequest{
@@ -172,14 +191,16 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 		RequesterId: requesterID,
 	}
 
-	mockDB.On("GetUserProfile", ctx, userID).Return(expectedRow, nil)
-	mockDB.On("IsFollowing", ctx, sqlc.IsFollowingParams{
-		FollowerID:  requesterID,
-		FollowingID: userID,
-	}).Return(true, nil)
-	mockDB.On("GetFollowerCount", ctx, userID).Return(int64(10), nil)
-	mockDB.On("GetFollowingCount", ctx, userID).Return(int64(5), nil)
-	mockDB.On("GetUserGroups", ctx, userID).Return([]sqlc.GetUserGroupsRow{}, nil)
+	mockDB.On("GetUserProfile", ctx, userUUID).Return(expectedRow, nil)
+	mockDB.On("IsFollowing", ctx, mock.MatchedBy(func(arg sqlc.IsFollowingParams) bool {
+		return arg.Pub == requesterUUID && arg.Pub_2 == userUUID
+	})).Return(true, nil)
+	mockDB.On("GetFollowerCount", ctx, userUUID).Return(int64(10), nil)
+	mockDB.On("GetFollowingCount", ctx, userUUID).Return(int64(5), nil)
+	mockDB.On("UserGroupCountsPerRole", ctx, userUUID).Return(sqlc.UserGroupCountsPerRoleRow{
+		TotalMemberships: 3,
+		OwnerCount:       1,
+	}, nil)
 
 	profile, err := service.GetUserProfile(ctx, req)
 
@@ -198,15 +219,18 @@ func TestSearchUsers_Success(t *testing.T) {
 		Limit:      10,
 	}
 
+	uuid1, _ := stringToUUID("550e8400-e29b-41d4-a716-446655440000")
+	uuid2, _ := stringToUUID("550e8400-e29b-41d4-a716-446655440001")
+
 	expectedRows := []sqlc.SearchUsersRow{
 		{
-			ID:            1,
+			PublicID:      uuid1,
 			Username:      "testuser1",
 			Avatar:        "avatar1.jpg",
 			ProfilePublic: true,
 		},
 		{
-			ID:            2,
+			PublicID:      uuid2,
 			Username:      "testuser2",
 			Avatar:        "avatar2.jpg",
 			ProfilePublic: true,
@@ -254,6 +278,9 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	userUUID, _ := stringToUUID(userID)
+
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
 	dobDate := pgtype.Date{
 		Time:  dob,
@@ -261,17 +288,17 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 	}
 
 	req := UpdateProfileRequest{
-		UserId:      1,
+		UserId:      userID,
 		Username:    "newusername",
 		FirstName:   "NewFirst",
 		LastName:    "NewLast",
-		DateOfBirth: "1990-01-15",
+		DateOfBirth: dob,
 		Avatar:      "newavatar.jpg",
 		About:       "New about",
 	}
 
 	expectedUser := sqlc.User{
-		ID:            1,
+		PublicID:      userUUID,
 		Username:      "newusername",
 		FirstName:     "NewFirst",
 		LastName:      "NewLast",
@@ -282,7 +309,7 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 	}
 
 	mockDB.On("UpdateUserProfile", ctx, mock.MatchedBy(func(arg sqlc.UpdateUserProfileParams) bool {
-		return arg.ID == 1 && arg.Username == "newusername"
+		return arg.Pub == userUUID && arg.Username == "newusername"
 	})).Return(expectedUser, nil)
 
 	profile, err := service.UpdateUserProfile(ctx, req)
@@ -293,40 +320,21 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 	mockDB.AssertExpectations(t)
 }
 
-func TestUpdateUserProfile_InvalidDateFormat(t *testing.T) {
-	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
-
-	ctx := context.Background()
-
-	req := UpdateProfileRequest{
-		UserId:      1,
-		Username:    "newusername",
-		FirstName:   "NewFirst",
-		LastName:    "NewLast",
-		DateOfBirth: "invalid-date",
-		Avatar:      "newavatar.jpg",
-		About:       "New about",
-	}
-
-	_, err := service.UpdateUserProfile(ctx, req)
-
-	assert.Equal(t, ErrInvalidDateFormat, err)
-}
-
 func TestUpdateProfilePrivacy_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	userUUID, _ := stringToUUID(userID)
 
 	req := UpdateProfilePrivacyRequest{
-		UserId: 1,
+		UserId: userID,
 		Public: false,
 	}
 
 	mockDB.On("UpdateProfilePrivacy", ctx, sqlc.UpdateProfilePrivacyParams{
-		ID:            1,
+		Pub:           userUUID,
 		ProfilePublic: false,
 	}).Return(nil)
 
@@ -341,14 +349,16 @@ func TestUpdateProfilePrivacy_Error(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
+	userID := "550e8400-e29b-41d4-a716-446655440999"
+	userUUID, _ := stringToUUID(userID)
 
 	req := UpdateProfilePrivacyRequest{
-		UserId: 999,
+		UserId: userID,
 		Public: false,
 	}
 
 	mockDB.On("UpdateProfilePrivacy", ctx, sqlc.UpdateProfilePrivacyParams{
-		ID:            999,
+		Pub:           userUUID,
 		ProfilePublic: false,
 	}).Return(errors.New("user not found"))
 

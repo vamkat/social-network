@@ -1,25 +1,25 @@
 -- name: GetUserProfile :one
 SELECT
-    id,
+    public_id,
     username,
     first_name,
     last_name,
     date_of_birth,
     avatar,
     about_me,
-    profile_public
+    profile_public,
+    created_at
 FROM users
-WHERE id = $1
+WHERE id = get_internal_user_id($1)
   AND deleted_at IS NULL;
 
 -- name: GetUserBasic :one
 SELECT
-    id,
+    public_id,
     username,
-    avatar,
-    profile_public
+    avatar
 FROM users
-WHERE id = $1;
+WHERE id = get_internal_user_id($1);
   
   
 -- name: UpdateUserProfile :one
@@ -32,31 +32,31 @@ SET
     avatar        = $6,
     about_me      = $7,
     updated_at    = CURRENT_TIMESTAMP
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = get_internal_user_id($1) AND deleted_at IS NULL
 RETURNING *;
 
 -- name: UpdateProfilePrivacy :exec
 UPDATE users
 SET profile_public=$2
-WHERE id=$1;
+WHERE id=get_internal_user_id($1);
 
 -- name: UpdateUserPassword :exec
 UPDATE auth_user
 SET
     password_hash = $2,
     updated_at = CURRENT_TIMESTAMP
-WHERE user_id = $1;
+WHERE user_id = get_internal_user_id($1);
 
 -- name: UpdateUserEmail :exec
 UPDATE auth_user
 SET
     email = $2,
     updated_at = CURRENT_TIMESTAMP
-WHERE user_id = $1;
+WHERE user_id = get_internal_user_id($1);
 
 -- name: SearchUsers :many
 SELECT
-    id,
+    public_id,
     username,
     avatar,
     profile_public

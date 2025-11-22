@@ -3,39 +3,34 @@ package userservice
 import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// username becomes FirstName_Lastname
-// uuid to send to front
-// get time.Time instead of string
-// register returns basicUserInfo (id, username, avatar) --public (remove)
-// API GATEWAY checks password at least 8 characters,check email
-// make token
-//add owner to group
+// uuid for users(done) and groups (TODO) to send to front
+// TODO make repo layer to handle sqlc to domain model conversions
+// TODO add owner to group
+// TODO fix tests
 
-func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest) (UserId, error) {
-
-	// convert date
-	dobTime, err := time.Parse("2006-01-02", req.DateOfBirth)
-	if err != nil {
-		return 0, ErrInvalidDateFormat
+func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest) (User, error) {
+	//if no username assign full name
+	if req.Username == "" {
+		req.Username = req.FirstName + "_" + req.LastName
 	}
 
+	// convert date
 	dob := pgtype.Date{
-		Time:  dobTime,
+		Time:  req.DateOfBirth,
 		Valid: true,
 	}
 
 	//hash password
 	passwordHash, err := hashPassword(req.Password)
 	if err != nil {
-		return 0, err
+		return User{}, err
 	}
 
-	var newId int64
+	var newPublicId string
 
 	err = s.runTx(ctx, func(q *sqlc.Queries) error {
 
@@ -52,21 +47,26 @@ func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest)
 		if err != nil {
 			return err //TODO check how to return correct error
 		}
-		newId = userId
+		newInternalId := userId.ID
+		newPublicId = userId.PublicID.String()
 
 		// Insert auth
 		return q.InsertNewUserAuth(ctx, sqlc.InsertNewUserAuthParams{
-			UserID:       userId,
+			UserID:       newInternalId,
 			Email:        req.Email,
 			PasswordHash: passwordHash,
 		})
 	})
 
 	if err != nil {
-		return 0, err //TODO check how to return correct error
+		return User{}, err //TODO check how to return correct error
 	}
 
-	return UserId(newId), nil
+	return User{
+		UserId:   newPublicId,
+		Username: req.Username,
+		Avatar:   req.Avatar,
+	}, nil
 
 }
 
@@ -80,17 +80,14 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginRequest) (User, er
 		}
 
 		u = User{
-			UserId:   row.ID,
+			UserId:   row.PublicID.String(),
 			Username: row.Username,
 			Avatar:   row.Avatar,
-			Public:   row.ProfilePublic,
 		}
 
 		if !checkPassword(row.PasswordHash, req.Password) {
-			q.IncrementFailedLoginAttempts(ctx, row.ID)
 			return err
 		}
-		q.ResetFailedLoginAttempts(ctx, u.UserId)
 		return nil
 	})
 
@@ -98,15 +95,17 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginRequest) (User, er
 		return User{}, ErrWrongCredentials
 	}
 
-	//TODO what happens when eg failed login attempts > 3? Add logic? //remove
-
 	return u, nil
 }
 
 func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePasswordRequest) error {
 	//TODO think whether transaction is needed here
+	userId, err := stringToUUID(req.UserId)
+	if err != nil {
+		return err
+	}
 
-	hashedPassword, err := s.db.GetUserPassword(ctx, req.UserId)
+	hashedPassword, err := s.db.GetUserPassword(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -121,7 +120,7 @@ func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePassword
 	}
 
 	err = s.db.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
-		UserID:       req.UserId,
+		Pub:          userId,
 		PasswordHash: newPasswordHash,
 	})
 	if err != nil {
@@ -132,10 +131,13 @@ func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePassword
 }
 
 func (s *UserService) UpdateUserEmail(ctx context.Context, req UpdateEmailRequest) error {
-	//reminder: userId always from token
-	err := s.db.UpdateUserEmail(ctx, sqlc.UpdateUserEmailParams{
-		UserID: req.UserId,
-		Email:  req.Email,
+	userId, err := stringToUUID(req.UserId)
+	if err != nil {
+		return err
+	}
+	err = s.db.UpdateUserEmail(ctx, sqlc.UpdateUserEmailParams{
+		Pub:   userId,
+		Email: req.Email,
 	})
 	if err != nil {
 		return err

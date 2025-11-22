@@ -17,6 +17,7 @@ CREATE TYPE user_status AS ENUM ('active', 'banned', 'deleted');
 
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
     username CITEXT COLLATE case_insensitive_ai UNIQUE NOT NULL,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX idx_users_id ON users(id);
 CREATE INDEX idx_users_status ON users(current_status);
+CREATE UNIQUE INDEX idx_users_public_id ON users(public_id);
 
 
 -----------------------------------------
@@ -44,7 +46,6 @@ CREATE TABLE IF NOT EXISTS auth_user (
     password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
-    failed_attempts INTEGER NOT NULL DEFAULT 0,
     last_login_at TIMESTAMPTZ
 );
 
@@ -447,3 +448,12 @@ CREATE TRIGGER trg_add_group_owner_as_member
 AFTER INSERT ON groups
 FOR EACH ROW
 EXECUTE FUNCTION add_group_owner_as_member();
+
+
+-----------------------------------------
+-- Function to get internal user id from public id
+-----------------------------------------
+CREATE OR REPLACE FUNCTION get_internal_user_id(pub UUID)
+RETURNS BIGINT AS $$
+    SELECT id FROM users WHERE public_id = pub AND deleted_at IS NULL;
+$$ LANGUAGE SQL STABLE;

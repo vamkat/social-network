@@ -16,22 +16,22 @@ UPDATE users
 SET 
     current_status = 'banned',
     ban_ends_at = $2
-WHERE id = $1
+WHERE id = get_internal_user_id($1)
 `
 
 type BanUserParams struct {
-	ID        int64
+	Pub       pgtype.UUID
 	BanEndsAt pgtype.Timestamptz
 }
 
 func (q *Queries) BanUser(ctx context.Context, arg BanUserParams) error {
-	_, err := q.db.Exec(ctx, banUser, arg.ID, arg.BanEndsAt)
+	_, err := q.db.Exec(ctx, banUser, arg.Pub, arg.BanEndsAt)
 	return err
 }
 
 const getUserForLogin = `-- name: GetUserForLogin :one
 SELECT
-    u.id,
+    u.public_id,
     u.username,
     u.avatar,
     u.profile_public,
@@ -44,7 +44,7 @@ WHERE (u.username = $1 OR au.email = $1)
 `
 
 type GetUserForLoginRow struct {
-	ID            int64
+	PublicID      pgtype.UUID
 	Username      string
 	Avatar        string
 	ProfilePublic bool
@@ -55,7 +55,7 @@ func (q *Queries) GetUserForLogin(ctx context.Context, username string) (GetUser
 	row := q.db.QueryRow(ctx, getUserForLogin, username)
 	var i GetUserForLoginRow
 	err := row.Scan(
-		&i.ID,
+		&i.PublicID,
 		&i.Username,
 		&i.Avatar,
 		&i.ProfilePublic,
@@ -69,25 +69,14 @@ SELECT
     password_hash
 FROM
     auth_user
-WHERE user_id=$1
+WHERE user_id=get_internal_user_id($1)
 `
 
-func (q *Queries) GetUserPassword(ctx context.Context, userID int64) (string, error) {
-	row := q.db.QueryRow(ctx, getUserPassword, userID)
+func (q *Queries) GetUserPassword(ctx context.Context, pub pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, getUserPassword, pub)
 	var password_hash string
 	err := row.Scan(&password_hash)
 	return password_hash, err
-}
-
-const incrementFailedLoginAttempts = `-- name: IncrementFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = failed_attempts + 1
-WHERE user_id = $1
-`
-
-func (q *Queries) IncrementFailedLoginAttempts(ctx context.Context, userID int64) error {
-	_, err := q.db.Exec(ctx, incrementFailedLoginAttempts, userID)
-	return err
 }
 
 const insertNewUser = `-- name: InsertNewUser :one
@@ -102,7 +91,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id
+RETURNING id,public_id
 `
 
 type InsertNewUserParams struct {
@@ -115,7 +104,12 @@ type InsertNewUserParams struct {
 	ProfilePublic bool
 }
 
-func (q *Queries) InsertNewUser(ctx context.Context, arg InsertNewUserParams) (int64, error) {
+type InsertNewUserRow struct {
+	ID       int64
+	PublicID pgtype.UUID
+}
+
+func (q *Queries) InsertNewUser(ctx context.Context, arg InsertNewUserParams) (InsertNewUserRow, error) {
 	row := q.db.QueryRow(ctx, insertNewUser,
 		arg.Username,
 		arg.FirstName,
@@ -125,9 +119,9 @@ func (q *Queries) InsertNewUser(ctx context.Context, arg InsertNewUserParams) (i
 		arg.AboutMe,
 		arg.ProfilePublic,
 	)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+	var i InsertNewUserRow
+	err := row.Scan(&i.ID, &i.PublicID)
+	return i, err
 }
 
 const insertNewUserAuth = `-- name: InsertNewUserAuth :exec
@@ -151,29 +145,17 @@ func (q *Queries) InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthPa
 	return err
 }
 
-const resetFailedLoginAttempts = `-- name: ResetFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = 0,
-    last_login_at = CURRENT_TIMESTAMP
-WHERE user_id = $1
-`
-
-func (q *Queries) ResetFailedLoginAttempts(ctx context.Context, userID int64) error {
-	_, err := q.db.Exec(ctx, resetFailedLoginAttempts, userID)
-	return err
-}
-
 const softDeleteUser = `-- name: SoftDeleteUser :exec
 UPDATE users
 SET
     current_status = 'deleted',
     deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = get_internal_user_id($1)
   AND deleted_at IS NULL
 `
 
-func (q *Queries) SoftDeleteUser(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, softDeleteUser, id)
+func (q *Queries) SoftDeleteUser(ctx context.Context, pub pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteUser, pub)
 	return err
 }
 
@@ -182,10 +164,10 @@ UPDATE users
 SET 
     current_status = 'active',
     ban_ends_at = NULL
-WHERE id = $1
+WHERE id = get_internal_user_id($1)
 `
 
-func (q *Queries) UnbanUser(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, unbanUser, id)
+func (q *Queries) UnbanUser(ctx context.Context, pub pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, unbanUser, pub)
 	return err
 }

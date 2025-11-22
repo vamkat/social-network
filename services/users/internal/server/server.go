@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	us "social-network/services/users/internal/service"
+	us "social-network/services/users/internal/domain"
 	pb "social-network/shared/gen/users"
 	"social-network/shared/ports"
 

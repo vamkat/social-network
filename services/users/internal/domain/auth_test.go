@@ -11,28 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestRegisterUser_InvalidDateFormat(t *testing.T) {
-	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
-
-	req := RegisterUserRequest{
-		Username:    "testuser",
-		FirstName:   "Test",
-		LastName:    "User",
-		DateOfBirth: "invalid-date",
-		Avatar:      "avatar.jpg",
-		About:       "Test about me",
-		Public:      true,
-		Email:       "test@example.com",
-		Password:    "password123",
-	}
-
-	ctx := context.Background()
-	_, err := service.RegisterUser(ctx, req)
-
-	assert.Equal(t, ErrInvalidDateFormat, err)
-}
-
 func TestLoginUser_InvalidCredentials(t *testing.T) {
 	t.Skip("Requires transaction support with real pool - use integration tests")
 }
@@ -46,16 +24,17 @@ func TestUpdateUserPassword_Success(t *testing.T) {
 	hashedOld, _ := hashPassword(oldPassword)
 
 	req := UpdatePasswordRequest{
-		UserId:      1,
+		UserId:      "550e8400-e29b-41d4-a716-446655440000",
 		OldPassword: oldPassword,
 		NewPassword: newPassword,
 	}
 
 	ctx := context.Background()
 
-	mockDB.On("GetUserPassword", ctx, int64(1)).Return(hashedOld, nil)
+	userUUID, _ := stringToUUID(req.UserId)
+	mockDB.On("GetUserPassword", ctx, userUUID).Return(hashedOld, nil)
 	mockDB.On("UpdateUserPassword", ctx, mock.MatchedBy(func(arg sqlc.UpdateUserPasswordParams) bool {
-		return arg.UserID == 1
+		return arg.Pub == userUUID
 	})).Return(nil)
 
 	err := service.UpdateUserPassword(ctx, req)
@@ -72,14 +51,15 @@ func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
 	hashedCorrect, _ := hashPassword(correctPassword)
 
 	req := UpdatePasswordRequest{
-		UserId:      1,
+		UserId:      "550e8400-e29b-41d4-a716-446655440000",
 		OldPassword: "wrongpassword",
 		NewPassword: "newpassword",
 	}
 
 	ctx := context.Background()
 
-	mockDB.On("GetUserPassword", ctx, int64(1)).Return(hashedCorrect, nil)
+	userUUID, _ := stringToUUID(req.UserId)
+	mockDB.On("GetUserPassword", ctx, userUUID).Return(hashedCorrect, nil)
 
 	err := service.UpdateUserPassword(ctx, req)
 
@@ -91,16 +71,17 @@ func TestUpdateUserEmail_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewUserService(mockDB, nil)
 
+	userUUID, _ := stringToUUID("550e8400-e29b-41d4-a716-446655440000")
 	req := UpdateEmailRequest{
-		UserId: 1,
+		UserId: "550e8400-e29b-41d4-a716-446655440000",
 		Email:  "newemail@example.com",
 	}
 
 	ctx := context.Background()
 
 	mockDB.On("UpdateUserEmail", ctx, sqlc.UpdateUserEmailParams{
-		UserID: 1,
-		Email:  "newemail@example.com",
+		Pub:   userUUID,
+		Email: "newemail@example.com",
 	}).Return(nil)
 
 	err := service.UpdateUserEmail(ctx, req)
@@ -113,8 +94,9 @@ func TestUpdateUserEmail_Error(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewUserService(mockDB, nil)
 
+	userUUID, _ := stringToUUID("550e8400-e29b-41d4-a716-446655440000")
 	req := UpdateEmailRequest{
-		UserId: 1,
+		UserId: "550e8400-e29b-41d4-a716-446655440000",
 		Email:  "duplicate@example.com",
 	}
 
@@ -122,8 +104,8 @@ func TestUpdateUserEmail_Error(t *testing.T) {
 
 	expectedErr := errors.New("email already exists")
 	mockDB.On("UpdateUserEmail", ctx, sqlc.UpdateUserEmailParams{
-		UserID: 1,
-		Email:  "duplicate@example.com",
+		Pub:   userUUID,
+		Email: "duplicate@example.com",
 	}).Return(expectedErr)
 
 	err := service.UpdateUserEmail(ctx, req)

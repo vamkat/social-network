@@ -15,36 +15,38 @@ const acceptFollowRequest = `-- name: AcceptFollowRequest :exec
 WITH updated AS (
     UPDATE follow_requests
     SET status = 'accepted', updated_at = NOW()
-    WHERE requester_id = $1 AND target_id = $2
+    WHERE requester_id = get_internal_user_id($1)
+      AND target_id    = get_internal_user_id($2)
+      AND deleted_at IS NULL
     RETURNING requester_id, target_id
 )
-
 INSERT INTO follows (follower_id, following_id)
-SELECT requester_id, target_id FROM updated
+SELECT requester_id, target_id
+FROM updated
 ON CONFLICT DO NOTHING
 `
 
 type AcceptFollowRequestParams struct {
-	RequesterID int64
-	TargetID    int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowRequestParams) error {
-	_, err := q.db.Exec(ctx, acceptFollowRequest, arg.RequesterID, arg.TargetID)
+	_, err := q.db.Exec(ctx, acceptFollowRequest, arg.Pub, arg.Pub_2)
 	return err
 }
 
 const followUser = `-- name: FollowUser :one
-SELECT follow_user($1, $2)
+SELECT follow_user(get_internal_user_id($1), get_internal_user_id($2))
 `
 
 type FollowUserParams struct {
-	PFollower int64
-	PTarget   int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 func (q *Queries) FollowUser(ctx context.Context, arg FollowUserParams) (string, error) {
-	row := q.db.QueryRow(ctx, followUser, arg.PFollower, arg.PTarget)
+	row := q.db.QueryRow(ctx, followUser, arg.Pub, arg.Pub_2)
 	var follow_user string
 	err := row.Scan(&follow_user)
 	return follow_user, err
@@ -53,33 +55,33 @@ func (q *Queries) FollowUser(ctx context.Context, arg FollowUserParams) (string,
 const getFollowerCount = `-- name: GetFollowerCount :one
 SELECT COUNT(*) AS follower_count
 FROM follows
-WHERE following_id = $1
+WHERE following_id = get_internal_user_id($1)
 `
 
-func (q *Queries) GetFollowerCount(ctx context.Context, followingID int64) (int64, error) {
-	row := q.db.QueryRow(ctx, getFollowerCount, followingID)
+func (q *Queries) GetFollowerCount(ctx context.Context, pub pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, getFollowerCount, pub)
 	var follower_count int64
 	err := row.Scan(&follower_count)
 	return follower_count, err
 }
 
 const getFollowers = `-- name: GetFollowers :many
-SELECT u.id, u.username, u.avatar,u.profile_public, f.created_at AS followed_at
+SELECT u.public_id, u.username, u.avatar,u.profile_public, f.created_at AS followed_at
 FROM follows f
 JOIN users u ON u.id = f.follower_id
-WHERE f.following_id = $1
+WHERE f.following_id = get_internal_user_id($1)
 ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
 type GetFollowersParams struct {
-	FollowingID int64
-	Limit       int32
-	Offset      int32
+	Pub    pgtype.UUID
+	Limit  int32
+	Offset int32
 }
 
 type GetFollowersRow struct {
-	ID            int64
+	PublicID      pgtype.UUID
 	Username      string
 	Avatar        string
 	ProfilePublic bool
@@ -87,7 +89,7 @@ type GetFollowersRow struct {
 }
 
 func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]GetFollowersRow, error) {
-	rows, err := q.db.Query(ctx, getFollowers, arg.FollowingID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getFollowers, arg.Pub, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +98,7 @@ func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]G
 	for rows.Next() {
 		var i GetFollowersRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.PublicID,
 			&i.Username,
 			&i.Avatar,
 			&i.ProfilePublic,
@@ -113,22 +115,22 @@ func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]G
 }
 
 const getFollowing = `-- name: GetFollowing :many
-SELECT u.id, u.username,u.avatar,u.profile_public, f.created_at AS followed_at
+SELECT u.public_id, u.username,u.avatar,u.profile_public, f.created_at AS followed_at
 FROM follows f
 JOIN users u ON u.id = f.following_id
-WHERE f.follower_id = $1
+WHERE f.follower_id = get_internal_user_id($1)
 ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
 type GetFollowingParams struct {
-	FollowerID int64
-	Limit      int32
-	Offset     int32
+	Pub    pgtype.UUID
+	Limit  int32
+	Offset int32
 }
 
 type GetFollowingRow struct {
-	ID            int64
+	PublicID      pgtype.UUID
 	Username      string
 	Avatar        string
 	ProfilePublic bool
@@ -136,7 +138,7 @@ type GetFollowingRow struct {
 }
 
 func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]GetFollowingRow, error) {
-	rows, err := q.db.Query(ctx, getFollowing, arg.FollowerID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getFollowing, arg.Pub, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +147,7 @@ func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]G
 	for rows.Next() {
 		var i GetFollowingRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.PublicID,
 			&i.Username,
 			&i.Avatar,
 			&i.ProfilePublic,
@@ -164,37 +166,37 @@ func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]G
 const getFollowingCount = `-- name: GetFollowingCount :one
 SELECT COUNT(*) AS following_count
 FROM follows
-WHERE follower_id = $1
+WHERE follower_id = get_internal_user_id($1)
 `
 
-func (q *Queries) GetFollowingCount(ctx context.Context, followerID int64) (int64, error) {
-	row := q.db.QueryRow(ctx, getFollowingCount, followerID)
+func (q *Queries) GetFollowingCount(ctx context.Context, pub pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, getFollowingCount, pub)
 	var following_count int64
 	err := row.Scan(&following_count)
 	return following_count, err
 }
 
 const getMutualFollowers = `-- name: GetMutualFollowers :many
-SELECT u.id, u.username
+SELECT u.public_id, u.username
 FROM follows f1
 JOIN follows f2 ON f1.follower_id = f2.follower_id
 JOIN users u ON u.id = f1.follower_id
-WHERE f1.following_id = $1
-  AND f2.following_id = $2
+WHERE f1.following_id = get_internal_user_id($1)
+  AND f2.following_id = get_internal_user_id($2)
 `
 
 type GetMutualFollowersParams struct {
-	FollowingID   int64
-	FollowingID_2 int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 type GetMutualFollowersRow struct {
-	ID       int64
+	PublicID pgtype.UUID
 	Username string
 }
 
 func (q *Queries) GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error) {
-	rows, err := q.db.Query(ctx, getMutualFollowers, arg.FollowingID, arg.FollowingID_2)
+	rows, err := q.db.Query(ctx, getMutualFollowers, arg.Pub, arg.Pub_2)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +204,7 @@ func (q *Queries) GetMutualFollowers(ctx context.Context, arg GetMutualFollowers
 	items := []GetMutualFollowersRow{}
 	for rows.Next() {
 		var i GetMutualFollowersRow
-		if err := rows.Scan(&i.ID, &i.Username); err != nil {
+		if err := rows.Scan(&i.PublicID, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -216,17 +218,17 @@ func (q *Queries) GetMutualFollowers(ctx context.Context, arg GetMutualFollowers
 const isFollowing = `-- name: IsFollowing :one
 SELECT EXISTS (
     SELECT 1 FROM follows
-    WHERE follower_id = $1 AND following_id = $2
+    WHERE follower_id = get_internal_user_id($1) AND following_id = get_internal_user_id($2)
 )
 `
 
 type IsFollowingParams struct {
-	FollowerID  int64
-	FollowingID int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 func (q *Queries) IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isFollowing, arg.FollowerID, arg.FollowingID)
+	row := q.db.QueryRow(ctx, isFollowing, arg.Pub, arg.Pub_2)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
@@ -236,18 +238,18 @@ const isFollowingEither = `-- name: IsFollowingEither :one
 SELECT EXISTS (
     SELECT 1
     FROM follows
-    WHERE (follower_id = $1 AND following_id = $2)
-       OR (follower_id = $2 AND following_id = $1)
+    WHERE (follower_id = get_internal_user_id($1) AND following_id = get_internal_user_id($2))
+       OR (follower_id = get_internal_user_id($2) AND following_id = get_internal_user_id($1))
 ) AS is_following_either
 `
 
 type IsFollowingEitherParams struct {
-	FollowerID  int64
-	FollowingID int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 func (q *Queries) IsFollowingEither(ctx context.Context, arg IsFollowingEitherParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isFollowingEither, arg.FollowerID, arg.FollowingID)
+	row := q.db.QueryRow(ctx, isFollowingEither, arg.Pub, arg.Pub_2)
 	var is_following_either bool
 	err := row.Scan(&is_following_either)
 	return is_following_either, err
@@ -256,16 +258,16 @@ func (q *Queries) IsFollowingEither(ctx context.Context, arg IsFollowingEitherPa
 const rejectFollowRequest = `-- name: RejectFollowRequest :exec
 UPDATE follow_requests
 SET status = 'rejected', updated_at = NOW()
-WHERE requester_id = $1 AND target_id = $2
+WHERE requester_id = get_internal_user_id($1) AND target_id = get_internal_user_id($2)
 `
 
 type RejectFollowRequestParams struct {
-	RequesterID int64
-	TargetID    int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 func (q *Queries) RejectFollowRequest(ctx context.Context, arg RejectFollowRequestParams) error {
-	_, err := q.db.Exec(ctx, rejectFollowRequest, arg.RequesterID, arg.TargetID)
+	_, err := q.db.Exec(ctx, rejectFollowRequest, arg.Pub, arg.Pub_2)
 	return err
 }
 
@@ -273,18 +275,18 @@ const unfollowUser = `-- name: UnfollowUser :exec
 
 
 DELETE FROM follows
-WHERE follower_id = $1 AND following_id = $2
+WHERE follower_id = get_internal_user_id($1) AND following_id = get_internal_user_id($2)
 `
 
 type UnfollowUserParams struct {
-	FollowerID  int64
-	FollowingID int64
+	Pub   pgtype.UUID
+	Pub_2 pgtype.UUID
 }
 
 // 1: follower_id
 // 2: following_id
 // returns followed or requested depending on target's privacy settings
 func (q *Queries) UnfollowUser(ctx context.Context, arg UnfollowUserParams) error {
-	_, err := q.db.Exec(ctx, unfollowUser, arg.FollowerID, arg.FollowingID)
+	_, err := q.db.Exec(ctx, unfollowUser, arg.Pub, arg.Pub_2)
 	return err
 }

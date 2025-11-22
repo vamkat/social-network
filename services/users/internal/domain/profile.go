@@ -8,25 +8,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *UserService) GetBasicUserInfo(ctx context.Context, userId int64) (resp User, err error) {
-	row, err := s.db.GetUserBasic(ctx, userId)
+func (s *UserService) GetBasicUserInfo(ctx context.Context, userId string) (resp User, err error) {
+	userUUID, err := stringToUUID(userId)
+	if err != nil {
+		return User{}, err
+	}
+
+	row, err := s.db.GetUserBasic(ctx, userUUID)
 	if err != nil {
 		return User{}, err
 	}
 	u := User{
-		UserId:   row.ID,
+		UserId:   userId,
 		Username: row.Username,
 		Avatar:   row.Avatar,
-		Public:   row.ProfilePublic,
 	}
 	return u, nil
 
 }
 
 func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest) (UserProfileResponse, error) {
+	userUUID, err := stringToUUID(req.UserId)
+	if err != nil {
+		return UserProfileResponse{}, err
+	}
+
 	var profile UserProfileResponse
 
-	row, err := s.db.GetUserProfile(ctx, req.UserId)
+	row, err := s.db.GetUserProfile(ctx, userUUID)
 	if err != nil {
 		return UserProfileResponse{}, err
 	}
@@ -37,7 +46,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest
 	}
 
 	profile = UserProfileResponse{
-		UserId:      row.ID,
+		UserId:      row.PublicID.String(),
 		Username:    row.Username,
 		FirstName:   row.FirstName,
 		LastName:    row.LastName,
@@ -45,43 +54,44 @@ func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest
 		Avatar:      row.Avatar,
 		About:       row.AboutMe,
 		Public:      row.ProfilePublic,
+		CreatedAt:   row.CreatedAt.Time,
 	}
 
-	if !profile.Public {
-		//check user is a follower
-		isFollower, err := s.IsFollowing(ctx, FollowUserReq{
-			FollowerId:   req.RequesterId,
-			TargetUserId: req.UserId,
-		})
-		if err != nil {
-			return UserProfileResponse{}, err
-		}
-		if !isFollower {
-			return UserProfileResponse{}, ErrProfilePrivate
-		}
-	}
-
-	profile.FollowersCount, err = s.db.GetFollowerCount(ctx, profile.UserId)
-	if err != nil {
-		return UserProfileResponse{}, err
-	}
-	profile.FollowingCount, err = s.db.GetFollowingCount(ctx, profile.UserId)
+	profile.ViewerIsFollowing, err = s.IsFollowing(ctx, FollowUserReq{
+		FollowerId:   req.RequesterId,
+		TargetUserId: req.UserId,
+	})
 	if err != nil {
 		return UserProfileResponse{}, err
 	}
 
-	//count for groups (member)
-	//count for groups (owner)
+	if req.RequesterId == req.UserId {
+		profile.OwnProfile = true
+	}
 
-	//different calls
-	profile.Groups, err = s.GetUserGroupsPaginated(ctx, profile.UserId) //if pagination then it should be separate call and I should probably have a groups count
+	if !profile.Public && !profile.ViewerIsFollowing && !profile.OwnProfile {
+		return UserProfileResponse{}, ErrProfilePrivate
+	}
+
+	profile.FollowersCount, err = s.db.GetFollowerCount(ctx, row.PublicID)
 	if err != nil {
 		return UserProfileResponse{}, err
 	}
+	profile.FollowingCount, err = s.db.GetFollowingCount(ctx, row.PublicID)
+	if err != nil {
+		return UserProfileResponse{}, err
+	}
+
+	groupsRow, err := s.db.UserGroupCountsPerRole(ctx, userUUID)
+	if err != nil {
+		return UserProfileResponse{}, err
+	}
+	profile.GroupsCount = groupsRow.TotalMemberships //owner and member, can change to member only
+	profile.OwnedGroupsCount = groupsRow.OwnerCount
 
 	return profile, nil
 
-	// possibly usergroups also a different call
+	// usergroups a different call
 	// from forum service get all posts paginated (and number of posts)
 	// and within all posts check each one if viewer has permission
 }
@@ -100,10 +110,9 @@ func (s *UserService) SearchUsers(ctx context.Context, req UserSearchReq) ([]Use
 	users := make([]User, 0, len(rows))
 	for _, r := range rows {
 		users = append(users, User{
-			UserId:   r.ID,
+			UserId:   r.PublicID.String(),
 			Username: r.Username,
 			Avatar:   r.Avatar,
-			Public:   r.ProfilePublic,
 		})
 	}
 
@@ -112,19 +121,18 @@ func (s *UserService) SearchUsers(ctx context.Context, req UserSearchReq) ([]Use
 
 func (s *UserService) UpdateUserProfile(ctx context.Context, req UpdateProfileRequest) (UserProfileResponse, error) {
 	//NOTE front needs to send everything, not just changed fields
-	var dob pgtype.Date
-	dobTime, err := time.Parse("2006-01-02", req.DateOfBirth)
+	userUUID, err := stringToUUID(req.UserId)
 	if err != nil {
-		return UserProfileResponse{}, ErrInvalidDateFormat
+		return UserProfileResponse{}, err
 	}
 
-	dob = pgtype.Date{
-		Time:  dobTime,
+	dob := pgtype.Date{
+		Time:  req.DateOfBirth,
 		Valid: true,
 	}
 
 	row, err := s.db.UpdateUserProfile(ctx, sqlc.UpdateUserProfileParams{
-		ID:          req.UserId,
+		Pub:         userUUID,
 		Username:    req.Username,
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
@@ -142,7 +150,7 @@ func (s *UserService) UpdateUserProfile(ctx context.Context, req UpdateProfileRe
 	}
 
 	profile := UserProfileResponse{
-		UserId:      row.ID,
+		UserId:      req.UserId,
 		Username:    row.Username,
 		FirstName:   row.FirstName,
 		LastName:    row.LastName,
@@ -157,9 +165,13 @@ func (s *UserService) UpdateUserProfile(ctx context.Context, req UpdateProfileRe
 }
 
 func (s *UserService) UpdateProfilePrivacy(ctx context.Context, req UpdateProfilePrivacyRequest) error {
+	userUUID, err := stringToUUID(req.UserId)
+	if err != nil {
+		return err
+	}
+	err = s.db.UpdateProfilePrivacy(ctx, sqlc.UpdateProfilePrivacyParams{
 
-	err := s.db.UpdateProfilePrivacy(ctx, sqlc.UpdateProfilePrivacyParams{
-		ID:            req.UserId,
+		Pub:           userUUID,
 		ProfilePublic: req.Public,
 	})
 	if err != nil {

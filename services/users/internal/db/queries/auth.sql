@@ -10,7 +10,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id;
+RETURNING id,public_id;
 
 -- name: InsertNewUserAuth :exec
 INSERT INTO auth_user (
@@ -26,11 +26,11 @@ SELECT
     password_hash
 FROM
     auth_user
-WHERE user_id=$1;
+WHERE user_id=get_internal_user_id($1);
 
 -- name: GetUserForLogin :one
 SELECT
-    u.id,
+    u.public_id,
     u.username,
     u.avatar,
     u.profile_public,
@@ -47,7 +47,7 @@ UPDATE users
 SET
     current_status = 'deleted',
     deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = get_internal_user_id($1)
   AND deleted_at IS NULL;
 
 
@@ -56,7 +56,7 @@ UPDATE users
 SET 
     current_status = 'banned',
     ban_ends_at = $2
-WHERE id = $1;
+WHERE id = get_internal_user_id($1);
 
 
 -- name: UnbanUser :exec
@@ -64,19 +64,7 @@ UPDATE users
 SET 
     current_status = 'active',
     ban_ends_at = NULL
-WHERE id = $1;
+WHERE id = get_internal_user_id($1);
 
-
--- name: IncrementFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = failed_attempts + 1
-WHERE user_id = $1;
-
-
--- name: ResetFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = 0,
-    last_login_at = CURRENT_TIMESTAMP
-WHERE user_id = $1;
 
 
