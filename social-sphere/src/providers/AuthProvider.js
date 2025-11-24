@@ -41,15 +41,32 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  async function login(credentials) {
-    // credentials: { identifier, password } (or email/password depending on backend)
-    await apiClient.post(AUTH_ENDPOINTS.login, credentials);
-    // After successful login, refresh "me"
-    const res = await apiClient.get(AUTH_ENDPOINTS.me);
-    setUser(res.data.user || null);
-    router.push("/feed/public");
-  }
+  // async function login(credentials) {
+  //   // credentials: { identifier, password } (or email/password depending on backend)
+  //   await apiClient.post(AUTH_ENDPOINTS.login, credentials);
+  //   // After successful login, refresh "me"
+  //   const res = await apiClient.get(AUTH_ENDPOINTS.me);
+  //   setUser(res.data.user || null);
+  //   router.push("/feed/public");
+  // }
 
+
+  async function login(credentials) {
+  // TEMPORARY MOCK LOGIN Replace with the 
+  console.log("MOCK LOGIN", credentials);
+
+  // Set a fake user for now
+  setUser({
+    id: 1,
+    username: credentials.identifier || "ychaniot",
+    firstName: "y",
+    lastName: "chaniot",
+    avatar: null,
+    publicProf: true,
+  });
+
+  router.push("/feed/public");
+}
   async function logout() {
     try {
       await apiClient.post(AUTH_ENDPOINTS.logout);
