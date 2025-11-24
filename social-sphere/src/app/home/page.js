@@ -1,6 +1,8 @@
 // app/home/page.tsx
 import Image from "next/image";
 import Link from "next/link";
+import PostForm from "@/components/forms/PostForm";
+import PostsFeed from "@/components/forms/PostsFeed";
 
 export default function HomePage() {
   return (
@@ -135,39 +137,18 @@ export default function HomePage() {
           {/* CENTER: COMPOSER + FEED */}
           <section className="flex-1 space-y-4 animate-fade-in lg:delay-100">
             {/* Composer */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/70 p-4">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-semibold">
-                  SM
-                </div>
-                <div className="flex-1">
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 px-3 py-2 text-sm text-slate-500">
-                    Share something with your circle…
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                      📷 <span>Add photo</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                      📊 <span>Create poll</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                      📅 <span>Start event</span>
-                    </div>
-                    <div className="ml-auto flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                      🔒 <span>Close friends</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            
+            <PostForm />
+            <PostsFeed />
             {/* Feed */}
             <div className="space-y-4">
               <div className="text-xs uppercase tracking-wide text-slate-500 px-1">
                 For you
               </div>
-
+              
+               
+              
+              
               {/* Post 1 */}
               <article className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/70 p-4 space-y-3">
                 <header className="flex gap-3 items-start">
