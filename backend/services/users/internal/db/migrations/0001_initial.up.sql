@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX idx_users_id ON users(id);
 CREATE INDEX idx_users_status ON users(current_status);
+CREATE UNIQUE INDEX idx_users_public_id ON users(public_id);
 
 
 -----------------------------------------
@@ -44,7 +45,6 @@ CREATE TABLE IF NOT EXISTS auth_user (
     password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
-    failed_attempts INTEGER NOT NULL DEFAULT 0,
     last_login_at TIMESTAMPTZ
 );
 
@@ -97,6 +97,12 @@ CREATE TABLE IF NOT EXISTS groups (
 );
 
 CREATE INDEX idx_groups_owner ON groups(group_owner);
+
+CREATE INDEX idx_groups_title_trgm
+    ON groups USING gin (group_title gin_trgm_ops);
+
+CREATE INDEX idx_groups_description_trgm
+    ON groups USING gin (group_description gin_trgm_ops);
 
 -----------------------------------------
 -- Group members
@@ -447,3 +453,4 @@ CREATE TRIGGER trg_add_group_owner_as_member
 AFTER INSERT ON groups
 FOR EACH ROW
 EXECUTE FUNCTION add_group_owner_as_member();
+

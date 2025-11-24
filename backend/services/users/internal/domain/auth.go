@@ -7,10 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// uuid for users(done) and groups (TODO) to send to front
 // TODO make repo layer to handle sqlc to domain model conversions
-// TODO add owner to group
-// TODO fix tests
 
 func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest) (User, error) {
 	//if no username assign full name

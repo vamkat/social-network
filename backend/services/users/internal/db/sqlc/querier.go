@@ -20,21 +20,20 @@ type Querier interface {
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (int64, error)
 	DeclineGroupInvite(ctx context.Context, arg DeclineGroupInviteParams) error
 	FollowUser(ctx context.Context, arg FollowUserParams) (string, error)
-	GetAllGroups(ctx context.Context) ([]GetAllGroupsRow, error)
+	GetAllGroups(ctx context.Context, arg GetAllGroupsParams) ([]GetAllGroupsRow, error)
 	GetFollowerCount(ctx context.Context, followingID int64) (int64, error)
 	GetFollowers(ctx context.Context, arg GetFollowersParams) ([]GetFollowersRow, error)
 	GetFollowing(ctx context.Context, arg GetFollowingParams) ([]GetFollowingRow, error)
 	GetFollowingCount(ctx context.Context, followerID int64) (int64, error)
 	GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, error)
-	GetGroupMembers(ctx context.Context, groupID int64) ([]GetGroupMembersRow, error)
+	GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error)
 	GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error)
 	GetUserBasic(ctx context.Context, id int64) (GetUserBasicRow, error)
 	GetUserForLogin(ctx context.Context, username string) (GetUserForLoginRow, error)
 	GetUserGroupRole(ctx context.Context, arg GetUserGroupRoleParams) (NullGroupRole, error)
-	GetUserGroups(ctx context.Context, groupOwner int64) ([]GetUserGroupsRow, error)
+	GetUserGroups(ctx context.Context, arg GetUserGroupsParams) ([]GetUserGroupsRow, error)
 	GetUserPassword(ctx context.Context, userID int64) (string, error)
 	GetUserProfile(ctx context.Context, id int64) (GetUserProfileRow, error)
-	IncrementFailedLoginAttempts(ctx context.Context, userID int64) error
 	InsertNewUser(ctx context.Context, arg InsertNewUserParams) (int64, error)
 	InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthParams) error
 	IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error)
@@ -44,8 +43,7 @@ type Querier interface {
 	LeaveGroup(ctx context.Context, arg LeaveGroupParams) error
 	RejectFollowRequest(ctx context.Context, arg RejectFollowRequestParams) error
 	RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoinRequestParams) error
-	ResetFailedLoginAttempts(ctx context.Context, userID int64) error
-	SearchGroupsFuzzy(ctx context.Context, similarity string) ([]SearchGroupsFuzzyRow, error)
+	SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyParams) ([]SearchGroupsFuzzyRow, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
 	SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error
 	SendGroupJoinRequest(ctx context.Context, arg SendGroupJoinRequestParams) error
@@ -62,6 +60,7 @@ type Querier interface {
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
+	UserGroupCountsPerRole(ctx context.Context, groupOwner int64) (UserGroupCountsPerRoleRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

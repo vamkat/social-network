@@ -67,16 +67,4 @@ SET
 WHERE id = $1;
 
 
--- name: IncrementFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = failed_attempts + 1
-WHERE user_id = $1;
-
-
--- name: ResetFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = 0,
-    last_login_at = CURRENT_TIMESTAMP
-WHERE user_id = $1;
-
 

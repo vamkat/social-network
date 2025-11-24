@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	us "social-network/services/users/internal/service"
+	us "social-network/services/users/internal/domain"
 	pb "social-network/shared/gen/users"
 	"social-network/shared/ports"
 
@@ -33,7 +33,7 @@ func (s *Server) RunGRPCServer() {
 	grpcServer := grpc.NewServer()
 
 	// TODO: Register services here, e.g.,
-	pb.RegisterUserServiceServer(grpcServer, s)
+	pb.RegisterUserServiceServer(grpcServer, &Server{})
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	if err := grpcServer.Serve(lis); err != nil {

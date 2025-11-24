@@ -84,8 +84,8 @@ func (m *MockQuerier) GetFollowingCount(ctx context.Context, id int64) (int64, e
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockQuerier) GetUserGroups(ctx context.Context, id int64) ([]sqlc.GetUserGroupsRow, error) {
-	args := m.Called(ctx, id)
+func (m *MockQuerier) GetUserGroups(ctx context.Context, arg sqlc.GetUserGroupsParams) ([]sqlc.GetUserGroupsRow, error) {
+	args := m.Called(ctx, arg)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -169,8 +169,8 @@ func (m *MockQuerier) IsFollowingEither(ctx context.Context, arg sqlc.IsFollowin
 }
 
 // Groups-related methods
-func (m *MockQuerier) GetAllGroups(ctx context.Context) ([]sqlc.GetAllGroupsRow, error) {
-	args := m.Called(ctx)
+func (m *MockQuerier) GetAllGroups(ctx context.Context, arg sqlc.GetAllGroupsParams) ([]sqlc.GetAllGroupsRow, error) {
+	args := m.Called(ctx, arg)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -185,16 +185,16 @@ func (m *MockQuerier) GetGroupInfo(ctx context.Context, groupID int64) (sqlc.Get
 	return args.Get(0).(sqlc.GetGroupInfoRow), args.Error(1)
 }
 
-func (m *MockQuerier) GetGroupMembers(ctx context.Context, groupID int64) ([]sqlc.GetGroupMembersRow, error) {
-	args := m.Called(ctx, groupID)
+func (m *MockQuerier) GetGroupMembers(ctx context.Context, arg sqlc.GetGroupMembersParams) ([]sqlc.GetGroupMembersRow, error) {
+	args := m.Called(ctx, arg)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]sqlc.GetGroupMembersRow), args.Error(1)
 }
 
-func (m *MockQuerier) SearchGroupsFuzzy(ctx context.Context, searchTerm string) ([]sqlc.SearchGroupsFuzzyRow, error) {
-	args := m.Called(ctx, searchTerm)
+func (m *MockQuerier) SearchGroupsFuzzy(ctx context.Context, arg sqlc.SearchGroupsFuzzyParams) ([]sqlc.SearchGroupsFuzzyRow, error) {
+	args := m.Called(ctx, arg)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

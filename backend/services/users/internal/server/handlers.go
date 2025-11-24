@@ -13,8 +13,7 @@ import (
 func (s *Server) GetBasicUserInfo(ctx context.Context, req *commonpb.UserId) (*pb.BasicUserInfo, error) {
 	u, err := s.Service.GetBasicUserInfo(ctx, req.Id)
 	return &pb.BasicUserInfo{
-		UserName:      u.Username,
-		Avatar:        u.Avatar,
-		PublicProfile: u.Public,
+		UserName: u.Username,
+		Avatar:   u.Avatar,
 	}, err
 }

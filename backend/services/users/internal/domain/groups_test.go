@@ -15,6 +15,10 @@ func TestGetAllGroupsPaginated_Success(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
+	req := Pagination{
+		Limit:  10,
+		Offset: 0,
+	}
 
 	expectedRows := []sqlc.GetAllGroupsRow{
 		{
@@ -31,9 +35,12 @@ func TestGetAllGroupsPaginated_Success(t *testing.T) {
 		},
 	}
 
-	mockDB.On("GetAllGroups", ctx).Return(expectedRows, nil)
+	mockDB.On("GetAllGroups", ctx, sqlc.GetAllGroupsParams{
+		Limit:  10,
+		Offset: 0,
+	}).Return(expectedRows, nil)
 
-	groups, err := service.GetAllGroupsPaginated(ctx)
+	groups, err := service.GetAllGroupsPaginated(ctx, req)
 
 	assert.NoError(t, err)
 	assert.Len(t, groups, 2)
@@ -47,10 +54,17 @@ func TestGetAllGroupsPaginated_Empty(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
+	req := Pagination{
+		Limit:  10,
+		Offset: 0,
+	}
 
-	mockDB.On("GetAllGroups", ctx).Return([]sqlc.GetAllGroupsRow{}, nil)
+	mockDB.On("GetAllGroups", ctx, sqlc.GetAllGroupsParams{
+		Limit:  10,
+		Offset: 0,
+	}).Return([]sqlc.GetAllGroupsRow{}, nil)
 
-	groups, err := service.GetAllGroupsPaginated(ctx)
+	groups, err := service.GetAllGroupsPaginated(ctx, req)
 
 	assert.NoError(t, err)
 	assert.Len(t, groups, 0)
@@ -63,6 +77,11 @@ func TestGetUserGroupsPaginated_Success(t *testing.T) {
 
 	ctx := context.Background()
 	userID := int64(1)
+	req := UserGroupsPaginated{
+		UserId: userID,
+		Limit:  10,
+		Offset: 0,
+	}
 
 	expectedRows := []sqlc.GetUserGroupsRow{
 		{
@@ -70,25 +89,31 @@ func TestGetUserGroupsPaginated_Success(t *testing.T) {
 			GroupTitle:       "Group 1",
 			GroupDescription: "Description 1",
 			MembersCount:     5,
-			Role:             "owner",
+			IsMember:         true,
+			IsOwner:          true,
 		},
 		{
 			GroupID:          2,
 			GroupTitle:       "Group 2",
 			GroupDescription: "Description 2",
 			MembersCount:     10,
-			Role:             "member",
+			IsMember:         true,
+			IsOwner:          false,
 		},
 	}
 
-	mockDB.On("GetUserGroups", ctx, userID).Return(expectedRows, nil)
+	mockDB.On("GetUserGroups", ctx, sqlc.GetUserGroupsParams{
+		GroupOwner: userID,
+		Limit:      10,
+		Offset:     0,
+	}).Return(expectedRows, nil)
 
-	groups, err := service.GetUserGroupsPaginated(ctx, userID)
+	groups, err := service.GetUserGroupsPaginated(ctx, req)
 
 	assert.NoError(t, err)
 	assert.Len(t, groups, 2)
-	assert.Equal(t, "owner", groups[0].Role)
-	assert.Equal(t, "member", groups[1].Role)
+	assert.Equal(t, true, groups[0].IsOwner)
+	assert.Equal(t, false, groups[1].IsOwner)
 	mockDB.AssertExpectations(t)
 }
 
@@ -138,6 +163,11 @@ func TestGetGroupMembers_Success(t *testing.T) {
 
 	ctx := context.Background()
 	groupID := int64(1)
+	req := GroupMembersReq{
+		GroupId: groupID,
+		Limit:   10,
+		Offset:  0,
+	}
 
 	expectedRows := []sqlc.GetGroupMembersRow{
 		{
@@ -162,9 +192,13 @@ func TestGetGroupMembers_Success(t *testing.T) {
 		},
 	}
 
-	mockDB.On("GetGroupMembers", ctx, groupID).Return(expectedRows, nil)
+	mockDB.On("GetGroupMembers", ctx, sqlc.GetGroupMembersParams{
+		GroupID: groupID,
+		Limit:   10,
+		Offset:  0,
+	}).Return(expectedRows, nil)
 
-	members, err := service.GetGroupMembers(ctx, groupID)
+	members, err := service.GetGroupMembers(ctx, req)
 
 	assert.NoError(t, err)
 	assert.Len(t, members, 2)
@@ -179,6 +213,12 @@ func TestSearchGroups_Success(t *testing.T) {
 
 	ctx := context.Background()
 	searchTerm := "test"
+	req := GroupSearchReq{
+		SearchTerm: searchTerm,
+		UserId:     1,
+		Limit:      10,
+		Offset:     0,
+	}
 
 	expectedRows := []sqlc.SearchGroupsFuzzyRow{
 		{
@@ -189,9 +229,14 @@ func TestSearchGroups_Success(t *testing.T) {
 		},
 	}
 
-	mockDB.On("SearchGroupsFuzzy", ctx, searchTerm).Return(expectedRows, nil)
+	mockDB.On("SearchGroupsFuzzy", ctx, sqlc.SearchGroupsFuzzyParams{
+		Similarity: searchTerm,
+		GroupOwner: 1,
+		Limit:      10,
+		Offset:     0,
+	}).Return(expectedRows, nil)
 
-	groups, err := service.SearchGroups(ctx, searchTerm)
+	groups, err := service.SearchGroups(ctx, req)
 
 	assert.NoError(t, err)
 	assert.Len(t, groups, 1)

@@ -5,9 +5,12 @@ import (
 	"social-network/services/users/internal/db/sqlc"
 )
 
-func (s *UserService) GetAllGroupsPaginated(ctx context.Context) ([]Group, error) {
-	//TODO add pagination (sorting by most members first)
-	rows, err := s.db.GetAllGroups(ctx)
+func (s *UserService) GetAllGroupsPaginated(ctx context.Context, req Pagination) ([]Group, error) {
+	//paginated (sorting by most members first)
+	rows, err := s.db.GetAllGroups(ctx, sqlc.GetAllGroupsParams{
+		Offset: req.Offset,
+		Limit:  req.Limit,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -25,10 +28,14 @@ func (s *UserService) GetAllGroupsPaginated(ctx context.Context) ([]Group, error
 	return groups, nil
 }
 
-func (s *UserService) GetUserGroupsPaginated(ctx context.Context, userId int64) ([]Group, error) {
-	//TODO add pagination (joined latest first)
+func (s *UserService) GetUserGroupsPaginated(ctx context.Context, req UserGroupsPaginated) ([]Group, error) {
+	//paginated (joined latest first)
 
-	rows, err := s.db.GetUserGroups(ctx, userId)
+	rows, err := s.db.GetUserGroups(ctx, sqlc.GetUserGroupsParams{
+		GroupOwner: req.UserId,
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +47,8 @@ func (s *UserService) GetUserGroupsPaginated(ctx context.Context, userId int64) 
 			GroupTitle:       r.GroupTitle,
 			GroupDescription: r.GroupDescription,
 			MembersCount:     r.MembersCount,
-			Role:             r.Role,
+			IsMember:         r.IsMember,
+			IsOwner:          r.IsOwner,
 		})
 	}
 
@@ -54,6 +62,7 @@ func (s *UserService) GetGroupInfo(ctx context.Context, groupId int64) (Group, e
 	}
 	group := Group{
 		GroupId:          row.ID,
+		GroupOwnerId:     row.GroupOwner,
 		GroupTitle:       row.GroupTitle,
 		GroupDescription: row.GroupDescription,
 		MembersCount:     row.MembersCount,
@@ -64,9 +73,13 @@ func (s *UserService) GetGroupInfo(ctx context.Context, groupId int64) (Group, e
 	//different calls for chat and posts (API GATEWAY)
 }
 
-func (s *UserService) GetGroupMembers(ctx context.Context, groupId int64) ([]GroupUser, error) {
-	//TODO add pagination (newest first)
-	rows, err := s.db.GetGroupMembers(ctx, groupId)
+func (s *UserService) GetGroupMembers(ctx context.Context, req GroupMembersReq) ([]GroupUser, error) {
+	//paginated (newest first)
+	rows, err := s.db.GetGroupMembers(ctx, sqlc.GetGroupMembersParams{
+		GroupID: req.GroupId,
+		Limit:   req.Limit,
+		Offset:  req.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +102,15 @@ func (s *UserService) GetGroupMembers(ctx context.Context, groupId int64) ([]Gro
 	return members, nil
 }
 
-func (s *UserService) SearchGroups(ctx context.Context, searchTerm string) ([]Group, error) {
-	//TODO add pagination? (most members first)
-	rows, err := s.db.SearchGroupsFuzzy(ctx, searchTerm)
+func (s *UserService) SearchGroups(ctx context.Context, req GroupSearchReq) ([]Group, error) {
+	//weighted (title more important than description)
+	//paginated (most members first)
+	rows, err := s.db.SearchGroupsFuzzy(ctx, sqlc.SearchGroupsFuzzyParams{
+		Similarity: req.SearchTerm,
+		GroupOwner: req.UserId,
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+	})
 	if err != nil {
 		return []Group{}, err
 	}
@@ -99,14 +118,17 @@ func (s *UserService) SearchGroups(ctx context.Context, searchTerm string) ([]Gr
 	for _, r := range rows {
 		groups = append(groups, Group{
 			GroupId:          r.ID,
+			GroupOwnerId:     r.GroupOwner,
 			GroupTitle:       r.GroupTitle,
 			GroupDescription: r.GroupDescription,
 			MembersCount:     r.MembersCount,
+			IsMember:         r.IsMember,
+			IsOwner:          r.IsOwner,
 		})
 	}
 
 	return groups, nil
-	//YES Do we want to include userId so that we also have the info if the user is a member, owner, or nothing?
+
 }
 
 func (s *UserService) InviteToGroupOrCancel(ctx context.Context, req InviteToGroupOrCancelRequest) error {

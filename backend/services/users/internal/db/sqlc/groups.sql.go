@@ -147,14 +147,21 @@ func (q *Queries) DeclineGroupInvite(ctx context.Context, arg DeclineGroupInvite
 }
 
 const getAllGroups = `-- name: GetAllGroups :many
-SELECT 
+SELECT
   id,
   group_title,
   group_description,
   members_count
 FROM groups
 WHERE deleted_at IS NULL
+ORDER BY members_count DESC, id ASC
+LIMIT $1 OFFSET $2
 `
+
+type GetAllGroupsParams struct {
+	Limit  int32
+	Offset int32
+}
 
 type GetAllGroupsRow struct {
 	ID               int64
@@ -163,8 +170,8 @@ type GetAllGroupsRow struct {
 	MembersCount     int32
 }
 
-func (q *Queries) GetAllGroups(ctx context.Context) ([]GetAllGroupsRow, error) {
-	rows, err := q.db.Query(ctx, getAllGroups)
+func (q *Queries) GetAllGroups(ctx context.Context, arg GetAllGroupsParams) ([]GetAllGroupsRow, error) {
+	rows, err := q.db.Query(ctx, getAllGroups, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +230,7 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 
 const getGroupMembers = `-- name: GetGroupMembers :many
 SELECT
-    gm.user_id,
+    u.id,
     u.username,
     u.avatar,
     u.profile_public,
@@ -234,10 +241,18 @@ JOIN users u
     ON gm.user_id = u.id
 WHERE gm.group_id = $1
   AND gm.deleted_at IS NULL
+ORDER BY gm.joined_at DESC, u.id DESC
+LIMIT $2 OFFSET $3
 `
 
+type GetGroupMembersParams struct {
+	GroupID int64
+	Limit   int32
+	Offset  int32
+}
+
 type GetGroupMembersRow struct {
-	UserID        int64
+	ID            int64
 	Username      string
 	Avatar        string
 	ProfilePublic bool
@@ -245,8 +260,8 @@ type GetGroupMembersRow struct {
 	JoinedAt      pgtype.Timestamptz
 }
 
-func (q *Queries) GetGroupMembers(ctx context.Context, groupID int64) ([]GetGroupMembersRow, error) {
-	rows, err := q.db.Query(ctx, getGroupMembers, groupID)
+func (q *Queries) GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error) {
+	rows, err := q.db.Query(ctx, getGroupMembers, arg.GroupID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +270,7 @@ func (q *Queries) GetGroupMembers(ctx context.Context, groupID int64) ([]GetGrou
 	for rows.Next() {
 		var i GetGroupMembersRow
 		if err := rows.Scan(
-			&i.UserID,
+			&i.ID,
 			&i.Username,
 			&i.Avatar,
 			&i.ProfilePublic,
@@ -298,29 +313,36 @@ SELECT DISTINCT
     g.group_title,
     g.group_description,
     g.members_count,
-    CASE 
-        WHEN g.group_owner = $1 THEN 'owner'
-        ELSE 'member'
-    END AS role
+    CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
+    CASE WHEN g.group_owner = $1 THEN TRUE ELSE FALSE END AS is_owner
 FROM groups g
 LEFT JOIN group_members gm
     ON gm.group_id = g.id
     AND gm.user_id = $1
     AND gm.deleted_at IS NULL
 WHERE g.deleted_at IS NULL
-  AND (g.group_owner = $1 OR gm.user_id = $1)
+  AND (gm.user_id = $1 OR g.group_owner = $1)
+ORDER BY COALESCE(gm.joined_at, g.created_at) DESC, g.id DESC
+LIMIT $2 OFFSET $3
 `
+
+type GetUserGroupsParams struct {
+	GroupOwner int64
+	Limit      int32
+	Offset     int32
+}
 
 type GetUserGroupsRow struct {
 	GroupID          int64
 	GroupTitle       string
 	GroupDescription string
 	MembersCount     int32
-	Role             string
+	IsMember         bool
+	IsOwner          bool
 }
 
-func (q *Queries) GetUserGroups(ctx context.Context, groupOwner int64) ([]GetUserGroupsRow, error) {
-	rows, err := q.db.Query(ctx, getUserGroups, groupOwner)
+func (q *Queries) GetUserGroups(ctx context.Context, arg GetUserGroupsParams) ([]GetUserGroupsRow, error) {
+	rows, err := q.db.Query(ctx, getUserGroups, arg.GroupOwner, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +355,8 @@ func (q *Queries) GetUserGroups(ctx context.Context, groupOwner int64) ([]GetUse
 			&i.GroupTitle,
 			&i.GroupDescription,
 			&i.MembersCount,
-			&i.Role,
+			&i.IsMember,
+			&i.IsOwner,
 		); err != nil {
 			return nil, err
 		}
@@ -423,26 +446,64 @@ func (q *Queries) RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoi
 
 const searchGroupsFuzzy = `-- name: SearchGroupsFuzzy :many
 SELECT
-    id,
-    group_title,
-    group_description,
-    members_count
-FROM groups
-WHERE deleted_at IS NULL
-  AND (similarity(group_title, $1) > 0.3
-       OR similarity(group_description, $1) > 0.3)
-ORDER BY GREATEST(similarity(group_title, $1), similarity(group_description, $1)) DESC
+    g.id,
+    g.group_title,
+    g.group_description,
+    g.members_count,
+    g.group_owner,
+    CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
+    CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,
+    (
+        2 * similarity(g.group_title, $1) +
+        1 * similarity(g.group_description, $1)
+    ) AS weighted_score
+FROM groups g
+LEFT JOIN group_members gm
+    ON gm.group_id = g.id
+    AND gm.user_id = $2
+    AND gm.deleted_at IS NULL
+WHERE g.deleted_at IS NULL
+  AND (
+        similarity(g.group_title, $1) > 0.2
+        OR similarity(g.group_description, $1) > 0.2
+      )
+ORDER BY
+    -- 1. Weighted fuzzy match score
+    weighted_score DESC,
+    -- 2. Prioritize groups the user belongs to
+    CASE WHEN gm.user_id IS NOT NULL THEN 1 ELSE 0 END DESC,
+    -- 3. Prioritize groups with more members
+    g.members_count DESC,
+    -- 4. Stable pagination
+    g.id DESC
+LIMIT $3 OFFSET $4
 `
+
+type SearchGroupsFuzzyParams struct {
+	Similarity string
+	GroupOwner int64
+	Limit      int32
+	Offset     int32
+}
 
 type SearchGroupsFuzzyRow struct {
 	ID               int64
 	GroupTitle       string
 	GroupDescription string
 	MembersCount     int32
+	GroupOwner       int64
+	IsMember         bool
+	IsOwner          bool
+	WeightedScore    int32
 }
 
-func (q *Queries) SearchGroupsFuzzy(ctx context.Context, similarity string) ([]SearchGroupsFuzzyRow, error) {
-	rows, err := q.db.Query(ctx, searchGroupsFuzzy, similarity)
+func (q *Queries) SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyParams) ([]SearchGroupsFuzzyRow, error) {
+	rows, err := q.db.Query(ctx, searchGroupsFuzzy,
+		arg.Similarity,
+		arg.GroupOwner,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -455,6 +516,10 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, similarity string) ([]S
 			&i.GroupTitle,
 			&i.GroupDescription,
 			&i.MembersCount,
+			&i.GroupOwner,
+			&i.IsMember,
+			&i.IsOwner,
+			&i.WeightedScore,
 		); err != nil {
 			return nil, err
 		}
@@ -542,4 +607,29 @@ type TransferOwnershipParams struct {
 func (q *Queries) TransferOwnership(ctx context.Context, arg TransferOwnershipParams) error {
 	_, err := q.db.Exec(ctx, transferOwnership, arg.GroupID, arg.UserID, arg.UserID_2)
 	return err
+}
+
+const userGroupCountsPerRole = `-- name: UserGroupCountsPerRole :one
+SELECT
+    COUNT(*) FILTER (WHERE g.group_owner = $1) AS owner_count,
+    COUNT(*) FILTER (WHERE gm.role = 'member' AND g.group_owner <> $1) AS member_only_count,
+    COUNT(*) AS total_memberships
+FROM group_members gm
+JOIN groups g ON gm.group_id = g.id
+WHERE gm.user_id = $1
+  AND gm.deleted_at IS NULL
+  AND g.deleted_at IS NULL
+`
+
+type UserGroupCountsPerRoleRow struct {
+	OwnerCount       int64
+	MemberOnlyCount  int64
+	TotalMemberships int64
+}
+
+func (q *Queries) UserGroupCountsPerRole(ctx context.Context, groupOwner int64) (UserGroupCountsPerRoleRow, error) {
+	row := q.db.QueryRow(ctx, userGroupCountsPerRole, groupOwner)
+	var i UserGroupCountsPerRoleRow
+	err := row.Scan(&i.OwnerCount, &i.MemberOnlyCount, &i.TotalMemberships)
+	return i, err
 }

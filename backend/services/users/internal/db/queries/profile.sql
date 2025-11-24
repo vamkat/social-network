@@ -7,7 +7,8 @@ SELECT
     date_of_birth,
     avatar,
     about_me,
-    profile_public
+    profile_public,
+    created_at
 FROM users
 WHERE id = $1
   AND deleted_at IS NULL;
@@ -16,8 +17,7 @@ WHERE id = $1
 SELECT
     id,
     username,
-    avatar,
-    profile_public
+    avatar
 FROM users
 WHERE id = $1;
   

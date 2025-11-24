@@ -45,7 +45,7 @@ WHERE follower_id = $1;
 -- name: IsFollowing :one
 SELECT EXISTS (
     SELECT 1 FROM follows
-    WHERE follower_id = $1 AND following_id = $2
+    WHERE follower_id =$1 AND following_id = $2
 );
 
 
@@ -68,19 +68,20 @@ WHERE f1.following_id = $1
   AND f2.following_id = $2;
 
 
-
 -- name: AcceptFollowRequest :exec
 WITH updated AS (
     UPDATE follow_requests
     SET status = 'accepted', updated_at = NOW()
-    WHERE requester_id = $1 AND target_id = $2
+    WHERE requester_id = $1
+      AND target_id    = $2
+      AND deleted_at IS NULL
     RETURNING requester_id, target_id
 )
-
--- name: InsertFollowAfterAccept :exec
 INSERT INTO follows (follower_id, following_id)
-SELECT requester_id, target_id FROM updated
+SELECT requester_id, target_id
+FROM updated
 ON CONFLICT DO NOTHING;
+
 
 
 -- name: RejectFollowRequest :exec

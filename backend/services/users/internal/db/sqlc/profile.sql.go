@@ -15,28 +15,21 @@ const getUserBasic = `-- name: GetUserBasic :one
 SELECT
     id,
     username,
-    avatar,
-    profile_public
+    avatar
 FROM users
 WHERE id = $1
 `
 
 type GetUserBasicRow struct {
-	ID            int64
-	Username      string
-	Avatar        string
-	ProfilePublic bool
+	ID       int64
+	Username string
+	Avatar   string
 }
 
 func (q *Queries) GetUserBasic(ctx context.Context, id int64) (GetUserBasicRow, error) {
 	row := q.db.QueryRow(ctx, getUserBasic, id)
 	var i GetUserBasicRow
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.Avatar,
-		&i.ProfilePublic,
-	)
+	err := row.Scan(&i.ID, &i.Username, &i.Avatar)
 	return i, err
 }
 
@@ -49,7 +42,8 @@ SELECT
     date_of_birth,
     avatar,
     about_me,
-    profile_public
+    profile_public,
+    created_at
 FROM users
 WHERE id = $1
   AND deleted_at IS NULL
@@ -64,6 +58,7 @@ type GetUserProfileRow struct {
 	Avatar        string
 	AboutMe       string
 	ProfilePublic bool
+	CreatedAt     pgtype.Timestamptz
 }
 
 func (q *Queries) GetUserProfile(ctx context.Context, id int64) (GetUserProfileRow, error) {
@@ -78,6 +73,7 @@ func (q *Queries) GetUserProfile(ctx context.Context, id int64) (GetUserProfileR
 		&i.Avatar,
 		&i.AboutMe,
 		&i.ProfilePublic,
+		&i.CreatedAt,
 	)
 	return i, err
 }

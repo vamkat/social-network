@@ -102,6 +102,23 @@ type GroupId int64
 
 type GroupRole string
 
+type Pagination struct {
+	Limit  int32
+	Offset int32
+}
+
+type GroupMembersReq struct {
+	GroupId int64
+	Limit   int32
+	Offset  int32
+}
+
+type UserGroupsPaginated struct {
+	UserId int64
+	Limit  int32
+	Offset int32
+}
+
 type GroupUser struct {
 	UserId    int64
 	Username  string
@@ -110,13 +127,22 @@ type GroupUser struct {
 	GroupRole string
 }
 
+type GroupSearchReq struct {
+	SearchTerm string
+	UserId     int64
+	Limit      int32
+	Offset     int32
+}
+
 // add owner to group
 type Group struct {
 	GroupId          int64
+	GroupOwnerId     int64
 	GroupTitle       string
 	GroupDescription string
 	MembersCount     int32
-	Role             string
+	IsMember         bool
+	IsOwner          bool
 }
 
 type InviteToGroupOrCancelRequest struct {

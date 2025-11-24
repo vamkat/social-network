@@ -79,17 +79,6 @@ func (q *Queries) GetUserPassword(ctx context.Context, userID int64) (string, er
 	return password_hash, err
 }
 
-const incrementFailedLoginAttempts = `-- name: IncrementFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = failed_attempts + 1
-WHERE user_id = $1
-`
-
-func (q *Queries) IncrementFailedLoginAttempts(ctx context.Context, userID int64) error {
-	_, err := q.db.Exec(ctx, incrementFailedLoginAttempts, userID)
-	return err
-}
-
 const insertNewUser = `-- name: InsertNewUser :one
 INSERT INTO users (
     username,
@@ -148,18 +137,6 @@ type InsertNewUserAuthParams struct {
 
 func (q *Queries) InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthParams) error {
 	_, err := q.db.Exec(ctx, insertNewUserAuth, arg.UserID, arg.Email, arg.PasswordHash)
-	return err
-}
-
-const resetFailedLoginAttempts = `-- name: ResetFailedLoginAttempts :exec
-UPDATE auth_user
-SET failed_attempts = 0,
-    last_login_at = CURRENT_TIMESTAMP
-WHERE user_id = $1
-`
-
-func (q *Queries) ResetFailedLoginAttempts(ctx context.Context, userID int64) error {
-	_, err := q.db.Exec(ctx, resetFailedLoginAttempts, userID)
 	return err
 }
 

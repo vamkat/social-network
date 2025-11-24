@@ -277,13 +277,12 @@ func (e UserStatus) Valid() bool {
 }
 
 type AuthUser struct {
-	UserID         int64
-	Email          string
-	PasswordHash   string
-	CreatedAt      pgtype.Timestamptz
-	UpdatedAt      pgtype.Timestamptz
-	FailedAttempts int32
-	LastLoginAt    pgtype.Timestamptz
+	UserID       int64
+	Email        string
+	PasswordHash string
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+	LastLoginAt  pgtype.Timestamptz
 }
 
 type Follow struct {

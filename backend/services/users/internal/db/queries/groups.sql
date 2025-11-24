@@ -94,13 +94,15 @@ promote AS (
 SELECT 1;
 
 -- name: GetAllGroups :many
-SELECT 
+SELECT
   id,
   group_title,
   group_description,
   members_count
 FROM groups
-WHERE deleted_at IS NULL;
+WHERE deleted_at IS NULL
+ORDER BY members_count DESC, id ASC
+LIMIT $1 OFFSET $2;
 
 -- name: GetUserGroups :many
 SELECT DISTINCT
@@ -108,17 +110,17 @@ SELECT DISTINCT
     g.group_title,
     g.group_description,
     g.members_count,
-    CASE 
-        WHEN g.group_owner = $1 THEN 'owner'
-        ELSE 'member'
-    END AS role
+    CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
+    CASE WHEN g.group_owner = $1 THEN TRUE ELSE FALSE END AS is_owner
 FROM groups g
 LEFT JOIN group_members gm
     ON gm.group_id = g.id
     AND gm.user_id = $1
     AND gm.deleted_at IS NULL
 WHERE g.deleted_at IS NULL
-  AND (g.group_owner = $1 OR gm.user_id = $1);
+  AND (gm.user_id = $1 OR g.group_owner = $1)
+ORDER BY COALESCE(gm.joined_at, g.created_at) DESC, g.id DESC
+LIMIT $2 OFFSET $3;
 
       
 -- name: GetGroupInfo :one
@@ -134,7 +136,7 @@ WHERE id=$1
 
 -- name: GetGroupMembers :many
 SELECT
-    gm.user_id,
+    u.id,
     u.username,
     u.avatar,
     u.profile_public,
@@ -144,19 +146,44 @@ FROM group_members gm
 JOIN users u
     ON gm.user_id = u.id
 WHERE gm.group_id = $1
-  AND gm.deleted_at IS NULL;
+  AND gm.deleted_at IS NULL
+ORDER BY gm.joined_at DESC, u.id DESC
+LIMIT $2 OFFSET $3;
+
 
 -- name: SearchGroupsFuzzy :many
 SELECT
-    id,
-    group_title,
-    group_description,
-    members_count
-FROM groups
-WHERE deleted_at IS NULL
-  AND (similarity(group_title, $1) > 0.3
-       OR similarity(group_description, $1) > 0.3)
-ORDER BY GREATEST(similarity(group_title, $1), similarity(group_description, $1)) DESC;
+    g.id,
+    g.group_title,
+    g.group_description,
+    g.members_count,
+    g.group_owner,
+    CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
+    CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,
+    (
+        2 * similarity(g.group_title, $1) +
+        1 * similarity(g.group_description, $1)
+    ) AS weighted_score
+FROM groups g
+LEFT JOIN group_members gm
+    ON gm.group_id = g.id
+    AND gm.user_id = $2
+    AND gm.deleted_at IS NULL
+WHERE g.deleted_at IS NULL
+  AND (
+        similarity(g.group_title, $1) > 0.2
+        OR similarity(g.group_description, $1) > 0.2
+      )
+ORDER BY
+    -- 1. Weighted fuzzy match score
+    weighted_score DESC,
+    -- 2. Prioritize groups the user belongs to
+    CASE WHEN gm.user_id IS NOT NULL THEN 1 ELSE 0 END DESC,
+    -- 3. Prioritize groups with more members
+    g.members_count DESC,
+    -- 4. Stable pagination
+    g.id DESC
+LIMIT $3 OFFSET $4;
 
 -- name: GetUserGroupRole :one
 SELECT role
@@ -179,3 +206,14 @@ SELECT (group_owner = $2) AS is_owner
 FROM groups
 WHERE id = $1
   AND deleted_at IS NULL;
+
+-- name: UserGroupCountsPerRole :one
+SELECT
+    COUNT(*) FILTER (WHERE g.group_owner = $1) AS owner_count,
+    COUNT(*) FILTER (WHERE gm.role = 'member' AND g.group_owner <> $1) AS member_only_count,
+    COUNT(*) AS total_memberships
+FROM group_members gm
+JOIN groups g ON gm.group_id = g.id
+WHERE gm.user_id = $1
+  AND gm.deleted_at IS NULL
+  AND g.deleted_at IS NULL;
