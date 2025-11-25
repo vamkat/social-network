@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
-import { login } from "@/actions/auth";
+import { login } from "@/actions/auth/auth";
 
 export default function LoginForm() {
     const router = useRouter();
