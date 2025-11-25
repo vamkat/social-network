@@ -17,7 +17,7 @@ CREATE TYPE user_status AS ENUM ('active', 'banned', 'deleted');
 
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    username CITEXT COLLATE case_insensitive_ai UNIQUE NOT NULL,
+    username CITEXT COLLATE case_insensitive_ai NOT NULL,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     date_of_birth DATE NOT NULL,
