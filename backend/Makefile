@@ -7,6 +7,7 @@ build-base:
 
 apply-namespace:
 	kubectl apply -f k8s/users/namespace-users.yaml
+	kubectl apply -f k8s/nginx/namespace-nginx.yaml
 
 deploy-nginx:
 	helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
