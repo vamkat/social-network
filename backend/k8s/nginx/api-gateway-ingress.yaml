@@ -3,7 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-gateway-ingress
-  namespace: social-network
+  namespace: ingress-nginx
   annotations:
     # WebSocket support (Upgrade + Connection headers)
     nginx.ingress.kubernetes.io/websocket-services: "api-gateway"

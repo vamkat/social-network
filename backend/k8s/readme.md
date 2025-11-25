@@ -43,7 +43,7 @@ make build-services
 make all
 ```
 
-###3 3. Watch pods
+#### 3. Watch pods
 ```bash
 kubectl get pods -n social-network
 ```

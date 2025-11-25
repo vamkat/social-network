@@ -25,7 +25,4 @@ COPY --from=build /app/services/users/internal/db/seeds ./seeds
 # Ensure seed script is executable
 RUN chmod +x /app/seeds/seed.sh
 
-# Environment variables
-ENV DATABASE_URL=postgres://postgres:secret@users-db:5432/social_users?sslmode=disable
-
 CMD ["./users_service"]

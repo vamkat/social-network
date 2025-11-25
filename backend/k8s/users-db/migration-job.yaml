@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: users-migrate
-  namespace: social-network
+  namespace: users
 spec:
   backoffLimit: 0
   template:
@@ -14,7 +14,10 @@ spec:
           imagePullPolicy: Never
           env:
             - name: DATABASE_URL
-              value: "postgres://postgres:secret@users-db:5432/social_users?sslmode=disable"
+              valueFrom:
+                secretKeyRef:
+                  name: users-secret
+                  key: DATABASE_URL
           command: ["sh", "-c"]
           args:
             - |
