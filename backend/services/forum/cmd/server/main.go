@@ -23,9 +23,9 @@ func main() {
 
 	log.Println("Connected to users database")
 
-	if err := db.RunMigrations(cfg, "./migrations"); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
+	// if err := db.RunMigrations(cfg, "./migrations"); err != nil {
+	// 	log.Fatalf("Failed to run migrations: %v", err)
+	// }
 
 	log.Println("Service ready!")
 

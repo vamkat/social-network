@@ -14,6 +14,8 @@ RUN go build -o migrate ./services/users/cmd/migrate
 # ---- Runtime stage ----
 FROM alpine:3.20
 
+RUN apk add --no-cache postgresql-client
+
 WORKDIR /app
 
 # Only copy the compiled binary (tiny image!)

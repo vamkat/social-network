@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"social-network/services/users/internal/db/sqlc"
 	userservice "social-network/services/users/internal/domain"
 	"social-network/services/users/internal/server"
-	"social-network/shared/db"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,13 +17,14 @@ import (
 
 func main() {
 	ctx := context.Background()
-	cfg := db.LoadConfigFromEnv()
+	// cfg := db.LoadConfigFromEnv()
 
 	var pool *pgxpool.Pool
 	var err error
 
 	for i := range 10 {
-		pool, err = db.ConnectOrCreateDB(ctx, cfg)
+		connStr := os.Getenv("DATABASE_URL")
+		pool, err = pgxpool.New(ctx, connStr)
 		if err == nil {
 			break
 		}

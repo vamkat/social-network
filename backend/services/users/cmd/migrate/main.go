@@ -3,17 +3,21 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"social-network/shared/db"
 )
 
 func main() {
-	cfg := db.LoadConfigFromEnv()
-
-	log.Println("Running database migrations...")
-
-	if err := db.RunMigrations(cfg, "./migrations"); err != nil {
-		log.Fatalf("Migration failed: %v", err)
+	dir, _ := os.Getwd()
+	log.Println("Running database migrations...", dir)
+	for range 10 {
+		if err := db.RunMigrations(os.Getenv("DATABASE_URL"), "./migrations"); err != nil {
+			log.Println("Migration failed, retrying in 2s:", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		break
 	}
 
 	log.Println("Migrations completed successfully.")
