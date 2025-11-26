@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: users-db
-  namespace: users
+  name: forum-db
+  namespace: forum
   labels:
     stage: app
 spec:
   selector:
-    app: users-db
+    app: forum-db
   ports:
     - name: postgres
       port: 5432

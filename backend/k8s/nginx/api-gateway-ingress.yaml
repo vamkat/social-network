@@ -4,6 +4,8 @@ kind: Ingress
 metadata:
   name: api-gateway-ingress
   namespace: ingress-nginx
+  labels:
+    stage: ingress
   annotations:
     # WebSocket support (Upgrade + Connection headers)
     nginx.ingress.kubernetes.io/websocket-services: "api-gateway"

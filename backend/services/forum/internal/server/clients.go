@@ -51,6 +51,6 @@ func (s *Server) InitUserClient(opts []grpc.DialOption) (err error) {
 	if err != nil {
 		err = fmt.Errorf("failed to dial user service: %v", err)
 	}
-	s.clients.UserClient = userpb.NewUserServiceClient(conn)
+	s.Clients.UserClient = userpb.NewUserServiceClient(conn)
 	return err
 }

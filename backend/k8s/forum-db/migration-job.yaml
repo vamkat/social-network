@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: users-migrate
-  namespace: users
+  name: forum-migrate
+  namespace: forum
   labels:
-    stage: migration
+    stage: migrationNA
 spec:
   backoffLimit: 0
   template:
@@ -12,13 +12,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: social-network/users:dev
+          image: social-network/forum:dev
           imagePullPolicy: Never
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: users-secret
+                  name: forum-secret
                   key: DATABASE_URL
           command: ["sh", "-c"]
           args:

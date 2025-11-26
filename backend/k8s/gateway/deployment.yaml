@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: api-gateway
   namespace: api-gateway
+  labels:
+    stage: app
 spec:
   replicas: 2
   selector:

@@ -1,28 +1,24 @@
-# ---- Build stage ----
-FROM base AS build
+FROM social-network/go-base AS build
 
 WORKDIR /app
 
-# Copy root module files
-COPY ../../go.mod ../../go.sum ./
-RUN go mod download
+COPY . .
 
-# Copy entire repo so shared/ and service code are available
-COPY ../../ .
-
-# Build forum service binary
 RUN go build -o forum_service ./services/forum/cmd/server
 
-# ---- Runtime stage ----
-FROM alpine:latest
+RUN go build -o migrate ./services/forum/cmd/migrate
+
+FROM alpine:3.20
+
+RUN apk add --no-cache postgresql-client
 
 WORKDIR /app
 
-# Copy built binary and migrations
 COPY --from=build /app/forum_service .
-COPY --from=build /app/services/forum/internal/db/migrations ./migrations
+COPY --from=build /app/migrate .
+COPY --from=build /app/services/users/internal/db/migrations ./migrations
+COPY --from=build /app/services/users/internal/db/seeds ./seeds
 
-# Env vars (can also be set in docker-compose)
-ENV DATABASE_URL=postgres://postgres:secret@forum-db:5432/social_forum?sslmode=disable
+RUN chmod +x /app/seeds/seed.sh
 
 CMD ["./forum_service"]
