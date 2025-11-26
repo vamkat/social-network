@@ -1,5 +1,4 @@
 import { getMockPosts } from '@/mock-data/posts';
-import Link from 'next/link';
 import PostCard from "@/components/ui/post-card";
 
 export default function FriendsFeedPage() {
