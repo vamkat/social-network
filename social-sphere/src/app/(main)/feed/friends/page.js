@@ -1,14 +1,14 @@
-import { getMockPosts } from "@/mock-data/posts";
+import { getMockPosts } from '@/mock-data/posts';
 import PostCard from "@/components/ui/post-card";
 
-export default function PublicFeedPage() {
+export default function FriendsFeedPage() {
     const posts = getMockPosts();
 
     return (
         <div className="feed-container">
             <div className="feed-header">
-                <h1 className="feed-title">Public Feed</h1>
-                <p className="feed-subtitle">What's happening around the world</p>
+                <h1 className="feed-title">Friends Feed</h1>
+                <p className="feed-subtitle">Updates from your friends</p>
             </div>
 
             <div className="flex flex-col">
@@ -16,6 +16,6 @@ export default function PublicFeedPage() {
                     <PostCard key={i} post={post} />
                 ))}
             </div>
-        </div >
+        </div>
     );
 }

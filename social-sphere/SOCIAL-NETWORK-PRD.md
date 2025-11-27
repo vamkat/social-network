@@ -110,7 +110,7 @@ src/
 │   │   │   ├── public/page.js # Public posts feed
 │   │   │   └── friends/page.js # Friends posts feed
 │   │   ├── profile/
-│   │   │   └── [username]/page.js
+│   │   │   └── [id]/page.js
 │   │   ├── posts/
 │   │   │   └── [id]/page.js
 │   │   ├── groups/
@@ -580,6 +580,7 @@ Modal overlay with:
 
 **Features:**
 - Browse all groups (grid/list view)
+- Browse MY GROUPS (grid/list view)
 - Search bar (search by group title)
 - "Create Group" button
 

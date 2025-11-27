@@ -215,3 +215,76 @@ body {
 .avatar-label {
   @apply text-xs text-(--muted);
 }
+
+/* Feed Posts */
+.feed-container {
+  @apply w-full py-8;
+}
+
+.feed-header {
+  @apply mb-8 px-4;
+}
+
+.feed-title {
+  @apply text-3xl font-bold tracking-tight;
+}
+
+.feed-subtitle {
+  @apply text-(--muted) mt-1;
+}
+
+.post-card {
+  @apply flex gap-4 px-4 py-6 border-b border-(--muted)/10 hover:bg-(--muted)/5 transition-colors cursor-pointer ;
+}
+
+.post-avatar-container {
+  @apply shrink-0;
+}
+
+.post-avatar {
+  @apply w-12 h-12 rounded-full bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 object-cover;
+}
+
+.post-content-container {
+  @apply flex-1 min-w-0;
+}
+
+.post-header {
+  @apply flex items-baseline justify-between mb-1;
+}
+
+.post-username {
+  @apply font-semibold text-(--foreground) hover:underline decoration-2 underline-offset-2;
+}
+
+.post-timestamp {
+  @apply text-xs text-(--muted) font-medium;
+}
+
+.post-text {
+  @apply text-(--foreground)/90 leading-relaxed mb-3 text-[15px];
+}
+
+.post-actions {
+  @apply flex items-center gap-6;
+}
+
+.action-btn {
+  @apply flex items-center gap-0.5 text-(--muted) transition-colors;
+}
+
+.action-btn-heart {
+  @apply hover:text-red-500;
+}
+
+.action-btn-comment {
+  @apply hover:text-(--foreground);
+}
+
+.icon-heart {
+  @apply w-5 h-5 group-hover/heart:fill-current group-hover/heart:scale-110 transition-transform;
+}
+
+.icon-comment {
+  @apply w-5 h-5 group-hover/comment:stroke-2;
+}

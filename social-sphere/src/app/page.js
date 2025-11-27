@@ -81,8 +81,8 @@ export default function LandingPage() {
               close communities truly close.
             </p>
           </div>
-          <div className="section-visual">
-            <div className="w-64 h-64 rounded-full bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center">
+          <div className="-visual">
+            <div className="w-64 hsection-64 rounded-full bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center">
               <div className="w-32 h-32 rounded-full bg-blue-500/10 animate-pulse" />
             </div>
           </div>

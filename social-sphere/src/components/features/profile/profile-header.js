@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Calendar, Link as LinkIcon, Lock, Globe, UserPlus, UserCheck, UserMinus, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import ProfileStats from "./profile-stats";
-import { toggleFollowUser, togglePrivacy } from "@/actions/profile-actions";
+import { toggleFollowUser, togglePrivacy } from "@/actions/profile/profile-actions";
 import Modal from "@/components/ui/modal";
 
 export default function ProfileHeader({ user, isOwnProfile }) {
@@ -187,7 +187,7 @@ export default function ProfileHeader({ user, isOwnProfile }) {
                         </button>
                         <button
                             onClick={confirmPrivacyToggle}
-                            className="px-4 py-2 rounded-full text-sm font-medium bg-(--foreground) text-(--background) hover:opacity-90 transition-opacity cursor-pointer" 
+                            className="px-4 py-2 rounded-full text-sm font-medium bg-(--foreground) text-(--background) hover:opacity-90 transition-opacity cursor-pointer"
                         >
                             {isPublic ? "Switch to Private" : "Switch to Public"}
                         </button>

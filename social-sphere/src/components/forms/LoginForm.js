@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
-import { useAuth } from "@/providers/AuthProvider";
+import { login } from "@/actions/auth/auth";
 
 export default function LoginForm() {
-    const { login } = useAuth();
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -18,21 +19,21 @@ export default function LoginForm() {
         setError("");
 
         const formData = new FormData(event.currentTarget);
-        const credentials = {
-            identifier: formData.get("identifier"),
-            password: formData.get("password"),
-        };
 
         try {
-            await login(credentials); // AuthProvider handles redirect + user state
-        } catch (err) {
-            setError("Invalid credentials");
-            setIsLoading(false);
-            return;
-        }
+            const result = await login(formData);
 
-        // login redirects; if it ever returns, stop the spinner
-        setIsLoading(false);
+            if (result.success) {
+                console.log("Login successful");
+                router.push("/feed/public");
+            } else {
+                setError(result.error || "Invalid credentials");
+                setIsLoading(false);
+            }
+        } catch (err) {
+            setError("An unexpected error occurred");
+            setIsLoading(false);
+        }
     }
 
     return (
