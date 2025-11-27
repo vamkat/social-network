@@ -7,11 +7,12 @@
 package common
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -65,13 +66,59 @@ func (x *UserId) GetId() int64 {
 	return 0
 }
 
+type Potato struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Potato) Reset() {
+	*x = Potato{}
+	mi := &file_common_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Potato) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Potato) ProtoMessage() {}
+
+func (x *Potato) ProtoReflect() protoreflect.Message {
+	mi := &file_common_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Potato.ProtoReflect.Descriptor instead.
+func (*Potato) Descriptor() ([]byte, []int) {
+	return file_common_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Potato) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 var File_common_proto protoreflect.FileDescriptor
 
 const file_common_proto_rawDesc = "" +
 	"\n" +
 	"\fcommon.proto\x12\x06common\"\x18\n" +
 	"\x06UserId\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02idB)Z'social-network/shared/gen/common;commonb\x06proto3"
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1c\n" +
+	"\x06potato\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04nameB)Z'social-network/shared/gen/common;commonb\x06proto3"
 
 var (
 	file_common_proto_rawDescOnce sync.Once
@@ -85,9 +132,10 @@ func file_common_proto_rawDescGZIP() []byte {
 	return file_common_proto_rawDescData
 }
 
-var file_common_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_common_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_common_proto_goTypes = []any{
 	(*UserId)(nil), // 0: common.UserId
+	(*Potato)(nil), // 1: common.potato
 }
 var file_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -108,7 +156,7 @@ func file_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_proto_rawDesc), len(file_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

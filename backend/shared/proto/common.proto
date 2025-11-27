@@ -8,3 +8,6 @@ message UserId {
   int64 id = 1;
 }
 
+message potato {
+  string name = 1;
+}

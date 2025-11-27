@@ -1,0 +1,13 @@
+#this is a makefile that will be used to build the shared proto packages
+#this file is intented to be called by the top level make file
+#this is a makefile so that we can achieve compatibility for all platforms, mac/linux/windows
+#you need protoc installed before you can generate from the proto files
+
+generate:
+	protoc --proto_path=shared/proto \
+		--go_out=paths=source_relative:shared/gen/common \
+		shared/proto/common.proto
+	protoc --proto_path=shared/proto \
+		--go_out=paths=source_relative:shared/gen/users \
+		--go-grpc_out=paths=source_relative:shared/gen/users \
+		shared/proto/users.proto

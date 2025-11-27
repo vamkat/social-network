@@ -54,7 +54,8 @@ apply-ingress:
 # 	kubectl apply -f k8s/users/secret-users.yaml
 
 
-
+build-proto:
+	$(MAKE) -f shared/proto/protoMakefile generate
 
 logs-users:
 	kubectl logs -l app=users -n users -f
