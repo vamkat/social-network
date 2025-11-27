@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: users
-  namespace: users
+  name: posts
+  namespace: posts
   labels:
     stage: app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: users
+      app: posts
   template:
     metadata:
       labels:
-        app: users
+        app: posts
     spec:
       initContainers:
         - name: wait-for-db
           image: busybox
           command: ['sh', '-c', 'until nc -z posts-db 5432; do echo waiting for db; sleep 2; done']
       containers:
-        - name: users
-          image: social-network/users:dev
+        - name: posts
+          image: social-network/posts:dev
           imagePullPolicy: Never
           ports:
             - containerPort: 50051

@@ -4,7 +4,7 @@ metadata:
   name: users-db
   namespace: users
   labels:
-    stage: app
+    stage: db
 spec:
   selector:
     app: users-db

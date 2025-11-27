@@ -109,6 +109,11 @@ kubectl get svc -A
 ```sh
 kubectl get deployments -A
 ```
+### View PersistentVolumeClaim (PVC)
+
+```sh
+kubectl get pvc -n <namespace>
+```
 
 ---
 
@@ -137,7 +142,7 @@ kubectl delete pod -l app=<pod-name> -n <namespace>
 ```
 
 ```sh
-kubeclt delete job users-migrate -n users
+kubeclt delete job <job-name> -n <namespace>
 ```
 
 ---
@@ -162,11 +167,10 @@ kubectl describe svc <name> -n users
 
 ### Logs
 
-Your Makefile already includes:
 
 ```sh
-make logs-users
-make logs-db
+kubectl logs -n users -l job-name=users-migrate  
+kubectl logs -n users -l app=users-db  
 ```
 
 Manual logs:
