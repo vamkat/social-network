@@ -22,7 +22,6 @@ CREATE TYPE intended_audience AS ENUM ('everyone','followers','selected','group'
 
 CREATE TABLE IF NOT EXISTS posts (
     id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
-    post_title TEXT NOT NULL,
     post_body TEXT NOT NULL,
     creator_id BIGINT NOT NULL, -- in user service
     group_id BIGINT, -- in user service, null for user posts
@@ -33,7 +32,7 @@ CREATE TABLE IF NOT EXISTS posts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
-);
+); --image here or always join?
 
 CREATE INDEX idx_posts_creator ON posts(creator_id);
 CREATE INDEX idx_posts_group ON posts(group_id);
@@ -51,7 +50,7 @@ CREATE TABLE IF NOT EXISTS post_audience (
 ------------------------------------------
 -- Feed_entries
 ------------------------------------------
-CREATE TABLE IF NOT EXISTS feed_entries (
+CREATE TABLE IF NOT EXISTS feed_entries ( --check how to update lazily
     user_id BIGINT NOT NULL, -- in user service
     post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     seen BOOLEAN NOT NULL DEFAULT FALSE,
@@ -68,7 +67,7 @@ CREATE INDEX idx_feed_user_created ON feed_entries(user_id, created_at DESC);
 CREATE TABLE IF NOT EXISTS comments (
     id BIGINT PRIMARY KEY REFERENCES master_index(id) ON DELETE CASCADE,
     comment_creator_id BIGINT NOT NULL, -- in users service
-    parent_post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    parent_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     comment_body TEXT NOT NULL,
     reactions_count INT DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -89,7 +88,7 @@ CREATE TABLE IF NOT EXISTS events (
     event_creator_id BIGINT NOT NULL, -- in users service
     group_id BIGINT NOT NULL, -- in user service
     event_date DATE NOT NULL,
-    still_valid BOOLEAN DEFAULT TRUE,
+    still_valid BOOLEAN DEFAULT TRUE, --do we need this?
     going_count INT DEFAULT 0,
     not_going_count INT DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,

@@ -5,6 +5,7 @@ import (
 
 	"social-network/services/users/internal/db/sqlc"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -151,6 +152,11 @@ func (m *MockQuerier) RejectFollowRequest(ctx context.Context, arg sqlc.RejectFo
 }
 
 func (m *MockQuerier) IsFollowing(ctx context.Context, arg sqlc.IsFollowingParams) (bool, error) {
+	args := m.Called(ctx, arg)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockQuerier) IsFollowRequestPending(ctx context.Context, arg sqlc.IsFollowRequestPendingParams) (bool, error) {
 	args := m.Called(ctx, arg)
 	return args.Bool(0), args.Error(1)
 }
@@ -303,6 +309,14 @@ func (m *MockQuerier) GetUserGroupRole(ctx context.Context, arg sqlc.GetUserGrou
 		return sqlc.NullGroupRole{}, args.Error(1)
 	}
 	return args.Get(0).(sqlc.NullGroupRole), args.Error(1)
+}
+
+func (m *MockQuerier) IsGroupMembershipPending(ctx context.Context, arg sqlc.IsGroupMembershipPendingParams) (pgtype.Bool, error) {
+	args := m.Called(ctx, arg)
+	if args.Get(0) == nil {
+		return pgtype.Bool{}, args.Error(1)
+	}
+	return args.Get(0).(pgtype.Bool), args.Error(1)
 }
 
 // Newer sqlc Querier includes UserGroupCountsPerRole — add to mock

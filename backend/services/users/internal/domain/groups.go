@@ -16,19 +16,34 @@ func (s *UserService) GetAllGroupsPaginated(ctx context.Context, req Pagination)
 	}
 
 	groups := make([]Group, 0, len(rows))
+
 	for _, r := range rows {
+		userInfo, err := s.userInRelationToGroup(ctx, GeneralGroupReq{
+			GroupId: r.ID,
+			UserId:  req.UserId,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		groups = append(groups, Group{
 			GroupId:          r.ID,
+			GroupOwnerId:     r.GroupOwner,
 			GroupTitle:       r.GroupTitle,
 			GroupDescription: r.GroupDescription,
+			GroupImage:       r.GroupImage,
 			MembersCount:     r.MembersCount,
+			IsMember:         userInfo.isMember,
+			IsOwner:          userInfo.isOwner,
+			IsPending:        userInfo.isPending,
 		})
+
 	}
 
 	return groups, nil
 }
 
-func (s *UserService) GetUserGroupsPaginated(ctx context.Context, req UserGroupsPaginated) ([]Group, error) {
+func (s *UserService) GetUserGroupsPaginated(ctx context.Context, req Pagination) ([]Group, error) {
 	//paginated (joined latest first)
 
 	rows, err := s.db.GetUserGroups(ctx, sqlc.GetUserGroupsParams{
@@ -42,21 +57,32 @@ func (s *UserService) GetUserGroupsPaginated(ctx context.Context, req UserGroups
 
 	groups := make([]Group, 0, len(rows))
 	for _, r := range rows {
+		isPending, err := s.isGroupMembershipPending(ctx, GeneralGroupReq{
+			GroupId: r.GroupID,
+			UserId:  req.UserId,
+		})
+		if err != nil {
+			return nil, err
+		}
 		groups = append(groups, Group{
 			GroupId:          r.GroupID,
+			GroupOwnerId:     r.GroupOwner,
 			GroupTitle:       r.GroupTitle,
 			GroupDescription: r.GroupDescription,
+			GroupImage:       r.GroupImage,
 			MembersCount:     r.MembersCount,
 			IsMember:         r.IsMember,
 			IsOwner:          r.IsOwner,
+			IsPending:        isPending,
 		})
 	}
 
 	return groups, nil
 }
 
-func (s *UserService) GetGroupInfo(ctx context.Context, groupId int64) (Group, error) {
-	row, err := s.db.GetGroupInfo(ctx, groupId)
+// SKIP GRPC FOR NOW
+func (s *UserService) GetGroupInfo(ctx context.Context, req GeneralGroupReq) (Group, error) {
+	row, err := s.db.GetGroupInfo(ctx, req.GroupId)
 	if err != nil {
 		return Group{}, nil
 	}
@@ -65,8 +91,19 @@ func (s *UserService) GetGroupInfo(ctx context.Context, groupId int64) (Group, e
 		GroupOwnerId:     row.GroupOwner,
 		GroupTitle:       row.GroupTitle,
 		GroupDescription: row.GroupDescription,
+		GroupImage:       row.GroupImage,
 		MembersCount:     row.MembersCount,
 	}
+	userInfo, err := s.userInRelationToGroup(ctx, GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.UserId,
+	})
+	if err != nil {
+		return Group{}, err
+	}
+	group.IsMember = userInfo.isMember
+	group.IsOwner = userInfo.isOwner
+	group.IsPending = userInfo.isPending
 
 	return group, nil
 
@@ -74,6 +111,18 @@ func (s *UserService) GetGroupInfo(ctx context.Context, groupId int64) (Group, e
 }
 
 func (s *UserService) GetGroupMembers(ctx context.Context, req GroupMembersReq) ([]GroupUser, error) {
+	//check request comes from member
+	isMember, err := s.isGroupMember(ctx, GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.UserId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrNotAuthorized
+	}
+
 	//paginated (newest first)
 	rows, err := s.db.GetGroupMembers(ctx, sqlc.GetGroupMembersParams{
 		GroupID: req.GroupId,
@@ -95,7 +144,6 @@ func (s *UserService) GetGroupMembers(ctx context.Context, req GroupMembersReq) 
 			UserId:    r.ID,
 			Username:  r.Username,
 			Avatar:    r.Avatar,
-			Public:    r.ProfilePublic,
 			GroupRole: role,
 		})
 	}
@@ -116,14 +164,23 @@ func (s *UserService) SearchGroups(ctx context.Context, req GroupSearchReq) ([]G
 	}
 	groups := make([]Group, 0, len(rows))
 	for _, r := range rows {
+		isPending, err := s.isGroupMembershipPending(ctx, GeneralGroupReq{
+			GroupId: r.ID,
+			UserId:  req.UserId,
+		})
+		if err != nil {
+			return nil, err
+		}
 		groups = append(groups, Group{
 			GroupId:          r.ID,
 			GroupOwnerId:     r.GroupOwner,
 			GroupTitle:       r.GroupTitle,
 			GroupDescription: r.GroupDescription,
+			GroupImage:       r.GroupImage,
 			MembersCount:     r.MembersCount,
 			IsMember:         r.IsMember,
 			IsOwner:          r.IsOwner,
+			IsPending:        isPending,
 		})
 	}
 
@@ -131,63 +188,67 @@ func (s *UserService) SearchGroups(ctx context.Context, req GroupSearchReq) ([]G
 
 }
 
-func (s *UserService) InviteToGroupOrCancel(ctx context.Context, req InviteToGroupOrCancelRequest) error {
+func (s *UserService) InviteToGroup(ctx context.Context, req InviteToGroupReq) error {
+	//check request comes from member
+	isMember, err := s.isGroupMember(ctx, GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.InviterId,
+	})
+	if err != nil {
+		return err
+	}
+	if !isMember {
+		return ErrNotAuthorized
+	}
 
-	if req.Cancel {
-		err := s.db.CancelGroupInvite(ctx, sqlc.CancelGroupInviteParams{
-			GroupID:    req.GroupId,
-			ReceiverID: req.InvitedId,
-			SenderID:   req.InviterId,
-		})
-		if err != nil {
-			return err
-		}
-	} else {
-
-		isMember, err := s.isGroupMember(ctx, GeneralGroupReq{
-			GroupId: req.GroupId,
-			UserId:  req.InviterId,
-		})
-		if err != nil {
-			return err
-		}
-		if !isMember {
-			return ErrNotAuthorized
-		}
-
-		err = s.db.SendGroupInvite(ctx, sqlc.SendGroupInviteParams{
-			GroupID:    req.GroupId,
-			SenderID:   req.InviterId,
-			ReceiverID: req.InvitedId,
-		})
-		if err != nil {
-			return err
-		}
+	err = s.db.SendGroupInvite(ctx, sqlc.SendGroupInviteParams{
+		GroupID:    req.GroupId,
+		SenderID:   req.InviterId,
+		ReceiverID: req.InvitedId,
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (s *UserService) RequestJoinGroupOrCancel(ctx context.Context, req GroupJoinOrCancelRequest) error {
-	var err error
-	if req.Cancel {
+// SKIP GRPC FOR NOW
+func (s *UserService) CancelInviteToGroup(ctx context.Context, req InviteToGroupReq) error {
 
-		err = s.db.CancelGroupJoinRequest(ctx, sqlc.CancelGroupJoinRequestParams{
-			GroupID: req.GroupId,
-			UserID:  req.RequesterId,
-		})
-
-	} else {
-		err = s.db.SendGroupJoinRequest(ctx, sqlc.SendGroupJoinRequestParams{
-			GroupID: req.GroupId,
-			UserID:  req.RequesterId,
-		})
-
+	err := s.db.CancelGroupInvite(ctx, sqlc.CancelGroupInviteParams{
+		GroupID:    req.GroupId,
+		ReceiverID: req.InvitedId,
+		SenderID:   req.InviterId,
+	})
+	if err != nil {
+		return err
 	}
+	return nil
+}
+
+func (s *UserService) RequestJoinGroupOrCancel(ctx context.Context, req GroupJoinRequest) error {
+	err := s.db.SendGroupJoinRequest(ctx, sqlc.SendGroupJoinRequestParams{
+		GroupID: req.GroupId,
+		UserID:  req.RequesterId,
+	})
+
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// SKIP GRPC FOR NOW
+func (s *UserService) CancelJoinGroupRequest(ctx context.Context, req GroupJoinRequest) error {
+	err := s.db.CancelGroupJoinRequest(ctx, sqlc.CancelGroupJoinRequestParams{
+		GroupID: req.GroupId,
+		UserID:  req.RequesterId,
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -257,6 +318,7 @@ func (s *UserService) LeaveGroup(ctx context.Context, req GeneralGroupReq) error
 	return nil
 }
 
+// SKIP GRPC FOR NOW
 func (s *UserService) RemoveFromGroup(ctx context.Context, req RemoveFromGroupRequest) error {
 	//check owner has indeed the owner role
 	isOwner, err := s.isGroupOwner(ctx, GeneralGroupReq{
@@ -286,6 +348,7 @@ func (s *UserService) CreateGroup(ctx context.Context, req CreateGroupRequest) (
 		GroupOwner:       req.OwnerId,
 		GroupTitle:       req.GroupTitle,
 		GroupDescription: req.GroupDescription,
+		GroupImage:       req.GroupImage,
 	})
 	if err != nil {
 		return 0, err
@@ -293,6 +356,23 @@ func (s *UserService) CreateGroup(ctx context.Context, req CreateGroupRequest) (
 	return GroupId(groupId), nil
 }
 
+func (s *UserService) userInRelationToGroup(ctx context.Context, req GeneralGroupReq) (resp UserInRelationToGroup, err error) {
+	resp.isOwner, err = s.isGroupOwner(ctx, req)
+	if err != nil {
+		return UserInRelationToGroup{}, err
+	}
+	resp.isMember, err = s.isGroupMember(ctx, req)
+	if err != nil {
+		return UserInRelationToGroup{}, err
+	}
+	resp.isPending, err = s.isGroupMembershipPending(ctx, req)
+	if err != nil {
+		return UserInRelationToGroup{}, err
+	}
+	return resp, nil
+}
+
+// NOT GRPC
 func (s *UserService) isGroupOwner(ctx context.Context, req GeneralGroupReq) (bool, error) {
 
 	isOwner, err := s.db.IsUserGroupOwner(ctx, sqlc.IsUserGroupOwnerParams{
@@ -308,6 +388,7 @@ func (s *UserService) isGroupOwner(ctx context.Context, req GeneralGroupReq) (bo
 	return true, nil
 }
 
+// NOT GRPC
 func (s *UserService) isGroupMember(ctx context.Context, req GeneralGroupReq) (bool, error) {
 
 	isMember, err := s.db.IsUserGroupMember(ctx, sqlc.IsUserGroupMemberParams{
@@ -321,6 +402,21 @@ func (s *UserService) isGroupMember(ctx context.Context, req GeneralGroupReq) (b
 		return false, nil
 	}
 	return true, nil
+}
+
+// NOT GRPC
+func (s *UserService) isGroupMembershipPending(ctx context.Context, req GeneralGroupReq) (bool, error) {
+	isPending, err := s.db.IsGroupMembershipPending(ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: req.GroupId,
+		UserID:  req.UserId,
+	})
+	if err != nil {
+		return false, err
+	}
+	if !isPending.Valid { //should never happen
+		return false, nil
+	}
+	return isPending.Bool, nil
 }
 
 // ---------------------------------------------------------------------

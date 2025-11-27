@@ -88,3 +88,12 @@ ON CONFLICT DO NOTHING;
 UPDATE follow_requests
 SET status = 'rejected', updated_at = NOW()
 WHERE requester_id = $1 AND target_id = $2;
+
+-- name: IsFollowRequestPending :one
+SELECT EXISTS(
+    SELECT 1 
+    FROM follow_requests
+    WHERE requester_id = $1
+      AND target_id = $2
+      AND status = 'pending'
+) AS has_pending_request;

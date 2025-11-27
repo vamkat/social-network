@@ -16,9 +16,7 @@ VALUES
   ('group_join_request', 'group',  TRUE),
   ('new_event', 'group',  TRUE),
   ('new_message', 'chat',  TRUE),
-  ('chat_mention', 'chat',  TRUE),
   ('forum_reply', 'forum', TRUE),
-  ('forum_mention', 'forum',  TRUE),
   ('forum_like', 'forum', TRUE);
 
 ------------------------------------------
@@ -32,7 +30,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     source_service TEXT NOT NULL CHECK (source_service IN ('users', 'chat', 'forum')),
     source_entity_id BIGINT,
     seen BOOLEAN DEFAULT FALSE,
-    read BOOLEAN DEFAULT FALSE,
+    needs_action BOOLEAN DEFAULT FALSE,
+    acted BOOLEAN DEFAULT FALSE,
     payload JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days'),

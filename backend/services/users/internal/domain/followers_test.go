@@ -15,10 +15,10 @@ func TestGetFollowersPaginated_Success(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	req := GetFollowersReq{
-		FollowingID: 1,
-		Limit:       10,
-		Offset:      0,
+	req := Pagination{
+		UserId: 1,
+		Limit:  10,
+		Offset: 0,
 	}
 
 	expectedRows := []sqlc.GetFollowersRow{
@@ -56,10 +56,10 @@ func TestGetFollowersPaginated_Empty(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	req := GetFollowersReq{
-		FollowingID: 999,
-		Limit:       10,
-		Offset:      0,
+	req := Pagination{
+		UserId: 999,
+		Limit:  10,
+		Offset: 0,
 	}
 
 	mockDB.On("GetFollowers", ctx, sqlc.GetFollowersParams{
@@ -80,10 +80,10 @@ func TestGetFollowingPaginated_Success(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	req := GetFollowingReq{
-		FollowerID: 1,
-		Limit:      10,
-		Offset:     0,
+	req := Pagination{
+		UserId: 1,
+		Limit:  10,
+		Offset: 0,
 	}
 
 	expectedRows := []sqlc.GetFollowingRow{
@@ -121,10 +121,10 @@ func TestGetFollowingPaginated_Empty(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	req := GetFollowingReq{
-		FollowerID: 999,
-		Limit:      10,
-		Offset:     0,
+	req := Pagination{
+		UserId: 999,
+		Limit:  10,
+		Offset: 0,
 	}
 
 	mockDB.On("GetFollowing", ctx, sqlc.GetFollowingParams{
@@ -155,10 +155,11 @@ func TestFollowUser_Immediate(t *testing.T) {
 		PTarget:   2,
 	}).Return("accepted", nil)
 
-	pending, err := service.FollowUser(ctx, req)
+	resp, err := service.FollowUser(ctx, req)
 
 	assert.NoError(t, err)
-	assert.False(t, pending)
+	assert.False(t, resp.IsPending)
+	assert.True(t, resp.ViewerIsFollowing)
 	mockDB.AssertExpectations(t)
 }
 
@@ -177,10 +178,11 @@ func TestFollowUser_Pending(t *testing.T) {
 		PTarget:   2,
 	}).Return("requested", nil)
 
-	pending, err := service.FollowUser(ctx, req)
+	resp, err := service.FollowUser(ctx, req)
 
 	assert.NoError(t, err)
-	assert.True(t, pending)
+	assert.True(t, resp.IsPending)
+	assert.False(t, resp.ViewerIsFollowing)
 	mockDB.AssertExpectations(t)
 }
 
@@ -220,9 +222,10 @@ func TestUnFollowUser_Success(t *testing.T) {
 		FollowingID: 2,
 	}).Return(nil)
 
-	err := service.UnFollowUser(ctx, req)
+	isFollowing, err := service.UnFollowUser(ctx, req)
 
 	assert.NoError(t, err)
+	assert.True(t, isFollowing)
 	mockDB.AssertExpectations(t)
 }
 
@@ -241,9 +244,10 @@ func TestUnFollowUser_Error(t *testing.T) {
 		FollowingID: 999,
 	}).Return(errors.New("not following"))
 
-	err := service.UnFollowUser(ctx, req)
+	isFollowing, err := service.UnFollowUser(ctx, req)
 
 	assert.Error(t, err)
+	assert.False(t, isFollowing)
 	mockDB.AssertExpectations(t)
 }
 

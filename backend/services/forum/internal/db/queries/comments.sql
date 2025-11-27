@@ -21,3 +21,7 @@ UPDATE comments
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 RETURNING *;
+
+-- get last comment for post id
+
+-- paginated comments by date newest first

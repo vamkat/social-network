@@ -111,8 +111,8 @@ func (q *Queries) CancelGroupJoinRequest(ctx context.Context, arg CancelGroupJoi
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (group_owner, group_title, group_description)
-VALUES ($1, $2, $3)
+INSERT INTO groups (group_owner, group_title, group_description, group_image)
+VALUES ($1, $2, $3, $4)
 RETURNING id
 `
 
@@ -120,10 +120,16 @@ type CreateGroupParams struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (int64, error) {
-	row := q.db.QueryRow(ctx, createGroup, arg.GroupOwner, arg.GroupTitle, arg.GroupDescription)
+	row := q.db.QueryRow(ctx, createGroup,
+		arg.GroupOwner,
+		arg.GroupTitle,
+		arg.GroupDescription,
+		arg.GroupImage,
+	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -149,8 +155,10 @@ func (q *Queries) DeclineGroupInvite(ctx context.Context, arg DeclineGroupInvite
 const getAllGroups = `-- name: GetAllGroups :many
 SELECT
   id,
+  group_owner,
   group_title,
   group_description,
+  group_image,
   members_count
 FROM groups
 WHERE deleted_at IS NULL
@@ -165,8 +173,10 @@ type GetAllGroupsParams struct {
 
 type GetAllGroupsRow struct {
 	ID               int64
+	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
 	MembersCount     int32
 }
 
@@ -181,8 +191,10 @@ func (q *Queries) GetAllGroups(ctx context.Context, arg GetAllGroupsParams) ([]G
 		var i GetAllGroupsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.GroupOwner,
 			&i.GroupTitle,
 			&i.GroupDescription,
+			&i.GroupImage,
 			&i.MembersCount,
 		); err != nil {
 			return nil, err
@@ -201,6 +213,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
+  group_image,
   members_count
 FROM groups
 WHERE id=$1
@@ -212,6 +225,7 @@ type GetGroupInfoRow struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
 	MembersCount     int32
 }
 
@@ -223,6 +237,7 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 		&i.GroupOwner,
 		&i.GroupTitle,
 		&i.GroupDescription,
+		&i.GroupImage,
 		&i.MembersCount,
 	)
 	return i, err
@@ -233,7 +248,6 @@ SELECT
     u.id,
     u.username,
     u.avatar,
-    u.profile_public,
     gm.role,
     gm.joined_at
 FROM group_members gm
@@ -252,12 +266,11 @@ type GetGroupMembersParams struct {
 }
 
 type GetGroupMembersRow struct {
-	ID            int64
-	Username      string
-	Avatar        string
-	ProfilePublic bool
-	Role          NullGroupRole
-	JoinedAt      pgtype.Timestamptz
+	ID       int64
+	Username string
+	Avatar   string
+	Role     NullGroupRole
+	JoinedAt pgtype.Timestamptz
 }
 
 func (q *Queries) GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error) {
@@ -273,7 +286,6 @@ func (q *Queries) GetGroupMembers(ctx context.Context, arg GetGroupMembersParams
 			&i.ID,
 			&i.Username,
 			&i.Avatar,
-			&i.ProfilePublic,
 			&i.Role,
 			&i.JoinedAt,
 		); err != nil {
@@ -310,8 +322,10 @@ func (q *Queries) GetUserGroupRole(ctx context.Context, arg GetUserGroupRolePara
 const getUserGroups = `-- name: GetUserGroups :many
 SELECT DISTINCT
     g.id AS group_id,
+    g.group_owner,
     g.group_title,
     g.group_description,
+    g.group_image,
     g.members_count,
     CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
     CASE WHEN g.group_owner = $1 THEN TRUE ELSE FALSE END AS is_owner
@@ -334,8 +348,10 @@ type GetUserGroupsParams struct {
 
 type GetUserGroupsRow struct {
 	GroupID          int64
+	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
 	MembersCount     int32
 	IsMember         bool
 	IsOwner          bool
@@ -352,8 +368,10 @@ func (q *Queries) GetUserGroups(ctx context.Context, arg GetUserGroupsParams) ([
 		var i GetUserGroupsRow
 		if err := rows.Scan(
 			&i.GroupID,
+			&i.GroupOwner,
 			&i.GroupTitle,
 			&i.GroupDescription,
+			&i.GroupImage,
 			&i.MembersCount,
 			&i.IsMember,
 			&i.IsOwner,
@@ -366,6 +384,36 @@ func (q *Queries) GetUserGroups(ctx context.Context, arg GetUserGroupsParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const isGroupMembershipPending = `-- name: IsGroupMembershipPending :one
+SELECT (
+    EXISTS(
+        SELECT 1 FROM group_join_requests gjr
+        WHERE gjr.group_id = $1
+          AND gjr.user_id = $2
+          AND gjr.status = 'pending'
+    ) 
+    OR 
+    EXISTS(
+        SELECT 1 FROM group_invites gi
+        WHERE gi.group_id = $1
+          AND gi.receiver_id = $2
+          AND gi.status = 'pending'
+    )
+) AS has_pending_membership
+`
+
+type IsGroupMembershipPendingParams struct {
+	GroupID int64
+	UserID  int64
+}
+
+func (q *Queries) IsGroupMembershipPending(ctx context.Context, arg IsGroupMembershipPendingParams) (pgtype.Bool, error) {
+	row := q.db.QueryRow(ctx, isGroupMembershipPending, arg.GroupID, arg.UserID)
+	var has_pending_membership pgtype.Bool
+	err := row.Scan(&has_pending_membership)
+	return has_pending_membership, err
 }
 
 const isUserGroupMember = `-- name: IsUserGroupMember :one
@@ -447,10 +495,11 @@ func (q *Queries) RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoi
 const searchGroupsFuzzy = `-- name: SearchGroupsFuzzy :many
 SELECT
     g.id,
+    g.group_owner,
     g.group_title,
     g.group_description,
+    g.group_image,
     g.members_count,
-    g.group_owner,
     CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
     CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,
     (
@@ -488,10 +537,11 @@ type SearchGroupsFuzzyParams struct {
 
 type SearchGroupsFuzzyRow struct {
 	ID               int64
+	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
 	MembersCount     int32
-	GroupOwner       int64
 	IsMember         bool
 	IsOwner          bool
 	WeightedScore    int32
@@ -513,10 +563,11 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyPa
 		var i SearchGroupsFuzzyRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.GroupOwner,
 			&i.GroupTitle,
 			&i.GroupDescription,
+			&i.GroupImage,
 			&i.MembersCount,
-			&i.GroupOwner,
 			&i.IsMember,
 			&i.IsOwner,
 			&i.WeightedScore,

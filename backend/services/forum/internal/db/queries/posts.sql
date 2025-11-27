@@ -1,3 +1,5 @@
+-- TODO always return whether user has reacted
+
 --get post by id
 SELECT p.*, mi.content_type
 FROM posts p
@@ -11,6 +13,8 @@ WHERE p.id = $1
 -- get group posts paginated
 
 -- get user posts paginated
+
+-- get most popular post for group (most liked and most comments)
 
 -- create (group) post
 INSERT INTO posts (post_title, post_body, creator_id, group_id, audience)

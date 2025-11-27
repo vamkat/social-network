@@ -5,11 +5,11 @@ import (
 	"social-network/services/users/internal/db/sqlc"
 )
 
-func (s *UserService) GetFollowersPaginated(ctx context.Context, req GetFollowersReq) ([]User, error) {
+func (s *UserService) GetFollowersPaginated(ctx context.Context, req Pagination) ([]User, error) {
 
 	//paginated, sorted by newest first
 	rows, err := s.db.GetFollowers(ctx, sqlc.GetFollowersParams{
-		FollowingID: req.FollowingID,
+		FollowingID: req.UserId,
 		Limit:       req.Limit,
 		Offset:      req.Offset,
 	})
@@ -29,11 +29,11 @@ func (s *UserService) GetFollowersPaginated(ctx context.Context, req GetFollower
 
 }
 
-func (s *UserService) GetFollowingPaginated(ctx context.Context, req GetFollowingReq) ([]User, error) {
+func (s *UserService) GetFollowingPaginated(ctx context.Context, req Pagination) ([]User, error) {
 
 	//paginated, sorted by newest first
 	rows, err := s.db.GetFollowing(ctx, sqlc.GetFollowingParams{
-		FollowerID: req.FollowerID,
+		FollowerID: req.UserId,
 		Limit:      req.Limit,
 		Offset:     req.Offset,
 	})
@@ -53,31 +53,35 @@ func (s *UserService) GetFollowingPaginated(ctx context.Context, req GetFollowin
 
 }
 
-func (s *UserService) FollowUser(ctx context.Context, req FollowUserReq) (pending bool, err error) {
+// should trigger event that creates conversation between two users for chat service (unless the target user was already following, so conversation exists)
+func (s *UserService) FollowUser(ctx context.Context, req FollowUserReq) (resp FollowUserResp, err error) {
 	status, err := s.db.FollowUser(ctx, sqlc.FollowUserParams{
 		PFollower: req.FollowerId,
 		PTarget:   req.TargetUserId,
 	})
 	if err != nil {
-		return false, err
+		return FollowUserResp{}, err
 	}
 	if status == "requested" { //I don't love hardcoding this, we'll see
-		pending = true
+		resp.IsPending = true
+		resp.ViewerIsFollowing = false
 	} else {
-		pending = false
+		resp.IsPending = false
+		resp.ViewerIsFollowing = true
 	}
-	return pending, nil
+	return resp, nil
 }
 
-func (s *UserService) UnFollowUser(ctx context.Context, req FollowUserReq) error {
-	err := s.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
+// should it trigger event to delete conversation if none of the two follow each other any more? Or just make it inactive?
+func (s *UserService) UnFollowUser(ctx context.Context, req FollowUserReq) (viewerIsFolling bool, err error) {
+	err = s.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
 		FollowerID:  req.FollowerId,
 		FollowingID: req.TargetUserId,
 	})
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func (s *UserService) HandleFollowRequest(ctx context.Context, req HandleFollowRequestReq) error {
@@ -101,6 +105,7 @@ func (s *UserService) HandleFollowRequest(ctx context.Context, req HandleFollowR
 	return nil
 }
 
+// SKIP GRPC FOR NOW
 func (s *UserService) IsFollowing(ctx context.Context, req FollowUserReq) (bool, error) {
 	isfollowing, err := s.db.IsFollowing(ctx, sqlc.IsFollowingParams{
 		FollowerID:  req.FollowerId,
@@ -112,6 +117,7 @@ func (s *UserService) IsFollowing(ctx context.Context, req FollowUserReq) (bool,
 	return isfollowing, nil
 }
 
+// SKIP GRPC FOR NOW
 func (s *UserService) IsFollowingEither(ctx context.Context, req FollowUserReq) (bool, error) {
 
 	atLeastOneIsFollowing, err := s.db.IsFollowingEither(ctx, sqlc.IsFollowingEitherParams{
@@ -128,3 +134,5 @@ func (s *UserService) IsFollowingEither(ctx context.Context, req FollowUserReq) 
 // low priority
 // ---------------------------------------------------------------------
 func GetMutualFollowers() {}
+
+//get pending follow requests for user

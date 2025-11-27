@@ -8,6 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// TODO add checks for post events (registration, updates, group titles and descriptions) - date:(valid format, over 13, not over 110),text fields:(length, special characters)
+
 func (s *UserService) GetBasicUserInfo(ctx context.Context, userId int64) (resp User, err error) {
 
 	row, err := s.db.GetUserBasic(ctx, userId)
@@ -49,10 +51,17 @@ func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest
 		CreatedAt:   row.CreatedAt.Time,
 	}
 
-	profile.ViewerIsFollowing, err = s.IsFollowing(ctx, FollowUserReq{
+	followingParams := FollowUserReq{
 		FollowerId:   req.RequesterId,
 		TargetUserId: req.UserId,
-	})
+	}
+
+	profile.ViewerIsFollowing, err = s.IsFollowing(ctx, followingParams)
+	if err != nil {
+		return UserProfileResponse{}, err
+	}
+
+	profile.IsPending, err = s.isFollowRequestPending(ctx, followingParams)
 	if err != nil {
 		return UserProfileResponse{}, err
 	}
@@ -78,6 +87,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest
 	if err != nil {
 		return UserProfileResponse{}, err
 	}
+
 	profile.GroupsCount = groupsRow.TotalMemberships //owner and member, can change to member only
 	profile.OwnedGroupsCount = groupsRow.OwnerCount
 
@@ -113,6 +123,8 @@ func (s *UserService) SearchUsers(ctx context.Context, req UserSearchReq) ([]Use
 
 func (s *UserService) UpdateUserProfile(ctx context.Context, req UpdateProfileRequest) (UserProfileResponse, error) {
 	//NOTE front needs to send everything, not just changed fields
+
+	//TODO add checks for all fields
 
 	dob := pgtype.Date{
 		Time:  req.DateOfBirth,
@@ -163,4 +175,16 @@ func (s *UserService) UpdateProfilePrivacy(ctx context.Context, req UpdateProfil
 	}
 
 	return nil
+}
+
+// NOT GRPC
+func (s *UserService) isFollowRequestPending(ctx context.Context, req FollowUserReq) (bool, error) {
+	isPending, err := s.db.IsFollowRequestPending(ctx, sqlc.IsFollowRequestPendingParams{
+		RequesterID: req.FollowerId,
+		TargetID:    req.TargetUserId,
+	})
+	if err != nil {
+		return false, err
+	}
+	return isPending, nil
 }

@@ -1,6 +1,6 @@
 -- name: CreateGroup :one
-INSERT INTO groups (group_owner, group_title, group_description)
-VALUES ($1, $2, $3)
+INSERT INTO groups (group_owner, group_title, group_description, group_image)
+VALUES ($1, $2, $3, $4)
 RETURNING id;
 
 -- name: AddGroupOwnerAsMember :exec
@@ -96,8 +96,10 @@ SELECT 1;
 -- name: GetAllGroups :many
 SELECT
   id,
+  group_owner,
   group_title,
   group_description,
+  group_image,
   members_count
 FROM groups
 WHERE deleted_at IS NULL
@@ -107,8 +109,10 @@ LIMIT $1 OFFSET $2;
 -- name: GetUserGroups :many
 SELECT DISTINCT
     g.id AS group_id,
+    g.group_owner,
     g.group_title,
     g.group_description,
+    g.group_image,
     g.members_count,
     CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
     CASE WHEN g.group_owner = $1 THEN TRUE ELSE FALSE END AS is_owner
@@ -129,6 +133,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
+  group_image,
   members_count
 FROM groups
 WHERE id=$1
@@ -139,7 +144,6 @@ SELECT
     u.id,
     u.username,
     u.avatar,
-    u.profile_public,
     gm.role,
     gm.joined_at
 FROM group_members gm
@@ -154,10 +158,11 @@ LIMIT $2 OFFSET $3;
 -- name: SearchGroupsFuzzy :many
 SELECT
     g.id,
+    g.group_owner,
     g.group_title,
     g.group_description,
+    g.group_image,
     g.members_count,
-    g.group_owner,
     CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
     CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,
     (
@@ -217,3 +222,21 @@ JOIN groups g ON gm.group_id = g.id
 WHERE gm.user_id = $1
   AND gm.deleted_at IS NULL
   AND g.deleted_at IS NULL;
+
+
+-- name: IsGroupMembershipPending :one
+SELECT (
+    EXISTS(
+        SELECT 1 FROM group_join_requests gjr
+        WHERE gjr.group_id = $1
+          AND gjr.user_id = $2
+          AND gjr.status = 'pending'
+    ) 
+    OR 
+    EXISTS(
+        SELECT 1 FROM group_invites gi
+        WHERE gi.group_id = $1
+          AND gi.receiver_id = $2
+          AND gi.status = 'pending'
+    )
+) AS has_pending_membership;

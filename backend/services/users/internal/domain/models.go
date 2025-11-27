@@ -78,6 +78,7 @@ type UserProfileResponse struct {
 	OwnedGroupsCount  int64
 	ViewerIsFollowing bool
 	OwnProfile        bool
+	IsPending         bool
 }
 
 type UpdateProfileRequest struct {
@@ -102,18 +103,14 @@ type GroupId int64
 
 type GroupRole string
 
-type Pagination struct {
-	Limit  int32
-	Offset int32
-}
-
 type GroupMembersReq struct {
+	UserId  int64
 	GroupId int64
 	Limit   int32
 	Offset  int32
 }
 
-type UserGroupsPaginated struct {
+type Pagination struct {
 	UserId int64
 	Limit  int32
 	Offset int32
@@ -123,7 +120,6 @@ type GroupUser struct {
 	UserId    int64
 	Username  string
 	Avatar    string
-	Public    bool
 	GroupRole string
 }
 
@@ -140,16 +136,17 @@ type Group struct {
 	GroupOwnerId     int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
 	MembersCount     int32
 	IsMember         bool
 	IsOwner          bool
+	IsPending        bool
 }
 
-type InviteToGroupOrCancelRequest struct {
+type InviteToGroupReq struct {
 	InviterId int64
 	InvitedId int64
 	GroupId   int64
-	Cancel    bool
 }
 
 type HandleGroupInviteRequest struct {
@@ -158,10 +155,9 @@ type HandleGroupInviteRequest struct {
 	Accepted  bool
 }
 
-type GroupJoinOrCancelRequest struct {
+type GroupJoinRequest struct {
 	GroupId     int64
 	RequesterId int64
-	Cancel      bool
 }
 
 type HandleJoinRequest struct {
@@ -186,6 +182,13 @@ type CreateGroupRequest struct {
 	OwnerId          int64
 	GroupTitle       string
 	GroupDescription string
+	GroupImage       string
+}
+
+type UserInRelationToGroup struct {
+	isOwner   bool
+	isMember  bool
+	isPending bool
 }
 
 // -------------------------------------------
@@ -197,20 +200,13 @@ type FollowUserReq struct {
 	TargetUserId int64
 }
 
+type FollowUserResp struct {
+	IsPending         bool
+	ViewerIsFollowing bool
+}
+
 type HandleFollowRequestReq struct {
 	UserId      int64
 	RequesterId int64
 	Accept      bool
-}
-
-type GetFollowersReq struct {
-	FollowingID int64
-	Limit       int32
-	Offset      int32
-}
-
-type GetFollowingReq struct {
-	FollowerID int64
-	Limit      int32
-	Offset     int32
 }

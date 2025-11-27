@@ -7,9 +7,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// TODO make repo layer to handle sqlc to domain model conversions
-
 func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest) (User, error) {
+	//TODO add checks for all fields
+
 	//if no username assign full name
 	if req.Username == "" {
 		req.Username = req.FirstName + "_" + req.LastName
@@ -95,6 +95,8 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginRequest) (User, er
 }
 
 func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePasswordRequest) error {
+	//TODO validate password (length, special characters, etc)
+
 	//TODO think whether transaction is needed here
 
 	hashedPassword, err := s.db.GetUserPassword(ctx, req.UserId)
@@ -123,6 +125,8 @@ func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePassword
 }
 
 func (s *UserService) UpdateUserEmail(ctx context.Context, req UpdateEmailRequest) error {
+
+	//TODO validate email
 
 	err := s.db.UpdateUserEmail(ctx, sqlc.UpdateUserEmailParams{
 		UserID: req.UserId,

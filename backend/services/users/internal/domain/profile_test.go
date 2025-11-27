@@ -88,6 +88,10 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 		FollowerID:  requesterID,
 		FollowingID: userID,
 	}).Return(true, nil)
+	mockDB.On("IsFollowRequestPending", ctx, sqlc.IsFollowRequestPendingParams{
+		RequesterID: requesterID,
+		TargetID:    userID,
+	}).Return(false, nil)
 	mockDB.On("GetFollowerCount", ctx, userID).Return(int64(10), nil)
 	mockDB.On("GetFollowingCount", ctx, userID).Return(int64(5), nil)
 	mockDB.On("UserGroupCountsPerRole", ctx, userID).Return(sqlc.UserGroupCountsPerRoleRow{
@@ -141,6 +145,10 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 		FollowerID:  requesterID,
 		FollowingID: userID,
 	}).Return(false, nil)
+	mockDB.On("IsFollowRequestPending", ctx, sqlc.IsFollowRequestPendingParams{
+		RequesterID: requesterID,
+		TargetID:    userID,
+	}).Return(false, nil)
 
 	_, err := service.GetUserProfile(ctx, req)
 
@@ -183,6 +191,10 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 		FollowerID:  requesterID,
 		FollowingID: userID,
 	}).Return(true, nil)
+	mockDB.On("IsFollowRequestPending", ctx, sqlc.IsFollowRequestPendingParams{
+		RequesterID: requesterID,
+		TargetID:    userID,
+	}).Return(false, nil)
 	mockDB.On("GetFollowerCount", ctx, userID).Return(int64(10), nil)
 	mockDB.On("GetFollowingCount", ctx, userID).Return(int64(5), nil)
 	mockDB.On("UserGroupCountsPerRole", ctx, userID).Return(sqlc.UserGroupCountsPerRoleRow{

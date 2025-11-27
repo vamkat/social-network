@@ -7,6 +7,7 @@ import (
 
 	"social-network/services/users/internal/db/sqlc"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,6 +40,33 @@ func TestGetAllGroupsPaginated_Success(t *testing.T) {
 		Limit:  10,
 		Offset: 0,
 	}).Return(expectedRows, nil)
+
+	// Mock the userInRelationToGroup calls for each group
+	mockDB.On("IsUserGroupOwner", ctx, sqlc.IsUserGroupOwnerParams{
+		ID:         1,
+		GroupOwner: 0, // The test doesn't specify UserId in the request, so it's 0
+	}).Return(false, nil)
+	mockDB.On("IsUserGroupMember", ctx, sqlc.IsUserGroupMemberParams{
+		GroupID: 1,
+		UserID:  0,
+	}).Return(false, nil)
+	mockDB.On("IsGroupMembershipPending", ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: 1,
+		UserID:  0,
+	}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
+
+	mockDB.On("IsUserGroupOwner", ctx, sqlc.IsUserGroupOwnerParams{
+		ID:         2,
+		GroupOwner: 0,
+	}).Return(false, nil)
+	mockDB.On("IsUserGroupMember", ctx, sqlc.IsUserGroupMemberParams{
+		GroupID: 2,
+		UserID:  0,
+	}).Return(false, nil)
+	mockDB.On("IsGroupMembershipPending", ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: 2,
+		UserID:  0,
+	}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
 
 	groups, err := service.GetAllGroupsPaginated(ctx, req)
 
@@ -77,7 +105,7 @@ func TestGetUserGroupsPaginated_Success(t *testing.T) {
 
 	ctx := context.Background()
 	userID := int64(1)
-	req := UserGroupsPaginated{
+	req := Pagination{
 		UserId: userID,
 		Limit:  10,
 		Offset: 0,
@@ -108,6 +136,17 @@ func TestGetUserGroupsPaginated_Success(t *testing.T) {
 		Offset:     0,
 	}).Return(expectedRows, nil)
 
+	// Mock the isGroupMembershipPending calls for each group
+	mockDB.On("IsGroupMembershipPending", ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: 1,
+		UserID:  userID,
+	}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
+
+	mockDB.On("IsGroupMembershipPending", ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: 2,
+		UserID:  userID,
+	}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
+
 	groups, err := service.GetUserGroupsPaginated(ctx, req)
 
 	assert.NoError(t, err)
@@ -123,6 +162,11 @@ func TestGetGroupInfo_Success(t *testing.T) {
 
 	ctx := context.Background()
 	groupID := int64(1)
+	userID := int64(1)
+	req := GeneralGroupReq{
+		GroupId: groupID,
+		UserId:  userID,
+	}
 
 	expectedRow := sqlc.GetGroupInfoRow{
 		ID:               groupID,
@@ -133,7 +177,21 @@ func TestGetGroupInfo_Success(t *testing.T) {
 
 	mockDB.On("GetGroupInfo", ctx, groupID).Return(expectedRow, nil)
 
-	group, err := service.GetGroupInfo(ctx, groupID)
+	// Mock the userInRelationToGroup calls
+	mockDB.On("IsUserGroupOwner", ctx, sqlc.IsUserGroupOwnerParams{
+		ID:         groupID,
+		GroupOwner: userID,
+	}).Return(false, nil)
+	mockDB.On("IsUserGroupMember", ctx, sqlc.IsUserGroupMemberParams{
+		GroupID: groupID,
+		UserID:  userID,
+	}).Return(false, nil)
+	mockDB.On("IsGroupMembershipPending", ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: groupID,
+		UserID:  userID,
+	}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
+
+	group, err := service.GetGroupInfo(ctx, req)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Group", group.GroupTitle)
@@ -147,10 +205,15 @@ func TestGetGroupInfo_NotFound(t *testing.T) {
 
 	ctx := context.Background()
 	groupID := int64(999)
+	userID := int64(1)
+	req := GeneralGroupReq{
+		GroupId: groupID,
+		UserId:  userID,
+	}
 
 	mockDB.On("GetGroupInfo", ctx, groupID).Return(sqlc.GetGroupInfoRow{}, errors.New("group not found"))
 
-	_, err := service.GetGroupInfo(ctx, groupID)
+	_, err := service.GetGroupInfo(ctx, req)
 
 	// Note: GetGroupInfo has a bug - returns nil error on db error
 	assert.NoError(t, err)
@@ -163,7 +226,9 @@ func TestGetGroupMembers_Success(t *testing.T) {
 
 	ctx := context.Background()
 	groupID := int64(1)
+	userID := int64(1)
 	req := GroupMembersReq{
+		UserId:  userID,
 		GroupId: groupID,
 		Limit:   10,
 		Offset:  0,
@@ -171,20 +236,18 @@ func TestGetGroupMembers_Success(t *testing.T) {
 
 	expectedRows := []sqlc.GetGroupMembersRow{
 		{
-			ID:            1,
-			Username:      "user1",
-			Avatar:        "avatar1.jpg",
-			ProfilePublic: true,
+			ID:       1,
+			Username: "user1",
+			Avatar:   "avatar1.jpg",
 			Role: sqlc.NullGroupRole{
 				GroupRole: "owner",
 				Valid:     true,
 			},
 		},
 		{
-			ID:            2,
-			Username:      "user2",
-			Avatar:        "avatar2.jpg",
-			ProfilePublic: true,
+			ID:       2,
+			Username: "user2",
+			Avatar:   "avatar2.jpg",
 			Role: sqlc.NullGroupRole{
 				GroupRole: "member",
 				Valid:     true,
@@ -197,6 +260,12 @@ func TestGetGroupMembers_Success(t *testing.T) {
 		Limit:   10,
 		Offset:  0,
 	}).Return(expectedRows, nil)
+
+	// Mock isGroupMember call
+	mockDB.On("IsUserGroupMember", ctx, sqlc.IsUserGroupMemberParams{
+		GroupID: groupID,
+		UserID:  userID,
+	}).Return(true, nil)
 
 	members, err := service.GetGroupMembers(ctx, req)
 
@@ -235,6 +304,12 @@ func TestSearchGroups_Success(t *testing.T) {
 		Limit:      10,
 		Offset:     0,
 	}).Return(expectedRows, nil)
+
+	// Mock the isGroupMembershipPending call for the returned group
+	mockDB.On("IsGroupMembershipPending", ctx, sqlc.IsGroupMembershipPendingParams{
+		GroupID: 1,
+		UserID:  1,
+	}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
 
 	groups, err := service.SearchGroups(ctx, req)
 
@@ -317,10 +392,9 @@ func TestRequestJoinGroupOrCancel_Request(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	req := GroupJoinOrCancelRequest{
+	req := GroupJoinRequest{
 		GroupId:     1,
 		RequesterId: 2,
-		Cancel:      false,
 	}
 
 	mockDB.On("SendGroupJoinRequest", ctx, sqlc.SendGroupJoinRequestParams{
@@ -339,10 +413,9 @@ func TestRequestJoinGroupOrCancel_Cancel(t *testing.T) {
 	service := NewUserService(mockDB, nil)
 
 	ctx := context.Background()
-	req := GroupJoinOrCancelRequest{
+	req := GroupJoinRequest{
 		GroupId:     1,
 		RequesterId: 2,
-		Cancel:      true,
 	}
 
 	mockDB.On("CancelGroupJoinRequest", ctx, sqlc.CancelGroupJoinRequestParams{
@@ -350,7 +423,7 @@ func TestRequestJoinGroupOrCancel_Cancel(t *testing.T) {
 		UserID:  2,
 	}).Return(nil)
 
-	err := service.RequestJoinGroupOrCancel(ctx, req)
+	err := service.CancelJoinGroupRequest(ctx, req)
 
 	assert.NoError(t, err)
 	mockDB.AssertExpectations(t)

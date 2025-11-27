@@ -1,6 +1,8 @@
 -- get group events paginated
 
--- get event by id
+-- EVENTS DON"T HAVE LIKES, COMMENTS but they do have IMAGES
+
+-- get event by id --show created at too
 SELECT *
 FROM events
 WHERE id = $1

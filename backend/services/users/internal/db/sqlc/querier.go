@@ -6,6 +6,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -36,8 +38,10 @@ type Querier interface {
 	GetUserProfile(ctx context.Context, id int64) (GetUserProfileRow, error)
 	InsertNewUser(ctx context.Context, arg InsertNewUserParams) (int64, error)
 	InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthParams) error
+	IsFollowRequestPending(ctx context.Context, arg IsFollowRequestPendingParams) (bool, error)
 	IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error)
 	IsFollowingEither(ctx context.Context, arg IsFollowingEitherParams) (bool, error)
+	IsGroupMembershipPending(ctx context.Context, arg IsGroupMembershipPendingParams) (pgtype.Bool, error)
 	IsUserGroupMember(ctx context.Context, arg IsUserGroupMemberParams) (bool, error)
 	IsUserGroupOwner(ctx context.Context, arg IsUserGroupOwnerParams) (bool, error)
 	LeaveGroup(ctx context.Context, arg LeaveGroupParams) error

@@ -215,6 +215,28 @@ func (q *Queries) GetMutualFollowers(ctx context.Context, arg GetMutualFollowers
 	return items, nil
 }
 
+const isFollowRequestPending = `-- name: IsFollowRequestPending :one
+SELECT EXISTS(
+    SELECT 1 
+    FROM follow_requests
+    WHERE requester_id = $1
+      AND target_id = $2
+      AND status = 'pending'
+) AS has_pending_request
+`
+
+type IsFollowRequestPendingParams struct {
+	RequesterID int64
+	TargetID    int64
+}
+
+func (q *Queries) IsFollowRequestPending(ctx context.Context, arg IsFollowRequestPendingParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isFollowRequestPending, arg.RequesterID, arg.TargetID)
+	var has_pending_request bool
+	err := row.Scan(&has_pending_request)
+	return has_pending_request, err
+}
+
 const isFollowing = `-- name: IsFollowing :one
 SELECT EXISTS (
     SELECT 1 FROM follows
