@@ -1,8 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: forum-migrate
-  namespace: forum
+  name: posts-migrate
+  namespace: posts
   labels:
     stage: migrationNA
 spec:
@@ -12,13 +12,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: social-network/forum:dev
+          image: social-network/posts:dev
           imagePullPolicy: Never
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: forum-secret
+                  name: posts-secret
                   key: DATABASE_URL
           command: ["sh", "-c"]
           args:

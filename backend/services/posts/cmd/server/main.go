@@ -38,8 +38,8 @@ func main() {
 	log.Println("Service ready!")
 
 	// queries := sqlc.New(pool)
-	// forumService := forumservice.NewForumService(queries, pool)
+	// postsService := postsservice.NewPostsService(queries, pool)
 
-	// server := server.NewForumServer(forumService)
+	// server := server.NewPostsServer(postsService)
 	// server.RunGRPCServer()
 }

@@ -94,7 +94,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest
 	return profile, nil
 
 	// usergroups a different call
-	// from forum service get all posts paginated (and number of posts)
+	// from posts service get all posts paginated (and number of posts)
 	// and within all posts check each one if viewer has permission
 }
 

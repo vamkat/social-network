@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: forum-db
-  namespace: forum
+  name: posts-db
+  namespace: posts
   labels:
     stage: db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: forum-db
+      app: posts-db
   template:
     metadata:
       labels:
-        app: forum-db
+        app: posts-db
     spec:
       containers:
         - name: postgres
@@ -24,24 +24,24 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: forum-secret
+                  name: posts-secret
                   key: DATABASE_URL
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: forum-secret
+                  name: posts-secret
                   key: POSTGRES_DB
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: forum-secret
+                  name: posts-secret
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: forum-secret
+                  name: posts-secret
                   key: POSTGRES_PASSWORD
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: forum-db-pvc
+            claimName: posts-db-pvc

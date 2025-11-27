@@ -1,6 +1,6 @@
 version: "2"
 sql:
-  - name: "forum"                    
+  - name: "posts"                    
     engine: "postgresql"
     schema: "./migrations/*.sql"
     queries: "./queries/*.sql"

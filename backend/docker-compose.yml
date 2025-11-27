@@ -47,41 +47,41 @@ services:
       start_period: 5s
 
  # ---------------------------
-  # FORUM SERVICE + DATABASE
+  # POSTS SERVICE + DATABASE
   # ---------------------------
-  forum:
+  posts:
     build:
       context: .
-      dockerfile: services/forum/Dockerfile
+      dockerfile: services/posts/Dockerfile
     environment:
-       - DATABASE_URL=postgres://postgres:secret@forum-db:5432/social_forum?sslmode=disable
+       - DATABASE_URL=postgres://postgres:secret@posts-db:5432/social_posts?sslmode=disable
        # Explicit DB_* variables for clarity and local tooling
-       - DB_HOST=forum-db
+       - DB_HOST=posts-db
        - DB_PORT=5432
        - DB_USER=postgres
        - DB_PASSWORD=secret
-       - DB_NAME=social_forum
+       - DB_NAME=social_posts
        - SSL_MODE=disable
     depends_on:
-      forum-db:
+      posts-db:
         condition: service_healthy
     ports:
       - "50052:50051" 
 
 
-  forum-db:
+  posts-db:
     image: postgres:15
-    container_name: forum-db
+    container_name: posts-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: social_forum
+      POSTGRES_DB: social_posts
     ports:
       - "5434:5432"
     volumes:
-      - forum-db-data:/var/lib/postgresql/data
+      - posts-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d social_forum"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d social_posts"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -105,7 +105,7 @@ services:
        - DB_NAME=social_chat
        - SSL_MODE=disable
     depends_on:
-      forum-db:
+      posts-db:
         condition: service_healthy
     ports:
       - "8082:8080" 
@@ -147,7 +147,7 @@ services:
        - DB_NAME=social_notifications
        - SSL_MODE=disable
     depends_on:
-      forum-db:
+      posts-db:
         condition: service_healthy
     ports:
       - "8083:8080" 
@@ -174,7 +174,7 @@ services:
       
 volumes:
   users-db-data:
-  forum-db-data:
+  posts-db-data:
   chat-db-data:
   notifications-db-data:
 

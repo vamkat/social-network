@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS notification_types (
     notif_type TEXT PRIMARY KEY,     -- e.g. "new_follow request"
-    category TEXT,             -- e.g. "social", "chat", "forum"
+    category TEXT,             -- e.g. "social", "chat", "posts"
     default_enabled BOOLEAN    -- for user notification settings
 );
 
@@ -16,8 +16,8 @@ VALUES
   ('group_join_request', 'group',  TRUE),
   ('new_event', 'group',  TRUE),
   ('new_message', 'chat',  TRUE),
-  ('forum_reply', 'forum', TRUE),
-  ('forum_like', 'forum', TRUE);
+  ('post_reply', 'posts', TRUE),
+  ('like', 'posts', TRUE);
 
 ------------------------------------------
 -- Notifications
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id BIGINT NOT NULL, --recipient user id
     notif_type TEXT NOT NULL REFERENCES notification_types(notif_type),
-    source_service TEXT NOT NULL CHECK (source_service IN ('users', 'chat', 'forum')),
+    source_service TEXT NOT NULL CHECK (source_service IN ('users', 'chat', 'posts')),
     source_entity_id BIGINT,
     seen BOOLEAN DEFAULT FALSE,
     needs_action BOOLEAN DEFAULT FALSE,

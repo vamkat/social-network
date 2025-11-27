@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS posts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
-); --image here or always join?
+); 
 
 CREATE INDEX idx_posts_creator ON posts(creator_id);
 CREATE INDEX idx_posts_group ON posts(group_id);

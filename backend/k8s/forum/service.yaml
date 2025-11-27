@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: forum
-  namespace: forum
+  name: posts
+  namespace: posts
   labels:
     stage: app
 spec:
   selector:
-    app: forum
+    app: posts
   ports:
     - name: grpc
       port: 50051

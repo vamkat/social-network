@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: forum-db-pvc
-  namespace: forum
+  name: posts-db-pvc
+  namespace: posts
   labels:
     stage: pvc
 spec:

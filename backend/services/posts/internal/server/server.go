@@ -62,7 +62,7 @@ func (s *Server) RunGRPCServer() {
 	}
 }
 
-func NewForumServer() *Server {
+func NewPostsServer() *Server {
 	return &Server{
 		Port:    ":50051",
 		Clients: Clients{},
