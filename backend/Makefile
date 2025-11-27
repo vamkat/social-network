@@ -1,47 +1,60 @@
 NAMESPACE=social-network
 
-.PHONY: build-base apply-namespace apply-db build-services deploy-users run-migrations logs-users logs-db all reset
+.PHONY: build-base apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db all reset
+
+# ==== Docker ====
 
 build-base:
 	docker build -t social-network/go-base -f docker/go/base.Dockerfile .
 
-apply-namespace:
-	kubectl apply -f k8s/users/namespace-users.yaml
-	kubectl apply -f k8s/nginx/namespace-nginx.yaml
-	kubectl apply -f k8s/gateway/namespace-gateway.yaml
+build-services:
+	docker build -t social-network/users:dev -f services/users/Dockerfile .
+# 	docker build -t social-network/api-gateway:dev -f gateway/Dockerfile .
 
+# ==== K8s ====
+
+# 1.
+apply-namespace:
+	kubectl apply -f k8s/ --recursive --selector stage=namespace
+
+#  2.
 deploy-nginx:
 	helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 	helm repo update
 	helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
 		-n ingress-nginx --create-namespace
 
+# 3.
+apply-pvc:
+	kubectl apply -f k8s/ --recursive --selector stage=pvc
+
+# 4.
+apply-db:
+	kubectl apply -f k8s/ --recursive --selector stage=db
+
+# 5.
+run-migrations:
+	kubectl apply -f k8s/ --recursive --selector stage=migration
+
+# 6.
+apply-configs:
+	kubectl apply -R -f k8s --selector stage=config
+
+# 7.
+apply-apps:
+	kubectl apply -f k8s/ --recursive --selector stage=app
+
+# 8.
 apply-ingress:
 	kubectl apply -f k8s/nginx/api-gateway-ingress.yaml
 
-apply-db:
-	kubectl apply -f k8s/users-db/pvc.yaml
-	kubectl apply -f k8s/users-db/deployment.yaml
-	kubectl apply -f k8s/users-db/service.yaml
+# deploy-users:
+# 	kubectl apply -f k8s/users/deployment.yaml
+# 	kubectl apply -f k8s/users/service.yaml
+# 	kubectl apply -f k8s/users/secret-users.yaml
 
-build-services:
-	docker build -t social-network/users:dev -f services/users/Dockerfile .
-# 	in progress
-# 	docker build -t social-network/api-gateway:dev -f gateway/Dockerfile .
 
-deploy-users:
-	kubectl apply -f k8s/users/deployment.yaml
-	kubectl apply -f k8s/users/service.yaml
-	kubectl apply -f k8s/users/secret-users.yaml
 
-# deploy the whole k8s folder with namespace files first
-# in progress
-deploy-all:
-	kubectl apply -f k8s --recursive --selector type=namespace
-
-run-migrations:
-	kubectl delete job users-migrate -n users --ignore-not-found=true
-	kubectl apply -f k8s/users-db/migration-job.yaml
 
 logs-users:
 	kubectl logs -l app=users -n users -f
@@ -53,5 +66,5 @@ reset:
 	kubectl delete namespace users --ignore-not-found=true
 	kubectl create namespace users
 
-all: apply-namespace deploy-nginx apply-db build-services deploy-users run-migrations apply-ingress
+all: build-base build-services apply-namespace deploy-nginx apply-pvc apply-db  deploy-users run-migrations apply-ingress
 

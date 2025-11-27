@@ -31,7 +31,6 @@ func (s *Server) RunGRPCServer() {
 
 	grpcServer := grpc.NewServer()
 
-	// TODO: Register services here, e.g.,
 	pb.RegisterUserServiceServer(grpcServer, &Server{})
 
 	log.Printf("gRPC server listening on %s", s.Port)

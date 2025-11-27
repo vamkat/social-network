@@ -3,19 +3,31 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
-	"social-network/services/forum/server"
-	"social-network/shared/db"
+	"time"
 
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 )
 
 func main() {
 	ctx := context.Background()
-	cfg := db.LoadConfigFromEnv()
+	// cfg := db.LoadConfigFromEnv()
 
-	pool, err := db.ConnectOrCreateDB(ctx, cfg)
+	var pool *pgxpool.Pool
+	var err error
+
+	for i := range 10 {
+		connStr := os.Getenv("DATABASE_URL")
+		pool, err = pgxpool.New(ctx, connStr)
+		if err == nil {
+			break
+		}
+		log.Printf("DB not ready yet (attempt %d): %v", i+1, err)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
 		log.Fatalf("Failed to connect DB: %v", err)
 	}
@@ -23,12 +35,11 @@ func main() {
 
 	log.Println("Connected to users database")
 
-	// if err := db.RunMigrations(cfg, "./migrations"); err != nil {
-	// 	log.Fatalf("Failed to run migrations: %v", err)
-	// }
-
 	log.Println("Service ready!")
 
-	servive := server.NewForumServer()
-	servive.RunGRPCServer()
+	// queries := sqlc.New(pool)
+	// forumService := forumservice.NewForumService(queries, pool)
+
+	// server := server.NewForumServer(forumService)
+	// server.RunGRPCServer()
 }

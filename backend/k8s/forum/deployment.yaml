@@ -18,7 +18,7 @@ spec:
       initContainers:
         - name: wait-for-db
           image: busybox
-          command: ['sh', '-c', 'until nc -z users-db 5432; do echo waiting for db; sleep 2; done']
+          command: ['sh', '-c', 'until nc -z forum-db 5432; do echo waiting for db; sleep 2; done']
       containers:
         - name: users
           image: social-network/users:dev
@@ -29,5 +29,5 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: users-secret
+                  name: forum-secret
                   key: DATABASE_URL

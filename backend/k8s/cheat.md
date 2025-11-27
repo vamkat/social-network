@@ -133,7 +133,11 @@ kubectl rollout restart deployment users -n users
 If using local images, sometimes you need:
 
 ```sh
-kubectl delete pod -l app=users -n users
+kubectl delete pod -l app=<pod-name> -n <namespace>
+```
+
+```sh
+kubeclt delete job users-migrate -n users
 ```
 
 ---

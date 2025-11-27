@@ -9,7 +9,6 @@ import (
 
 	commonpb "social-network/shared/gen/common"
 	pb "social-network/shared/gen/users"
-	"social-network/shared/ports"
 
 	"google.golang.org/grpc"
 )
@@ -17,8 +16,9 @@ import (
 // Server struct placeholder
 type Server struct {
 	pb.UnimplementedUserServiceServer
-	clients Clients
+	Clients Clients
 	Port    string
+	// Service *us.UserService
 }
 
 type Clients struct {
@@ -45,7 +45,7 @@ func (s *Server) RunGRPCServer() {
 	s.InitClients()
 
 	// Example call to UserClient
-	resp, err := s.clients.UserClient.GetBasicUserInfo(context.Background(), &commonpb.UserId{
+	resp, err := s.Clients.UserClient.GetBasicUserInfo(context.Background(), &commonpb.UserId{
 		Id: 1234,
 	})
 	if err != nil {
@@ -64,6 +64,7 @@ func (s *Server) RunGRPCServer() {
 
 func NewForumServer() *Server {
 	return &Server{
-		Port: ports.Forum,
+		Port:    ":50051",
+		Clients: Clients{},
 	}
 }

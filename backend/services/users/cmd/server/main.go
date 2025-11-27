@@ -10,15 +10,15 @@ import (
 	userservice "social-network/services/users/internal/domain"
 	"social-network/services/users/internal/server"
 
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	// Seems to be a relic from when migrations were run from here
+	// _ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 )
 
 func main() {
 	ctx := context.Background()
-	// cfg := db.LoadConfigFromEnv()
-
 	var pool *pgxpool.Pool
 	var err error
 
@@ -44,6 +44,7 @@ func main() {
 	queries := sqlc.New(pool)
 	userService := userservice.NewUserService(queries, pool)
 
-	service := server.NewUsersServer(userService)
-	service.RunGRPCServer()
+	server := server.NewUsersServer(userService)
+	server.InitClients()
+	server.RunGRPCServer()
 }

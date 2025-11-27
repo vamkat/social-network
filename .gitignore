@@ -1,0 +1,37 @@
+# macOs
+.DS_Store
+
+# debug files
+.vscode
+*.bin
+*.exe
+__debug_bin*
+
+test_output
+downloads
+.idea
+idea
+/.idea
+/idea
+
+downloads.txt
+wget
+wget-log
+mirror-log
+dev-log.txt
+downloader-log
+
+# Downloads
+*.html
+*.css
+*js
+*.zip
+*.img
+*.jpg
+*.png
+*.xml
+*.com
+*.io
+*.gz
+*.part
+*.mirror
