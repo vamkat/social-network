@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import CommentThread from "@/components/features/comments/comment-thread";
 import { getLastCommentForPostID } from "@/mock-data/comments";
 
 export default function PostCard({ post }) {
+    const [showComments, setShowComments] = useState(false);
     const lastComment = getLastCommentForPostID(post.ID);
 
     return (
@@ -63,7 +66,7 @@ export default function PostCard({ post }) {
                     </button>
                 </div>
 
-                {/* Hover Comment Preview */}
+                {/* Hover last comment preview + view more */}
                 {lastComment && (
                     <div className="hidden group-hover:block mt-4 pt-3 border-t border-(--muted)/15 animate-in fade-in slide-in-from-top-1 duration-200">
                         <div className="flex gap-3">
@@ -78,14 +81,24 @@ export default function PostCard({ post }) {
                                 <p className="text-sm text-(--foreground)/90 mt-1 leading-relaxed">
                                     {lastComment.Content}
                                 </p>
-                                <button className="flex items-center gap-1.5 mt-2 text-xs text-(--muted) hover:text-red-500 transition-colors group/comment-heart">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5 group-hover/comment-heart:fill-current">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                                    </svg>
-                                    <span className="font-medium">{lastComment.NumOfHearts}</span>
+                                <button
+                                    className="mt-3 text-xs font-semibold text-(--foreground) hover:text-(--muted) transition-colors cursor-pointer"
+                                    onClick={() => setShowComments(true)}
+                                >
+                                    View more comments
                                 </button>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {showComments && (
+                    <div className="mt-4">
+                        <CommentThread
+                            postId={post.ID}
+                            totalCount={post.NumOfComments}
+                            skipCommentId={lastComment?.ID}
+                        />
                     </div>
                 )}
             </div>

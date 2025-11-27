@@ -1,5 +1,5 @@
 import { getMockPosts } from "@/mock-data/posts";
-import PostCard from "@/components/ui/post-card";
+import PostFeed from "@/components/features/feed/post-feed";
 
 export default function PublicFeedPage() {
     const posts = getMockPosts();
@@ -11,11 +11,7 @@ export default function PublicFeedPage() {
                 <p className="feed-subtitle">What's happening around the world</p>
             </div>
 
-            <div className="flex flex-col">
-                {posts.map((post, i) => (
-                    <PostCard key={i} post={post} />
-                ))}
-            </div>
+            <PostFeed posts={posts} pageSize={4} />
         </div >
     );
 }

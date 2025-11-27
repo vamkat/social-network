@@ -6,7 +6,7 @@ import { Lock } from "lucide-react";
 import { fetchUserProfile } from "@/actions/profile/profile-actions";
 import { GetPostsByUserId } from "@/mock-data/posts";
 import { getUserByID } from "@/mock-data/users";
-import PostCard from "@/components/ui/post-card";
+import PostFeed from "@/components/features/feed/post-feed";
 
 export default function ProfilePage({ params }) {
     const { id } = use(params);
@@ -72,11 +72,7 @@ export default function ProfilePage({ params }) {
                 </div>
             ) : (
                 <div className="mt-8">
-                    <div className="flex flex-col">
-                        {userPosts.map((post, i) => (
-                            <PostCard key={i} post={post} />
-                        ))}
-                    </div>
+                    <PostFeed posts={userPosts} pageSize={3} />
                 </div>
             )
             }

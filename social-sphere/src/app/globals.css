@@ -288,3 +288,44 @@ body {
 .icon-comment {
   @apply w-5 h-5 group-hover/comment:stroke-2;
 }
+
+/* Comments */
+.comment-thread {
+  @apply border-t border-(--muted)/10 pt-4 space-y-2;
+}
+
+.comment-row {
+  @apply flex gap-3;
+}
+
+.comment-avatar {
+  @apply w-8 h-8 rounded-full overflow-hidden shrink-0 border border-(--muted)/20;
+}
+
+.comment-avatar img {
+  @apply w-full h-full object-cover;
+}
+
+.comment-body {
+  @apply flex-1 min-w-0;
+}
+
+.comment-meta {
+  @apply flex items-center justify-between gap-3 text-xs text-(--muted);
+}
+
+.comment-content {
+  @apply text-sm text-(--foreground)/90 leading-relaxed;
+}
+
+.comment-loader {
+  @apply text-xs text-(--muted) flex items-center gap-2;
+}
+
+.loader-dot {
+  @apply w-2 h-2 rounded-full bg-(--muted) animate-pulse;
+}
+
+.comment-load-more {
+  @apply w-full text-xs font-semibold text-(--foreground) bg-(--muted)/10 hover:bg-(--muted)/20 rounded-lg py-2 border border-(--muted)/15 transition-colors cursor-pointer;
+}
