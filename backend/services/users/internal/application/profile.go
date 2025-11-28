@@ -1,4 +1,4 @@
-package userservice
+package application
 
 import (
 	"context"
@@ -175,16 +175,4 @@ func (s *UserService) UpdateProfilePrivacy(ctx context.Context, req UpdateProfil
 	}
 
 	return nil
-}
-
-// NOT GRPC
-func (s *UserService) isFollowRequestPending(ctx context.Context, req FollowUserReq) (bool, error) {
-	isPending, err := s.db.IsFollowRequestPending(ctx, sqlc.IsFollowRequestPendingParams{
-		RequesterID: req.FollowerId,
-		TargetID:    req.TargetUserId,
-	})
-	if err != nil {
-		return false, err
-	}
-	return isPending, nil
 }

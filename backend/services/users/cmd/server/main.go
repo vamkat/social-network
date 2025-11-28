@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
+	userservice "social-network/services/users/internal/application"
 	"social-network/services/users/internal/db/sqlc"
-	userservice "social-network/services/users/internal/domain"
 	"social-network/services/users/internal/server"
 
 	// Seems to be a relic from when migrations were run from here

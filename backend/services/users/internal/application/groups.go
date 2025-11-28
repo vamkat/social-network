@@ -1,4 +1,4 @@
-package userservice
+package application
 
 import (
 	"context"
@@ -252,6 +252,7 @@ func (s *UserService) CancelJoinGroupRequest(ctx context.Context, req GroupJoinR
 	return nil
 }
 
+// CHAT SERVICE EVENT add member to group conversation if accepted
 func (s *UserService) RespondToGroupInvite(ctx context.Context, req HandleGroupInviteRequest) error {
 
 	if req.Accepted {
@@ -276,6 +277,7 @@ func (s *UserService) RespondToGroupInvite(ctx context.Context, req HandleGroupI
 	return nil
 }
 
+// CHAT SERVICE EVENT add member to group conversation if accepted
 func (s *UserService) HandleGroupJoinRequest(ctx context.Context, req HandleJoinRequest) error {
 
 	isOwner, err := s.isGroupOwner(ctx, GeneralGroupReq{
@@ -306,6 +308,7 @@ func (s *UserService) HandleGroupJoinRequest(ctx context.Context, req HandleJoin
 	return nil
 }
 
+// CHAT SERVICE EVENT soft remove member from group conversation (keep history)
 func (s *UserService) LeaveGroup(ctx context.Context, req GeneralGroupReq) error {
 
 	err := s.db.LeaveGroup(ctx, sqlc.LeaveGroupParams{
@@ -342,6 +345,7 @@ func (s *UserService) RemoveFromGroup(ctx context.Context, req RemoveFromGroupRe
 	return nil
 }
 
+// CHAT SERVICE EVENT create group conversation
 func (s *UserService) CreateGroup(ctx context.Context, req CreateGroupRequest) (GroupId, error) {
 
 	groupId, err := s.db.CreateGroup(ctx, sqlc.CreateGroupParams{
@@ -356,6 +360,7 @@ func (s *UserService) CreateGroup(ctx context.Context, req CreateGroupRequest) (
 	return GroupId(groupId), nil
 }
 
+// NOT GRPC
 func (s *UserService) userInRelationToGroup(ctx context.Context, req GeneralGroupReq) (resp UserInRelationToGroup, err error) {
 	resp.isOwner, err = s.isGroupOwner(ctx, req)
 	if err != nil {

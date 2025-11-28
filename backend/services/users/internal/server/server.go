@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	us "social-network/services/users/internal/domain"
+	us "social-network/services/users/internal/application"
 	pb "social-network/shared/gen/users"
 
 	"google.golang.org/grpc"

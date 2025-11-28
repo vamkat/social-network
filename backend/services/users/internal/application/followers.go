@@ -1,4 +1,4 @@
-package userservice
+package application
 
 import (
 	"context"
@@ -53,7 +53,7 @@ func (s *UserService) GetFollowingPaginated(ctx context.Context, req Pagination)
 
 }
 
-// should trigger event that creates conversation between two users for chat service (unless the target user was already following, so conversation exists)
+// CHAT SERVICE EVENT should trigger event that creates conversation between two users for chat service (unless the target user was already following, so conversation exists)
 func (s *UserService) FollowUser(ctx context.Context, req FollowUserReq) (resp FollowUserResp, err error) {
 	status, err := s.db.FollowUser(ctx, sqlc.FollowUserParams{
 		PFollower: req.FollowerId,
@@ -72,7 +72,7 @@ func (s *UserService) FollowUser(ctx context.Context, req FollowUserReq) (resp F
 	return resp, nil
 }
 
-// should it trigger event to delete conversation if none of the two follow each other any more? Or just make it inactive?
+// CHAT SERVICE EVENT should it trigger event to delete conversation if none of the two follow each other any more? Or just make it inactive?
 func (s *UserService) UnFollowUser(ctx context.Context, req FollowUserReq) (viewerIsFolling bool, err error) {
 	err = s.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
 		FollowerID:  req.FollowerId,
@@ -84,6 +84,7 @@ func (s *UserService) UnFollowUser(ctx context.Context, req FollowUserReq) (view
 	return true, nil
 }
 
+// CHAT SERVICE EVENT accepting a follow request should also trigger event to create conversation
 func (s *UserService) HandleFollowRequest(ctx context.Context, req HandleFollowRequestReq) error {
 	var err error
 	if req.Accept {
@@ -103,6 +104,23 @@ func (s *UserService) HandleFollowRequest(ctx context.Context, req HandleFollowR
 		return err
 	}
 	return nil
+}
+
+// TODO returns ids of people a user follows so that the feed can be fetched
+func (s *UserService) GetFollowingIds(ctx context.Context, userId int64) ([]int64, error) {
+	return nil, nil
+}
+
+// NOT GRPC
+func (s *UserService) isFollowRequestPending(ctx context.Context, req FollowUserReq) (bool, error) {
+	isPending, err := s.db.IsFollowRequestPending(ctx, sqlc.IsFollowRequestPendingParams{
+		RequesterID: req.FollowerId,
+		TargetID:    req.TargetUserId,
+	})
+	if err != nil {
+		return false, err
+	}
+	return isPending, nil
 }
 
 // SKIP GRPC FOR NOW

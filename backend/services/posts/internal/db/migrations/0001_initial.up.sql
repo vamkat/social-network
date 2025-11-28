@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS master_index (
     deleted_at TIMESTAMPTZ
 );
 CREATE INDEX idx_master_type ON master_index(content_type);
+CREATE INDEX idx_master_index_id_type ON master_index(id, content_type);
 
 ------------------------------------------
 -- Posts
@@ -26,8 +27,9 @@ CREATE TABLE IF NOT EXISTS posts (
     creator_id BIGINT NOT NULL, -- in user service
     group_id BIGINT, -- in user service, null for user posts
     audience intended_audience NOT NULL DEFAULT 'everyone',
-    comments_count INT DEFAULT 0,
-    reactions_count INT DEFAULT 0,
+    comments_count INT DEFAULT 0 NOT NULL,
+    reactions_count INT DEFAULT 0 NOT NULL,
+    images_count INT DEFAULT 0 NOT NULL,
     last_commented_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -37,6 +39,11 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE INDEX idx_posts_creator ON posts(creator_id);
 CREATE INDEX idx_posts_group ON posts(group_id);
 CREATE INDEX idx_posts_audience_created ON posts(audience, created_at DESC);
+CREATE INDEX idx_posts_creator_id_created_at ON posts(creator_id, created_at DESC);
+CREATE INDEX idx_posts_group_id_created_at   ON posts(group_id, created_at DESC);
+CREATE INDEX idx_posts_created_at_desc       ON posts(created_at DESC);
+CREATE INDEX idx_posts_deleted_at_null       ON posts(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_posts_active ON posts(id) WHERE deleted_at IS NULL;
 
 ------------------------------------------
 -- Post_audience (for 'selected' audience)
@@ -46,20 +53,22 @@ CREATE TABLE IF NOT EXISTS post_audience (
     allowed_user_id BIGINT, -- in user service
     PRIMARY KEY (post_id, allowed_user_id)
 );
+CREATE INDEX idx_post_audience_post_id  ON post_audience(post_id);
+CREATE INDEX idx_post_audience_user_id  ON post_audience(allowerd_user_id);
+CREATE UNIQUE INDEX uniq_post_user_audience ON post_audience(post_id, allowerd_user_id);
+
 
 ------------------------------------------
--- Feed_entries
+-- Feed_state
 ------------------------------------------
-CREATE TABLE IF NOT EXISTS feed_entries ( --check how to update lazily
-    user_id BIGINT NOT NULL, -- in user service
-    post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    seen BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ,
-    PRIMARY KEY(user_id, post_id)
+CREATE TABLE IF NOT EXISTS user_feed_state (
+    user_id BIGINT PRIMARY KEY,   -- users service
+    last_seen_post_id BIGINT,     -- last post delivered (cursor)
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_feed_user_created ON feed_entries(user_id, created_at DESC);
+CREATE INDEX idx_posts_feed ON posts(creator_id, deleted_at, created_at DESC) 
+WHERE deleted_at IS NULL;
 
 ------------------------------------------
 -- Comments
@@ -69,14 +78,17 @@ CREATE TABLE IF NOT EXISTS comments (
     comment_creator_id BIGINT NOT NULL, -- in users service
     parent_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     comment_body TEXT NOT NULL,
-    reactions_count INT DEFAULT 0,
+    reactions_count INT DEFAULT 0 NOT NULL,
+    images_count INT DEFAULT 0 NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_comments_parent_created ON comments(parent_post_id, created_at DESC);
+CREATE INDEX idx_comments_parent_created ON comments(parent_id, created_at DESC);
 CREATE INDEX idx_comments_creator ON comments(comment_creator_id);
+CREATE INDEX idx_comments_active ON comments(parent_id) WHERE deleted_at IS NULL;
+
 
 ------------------------------------------
 -- Events
@@ -89,8 +101,9 @@ CREATE TABLE IF NOT EXISTS events (
     group_id BIGINT NOT NULL, -- in user service
     event_date DATE NOT NULL,
     still_valid BOOLEAN DEFAULT TRUE, --do we need this?
-    going_count INT DEFAULT 0,
-    not_going_count INT DEFAULT 0,
+    going_count INT DEFAULT 0 NOT NULL,
+    not_going_count INT DEFAULT 0 NOT NULL,
+    images_count INT DEFAULT 0 NOT NULL, --keep this or not?
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
@@ -98,6 +111,7 @@ CREATE TABLE IF NOT EXISTS events (
 
 CREATE INDEX idx_events_creator ON events(event_creator_id);
 CREATE INDEX idx_events_date ON events(event_date);
+
 
 ------------------------------------------
 -- Event responses
@@ -129,7 +143,9 @@ CREATE TABLE IF NOT EXISTS images (
     CONSTRAINT unique_image_sort_order UNIQUE(entity_id, sort_order)
 );
 
-CREATE INDEX idx_images_entity ON images(entity_id);
+CREATE INDEX idx_images_entity_id ON images(entity_id);
+CREATE INDEX idx_images_entity_active ON images(entity_id) WHERE deleted_at IS NULL;
+
 
 ------------------------------------------
 -- Reactions (likes only)
@@ -144,8 +160,12 @@ CREATE TABLE IF NOT EXISTS reactions (
     CONSTRAINT unique_user_reaction_per_content UNIQUE (user_id, content_id)
 );
 
-CREATE INDEX idx_reactions_content ON reactions(content_id);
+
 CREATE INDEX idx_reactions_user ON reactions(user_id);
+CREATE UNIQUE INDEX idx_reactions_unique ON reactions(content_id, user_id);
+CREATE INDEX idx_reactions_content_id ON reactions(content_id);
+CREATE INDEX idx_reactions_active ON reactions(content_id) WHERE deleted_at IS NULL;
+
 
 
 ------------------------------------------
@@ -230,15 +250,15 @@ BEGIN
         UPDATE posts
         SET comments_count = comments_count + 1,
             last_commented_at = NEW.created_at
-        WHERE id = NEW.parent_post_id;
+        WHERE id = NEW.parent_id;
     ELSIF (TG_OP = 'DELETE') THEN
         UPDATE posts
         SET comments_count = comments_count - 1,
             last_commented_at = (SELECT MAX(created_at) 
                                  FROM comments 
-                                 WHERE parent_post_id = OLD.parent_post_id 
+                                 WHERE parent_id = OLD.parent_id 
                                    AND deleted_at IS NULL)
-        WHERE id = OLD.parent_post_id;
+        WHERE id = OLD.parent_id;
     END IF;
     RETURN NULL;
 END;
@@ -303,27 +323,45 @@ EXECUTE FUNCTION update_reactions_count();
 
 
 ------------------------------------------
--- Soft delete cascade for posts
+-- Soft delete cascade for posts, comments, events
 ------------------------------------------
-CREATE OR REPLACE FUNCTION soft_delete_post_cascade()
+CREATE OR REPLACE FUNCTION cascade_soft_delete_unified()
 RETURNS TRIGGER AS $$
+DECLARE
+    _type TEXT;
 BEGIN
-    NEW.deleted_at := CURRENT_TIMESTAMP;
+    SELECT content_type INTO _type
+    FROM master_index
+    WHERE id = OLD.id;
 
-    UPDATE comments SET deleted_at = CURRENT_TIMESTAMP WHERE parent_post_id = OLD.id;
-    UPDATE reactions SET deleted_at = CURRENT_TIMESTAMP WHERE content_id = OLD.id;
-    UPDATE feed_entries SET deleted_at = CURRENT_TIMESTAMP WHERE post_id = OLD.id;
-    UPDATE images SET deleted_at = CURRENT_TIMESTAMP WHERE entity_id = OLD.id;
+    IF _type IN ('POST', 'COMMENT', 'EVENT') THEN
+        UPDATE images
+        SET deleted_at = CURRENT_TIMESTAMP
+        WHERE entity_id = OLD.id AND deleted_at IS NULL;
+    END IF;
 
-    RETURN NEW;
+    RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_soft_delete_post
-BEFORE UPDATE ON posts
+AFTER UPDATE ON posts
 FOR EACH ROW
-WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
-EXECUTE FUNCTION soft_delete_post_cascade();
+WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL)
+EXECUTE FUNCTION cascade_soft_delete_unified();
+
+CREATE TRIGGER trg_soft_delete_comment
+AFTER UPDATE ON comments
+FOR EACH ROW
+WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL)
+EXECUTE FUNCTION cascade_soft_delete_unified();
+
+CREATE TRIGGER trg_soft_delete_event
+AFTER UPDATE ON events
+FOR EACH ROW
+WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL)
+EXECUTE FUNCTION cascade_soft_delete_unified();
+
 
 ------------------------------------------
 -- Event responses count trigger
@@ -423,3 +461,54 @@ CREATE TRIGGER trg_set_sort_order
 BEFORE INSERT ON images
 FOR EACH ROW
 EXECUTE FUNCTION set_next_sort_order();
+
+------------------------------------------------
+-- trigger to update image count for posts, comments, events
+------------------------------------------------
+CREATE OR REPLACE FUNCTION update_entity_image_count()
+RETURNS TRIGGER AS $$
+DECLARE
+    _type TEXT;
+    _entity_id BIGINT;
+BEGIN
+    -- Determine which row to count against depending on event type
+    _entity_id := COALESCE(NEW.entity_id, OLD.entity_id);
+
+    SELECT content_type INTO _type
+    FROM master_index
+    WHERE id = _entity_id;
+
+    -- Update appropriate table based on entity type
+    IF _type = 'POST' THEN
+        UPDATE posts
+        SET images_count = (
+            SELECT COUNT(*) FROM images 
+            WHERE entity_id = _entity_id AND deleted_at IS NULL
+        )
+        WHERE id = _entity_id;
+
+    ELSIF _type = 'COMMENT' THEN
+        UPDATE comments
+        SET images_count = (
+            SELECT COUNT(*) FROM images 
+            WHERE entity_id = _entity_id AND deleted_at IS NULL
+        )
+        WHERE id = _entity_id;
+
+    ELSIF _type = 'EVENT' THEN
+        UPDATE events
+        SET images_count = (
+            SELECT COUNT(*) FROM images 
+            WHERE entity_id = _entity_id AND deleted_at IS NULL
+        )
+        WHERE id = _entity_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- AFTER INSERT/UPDATE/DELETE → Any change recalc counts automatically
+CREATE TRIGGER trg_images_count
+AFTER INSERT OR UPDATE OR DELETE ON images
+FOR EACH ROW EXECUTE FUNCTION update_entity_image_count();

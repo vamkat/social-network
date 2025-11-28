@@ -1,4 +1,4 @@
-package userservice
+package application
 
 import (
 	"testing"

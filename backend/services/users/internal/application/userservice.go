@@ -1,4 +1,4 @@
-package userservice
+package application
 
 import (
 	"social-network/services/users/internal/db/sqlc"
