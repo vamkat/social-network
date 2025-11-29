@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"social-network/gateway/utils"
+	"social-network/gateway/internal/utils"
 )
 
 func (h *Handlers) testHandler() http.HandlerFunc {
@@ -11,7 +11,7 @@ func (h *Handlers) testHandler() http.HandlerFunc {
 		fmt.Println("test handler called")
 
 		err := utils.WriteJSON(w, http.StatusOK, map[string]string{
-			"message": "this is a test",
+			"message": "this request id is: " + r.Context().Value("requestId").(string),
 		})
 
 		if err != nil {

@@ -3,11 +3,13 @@ package entry
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"social-network/gateway/handlers"
+	"social-network/gateway/internal/handlers"
+
 	"syscall"
 	"time"
 )
@@ -16,17 +18,26 @@ import (
 func Start() {
 
 	// set handlers
-	handlers := handlers.Handlers{}
+	handlers := handlers.NewHandlers()
+
+	// start gRPC connections
+	deferMe, err := handlers.Services.StartConnections()
+	if err != nil {
+		log.Fatalf("failed to start gRPC services connections: %v", err)
+	}
+	defer deferMe()
+
+	fmt.Println("gRPC services connections started")
 
 	// set server
 	var server http.Server
-	server.Handler = handlers.SetHandlers()
+	server.Handler = handlers.BuildMux()
 	server.Addr = "localhost:8081" //todo get from a config file or something
 
 	go func() {
-		log.Printf("Server running on https://%s\n", server.Addr)
+		log.Printf("Starting server on http://%s\n", server.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("ListenAndServeTLS failed: %v", err)
+			log.Fatalf("Failed to listen and serve: %v", err)
 		}
 	}()
 

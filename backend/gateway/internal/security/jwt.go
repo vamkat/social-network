@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"social-network/gateway/utils"
+	"social-network/gateway/internal/utils"
 	"strings"
 	"time"
 	// "platform.zone01.gr/git/kvamvasa/real-time-forum/backend/internal/utils"

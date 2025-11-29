@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"social-network/gateway/security"
-	"social-network/gateway/utils"
+	"social-network/gateway/internal/security"
+	"social-network/gateway/internal/utils"
 	"strings"
 )
 
@@ -45,6 +45,15 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		fmt.Println("method not allowed")
 		return false, r
+	})
+	return m
+}
+
+// Enrich context with request ID
+func (m *MiddleSystem) EnrichContext() *MiddleSystem {
+	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
+		ctx := context.WithValue(r.Context(), "requestId", utils.GenUUID())
+		return true, r.WithContext(ctx)
 	})
 	return m
 }

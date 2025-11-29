@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func WriteJSON(w http.ResponseWriter, code int, v any) error {
@@ -30,4 +32,9 @@ func B64urlEncode(data []byte) string {
 
 func B64urlDecode(s string) ([]byte, error) {
 	return base64.RawURLEncoding.DecodeString(s)
+}
+
+func GenUUID() string {
+	uuid := uuid.New()
+	return uuid.String()
 }

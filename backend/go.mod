@@ -6,8 +6,10 @@ toolchain go1.24.10
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.19.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/lib/pq v1.10.9
+	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/protobuf v1.36.10
 )
@@ -17,7 +19,6 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/speps/go-hashids/v2 v2.0.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/net v0.46.1-0.20251013234738-63d1a5100f82 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
