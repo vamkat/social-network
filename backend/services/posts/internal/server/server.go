@@ -10,6 +10,7 @@ import (
 	pb "social-network/shared/gen-go/users"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // Server struct placeholder
@@ -44,9 +45,10 @@ func (s *Server) RunGRPCServer() {
 	s.InitClients()
 
 	// Example call to UserClient
-	resp, err := s.Clients.UserClient.GetBasicUserInfo(context.Background(), &pb.UserBasicInfoRequest{
-		Id: 1234,
-	})
+	resp, err := s.Clients.UserClient.GetBasicUserInfo(
+		context.Background(),
+		&wrapperspb.Int64Value{Value: 1234},
+	)
 	if err != nil {
 		fmt.Println(err)
 	}

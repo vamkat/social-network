@@ -11,6 +11,8 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,20 +21,72 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_GetBasicUserInfo_FullMethodName = "/users.UserService/GetBasicUserInfo"
-	UserService_GetUserProfile_FullMethodName   = "/users.UserService/GetUserProfile"
-	UserService_RegisterUser_FullMethodName     = "/users.UserService/RegisterUser"
-	UserService_LoginUser_FullMethodName        = "/users.UserService/LoginUser"
+	UserService_RegisterUser_FullMethodName             = "/users.UserService/RegisterUser"
+	UserService_LoginUser_FullMethodName                = "/users.UserService/LoginUser"
+	UserService_UpdateUserPassword_FullMethodName       = "/users.UserService/UpdateUserPassword"
+	UserService_UpdateUserEmail_FullMethodName          = "/users.UserService/UpdateUserEmail"
+	UserService_GetFollowersPaginated_FullMethodName    = "/users.UserService/GetFollowersPaginated"
+	UserService_GetFollowingPaginated_FullMethodName    = "/users.UserService/GetFollowingPaginated"
+	UserService_FollowUser_FullMethodName               = "/users.UserService/FollowUser"
+	UserService_UnFollowUser_FullMethodName             = "/users.UserService/UnFollowUser"
+	UserService_HandleFollowRequest_FullMethodName      = "/users.UserService/HandleFollowRequest"
+	UserService_GetFollowingIds_FullMethodName          = "/users.UserService/GetFollowingIds"
+	UserService_GetFollowSuggestions_FullMethodName     = "/users.UserService/GetFollowSuggestions"
+	UserService_GetAllGroupsPaginated_FullMethodName    = "/users.UserService/GetAllGroupsPaginated"
+	UserService_GetUserGroupsPaginated_FullMethodName   = "/users.UserService/GetUserGroupsPaginated"
+	UserService_GetGroupInfo_FullMethodName             = "/users.UserService/GetGroupInfo"
+	UserService_GetGroupMembers_FullMethodName          = "/users.UserService/GetGroupMembers"
+	UserService_SearchGroups_FullMethodName             = "/users.UserService/SearchGroups"
+	UserService_InviteToGroup_FullMethodName            = "/users.UserService/InviteToGroup"
+	UserService_RequestJoinGroupOrCancel_FullMethodName = "/users.UserService/RequestJoinGroupOrCancel"
+	UserService_RespondToGroupInvite_FullMethodName     = "/users.UserService/RespondToGroupInvite"
+	UserService_HandleGroupJoinRequest_FullMethodName   = "/users.UserService/HandleGroupJoinRequest"
+	UserService_LeaveGroup_FullMethodName               = "/users.UserService/LeaveGroup"
+	UserService_CreateGroup_FullMethodName              = "/users.UserService/CreateGroup"
+	UserService_GetBasicUserInfo_FullMethodName         = "/users.UserService/GetBasicUserInfo"
+	UserService_GetUserProfile_FullMethodName           = "/users.UserService/GetUserProfile"
+	UserService_SearchUsers_FullMethodName              = "/users.UserService/SearchUsers"
+	UserService_UpdateUserProfile_FullMethodName        = "/users.UserService/UpdateUserProfile"
+	UserService_UpdateProfilePrivacy_FullMethodName     = "/users.UserService/UpdateProfilePrivacy"
 )
 
 // UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	GetBasicUserInfo(ctx context.Context, in *UserBasicInfoRequest, opts ...grpc.CallOption) (*UserBasicInfoResponse, error)
-	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
+	// Auth
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*User, error)
 	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*User, error)
+	UpdateUserPassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateUserEmail(ctx context.Context, in *UpdateEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Followers
+	GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error)
+	GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error)
+	FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*FollowUserResponse, error)
+	UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
+	HandleFollowRequest(ctx context.Context, in *HandleFollowRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*Int64Arr, error)
+	GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*ListUsers, error)
+	// GROUPS
+	GetAllGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
+	GetUserGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
+	GetGroupInfo(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*Group, error)
+	GetGroupMembers(ctx context.Context, in *GroupMembersRequest, opts ...grpc.CallOption) (*GroupUserArr, error)
+	SearchGroups(ctx context.Context, in *GroupSearchRequest, opts ...grpc.CallOption) (*GroupArr, error)
+	InviteToGroup(ctx context.Context, in *InviteToGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// rpc CancelInviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+	RequestJoinGroupOrCancel(ctx context.Context, in *GroupJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RespondToGroupInvite(ctx context.Context, in *HandleGroupInviteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	HandleGroupJoinRequest(ctx context.Context, in *HandleJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	LeaveGroup(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
+	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
+	// Profile
+	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error)
+	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
+	SearchUsers(ctx context.Context, in *UserProfileRequest, opts ...grpc.CallOption) (*ListUsers, error)
+	UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
+	UpdateProfilePrivacy(ctx context.Context, in *UpdateProfilePrivacyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type userServiceClient struct {
@@ -41,26 +95,6 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
-}
-
-func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *UserBasicInfoRequest, opts ...grpc.CallOption) (*UserBasicInfoResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserBasicInfoResponse)
-	err := c.cc.Invoke(ctx, UserService_GetBasicUserInfo_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserProfileResponse)
-	err := c.cc.Invoke(ctx, UserService_GetUserProfile_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*User, error) {
@@ -83,14 +117,293 @@ func (c *userServiceClient) LoginUser(ctx context.Context, in *LoginRequest, opt
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateUserPassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserPassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateUserEmail(ctx context.Context, in *UpdateEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsers)
+	err := c.cc.Invoke(ctx, UserService_GetFollowersPaginated_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsers)
+	err := c.cc.Invoke(ctx, UserService_GetFollowingPaginated_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*FollowUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FollowUserResponse)
+	err := c.cc.Invoke(ctx, UserService_FollowUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(wrapperspb.BoolValue)
+	err := c.cc.Invoke(ctx, UserService_UnFollowUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) HandleFollowRequest(ctx context.Context, in *HandleFollowRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_HandleFollowRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*Int64Arr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Int64Arr)
+	err := c.cc.Invoke(ctx, UserService_GetFollowingIds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*ListUsers, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsers)
+	err := c.cc.Invoke(ctx, UserService_GetFollowSuggestions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetAllGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GroupArr)
+	err := c.cc.Invoke(ctx, UserService_GetAllGroupsPaginated_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GroupArr)
+	err := c.cc.Invoke(ctx, UserService_GetUserGroupsPaginated_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetGroupInfo(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*Group, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Group)
+	err := c.cc.Invoke(ctx, UserService_GetGroupInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetGroupMembers(ctx context.Context, in *GroupMembersRequest, opts ...grpc.CallOption) (*GroupUserArr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GroupUserArr)
+	err := c.cc.Invoke(ctx, UserService_GetGroupMembers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) SearchGroups(ctx context.Context, in *GroupSearchRequest, opts ...grpc.CallOption) (*GroupArr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GroupArr)
+	err := c.cc.Invoke(ctx, UserService_SearchGroups_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) InviteToGroup(ctx context.Context, in *InviteToGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_InviteToGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) RequestJoinGroupOrCancel(ctx context.Context, in *GroupJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_RequestJoinGroupOrCancel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) RespondToGroupInvite(ctx context.Context, in *HandleGroupInviteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_RespondToGroupInvite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) HandleGroupJoinRequest(ctx context.Context, in *HandleJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_HandleGroupJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) LeaveGroup(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_LeaveGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(wrapperspb.Int64Value)
+	err := c.cc.Invoke(ctx, UserService_CreateGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(User)
+	err := c.cc.Invoke(ctx, UserService_GetBasicUserInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserProfileResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) SearchUsers(ctx context.Context, in *UserProfileRequest, opts ...grpc.CallOption) (*ListUsers, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsers)
+	err := c.cc.Invoke(ctx, UserService_SearchUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserProfileResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateProfilePrivacy(ctx context.Context, in *UpdateProfilePrivacyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_UpdateProfilePrivacy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
-	GetBasicUserInfo(context.Context, *UserBasicInfoRequest) (*UserBasicInfoResponse, error)
-	GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error)
+	// Auth
 	RegisterUser(context.Context, *RegisterUserRequest) (*User, error)
 	LoginUser(context.Context, *LoginRequest) (*User, error)
+	UpdateUserPassword(context.Context, *UpdatePasswordRequest) (*emptypb.Empty, error)
+	UpdateUserEmail(context.Context, *UpdateEmailRequest) (*emptypb.Empty, error)
+	// Followers
+	GetFollowersPaginated(context.Context, *Pagination) (*ListUsers, error)
+	GetFollowingPaginated(context.Context, *Pagination) (*ListUsers, error)
+	FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error)
+	UnFollowUser(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error)
+	HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error)
+	GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*Int64Arr, error)
+	GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*ListUsers, error)
+	// GROUPS
+	GetAllGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
+	GetUserGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
+	GetGroupInfo(context.Context, *GeneralGroupRequest) (*Group, error)
+	GetGroupMembers(context.Context, *GroupMembersRequest) (*GroupUserArr, error)
+	SearchGroups(context.Context, *GroupSearchRequest) (*GroupArr, error)
+	InviteToGroup(context.Context, *InviteToGroupRequest) (*emptypb.Empty, error)
+	// rpc CancelInviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+	RequestJoinGroupOrCancel(context.Context, *GroupJoinRequest) (*emptypb.Empty, error)
+	RespondToGroupInvite(context.Context, *HandleGroupInviteRequest) (*emptypb.Empty, error)
+	HandleGroupJoinRequest(context.Context, *HandleJoinRequest) (*emptypb.Empty, error)
+	LeaveGroup(context.Context, *GeneralGroupRequest) (*emptypb.Empty, error)
+	// rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
+	CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error)
+	// Profile
+	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error)
+	GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error)
+	SearchUsers(context.Context, *UserProfileRequest) (*ListUsers, error)
+	UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error)
+	UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -101,17 +414,86 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
-func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *UserBasicInfoRequest) (*UserBasicInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBasicUserInfo not implemented")
-}
-func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
-}
 func (UnimplementedUserServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
 }
 func (UnimplementedUserServiceServer) LoginUser(context.Context, *LoginRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoginUser not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserPassword(context.Context, *UpdatePasswordRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserPassword not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserEmail(context.Context, *UpdateEmailRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserEmail not implemented")
+}
+func (UnimplementedUserServiceServer) GetFollowersPaginated(context.Context, *Pagination) (*ListUsers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFollowersPaginated not implemented")
+}
+func (UnimplementedUserServiceServer) GetFollowingPaginated(context.Context, *Pagination) (*ListUsers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFollowingPaginated not implemented")
+}
+func (UnimplementedUserServiceServer) FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FollowUser not implemented")
+}
+func (UnimplementedUserServiceServer) UnFollowUser(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnFollowUser not implemented")
+}
+func (UnimplementedUserServiceServer) HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HandleFollowRequest not implemented")
+}
+func (UnimplementedUserServiceServer) GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*Int64Arr, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFollowingIds not implemented")
+}
+func (UnimplementedUserServiceServer) GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*ListUsers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFollowSuggestions not implemented")
+}
+func (UnimplementedUserServiceServer) GetAllGroupsPaginated(context.Context, *Pagination) (*GroupArr, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllGroupsPaginated not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserGroupsPaginated(context.Context, *Pagination) (*GroupArr, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserGroupsPaginated not implemented")
+}
+func (UnimplementedUserServiceServer) GetGroupInfo(context.Context, *GeneralGroupRequest) (*Group, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGroupInfo not implemented")
+}
+func (UnimplementedUserServiceServer) GetGroupMembers(context.Context, *GroupMembersRequest) (*GroupUserArr, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGroupMembers not implemented")
+}
+func (UnimplementedUserServiceServer) SearchGroups(context.Context, *GroupSearchRequest) (*GroupArr, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchGroups not implemented")
+}
+func (UnimplementedUserServiceServer) InviteToGroup(context.Context, *InviteToGroupRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InviteToGroup not implemented")
+}
+func (UnimplementedUserServiceServer) RequestJoinGroupOrCancel(context.Context, *GroupJoinRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestJoinGroupOrCancel not implemented")
+}
+func (UnimplementedUserServiceServer) RespondToGroupInvite(context.Context, *HandleGroupInviteRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RespondToGroupInvite not implemented")
+}
+func (UnimplementedUserServiceServer) HandleGroupJoinRequest(context.Context, *HandleJoinRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HandleGroupJoinRequest not implemented")
+}
+func (UnimplementedUserServiceServer) LeaveGroup(context.Context, *GeneralGroupRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LeaveGroup not implemented")
+}
+func (UnimplementedUserServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateGroup not implemented")
+}
+func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBasicUserInfo not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
+}
+func (UnimplementedUserServiceServer) SearchUsers(context.Context, *UserProfileRequest) (*ListUsers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchUsers not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserProfile not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfilePrivacy not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -132,42 +514,6 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UserService_ServiceDesc, srv)
-}
-
-func _UserService_GetBasicUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserBasicInfoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).GetBasicUserInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_GetBasicUserInfo_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetBasicUserInfo(ctx, req.(*UserBasicInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_GetUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserProfileRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).GetUserProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_GetUserProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUserProfile(ctx, req.(*GetUserProfileRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -206,6 +552,456 @@ func _UserService_LoginUser_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateUserPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserPassword(ctx, req.(*UpdatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateUserEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserEmail(ctx, req.(*UpdateEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetFollowersPaginated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pagination)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetFollowersPaginated(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetFollowersPaginated_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetFollowersPaginated(ctx, req.(*Pagination))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetFollowingPaginated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pagination)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetFollowingPaginated(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetFollowingPaginated_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetFollowingPaginated(ctx, req.(*Pagination))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_FollowUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FollowUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).FollowUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_FollowUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).FollowUser(ctx, req.(*FollowUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UnFollowUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FollowUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UnFollowUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UnFollowUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UnFollowUser(ctx, req.(*FollowUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_HandleFollowRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleFollowRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).HandleFollowRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_HandleFollowRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).HandleFollowRequest(ctx, req.(*HandleFollowRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetFollowingIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.Int64Value)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetFollowingIds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetFollowingIds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetFollowingIds(ctx, req.(*wrapperspb.Int64Value))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetFollowSuggestions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.Int64Value)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetFollowSuggestions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetFollowSuggestions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetFollowSuggestions(ctx, req.(*wrapperspb.Int64Value))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetAllGroupsPaginated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pagination)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetAllGroupsPaginated(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetAllGroupsPaginated_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetAllGroupsPaginated(ctx, req.(*Pagination))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserGroupsPaginated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pagination)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserGroupsPaginated(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserGroupsPaginated_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserGroupsPaginated(ctx, req.(*Pagination))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetGroupInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GeneralGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetGroupInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetGroupInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetGroupInfo(ctx, req.(*GeneralGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetGroupMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetGroupMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetGroupMembers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetGroupMembers(ctx, req.(*GroupMembersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_SearchGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).SearchGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_SearchGroups_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).SearchGroups(ctx, req.(*GroupSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_InviteToGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InviteToGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).InviteToGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_InviteToGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).InviteToGroup(ctx, req.(*InviteToGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_RequestJoinGroupOrCancel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupJoinRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RequestJoinGroupOrCancel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RequestJoinGroupOrCancel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RequestJoinGroupOrCancel(ctx, req.(*GroupJoinRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_RespondToGroupInvite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleGroupInviteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RespondToGroupInvite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RespondToGroupInvite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RespondToGroupInvite(ctx, req.(*HandleGroupInviteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_HandleGroupJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleJoinRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).HandleGroupJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_HandleGroupJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).HandleGroupJoinRequest(ctx, req.(*HandleJoinRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_LeaveGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GeneralGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).LeaveGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_LeaveGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).LeaveGroup(ctx, req.(*GeneralGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_CreateGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).CreateGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_CreateGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).CreateGroup(ctx, req.(*CreateGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetBasicUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.Int64Value)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetBasicUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetBasicUserInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetBasicUserInfo(ctx, req.(*wrapperspb.Int64Value))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserProfile(ctx, req.(*GetUserProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_SearchUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).SearchUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_SearchUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).SearchUsers(ctx, req.(*UserProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserProfile(ctx, req.(*UpdateProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateProfilePrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProfilePrivacyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateProfilePrivacy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateProfilePrivacy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateProfilePrivacy(ctx, req.(*UpdateProfilePrivacyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +1009,94 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "users.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RegisterUser",
+			Handler:    _UserService_RegisterUser_Handler,
+		},
+		{
+			MethodName: "LoginUser",
+			Handler:    _UserService_LoginUser_Handler,
+		},
+		{
+			MethodName: "UpdateUserPassword",
+			Handler:    _UserService_UpdateUserPassword_Handler,
+		},
+		{
+			MethodName: "UpdateUserEmail",
+			Handler:    _UserService_UpdateUserEmail_Handler,
+		},
+		{
+			MethodName: "GetFollowersPaginated",
+			Handler:    _UserService_GetFollowersPaginated_Handler,
+		},
+		{
+			MethodName: "GetFollowingPaginated",
+			Handler:    _UserService_GetFollowingPaginated_Handler,
+		},
+		{
+			MethodName: "FollowUser",
+			Handler:    _UserService_FollowUser_Handler,
+		},
+		{
+			MethodName: "UnFollowUser",
+			Handler:    _UserService_UnFollowUser_Handler,
+		},
+		{
+			MethodName: "HandleFollowRequest",
+			Handler:    _UserService_HandleFollowRequest_Handler,
+		},
+		{
+			MethodName: "GetFollowingIds",
+			Handler:    _UserService_GetFollowingIds_Handler,
+		},
+		{
+			MethodName: "GetFollowSuggestions",
+			Handler:    _UserService_GetFollowSuggestions_Handler,
+		},
+		{
+			MethodName: "GetAllGroupsPaginated",
+			Handler:    _UserService_GetAllGroupsPaginated_Handler,
+		},
+		{
+			MethodName: "GetUserGroupsPaginated",
+			Handler:    _UserService_GetUserGroupsPaginated_Handler,
+		},
+		{
+			MethodName: "GetGroupInfo",
+			Handler:    _UserService_GetGroupInfo_Handler,
+		},
+		{
+			MethodName: "GetGroupMembers",
+			Handler:    _UserService_GetGroupMembers_Handler,
+		},
+		{
+			MethodName: "SearchGroups",
+			Handler:    _UserService_SearchGroups_Handler,
+		},
+		{
+			MethodName: "InviteToGroup",
+			Handler:    _UserService_InviteToGroup_Handler,
+		},
+		{
+			MethodName: "RequestJoinGroupOrCancel",
+			Handler:    _UserService_RequestJoinGroupOrCancel_Handler,
+		},
+		{
+			MethodName: "RespondToGroupInvite",
+			Handler:    _UserService_RespondToGroupInvite_Handler,
+		},
+		{
+			MethodName: "HandleGroupJoinRequest",
+			Handler:    _UserService_HandleGroupJoinRequest_Handler,
+		},
+		{
+			MethodName: "LeaveGroup",
+			Handler:    _UserService_LeaveGroup_Handler,
+		},
+		{
+			MethodName: "CreateGroup",
+			Handler:    _UserService_CreateGroup_Handler,
+		},
 		{
 			MethodName: "GetBasicUserInfo",
 			Handler:    _UserService_GetBasicUserInfo_Handler,
@@ -222,12 +1106,16 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_GetUserProfile_Handler,
 		},
 		{
-			MethodName: "RegisterUser",
-			Handler:    _UserService_RegisterUser_Handler,
+			MethodName: "SearchUsers",
+			Handler:    _UserService_SearchUsers_Handler,
 		},
 		{
-			MethodName: "LoginUser",
-			Handler:    _UserService_LoginUser_Handler,
+			MethodName: "UpdateUserProfile",
+			Handler:    _UserService_UpdateUserProfile_Handler,
+		},
+		{
+			MethodName: "UpdateProfilePrivacy",
+			Handler:    _UserService_UpdateProfilePrivacy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
