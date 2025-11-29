@@ -147,10 +147,10 @@ services:
        - DB_NAME=social_notifications
        - SSL_MODE=disable
     depends_on:
-      posts-db:
+      notifications-db:
         condition: service_healthy
     ports:
-      - "8083:8080" 
+      - "50053:50051" 
 
 
   notifications-db:

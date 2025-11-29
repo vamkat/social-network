@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package notifications;
+
+option go_package = "social-network/shared/gen/notifications;notifications";
+
+service NotificationService {
+  rpc GetNotifications (GetNotificationsRequest) returns (GetNotificationsResponse);
+  rpc MarkAsRead (MarkAsReadRequest) returns (MarkAsReadResponse);
+  rpc CreateNotification (CreateNotificationRequest) returns (CreateNotificationResponse);
+  rpc MarkNotificationAsActed (MarkNotificationAsActedRequest) returns (MarkAsActedResponse);
+}
+
+message Notification {
+  int64 id = 1;
+  int64 user_id = 2;
+  NotificationType type = 3;
+  SourceService source_service = 4;
+  int64 source_entity_id = 5;
+  bool seen = 6;
+  bool needs_action = 7;
+  bool acted = 8;
+  map<string, string> payload = 9;
+  int64 created_at = 10;  // Unix timestamp
+  int64 expires_at = 11;  // Unix timestamp
+}
+
+enum NotificationType {
+  NEW_FOLLOWER = 0;
+  FOLLOW_REQUEST = 1;
+  GROUP_INVITE = 2;
+  GROUP_JOIN_REQUEST = 3;
+  NEW_EVENT = 4;
+  NEW_MESSAGE = 5;
+  POST_REPLY = 6;
+  LIKE = 7;
+}
+
+enum SourceService {
+  USERS = 0;
+  CHAT = 1;
+  POSTS = 2;
+}
+
+message GetNotificationsRequest {
+  int64 user_id = 1;
+  optional bool status = 2;  // nil = all, true = read, false = unread
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message GetNotificationsResponse {
+  repeated Notification notifications = 1;
+  int64 total_count = 2;
+}
+
+message MarkAsReadRequest {
+  int64 user_id = 1;
+  repeated int64 notification_ids = 2;
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+  int32 updated_count = 2;
+}
+
+message CreateNotificationRequest {
+  int64 user_id = 1;
+  NotificationType type = 2;
+  SourceService source_service = 3;
+  int64 source_entity_id = 4;
+  map<string, string> payload = 5;
+  bool needs_action = 6;
+}
+
+message CreateNotificationResponse {
+  int64 id = 1;
+  bool success = 2;
+}
+
+message MarkNotificationAsActedRequest {
+  int64 notification_id = 1;
+}
+
+message MarkAsActedResponse {
+  bool success = 1;
+}
