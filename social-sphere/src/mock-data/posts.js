@@ -1,5 +1,5 @@
-export const getMockPosts = () => {
-    return [
+export const getMockPosts = (offset = 0, limit = 10) => {
+    const posts = [
         {
             ID: "1",
             BasicUserInfo: {
@@ -155,8 +155,12 @@ export const getMockPosts = () => {
             IsHearted: false,
         }
     ];
+
+    return posts.slice(offset, offset + limit);
 }
 
-export const GetPostsByUserId = (userId) => {
-    return getMockPosts().filter(post => post.BasicUserInfo.UserID === userId);
+export const GetPostsByUserId = (userId, offset = 0, limit = 10) => {
+    const allPosts = getMockPosts(0, 1000);
+    const userPosts = allPosts.filter(post => post.BasicUserInfo.UserID === userId);
+    return userPosts.slice(offset, offset + limit);
 }
