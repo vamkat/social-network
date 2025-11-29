@@ -7,8 +7,7 @@ import (
 	"net"
 	"time"
 
-	commonpb "social-network/shared/gen/common"
-	pb "social-network/shared/gen/users"
+	pb "social-network/shared/gen-go/users"
 
 	"google.golang.org/grpc"
 )
@@ -45,7 +44,7 @@ func (s *Server) RunGRPCServer() {
 	s.InitClients()
 
 	// Example call to UserClient
-	resp, err := s.Clients.UserClient.GetBasicUserInfo(context.Background(), &commonpb.UserId{
+	resp, err := s.Clients.UserClient.GetBasicUserInfo(context.Background(), &pb.UserBasicInfoRequest{
 		Id: 1234,
 	})
 	if err != nil {

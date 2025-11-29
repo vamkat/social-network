@@ -5,7 +5,7 @@ import (
 	"net"
 
 	us "social-network/services/users/internal/application"
-	pb "social-network/shared/gen/users"
+	pb "social-network/shared/gen-go/users"
 
 	"google.golang.org/grpc"
 )

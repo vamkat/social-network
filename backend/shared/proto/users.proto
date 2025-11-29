@@ -4,15 +4,74 @@ package users;
 
 option go_package = "social-network/shared/gen/users;users";
 
-import "common.proto";
+import "google/protobuf/timestamp.proto";
 
 service UserService {
-  rpc GetBasicUserInfo (common.UserId) returns (User);
+  rpc GetBasicUserInfo (UserBasicInfoRequest) returns (UserBasicInfoResponse);
+  rpc GetUserProfile (GetUserProfileRequest) returns (UserProfileResponse);
+  rpc RegisterUser(RegisterUserRequest) returns (User);
+  rpc LoginUser(LoginRequest) returns (User);
 }
 
+// COMMON
 message User {
+  int64 user_id = 1;
+  string username = 2;
+  string avatar = 3;
+}
+
+// BASIC USER INFO
+message UserBasicInfoRequest {
+  int64 id = 1;
+}
+
+message UserBasicInfoResponse {
   int64 userId = 1;
   string user_name = 2;
   string avatar = 3;
   bool public_profile = 4;
+}
+
+// GET USER PROFILE
+message GetUserProfileRequest {
+  int64 user_id = 1;
+  int64 requester_id = 2;
+}
+
+message UserProfileResponse {
+  int64 user_id = 1;
+  string username = 2;
+  string first_name = 3;
+  string last_name = 4;
+  google.protobuf.Timestamp date_of_birth = 5;
+  string avatar = 6;
+  string about = 7;
+  bool public = 8;
+  google.protobuf.Timestamp created_at = 9;
+  int64 followers_count = 10;
+  int64 following_count = 11;
+  int64 groups_count = 12;
+  int64 owned_groups_count = 13;
+  bool viewer_is_following = 14;
+  bool own_profile = 15;
+  bool is_pending = 16;
+}
+
+// REGISTER USER
+message RegisterUserRequest {
+  string username = 1;
+  string first_name = 2;
+  string last_name = 3;
+  google.protobuf.Timestamp date_of_birth = 4;
+  string avatar = 5;
+  string about = 6;
+  bool public = 7;
+  string email = 8;
+  string password = 9;
+}
+
+// LOGIN 
+message LoginRequest {
+  string identifier = 1;
+  string password =2;
 }
