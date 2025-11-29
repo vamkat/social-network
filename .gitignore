@@ -13,6 +13,8 @@ downloads
 idea
 /.idea
 /idea
+backend/services/post-service
+
 
 downloads.txt
 wget

@@ -1,28 +1,28 @@
-# ---- Build stage ----
 FROM social-network/go-base AS build
 
 WORKDIR /app
 
-# Copy root module files
-COPY ../../go.mod ../../go.sum ./
-RUN go mod download
+COPY . .
 
-# Copy entire repo so shared/ and service code are available
-COPY ../../ .
+RUN go build -o chat_service ./services/chat/cmd/server
 
-# Build chat service binary
-RUN go build -o chat_service ./services/chat
+RUN go build -o migrate ./services/chat/cmd/migrate
 
-# ---- Runtime stage ----
-FROM alpine:latest
+FROM alpine:3.20
+
+RUN apk add --no-cache postgresql-client
 
 WORKDIR /app
 
-# Copy built binary and migrations
 COPY --from=build /app/chat_service .
-COPY --from=build /app/services/chat/migrations ./migrations
+COPY --from=build /app/migrate .
+COPY --from=build /app/services/chat/internal/db/migrations ./migrations
+# COPY --from=build /app/services/chat/internal/db/seeds ./seeds
 
-# Env vars (can also be set in docker-compose)
-ENV DATABASE_URL=postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
+COPY services/chat/entrypoint.sh /app/entrypoint.sh
 
+# RUN chmod +x /app/seeds/seed.sh 
+ RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["./chat_service"]

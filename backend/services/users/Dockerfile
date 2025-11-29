@@ -19,6 +19,10 @@ COPY --from=build /app/migrate .
 COPY --from=build /app/services/users/internal/db/migrations ./migrations
 COPY --from=build /app/services/users/internal/db/seeds ./seeds
 
-RUN chmod +x /app/seeds/seed.sh
+COPY services/users/entrypoint.sh /app/entrypoint.sh
 
+RUN chmod +x /app/seeds/seed.sh && \
+    chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["./users_service"]

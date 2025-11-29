@@ -150,7 +150,7 @@ services:
       notifications-db:
         condition: service_healthy
     ports:
-      - "8083:8080" 
+      - "50054:50051" 
 
 
   notifications-db:
