@@ -15,11 +15,13 @@ type Server struct {
 	pb.UnimplementedUserServiceServer
 	Clients Clients
 	Port    string
-	// Service *us.UserService
+	// Service
+	// Define here the db service so your hanlders can access it
 }
 
 // Holds connections to clients
 type Clients struct {
+	// define here all grpc connections
 }
 
 // RunGRPCServer starts the gRPC server and blocks
