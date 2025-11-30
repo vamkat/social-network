@@ -39,7 +39,7 @@ service UserService {
   // Profile
   rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (User);
   rpc GetUserProfile (GetUserProfileRequest) returns (UserProfileResponse);
-  rpc SearchUsers (UserProfileRequest) returns (ListUsers);
+  rpc SearchUsers (UserSearchRequest) returns (ListUsers);
   rpc UpdateUserProfile (UpdateProfileRequest) returns (UserProfileResponse);
   rpc UpdateProfilePrivacy (UpdateProfilePrivacyRequest) returns (google.protobuf.Empty);
 
@@ -234,9 +234,9 @@ message GetUserProfileRequest {
   int64 requester_id = 2;
 }
 
-message UserProfileRequest {
-    int64 user_id = 1;
-    int64 requester_id = 2;
+message UserSearchRequest {
+  string search_term = 1;
+  int32 limit = 2;
 }
 
 message UpdateProfileRequest {

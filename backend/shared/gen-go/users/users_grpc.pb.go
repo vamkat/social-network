@@ -84,7 +84,7 @@ type UserServiceClient interface {
 	// Profile
 	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error)
 	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
-	SearchUsers(ctx context.Context, in *UserProfileRequest, opts ...grpc.CallOption) (*ListUsers, error)
+	SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*ListUsers, error)
 	UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
 	UpdateProfilePrivacy(ctx context.Context, in *UpdateProfilePrivacyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -337,7 +337,7 @@ func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfi
 	return out, nil
 }
 
-func (c *userServiceClient) SearchUsers(ctx context.Context, in *UserProfileRequest, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *userServiceClient) SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListUsers)
 	err := c.cc.Invoke(ctx, UserService_SearchUsers_FullMethodName, in, out, cOpts...)
@@ -401,7 +401,7 @@ type UserServiceServer interface {
 	// Profile
 	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error)
 	GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error)
-	SearchUsers(context.Context, *UserProfileRequest) (*ListUsers, error)
+	SearchUsers(context.Context, *UserSearchRequest) (*ListUsers, error)
 	UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error)
 	UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
@@ -486,7 +486,7 @@ func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *wrapper
 func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
 }
-func (UnimplementedUserServiceServer) SearchUsers(context.Context, *UserProfileRequest) (*ListUsers, error) {
+func (UnimplementedUserServiceServer) SearchUsers(context.Context, *UserSearchRequest) (*ListUsers, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchUsers not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error) {
@@ -949,7 +949,7 @@ func _UserService_GetUserProfile_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _UserService_SearchUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserProfileRequest)
+	in := new(UserSearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -961,7 +961,7 @@ func _UserService_SearchUsers_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: UserService_SearchUsers_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).SearchUsers(ctx, req.(*UserProfileRequest))
+		return srv.(UserServiceServer).SearchUsers(ctx, req.(*UserSearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

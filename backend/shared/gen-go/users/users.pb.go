@@ -1782,28 +1782,28 @@ func (x *GetUserProfileRequest) GetRequesterId() int64 {
 	return 0
 }
 
-type UserProfileRequest struct {
+type UserSearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	RequesterId   int64                  `protobuf:"varint,2,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"`
+	SearchTerm    string                 `protobuf:"bytes,1,opt,name=search_term,json=searchTerm,proto3" json:"search_term,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UserProfileRequest) Reset() {
-	*x = UserProfileRequest{}
+func (x *UserSearchRequest) Reset() {
+	*x = UserSearchRequest{}
 	mi := &file_users_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UserProfileRequest) String() string {
+func (x *UserSearchRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UserProfileRequest) ProtoMessage() {}
+func (*UserSearchRequest) ProtoMessage() {}
 
-func (x *UserProfileRequest) ProtoReflect() protoreflect.Message {
+func (x *UserSearchRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_users_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1815,21 +1815,21 @@ func (x *UserProfileRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UserProfileRequest.ProtoReflect.Descriptor instead.
-func (*UserProfileRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UserSearchRequest.ProtoReflect.Descriptor instead.
+func (*UserSearchRequest) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *UserProfileRequest) GetUserId() int64 {
+func (x *UserSearchRequest) GetSearchTerm() string {
 	if x != nil {
-		return x.UserId
+		return x.SearchTerm
 	}
-	return 0
+	return ""
 }
 
-func (x *UserProfileRequest) GetRequesterId() int64 {
+func (x *UserSearchRequest) GetLimit() int32 {
 	if x != nil {
-		return x.RequesterId
+		return x.Limit
 	}
 	return 0
 }
@@ -2128,10 +2128,11 @@ const file_users_proto_rawDesc = "" +
 	"\x0epublic_profile\x18\x04 \x01(\bR\rpublicProfile\"S\n" +
 	"\x15GetUserProfileRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12!\n" +
-	"\frequester_id\x18\x02 \x01(\x03R\vrequesterId\"P\n" +
-	"\x12UserProfileRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12!\n" +
-	"\frequester_id\x18\x02 \x01(\x03R\vrequesterId\"\xf5\x01\n" +
+	"\frequester_id\x18\x02 \x01(\x03R\vrequesterId\"J\n" +
+	"\x11UserSearchRequest\x12\x1f\n" +
+	"\vsearch_term\x18\x01 \x01(\tR\n" +
+	"searchTerm\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\xf5\x01\n" +
 	"\x14UpdateProfileRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
@@ -2143,7 +2144,7 @@ const file_users_proto_rawDesc = "" +
 	"\x05about\x18\a \x01(\tR\x05about\"N\n" +
 	"\x1bUpdateProfilePrivacyRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x16\n" +
-	"\x06public\x18\x02 \x01(\bR\x06public2\xbc\x0e\n" +
+	"\x06public\x18\x02 \x01(\bR\x06public2\xbb\x0e\n" +
 	"\vUserService\x127\n" +
 	"\fRegisterUser\x12\x1a.users.RegisterUserRequest\x1a\v.users.User\x12-\n" +
 	"\tLoginUser\x12\x13.users.LoginRequest\x1a\v.users.User\x12J\n" +
@@ -2170,8 +2171,8 @@ const file_users_proto_rawDesc = "" +
 	"LeaveGroup\x12\x1a.users.GeneralGroupRequest\x1a\x16.google.protobuf.Empty\x12E\n" +
 	"\vCreateGroup\x12\x19.users.CreateGroupRequest\x1a\x1b.google.protobuf.Int64Value\x12<\n" +
 	"\x10GetBasicUserInfo\x12\x1b.google.protobuf.Int64Value\x1a\v.users.User\x12J\n" +
-	"\x0eGetUserProfile\x12\x1c.users.GetUserProfileRequest\x1a\x1a.users.UserProfileResponse\x12:\n" +
-	"\vSearchUsers\x12\x19.users.UserProfileRequest\x1a\x10.users.ListUsers\x12L\n" +
+	"\x0eGetUserProfile\x12\x1c.users.GetUserProfileRequest\x1a\x1a.users.UserProfileResponse\x129\n" +
+	"\vSearchUsers\x12\x18.users.UserSearchRequest\x1a\x10.users.ListUsers\x12L\n" +
 	"\x11UpdateUserProfile\x12\x1b.users.UpdateProfileRequest\x1a\x1a.users.UserProfileResponse\x12R\n" +
 	"\x14UpdateProfilePrivacy\x12\".users.UpdateProfilePrivacyRequest\x1a\x16.google.protobuf.EmptyB'Z%social-network/shared/gen/users;usersb\x06proto3"
 
@@ -2216,7 +2217,7 @@ var file_users_proto_goTypes = []any{
 	(*CreateGroupRequest)(nil),          // 24: users.CreateGroupRequest
 	(*UserBasicInfoResponse)(nil),       // 25: users.UserBasicInfoResponse
 	(*GetUserProfileRequest)(nil),       // 26: users.GetUserProfileRequest
-	(*UserProfileRequest)(nil),          // 27: users.UserProfileRequest
+	(*UserSearchRequest)(nil),           // 27: users.UserSearchRequest
 	(*UpdateProfileRequest)(nil),        // 28: users.UpdateProfileRequest
 	(*UpdateProfilePrivacyRequest)(nil), // 29: users.UpdateProfilePrivacyRequest
 	(*timestamppb.Timestamp)(nil),       // 30: google.protobuf.Timestamp
@@ -2256,7 +2257,7 @@ var file_users_proto_depIdxs = []int32{
 	24, // 28: users.UserService.CreateGroup:input_type -> users.CreateGroupRequest
 	31, // 29: users.UserService.GetBasicUserInfo:input_type -> google.protobuf.Int64Value
 	26, // 30: users.UserService.GetUserProfile:input_type -> users.GetUserProfileRequest
-	27, // 31: users.UserService.SearchUsers:input_type -> users.UserProfileRequest
+	27, // 31: users.UserService.SearchUsers:input_type -> users.UserSearchRequest
 	28, // 32: users.UserService.UpdateUserProfile:input_type -> users.UpdateProfileRequest
 	29, // 33: users.UserService.UpdateProfilePrivacy:input_type -> users.UpdateProfilePrivacyRequest
 	0,  // 34: users.UserService.RegisterUser:output_type -> users.User
