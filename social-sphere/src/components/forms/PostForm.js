@@ -100,15 +100,16 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                 )}
 
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    {/* Just UI placeholders for now */}
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                        [+] <span>Add photo</span>
+                        📷 <span>Add photo</span>
+                    </div>
+                    {/* <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
+                        📊 <span>Create poll</span>
                     </div>
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                        [#] <span>Create poll</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                        [*] <span>Start event</span>
-                    </div>
+                        📅 <span>Start event</span>
+                    </div> */}
                     <div className="ml-auto flex items-center gap-2">
                         <button
                             type="button"
