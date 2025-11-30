@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"social-network/services/users/internal/db/sqlc"
 	"time"
 
@@ -26,14 +27,13 @@ func (s *UserService) GetBasicUserInfo(ctx context.Context, userId int64) (resp 
 }
 
 func (s *UserService) GetUserProfile(ctx context.Context, req UserProfileRequest) (UserProfileResponse, error) {
-
 	var profile UserProfileResponse
 
 	row, err := s.db.GetUserProfile(ctx, req.UserId)
 	if err != nil {
+		fmt.Println(err)
 		return UserProfileResponse{}, err
 	}
-
 	dob := time.Time{}
 	if row.DateOfBirth.Valid {
 		dob = row.DateOfBirth.Time

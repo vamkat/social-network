@@ -31,7 +31,7 @@ func (s *Server) RunGRPCServer() {
 
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterUserServiceServer(grpcServer, &Server{})
+	pb.RegisterUserServiceServer(grpcServer, s)
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	if err := grpcServer.Serve(lis); err != nil {
