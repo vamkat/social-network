@@ -1,9 +1,6 @@
----------------------------------------------------------------
 -- name: GetPostById :one
-------------------------------------------------------------------
 SELECT
     p.id,
-    p.post_title,
     p.post_body,
     p.creator_id,
     p.group_id,
@@ -51,12 +48,9 @@ WHERE p.id = $1
       );
 
 
------------------------------------------------------------------------------
 -- name: GetGroupPostsPaginated :many
--------------------------------------------------------------------------------
 SELECT
     p.id,
-    p.post_title,
     p.post_body,
     p.creator_id,
     p.group_id,
@@ -92,12 +86,9 @@ GROUP BY p.id
 ORDER BY p.created_at DESC               -- newest first
 LIMIT $3 OFFSET $4;                      -- pagination
 
-------------------------------------------------------------------------------
 -- name: GetUserPostsPaginated :many
-------------------------------------------------------------------------------
 SELECT
     p.id,
-    p.post_title,
     p.post_body,
     p.creator_id,
     p.comments_count,
@@ -147,12 +138,9 @@ GROUP BY p.id
 ORDER BY p.created_at DESC
 LIMIT $3 OFFSET $4;
 
------------------------------------------------------------------------
 -- name: GetMostPopularPostInGroup :one
--------------------------------------------------------------------------
 SELECT
     p.id,
-    p.post_title,
     p.post_body,
     p.creator_id,
     p.group_id,
@@ -182,89 +170,37 @@ WHERE p.group_id = $1
 ORDER BY popularity_score DESC, p.created_at DESC
 LIMIT 1;
 
------------------------------------------------------
--- create post
------------------------------------------------------
-BEGIN;
+-- name: CreatePost :one
+INSERT INTO posts (post_body, creator_id, group_id, audience)
+VALUES ($1, $2, $3, $4)
+RETURNING id;
 
--- Insert post
-WITH new_post AS (
-  INSERT INTO posts (post_title, post_body, creator_id, group_id, audience)
-  VALUES ($1, $2, $3, $4, $5)   -- $5 = audience ('everyone', 'selected', etc.)
-  RETURNING id
-)
-
--- Insert images
-INSERT INTO images (file_name, entity_id, sort_order)
-SELECT file_name, id, sort_order
-FROM unnest($6_file_names::text[], $6_sort_orders::int[]) AS t(file_name, sort_order),
-     new_post;
-
--- Insert allowed users if audience = 'selected'
+-- name: InsertPostAudience :exec
 INSERT INTO post_audience (post_id, allowed_user_id)
-SELECT id, allowed_user_id
-FROM unnest($7::bigint[]) AS allowed_user_id,
-     new_post
-WHERE $5 = 'selected';   -- only insert if audience is 'selected'
+SELECT $1, allowed_user_id
+FROM unnest($2::bigint[]) AS allowed_user_id;
 
-COMMIT;
-
-------------------------------------------------------------
--- edit post content
-------------------------------------------------------------
+-- name: EditPostContent :one
 UPDATE posts
-SET post_body  = $1,
-WHERE id = $3 AND deleted_at IS NULL
+SET post_body  = $1
+WHERE id = $2 AND deleted_at IS NULL
 RETURNING *;
 
---------------------------------------
--- edit post's intended audience
---------------------------------------
-BEGIN;
-
--- Update audience type
+-- name: UpdatePostAudience :exec
 UPDATE posts
 SET audience = $2, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
 
--- If audience is now 'selected', update allowed users list
--- First, remove previous list
-DELETE FROM post_audience WHERE post_id = $1;
-
--- Then add the new allowed users ONLY if selected
-INSERT INTO post_audience (post_id, allowed_user_id)
-SELECT $1, unnest_user_id
-FROM unnest($3::bigint[]) AS unnest_user_id
-WHERE $2 = 'selected';   -- only insert if new audience is selected
-
-COMMIT;
-
-------------------------------------------
--- edit selected audience for post id
---------------------------------------------
-BEGIN;
-
--- Remove current audience list
+-- name: ClearPostAudience :exec
 DELETE FROM post_audience
 WHERE post_id = $1;
 
--- Insert new audience list (full array provided by frontend/backend)
-INSERT INTO post_audience (post_id, allowed_user_id)
-SELECT $1, unnest_user_id
-FROM unnest($2::bigint[]) AS unnest_user_id;
-
-COMMIT;
-
---------------------------------------------------------
--- delete post
--------------------------------------------------------------
+-- name: DeletePost :exec
 UPDATE posts
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL;
 
--------------------------------------------------------
 -- name: GetPostAudience :many
------------------------------------------------------------
 SELECT allowed_user_id
 FROM post_audience
 WHERE post_id = $1

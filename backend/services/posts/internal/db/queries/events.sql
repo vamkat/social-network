@@ -1,6 +1,4 @@
---------------------------------------------------------------------
--- name: GetEventsByGroup :many
---------------------------------------------------------------------
+-- name: GetEventsByGroupId :many
 SELECT
     e.id,
     e.event_title,
@@ -13,7 +11,6 @@ SELECT
     e.going_count,
     e.not_going_count,
 
-    -- preview image (first by sort_order)
     (SELECT i.file_name
      FROM images i
      WHERE i.entity_id = e.id AND i.deleted_at IS NULL
@@ -21,7 +18,6 @@ SELECT
      LIMIT 1
     ) AS preview_image,
 
-    -- total number of images
     (SELECT COUNT(1)
      FROM images i
      WHERE i.entity_id = e.id AND i.deleted_at IS NULL
@@ -35,77 +31,28 @@ ORDER BY e.event_date ASC
 OFFSET $2
 LIMIT $3;
 
----------------------------------------------------
-  -- create event
-  ------------------------------------------------
-BEGIN;
+-- name: CreateEvent :one
 
--- Insert the event
-WITH new_event AS (
-    INSERT INTO events (
-        event_title,
-        event_body,
-        event_creator_id,
-        group_id,
-        event_date,
-        still_valid
-    )
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-),
-
--- Insert associated images (if any)
-inserted_images AS (
-    INSERT INTO images (file_name, entity_id)
-    SELECT fname, e.id
-    FROM unnest($7::text[]) AS fname
-    CROSS JOIN new_event e
-    RETURNING *
+INSERT INTO events (
+    event_title,
+    event_body,
+    event_creator_id,
+    group_id,
+    event_date,
+    still_valid
 )
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
 
--- Return event with preview image and total images
-SELECT
-    e.id,
-    e.event_title,
-    e.event_body,
-    e.event_creator_id,
-    e.group_id,
-    e.event_date,
-    e.still_valid,
-    e.going_count,
-    e.not_going_count,
-    e.created_at,
-    e.updated_at,
 
-    -- preview image (first by sort_order)
-    (SELECT i.file_name
-     FROM images i
-     WHERE i.entity_id = e.id AND i.deleted_at IS NULL
-     ORDER BY i.sort_order ASC
-     LIMIT 1
-    ) AS preview_image,
-
-    -- total number of images
-    (SELECT COUNT(1)
-     FROM images i
-     WHERE i.entity_id = e.id AND i.deleted_at IS NULL
-    ) AS total_images
-
-FROM new_event e;
-
-COMMIT;
-
-----------------------------------------------------------
--- Change still_valid for past events (needs to be run periodically, eg every day)
----------------------------------------------------------
+-- name: UpdateStillValid :exec
+-- needs to be run periodically, eg every day
 UPDATE events
 SET still_valid = FALSE
 WHERE event_date < CURRENT_DATE
   AND still_valid = TRUE;
 
----------------------------------------------------------------------
--- respond to event
----------------------------------------------------------------------
+-- name: RespondToEvent :one
 INSERT INTO event_responses (event_id, user_id, going)
 VALUES ($1, $2, $3)
 ON CONFLICT (event_id, user_id)
@@ -115,11 +62,7 @@ SET going = EXCLUDED.going,
     updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
-
-
------------------------------------------------------------
--- delete event response
--------------------------------------------------------------
+-- name: DeleteEventResponse :one
 UPDATE event_responses
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE event_id = $1
@@ -127,19 +70,15 @@ WHERE event_id = $1
   AND deleted_at IS NULL
 RETURNING *;
 
-------------------------------------------------------------
--- edit event
-------------------------------------------------------------------
+-- name: EditEvent :one
 UPDATE events
 SET event_title = $1,
     event_body = $2,
-    event_date = $3,
-WHERE id = $5 AND deleted_at IS NULL
+    event_date = $3
+WHERE id = $4 AND deleted_at IS NULL
 RETURNING *;
 
-------------------------------------------------------------
--- delete event
-------------------------------------------------------------
+-- name: DeleteEvent :one
 UPDATE events
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL

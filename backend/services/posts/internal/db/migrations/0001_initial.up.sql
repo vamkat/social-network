@@ -44,6 +44,7 @@ CREATE INDEX idx_posts_group_id_created_at   ON posts(group_id, created_at DESC)
 CREATE INDEX idx_posts_created_at_desc       ON posts(created_at DESC);
 CREATE INDEX idx_posts_deleted_at_null       ON posts(deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_posts_active ON posts(id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_posts_personal_feed ON posts(created_at DESC) WHERE deleted_at IS NULL;
 
 ------------------------------------------
 -- Post_audience (for 'selected' audience)
@@ -56,19 +57,6 @@ CREATE TABLE IF NOT EXISTS post_audience (
 CREATE INDEX idx_post_audience_post_id  ON post_audience(post_id);
 CREATE INDEX idx_post_audience_user_id  ON post_audience(allowerd_user_id);
 CREATE UNIQUE INDEX uniq_post_user_audience ON post_audience(post_id, allowerd_user_id);
-
-
-------------------------------------------
--- Feed_state
-------------------------------------------
-CREATE TABLE IF NOT EXISTS user_feed_state (
-    user_id BIGINT PRIMARY KEY,   -- users service
-    last_seen_post_id BIGINT,     -- last post delivered (cursor)
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_posts_feed ON posts(creator_id, deleted_at, created_at DESC) 
-WHERE deleted_at IS NULL;
 
 ------------------------------------------
 -- Comments
