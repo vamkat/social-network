@@ -1,33 +1,40 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
+	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
 	"social-network/shared/gen-go/users"
+	"strconv"
 )
 
-func (h *Handlers) getBasicUserInfo() http.HandlerFunc {
+func (h *Handlers) getUserProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		type basicUserRequest struct {
-			UserId int64 `json:"user_id"`
-		}
 
-		httpReq := basicUserRequest{}
-
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-		err := decoder.Decode(&httpReq)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		userIdStr := r.URL.Query().Get("user_id")
+		if userIdStr == "" {
+			utils.ErrorJSON(w, http.StatusBadRequest, "missing user_id query param")
 			return
 		}
 
-		grpcReq := users.UserBasicInfoRequest{
-			Id: httpReq.UserId,
+		userId, err := strconv.ParseInt(userIdStr, 10, 64)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "invalid user_id query param")
+			return
 		}
 
-		basicUserResp, err := h.Services.Users.GetBasicUserInfo(r.Context(), &grpcReq)
+		claims, ok := utils.GetValue[security.Claims](r, utils.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+		requesterId := int64(claims.UserId)
+
+		grpcReq := users.GetUserProfileRequest{
+			UserId:      userId,
+			RequesterId: requesterId,
+		}
+
+		basicUserResp, err := h.Services.Users.GetUserProfile(r.Context(), &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get user info")
 			return

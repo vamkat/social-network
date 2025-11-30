@@ -22,7 +22,10 @@ func (h *Handlers) BuildMux() *http.ServeMux {
 	Chain := middleware.Chain
 
 	mux.HandleFunc("/test", Chain().AllowedMethod("GET").EnrichContext().Finalize(h.testHandler()))
-	mux.HandleFunc("/user", Chain().AllowedMethod("GET").EnrichContext().Finalize(h.getBasicUserInfo()))
+	mux.HandleFunc("/profile", Chain().AllowedMethod("GET").EnrichContext().Auth().Finalize(h.getUserProfile()))
 	mux.HandleFunc("/login", Chain().AllowedMethod("POST").EnrichContext().Finalize(h.loginHandler()))
+	mux.HandleFunc("/register", Chain().AllowedMethod("POST").EnrichContext().Finalize(h.registerHandler()))
+	mux.HandleFunc("/logout", Chain().AllowedMethod("POST").EnrichContext().Auth().Finalize(h.logoutHandler()))
+
 	return mux
 }
