@@ -1,17 +1,19 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import ProfileHeader from "@/components/features/profile/profile-header";
 import { Lock } from "lucide-react";
 import { fetchUserProfile } from "@/actions/profile/profile-actions";
-import { GetPostsByUserId } from "@/mock-data/posts";
+import { fetchUserPosts } from "@/actions/posts/posts";
 import { getUserByID } from "@/mock-data/users";
-import PostFeed from "@/components/features/feed/post-feed";
+import FeedList from "@/components/feed/feed-list";
 
 export default function ProfilePage({ params }) {
     const { id } = use(params);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [initialPosts, setInitialPosts] = useState([]);
+    const [postsLoaded, setPostsLoaded] = useState(false);
 
 
     // mock data
@@ -33,6 +35,27 @@ export default function ProfilePage({ params }) {
         loadUser();
     }, [id]);
 
+    useEffect(() => {
+        if (user) {
+            const loadPosts = async () => {
+                try {
+                    const posts = await fetchUserPosts(user.ID, 0, 5);
+                    setInitialPosts(posts);
+                } catch (error) {
+                    console.error("Failed to fetch posts:", error);
+                } finally {
+                    setPostsLoaded(true);
+                }
+            };
+            loadPosts();
+        }
+    }, [user]);
+
+    const fetchPosts = useCallback(async (offset, limit) => {
+        if (!user) return [];
+        return await fetchUserPosts(user.ID, offset, limit);
+    }, [user]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
@@ -53,9 +76,6 @@ export default function ProfilePage({ params }) {
     const isOwnProfile = user.ID === currentUser.ID; // Mock check
     const isPrivateView = !user.publicProf && !user.isFollower && !isOwnProfile;
 
-    // Mock Posts Data
-    const userPosts = GetPostsByUserId(user.ID);
-
     return (
         <div className="animate-in fade-in duration-500">
             <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
@@ -72,7 +92,13 @@ export default function ProfilePage({ params }) {
                 </div>
             ) : (
                 <div className="mt-8">
-                    <PostFeed posts={userPosts} pageSize={3} />
+                    {postsLoaded ? (
+                        <FeedList initialPosts={initialPosts} fetchPosts={fetchPosts} />
+                    ) : (
+                        <div className="flex justify-center p-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                        </div>
+                    )}
                 </div>
             )
             }

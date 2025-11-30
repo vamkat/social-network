@@ -1,13 +1,63 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import CommentThread from "@/components/features/comments/comment-thread";
-import { getLastCommentForPostID } from "@/mock-data/comments";
+import { useState, useEffect } from "react";
+import { fetchComments } from "@/actions/comments/comments";
 
 export default function PostCard({ post }) {
-    const [showComments, setShowComments] = useState(false);
-    const lastComment = getLastCommentForPostID(post.ID);
+    const [comments, setComments] = useState([]);
+    const [loading, setLoading] = useState(true); // Initial loading for first comment
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+
+    useEffect(() => {
+        const loadInitialComment = async () => {
+            try {
+                // Fetch the last comment (offset 0, limit 1)
+                const initialComments = await fetchComments(post.ID, 0, 1);
+                setComments(initialComments);
+                if (initialComments.length === 0) setHasMore(false);
+            } catch (error) {
+                console.error("Failed to load comments", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadInitialComment();
+    }, [post.ID]);
+
+    const handleLoadMore = async (e) => {
+        e.preventDefault(); // Prevent link navigation if inside a link (though button should handle it)
+        e.stopPropagation();
+
+        if (loadingMore) return;
+        setLoadingMore(true);
+
+        try {
+            const currentCount = comments.length;
+            const limit = 2;
+            // Fetch previous 2 comments
+            const newComments = await fetchComments(post.ID, currentCount, limit);
+
+            if (newComments.length < limit) {
+                setHasMore(false);
+            }
+
+            if (newComments.length > 0) {
+                // Prepend new comments (which are older) to the list
+                // Note: fetchComments returns [newest-1, newest-2].
+                // We want to display them as [newest-2, newest-1, newest].
+                // So we reverse the batch before prepending.
+                setComments(prev => [...newComments.reverse(), ...prev]);
+            } else {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error("Failed to load more comments", error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
 
     return (
         <div className="post-card group">
@@ -66,39 +116,44 @@ export default function PostCard({ post }) {
                     </button>
                 </div>
 
-                {/* Hover last comment preview + view more */}
-                {lastComment && (
+                {/* Hover Comment Preview */}
+                {comments.length > 0 && (
                     <div className="hidden group-hover:block mt-4 pt-3 border-t border-(--muted)/15 animate-in fade-in slide-in-from-top-1 duration-200">
-                        <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-(--muted)/20">
-                                <img src={lastComment.BasicUserInfo.Avatar} alt={lastComment.BasicUserInfo.Username} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold">@{lastComment.BasicUserInfo.Username}</span>
-                                    <span className="text-xs text-(--muted)">{lastComment.CreatedAt}</span>
-                                </div>
-                                <p className="text-sm text-(--foreground)/90 mt-1 leading-relaxed">
-                                    {lastComment.Content}
-                                </p>
-                                <button
-                                    className="mt-3 text-xs font-semibold text-(--foreground) hover:text-(--muted) transition-colors cursor-pointer"
-                                    onClick={() => setShowComments(true)}
-                                >
-                                    View more comments
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {showComments && (
-                    <div className="mt-4">
-                        <CommentThread
-                            postId={post.ID}
-                            totalCount={post.NumOfComments}
-                            skipCommentId={lastComment?.ID}
-                        />
+                        {hasMore && (
+                            <button
+                                onClick={handleLoadMore}
+                                disabled={loadingMore}
+                                className="w-full text-left text-xs text-(--muted) hover:text-(--foreground) mb-3 pl-11 transition-colors"
+                            >
+                                {loadingMore ? "Loading..." : "View previous comments"}
+                            </button>
+                        )}
+
+                        <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            {comments.map((comment, index) => (
+                                <div key={comment.ID || index} className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-(--muted)/20">
+                                        <img src={comment.BasicUserInfo.Avatar} alt={comment.BasicUserInfo.Username} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-semibold">@{comment.BasicUserInfo.Username}</span>
+                                            <span className="text-xs text-(--muted)">{comment.CreatedAt}</span>
+                                        </div>
+                                        <p className="text-sm text-(--foreground)/90 mt-1 leading-relaxed">
+                                            {comment.Content}
+                                        </p>
+                                        <button className="flex items-center gap-1.5 mt-2 text-xs text-(--muted) hover:text-red-500 transition-colors group/comment-heart">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5 group-hover/comment-heart:fill-current">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                                            </svg>
+                                            <span className="font-medium">{comment.NumOfHearts}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

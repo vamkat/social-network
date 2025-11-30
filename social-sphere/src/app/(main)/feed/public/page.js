@@ -1,8 +1,8 @@
-import { getMockPosts } from "@/mock-data/posts";
-import PostFeed from "@/components/features/feed/post-feed";
+import { fetchPublicPosts } from "@/actions/posts/posts";
+import FeedList from "@/components/feed/feed-list";
 
-export default function PublicFeedPage() {
-    const posts = getMockPosts();
+export default async function PublicFeedPage() {
+    const initialPosts = await fetchPublicPosts(0, 5);
 
     return (
         <div className="feed-container">
@@ -11,7 +11,7 @@ export default function PublicFeedPage() {
                 <p className="feed-subtitle">What's happening around the world</p>
             </div>
 
-            <PostFeed posts={posts} pageSize={4} />
+            <FeedList initialPosts={initialPosts} fetchPosts={fetchPublicPosts} />
         </div >
     );
 }

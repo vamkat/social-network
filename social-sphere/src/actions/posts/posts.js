@@ -2,23 +2,33 @@
 
 import { getMockPosts, GetPostsByUserId } from "@/mock-data/posts";
 
-export async function fetchPublicPosts() {
+export async function fetchPublicPosts(offset = 0, limit = 5) {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return getMockPosts();
+    return getMockPosts(offset, limit);
 }
 
-export async function fetchFeedPosts() {
+export async function fetchFeedPosts(offset = 0, limit = 5) {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return getMockPosts();
+    return getMockPosts(offset, limit);
 }
 
-export async function fetchUserPosts(userID) {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+import { unstable_cache } from "next/cache";
 
-    return GetPostsByUserId(userID);
+export async function fetchUserPosts(userID, offset = 0, limit = 5) {
+    const getCachedPosts = unstable_cache(
+        async () => {
+            console.log(`[CACHE MISS] Fetching posts for user ${userID}, offset ${offset}, limit ${limit}`);
+            // Simulate API delay
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            return GetPostsByUserId(userID, offset, limit);
+        },
+        [`user-posts-${userID}-${offset}-${limit}`],
+        { revalidate: 60 }
+    );
+
+    return getCachedPosts();
 }

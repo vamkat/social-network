@@ -1,5 +1,5 @@
-export const getMockPosts = () => {
-    return [
+export const getMockPosts = (offset = 0, limit = 10) => {
+    const posts = [
         {
             ID: "1",
             BasicUserInfo: {
@@ -10,7 +10,7 @@ export const getMockPosts = () => {
             Content: "Sunday mornings are for slow breakfasts and even slower jazz. 🎷🥐 There's something magical about the quiet before the city wakes up.",
             PostImage: "/elon.jpeg",
             CreatedAt: "10m ago",
-            NumOfComments: 9,
+            NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
         },
@@ -52,7 +52,7 @@ export const getMockPosts = () => {
             Content: "Sunday mornings are for slow breakfasts and even slower jazz. 🎷🥐 There's something magical about the quiet before the city wakes up.",
             PostImage: null,
             CreatedAt: "10m ago",
-            NumOfComments: 0,
+            NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
         },
@@ -66,7 +66,7 @@ export const getMockPosts = () => {
             Content: "Finally hiked the trail I've been looking at for months. The view from the top was absolutely worth the struggle. Nature has a way of resetting your perspective.",
             PostImage: null,
             CreatedAt: "3h ago",
-            NumOfComments: 2,
+            NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
         },
@@ -80,7 +80,7 @@ export const getMockPosts = () => {
             Content: "This guy is a legend",
             PostImage: "/trump.jpeg",
             CreatedAt: "3h ago",
-            NumOfComments: 0,
+            NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
         },
@@ -94,7 +94,7 @@ export const getMockPosts = () => {
             Content: "This guy is a fat pig",
             PostImage: "/elon.jpeg",
             CreatedAt: "3h ago",
-            NumOfComments: 0,
+            NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
         },
@@ -108,7 +108,7 @@ export const getMockPosts = () => {
             Content: "this guy wants nuclear war with US",
             PostImage: "/kim.jpeg",
             CreatedAt: "3h ago",
-            NumOfComments: 1,
+            NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
         },
@@ -122,7 +122,7 @@ export const getMockPosts = () => {
             Content: "Does anyone else feel like time is moving exceptionally fast lately? I swear it was January just yesterday.",
             PostImage: null,
             CreatedAt: "5h ago",
-            NumOfComments: 0,
+            NumOfComments: 42,
             NumOfHearts: 145,
             IsHearted: false,
         },
@@ -136,7 +136,7 @@ export const getMockPosts = () => {
             Content: "Small wins matter. Fixed a bug that's been bugging me (pun intended) for a week. Celebrating with a donut.",
             PostImage: null,
             CreatedAt: "1d ago",
-            NumOfComments: 0,
+            NumOfComments: 7,
             NumOfHearts: 12,
             IsHearted: false,
         },
@@ -150,13 +150,17 @@ export const getMockPosts = () => {
             Content: "What the fuck is going on??",
             PostImage: null,
             CreatedAt: "1d ago",
-            NumOfComments: 0,
+            NumOfComments: 7,
             NumOfHearts: 12,
             IsHearted: false,
         }
     ];
+
+    return posts.slice(offset, offset + limit);
 }
 
-export const GetPostsByUserId = (userId) => {
-    return getMockPosts().filter(post => post.BasicUserInfo.UserID === userId);
+export const GetPostsByUserId = (userId, offset = 0, limit = 10) => {
+    const allPosts = getMockPosts(0, 1000);
+    const userPosts = allPosts.filter(post => post.BasicUserInfo.UserID === userId);
+    return userPosts.slice(offset, offset + limit);
 }
