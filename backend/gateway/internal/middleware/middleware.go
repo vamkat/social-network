@@ -26,7 +26,8 @@ func (m *MiddleSystem) add(f func(http.ResponseWriter, *http.Request) (bool, *ht
 func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		fmt.Println("endpoint: ", r.URL.Path)
-		w.Header().Set("Access-Control-Allow-Origin", "https://localhost:8080")
+		// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", ")+", OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Timestamp")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")

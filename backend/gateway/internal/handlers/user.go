@@ -43,6 +43,8 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			return
 		}
 
+		fmt.Println("retrieved user profile: ", basicUserResp)
+
 		err = utils.WriteJSON(w, http.StatusOK, basicUserResp)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send user info")
