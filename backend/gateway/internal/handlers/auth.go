@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
@@ -13,7 +14,7 @@ import (
 
 func (h *Handlers) loginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		fmt.Println("login handler called")
 		//READ REQUEST BODY
 		type loginHttpRequest struct {
 			Identifier string `json:"identifier"`
@@ -86,7 +87,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 func (h *Handlers) registerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		fmt.Println("register handler called, with: ", r.Body)
 		//READ REQUEST BODY
 		type registerHttpRequest struct {
 			Username    string                 `json:"username,omitempty"`
@@ -143,6 +144,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 func (h *Handlers) logoutHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("logout handler called")
 		//CLEAR COOKIE
 		http.SetCookie(w, &http.Cookie{
 			Name:     "jwt",

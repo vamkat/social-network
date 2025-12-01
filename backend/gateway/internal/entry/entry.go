@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"social-network/gateway/internal/handlers"
+	redis_connector "social-network/shared/go/redis"
 
 	"syscall"
 	"time"
@@ -28,6 +29,13 @@ func Start() {
 	defer deferMe()
 
 	fmt.Println("gRPC services connections started")
+
+	redisClient := redis_connector.NewRedisClient("127.0.0.1:6379", "", 0)
+	err = redisClient.TestRedisConnection()
+	if err != nil {
+		log.Fatalf("failed to connect to redis: %v", err)
+	}
+	fmt.Println("redis connection started")
 
 	// set server
 	var server http.Server
