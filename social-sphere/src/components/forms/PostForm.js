@@ -6,14 +6,14 @@ const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000"; // dummy
 
 export default function PostForm({ onPostCreated, onCancel, embed = false }) {
-    const [title, setTitle] = useState("");
+   // const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
 
     async function handleSubmit(e) {
         e.preventDefault();
-        if (!title.trim() || !body.trim()) return;
+        if (!body.trim()) return;
 
         setIsLoading(true);
         setError("");
@@ -25,7 +25,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    post_title: title,
+                    //post_title: title,
                     post_body: body,
                 }),
             });
@@ -38,7 +38,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
 
             const newPost = {
                 id: data.id,
-                post_title: data.post_title,
+                //post_title: data.post_title,
                 post_body: data.post_body,
                 post_creator: data.post_creator,
                 group_id: data.group_id ?? null,
@@ -51,7 +51,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                 onPostCreated(newPost);
             }
 
-            setTitle("");
+            //setTitle("");
             setBody("");
         } catch (err) {
             console.error(err);
@@ -71,7 +71,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
             }
         >
             <div className="flex-1 space-y-3">
-                <div>
+                {/* <div>
                     <input
                         type="text"
                         name="post_title"
@@ -81,7 +81,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                         placeholder="Give your post a title..."
                         required
                     />
-                </div>
+                </div> */}
 
                 <div>
                     <textarea
@@ -114,7 +114,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                         <button
                             type="button"
                             onClick={() => {
-                                setTitle("");
+                                //setTitle("");
                                 setBody("");
                                 if (onCancel) {
                                     onCancel();
@@ -128,7 +128,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                         </button>
                         <button
                             type="submit"
-                            disabled={isLoading || !title.trim() || !body.trim()}
+                            disabled={isLoading || !body.trim()}
                             className="btn btn-primary px-4 py-1.5 text-xs disabled:opacity-100 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "Posting..." : "Post"}

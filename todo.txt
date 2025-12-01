@@ -3,13 +3,14 @@
 
 TODOS:
 
-1. Create-Post component ACCORDING TO CURRENT DESIGN.
+1. Create-Post component ACCORDING TO CURRENT DESIGN. add button for selection
 2. Create-Comment component ACCORDING TO CURRENT DESIGN.
 3. Create-Group component ACCORDING TO CURRENT DESIGN.
+4. Edit-Post component
 
 
 4. Form Validations (COMMUNICATE CONSTRAINTS WITH BACKEND/Katerina)
-
+optional must be sent as an empty string ("")
 -> registration form (
       Username: optional, (IF ADDED, Check GOOD PRACTICES, prevent sql injection, etc )
       Email: required, valid email (Check GOOD PRACTICES, theres a regex for that)
