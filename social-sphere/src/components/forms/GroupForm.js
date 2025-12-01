@@ -6,16 +6,46 @@ import { useRouter } from "next/navigation";
 const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000"; // dummy
 
-export default function GroupForm({ onCreated, onCancel }) {
+export default function GroupForm({ onCreated, onCancel, availableMembers = [] }) {
     const router = useRouter();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [privacy, setPrivacy] = useState("public");
     const [imageUrl, setImageUrl] = useState("");
     const [invites, setInvites] = useState("");
+    const [showInvitePicker, setShowInvitePicker] = useState(false);
+    const [inviteQuery, setInviteQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    const parsedInvites = parseInvites(invites);
+    const filteredMembers = (availableMembers || []).filter((member) => {
+        const search = inviteQuery.toLowerCase();
+        return (
+            member.email?.toLowerCase().includes(search) ||
+            member.name?.toLowerCase().includes(search) ||
+            member.username?.toLowerCase().includes(search)
+        );
+    });
+
+    function parseInvites(raw) {
+        return raw
+            .split(/[,\n]/)
+            .map((item) => item.trim())
+            .filter(Boolean);
+    }
+
+    function addInvite(email) {
+        const list = new Set(parseInvites(invites));
+        list.add(email);
+        setInvites(Array.from(list).join(", "));
+    }
+
+    function removeInvite(email) {
+        const list = parseInvites(invites).filter((item) => item !== email);
+        setInvites(list.join(", "));
+    }
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -26,10 +56,7 @@ export default function GroupForm({ onCreated, onCancel }) {
         setSuccess("");
 
         try {
-            const inviteList = invites
-                .split(/[,\\n]/)
-                .map((item) => item.trim())
-                .filter(Boolean);
+            const inviteList = parseInvites(invites);
 
             const payload = {
                 title: title.trim(),
@@ -66,6 +93,8 @@ export default function GroupForm({ onCreated, onCancel }) {
             setDescription("");
             setImageUrl("");
             setInvites("");
+            setInviteQuery("");
+            setShowInvitePicker(false);
 
             if (onCreated) {
                 onCreated(newGroup);
@@ -154,6 +183,62 @@ export default function GroupForm({ onCreated, onCancel }) {
                 <p className="text-xs text-(--muted)">
                     We will send invitations to these emails after the group is created.
                 </p>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    {parsedInvites.map((email) => (
+                        <span
+                            key={email}
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-(--muted)/10 text-xs"
+                        >
+                            {email}
+                            <button
+                                type="button"
+                                onClick={() => removeInvite(email)}
+                                className="text-(--muted) hover:text-(--foreground)"
+                            >
+                                ✕
+                            </button>
+                        </span>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={() => setShowInvitePicker((v) => !v)}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-full border border-(--muted)/30 hover:border-(--foreground) transition-colors"
+                    >
+                        Browse members
+                    </button>
+                </div>
+
+                {showInvitePicker && (
+                    <div className="mt-2 rounded-xl border border-(--muted)/20 bg-(--background) shadow-sm p-3 space-y-3">
+                        <input
+                            type="text"
+                            value={inviteQuery}
+                            onChange={(e) => setInviteQuery(e.target.value)}
+                            placeholder="Search by name or email"
+                            className="w-full rounded-lg border border-(--muted)/20 px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-(--foreground)/20"
+                        />
+                        <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                            {filteredMembers.length === 0 && (
+                                <p className="text-xs text-(--muted)">No matches.</p>
+                            )}
+                            {filteredMembers.map((member) => (
+                                <button
+                                    key={member.email || member.username}
+                                    type="button"
+                                    onClick={() => addInvite(member.email)}
+                                    className="w-full flex items-center justify-between text-left px-3 py-2 rounded-lg hover:bg-(--muted)/10"
+                                >
+                                    <div>
+                                        <div className="text-sm font-semibold">{member.name || member.username}</div>
+                                        <div className="text-xs text-(--muted)">{member.email}</div>
+                                    </div>
+                                    <span className="text-xs text-(--muted)">Add</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {error && <p className="text-xs text-red-500 animate-fade-in">{error}</p>}
@@ -175,14 +260,14 @@ export default function GroupForm({ onCreated, onCancel }) {
                             router.back();
                         }
                     }}
-                    className="btn btn-secondary px-4 py-2 border border-(--muted)/20"
+                    className="btn btn-secondary px-4 py-2 border border-(--muted)/100"
                 >
                     Cancel
                 </button>
                 <button
                     type="submit"
                     disabled={isLoading || !title.trim() || !description.trim()}
-                    className="btn btn-primary px-5 py-2 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="btn btn-primary px-5 py-2 text-xs disabled:opacity-100 disabled:cursor-not-allowed"
                 >
                     {isLoading ? "Creating..." : "Create group"}
                 </button>
