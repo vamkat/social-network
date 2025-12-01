@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
+	"social-network/shared/customtypes"
 	"social-network/shared/gen-go/users"
-	"social-network/shared/types"
 	"time"
 )
 
@@ -89,15 +89,15 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		fmt.Println("register handler called, with: ", r.Body)
 		//READ REQUEST BODY
 		type registerHttpRequest struct {
-			Username    types.Username    `json:"username,omitempty"`
-			FirstName   types.Name        `json:"first_name,omitempty"`
-			LastName    types.Name        `json:"last_name,omitempty"`
-			DateOfBirth types.DateOfBirth `json:"date_of_birth,omitempty"`
-			Avatar      string            `json:"avatar,omitempty"`
-			About       types.About       `json:"about,omitempty"`
-			Public      bool              `json:"public,omitempty"`
-			Email       types.Email       `json:"email,omitempty"`
-			Password    types.Password    `json:"password,omitempty"`
+			Username    customtypes.Username    `json:"username,omitempty"`
+			FirstName   customtypes.Name        `json:"first_name,omitempty"`
+			LastName    customtypes.Name        `json:"last_name,omitempty"`
+			DateOfBirth customtypes.DateOfBirth `json:"date_of_birth,omitempty"`
+			Avatar      string                  `json:"avatar,omitempty"`
+			About       customtypes.About       `json:"about,omitempty"`
+			Public      bool                    `json:"public,omitempty"`
+			Email       customtypes.Email       `json:"email,omitempty"`
+			Password    customtypes.Password    `json:"password,omitempty"`
 		}
 
 		httpReq := registerHttpRequest{}
@@ -108,7 +108,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			return
 		}
 
-		if err := utils.ValidateStruct(httpReq); err != nil {
+		if err := customtypes.ValidateStruct(httpReq); err != nil {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 		}
 

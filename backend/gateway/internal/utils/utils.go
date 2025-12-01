@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
-	"social-network/shared/types"
 
 	"github.com/google/uuid"
 )
@@ -72,35 +70,4 @@ func B64urlDecode(s string) ([]byte, error) {
 func GenUUID() string {
 	uuid := uuid.New()
 	return uuid.String()
-}
-
-func ValidateStruct(s interface{}) error {
-	v := reflect.ValueOf(s)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	t := v.Type()
-
-	var allErrors []string
-
-	for i := 0; i < v.NumField(); i++ {
-		fieldVal := v.Field(i)
-		fieldType := t.Field(i)
-
-		// Only exported fields can be validated
-		if !fieldVal.CanInterface() {
-			continue
-		}
-
-		if validator, ok := fieldVal.Interface().(types.Validator); ok {
-			if err := validator.Validate(); err != nil {
-				allErrors = append(allErrors, fmt.Sprintf("%s: %v", fieldType.Name, err))
-			}
-		}
-	}
-
-	if len(allErrors) > 0 {
-		return fmt.Errorf("validation errors: %v", allErrors)
-	}
-	return nil
 }
