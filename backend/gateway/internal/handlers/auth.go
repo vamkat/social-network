@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
-	"social-network/shared/customtypes"
+	ct "social-network/shared/customtypes"
 	"social-network/shared/gen-go/users"
 	"time"
 )
@@ -16,8 +16,8 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		fmt.Println("login handler called")
 		//READ REQUEST BODY
 		type loginHttpRequest struct {
-			Identifier string `json:"identifier"`
-			Password   string `json:"password"`
+			Identifier ct.Identifier `json:"identifier"`
+			Password   ct.Password   `json:"password"`
 		}
 
 		httpReq := loginHttpRequest{}
@@ -31,15 +31,15 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		}
 
 		//VALIDATE INPUT
-		if httpReq.Identifier == "" || httpReq.Password == "" {
-			utils.ErrorJSON(w, http.StatusBadRequest, "missing required fields")
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		//MAKE GRPC REQUEST
 		gRpcReq := users.LoginRequest{
-			Identifier: httpReq.Identifier,
-			Password:   httpReq.Password,
+			Identifier: httpReq.Identifier.String(),
+			Password:   httpReq.Password.String(),
 		}
 
 		user, err := h.Services.Users.LoginUser(r.Context(), &gRpcReq)
@@ -89,15 +89,15 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		fmt.Println("register handler called, with: ", r.Body)
 		//READ REQUEST BODY
 		type registerHttpRequest struct {
-			Username    customtypes.Username    `json:"username,omitempty"`
-			FirstName   customtypes.Name        `json:"first_name,omitempty"`
-			LastName    customtypes.Name        `json:"last_name,omitempty"`
-			DateOfBirth customtypes.DateOfBirth `json:"date_of_birth,omitempty"`
-			Avatar      string                  `json:"avatar,omitempty"`
-			About       customtypes.About       `json:"about,omitempty"`
-			Public      bool                    `json:"public,omitempty"`
-			Email       customtypes.Email       `json:"email,omitempty"`
-			Password    customtypes.Password    `json:"password,omitempty"`
+			Username    ct.Username    `json:"username,omitempty"`
+			FirstName   ct.Name        `json:"first_name,omitempty"`
+			LastName    ct.Name        `json:"last_name,omitempty"`
+			DateOfBirth ct.DateOfBirth `json:"date_of_birth,omitempty"`
+			Avatar      string         `json:"avatar,omitempty"`
+			About       ct.About       `json:"about,omitempty"`
+			Public      bool           `json:"public,omitempty"`
+			Email       ct.Email       `json:"email,omitempty"`
+			Password    ct.Password    `json:"password,omitempty"`
 		}
 
 		httpReq := registerHttpRequest{}
@@ -108,7 +108,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			return
 		}
 
-		if err := customtypes.ValidateStruct(httpReq); err != nil {
+		if err := ct.ValidateStruct(httpReq); err != nil {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 		}
 
