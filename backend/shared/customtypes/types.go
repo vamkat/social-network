@@ -27,7 +27,7 @@ var ErrValidation error = errors.New("type validation error")
 // EncryptedId
 // ------------------------------------------------------------
 
-// Encrytped id is not nullable. Validation always returns error if not len>0.
+// Encrypted id is nullable. If `validation:"nullable` tag is present zero values don't return error.
 type EncryptedId int64
 
 var salt string = os.Getenv("ENC_KEY")
@@ -64,7 +64,7 @@ func (e *EncryptedId) UnmarshalJSON(data []byte) error {
 }
 
 func (e EncryptedId) IsValid() bool {
-	return e > 0
+	return e >= 0
 }
 
 func (e EncryptedId) Validate() error {
@@ -74,11 +74,16 @@ func (e EncryptedId) Validate() error {
 	return nil
 }
 
+func (e EncryptedId) Int64() int64 {
+	return int64(e)
+}
+
 // ------------------------------------------------------------
 // Id
 // ------------------------------------------------------------
 
-// Id is not nullable. Validation always returns error if not len>0.
+// Id is nullable. If `validation:"nullable"` tag is present zero values don't return error.
+// Negative values return error.
 type Id int64
 
 func (i Id) MarshalJSON() ([]byte, error) {
@@ -95,7 +100,7 @@ func (i *Id) UnmarshalJSON(data []byte) error {
 }
 
 func (i Id) IsValid() bool {
-	return i > 0
+	return i >= 0
 }
 
 func (i Id) Validate() error {
@@ -105,11 +110,15 @@ func (i Id) Validate() error {
 	return nil
 }
 
+func (i Id) Int64() int64 {
+	return int64(i)
+}
+
 // ------------------------------------------------------------
 // Name
 // ------------------------------------------------------------
 
-// General type for names and surnames. Name is a nullable field. If needs to be present tag with `validate:"required"`
+// General type for names and surnames. Name type is not nullable. All smaller than len 2 values return error
 type Name string
 
 func (n Name) MarshalJSON() ([]byte, error) {
@@ -127,7 +136,7 @@ func (n *Name) UnmarshalJSON(data []byte) error {
 
 func (n Name) IsValid() bool {
 	// empty check for now. Add regex for name
-	return len(n) >= 0
+	return len(n) > 1
 }
 
 func (n Name) Validate() error {
@@ -137,10 +146,15 @@ func (n Name) Validate() error {
 	return nil
 }
 
+func (n Name) String() string {
+	return string(n)
+}
+
 // ------------------------------------------------------------
 // Username
 // ------------------------------------------------------------
-// Username is a nullable field. If needs to be present tag with `validate:"required"`
+
+// Username is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 type Username string
 
 var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{3,32}$`)
@@ -172,10 +186,16 @@ func (u Username) Validate() error {
 	return nil
 }
 
+func (u Username) String() string {
+	return string(u)
+}
+
 // ------------------------------------------------------------
 // Email
 // ------------------------------------------------------------
 
+// Not nullable.
+// Error upon validation is returned if string doesn't match email format or is empty.
 type Email string
 
 var emailRegex = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
@@ -194,9 +214,6 @@ func (e *Email) UnmarshalJSON(data []byte) error {
 }
 
 func (e Email) IsValid() bool {
-	if e == "" {
-		return true
-	}
 	return emailRegex.MatchString(string(e))
 }
 
@@ -207,10 +224,15 @@ func (e Email) Validate() error {
 	return nil
 }
 
+func (e Email) String() string {
+	return string(e)
+}
+
 // ------------------------------------------------------------
 // Limit
 // ------------------------------------------------------------
 
+// Non zero type. Validation returns error if zero or above limit
 type Limit int32
 
 var maxLimit = 500
@@ -239,10 +261,15 @@ func (l Limit) Validate() error {
 	return nil
 }
 
+func (l Limit) Int32() int32 {
+	return int32(l)
+}
+
 // ------------------------------------------------------------
 // Offset
 // ------------------------------------------------------------
 
+// Non negative type. Validation returns error if below zero or above limit
 type Offset int32
 
 func (o Offset) MarshalJSON() ([]byte, error) {
@@ -269,13 +296,17 @@ func (o Offset) Validate() error {
 	return nil
 }
 
+func (o Offset) Int32() int32 {
+	return int32(o)
+}
+
 // ------------------------------------------------------------
 // Password
 // (Hash on Unmarshal; store hashed value only)
 // ------------------------------------------------------------
 
 // Password is not nullable. The length is checked and error is returned during json unmarshall.
-// Password unmarshaling also depends on "PASSWORD_SECRET" env variable to be present.
+// Password unmarshaling depends on "PASSWORD_SECRET" env variable to be present.
 type Password string
 
 func (p Password) MarshalJSON() ([]byte, error) {
@@ -318,11 +349,16 @@ func (p Password) Validate() error {
 	return nil
 }
 
+func (p Password) String() string {
+	return string(p)
+}
+
 // ------------------------------------------------------------
 // DateOfBirth
 // ------------------------------------------------------------
 
-// DateOfBirth is a nullable field. If needs to be present tag with `validate:"required"`
+// TODO: Make not nullable
+// DateOfBirth is non nullable. If value is the zero time instant, January 1, year 1, 00:00:00 UTC validation returns error.
 type DateOfBirth time.Time
 
 const (
@@ -352,9 +388,9 @@ func (d *DateOfBirth) UnmarshalJSON(data []byte) error {
 
 func (d DateOfBirth) IsValid() bool {
 	t := time.Time(d)
-	// if t.IsZero() {
-	// 	return false
-	// }
+	if t.IsZero() {
+		return false
+	}
 
 	now := time.Now().UTC()
 
@@ -384,6 +420,7 @@ func (d DateOfBirth) Time() time.Time {
 	return time.Time(d)
 }
 
+// Helper to parse time.Time value to proto *timestamppb.Timestamp
 func (d DateOfBirth) ToProto() *timestamppb.Timestamp {
 	return timestamppb.New(time.Time(d))
 }
@@ -392,7 +429,7 @@ func (d DateOfBirth) ToProto() *timestamppb.Timestamp {
 // Identifier (username or email)
 // ------------------------------------------------------------
 
-// Represents user name or email. Identifier is a nullable field. If needs to be present tag with `validate:"required"`
+// Represents user name or email. Identifier is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 type Identifier string
 
 func (i Identifier) MarshalJSON() ([]byte, error) {
@@ -423,11 +460,15 @@ func (i Identifier) Validate() error {
 	return nil
 }
 
+func (i Identifier) String() string {
+	return string(i)
+}
+
 // ------------------------------------------------------------
 // About
 // ------------------------------------------------------------
 
-// Can be used for bio or descritpion. About is a nullable field. If needs to be present tag with `validate:"required"`
+// Can be used for bio or descritpion. About is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 type About string
 
 var (
@@ -474,11 +515,15 @@ func (a About) Validate() error {
 	return nil
 }
 
+func (a About) String() string {
+	return string(a)
+}
+
 // ------------------------------------------------------------
 // Title (group/chat title)
 // ------------------------------------------------------------
 
-// Refers to title of content not mr, mrs. Title is a nullable field. If needs to be present tag with `validate:"required"`
+// Refers to title of content not mr, mrs. Title is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 type Title string
 
 var (
@@ -530,18 +575,22 @@ func (t Title) Validate() error {
 	return nil
 }
 
+func (t Title) String() string {
+	return string(t)
+}
+
 // ValidateStruct iterates over exported struct fields and validates them.
 // - If a field implements Validator, its Validate() method is called.
-// - If a field has `validate:"required"` tag, zero values are flagged as errors.
-// - Optional fields (no tag) are ignored if empty.
+// - If a field does not have `validate:"nullable"` tag, zero values are flagged as errors.
+// - Nullable fields if empty return nil error.
 // Example:
 //
 //	type RegisterRequest struct {
-//	    Username  customtypes.Username `json:"username,omitempty" validate:"required"`
-//	    FirstName customtypes.Name     `json:"first_name,omitempty" validate:"required"`
-//	    LastName  customtypes.Name     `json:"last_name,omitempty"` // optional
-//	    About     customtypes.About    `json:"about,omitempty"`     // optional
-//	    Email     customtypes.Email    `json:"email,omitempty" validate:"required"`
+//	    Username  customtypes.Username `json:"username,omitempty" validate:"nullable"` // optional
+//	    FirstName customtypes.Name     `json:"first_name,omitempty" validate:"nullable"` // optional
+//	    LastName  customtypes.Name     `json:"last_name"` // required
+//	    About     customtypes.About    `json:"about"`     // required
+//	    Email     customtypes.Email    `json:"email,omitempty" validate:"nullable"` // optional
 //	}
 func ValidateStruct(s any) error {
 	v := reflect.ValueOf(s)
@@ -564,9 +613,9 @@ func ValidateStruct(s any) error {
 		val := fieldVal.Interface()
 		validator, ok := val.(Validator)
 
-		required := fieldType.Tag.Get("validate") == "required"
+		nullable := fieldType.Tag.Get("validate") == "nullable"
 
-		if required {
+		if !nullable {
 			if isZeroValue(fieldVal) {
 				allErrors = append(allErrors, fmt.Sprintf("%s: required field missing", fieldType.Name))
 				continue

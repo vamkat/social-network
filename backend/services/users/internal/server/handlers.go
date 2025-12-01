@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"runtime"
 	"social-network/services/users/internal/application"
+	ct "social-network/shared/customtypes"
 	pb "social-network/shared/gen-go/users"
 
 	"google.golang.org/grpc/codes"
@@ -25,15 +26,15 @@ func (s *Server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) 
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 
-	user, err := s.Service.RegisterUser(ctx, application.RegisterUserRequest{
-		Username:    req.GetUsername(),
-		FirstName:   req.GetFirstName(),
-		LastName:    req.GetLastName(),
-		Email:       req.GetEmail(),
-		Password:    req.GetPassword(),
-		DateOfBirth: req.GetDateOfBirth().AsTime(),
+	user, err := s.Application.RegisterUser(ctx, application.RegisterUserRequest{
+		Username:    ct.Username(req.GetUsername()),
+		FirstName:   ct.Name(req.GetFirstName()),
+		LastName:    ct.Name(req.GetLastName()),
+		Email:       ct.Email(req.GetEmail()),
+		Password:    ct.Password(req.GetPassword()),
+		DateOfBirth: ct.DateOfBirth(req.GetDateOfBirth().AsTime()),
 		Avatar:      req.GetAvatar(),
-		About:       req.GetAbout(),
+		About:       ct.About(req.GetAbout()),
 		Public:      req.GetPublic(),
 	})
 	if err != nil {
@@ -42,8 +43,8 @@ func (s *Server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) 
 	}
 
 	return &pb.User{
-		UserId:   user.UserId,
-		Username: user.Username,
+		UserId:   user.UserId.Int64(),
+		Username: user.Username.String(),
 		Avatar:   user.Avatar,
 	}, nil
 }
@@ -64,9 +65,9 @@ func (s *Server) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.User,
 		return nil, err
 	}
 
-	user, err := s.Service.LoginUser(ctx, application.LoginRequest{
-		Identifier: Identifier,
-		Password:   Password,
+	user, err := s.Application.LoginUser(ctx, application.LoginRequest{
+		Identifier: ct.Identifier(Identifier),
+		Password:   ct.Password(Password),
 	})
 	if err != nil {
 		fmt.Println("Error in LoginUser:", err)
@@ -74,8 +75,8 @@ func (s *Server) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.User,
 	}
 
 	return &pb.User{
-		UserId:   user.UserId,
-		Username: user.Username,
+		UserId:   user.UserId.Int64(),
+		Username: user.Username.String(),
 		Avatar:   user.Avatar,
 	}, nil
 }
@@ -95,9 +96,9 @@ func (s *Server) UpdateUserPassword(ctx context.Context, req *pb.UpdatePasswordR
 		return nil, err
 	}
 
-	err := s.Service.UpdateUserPassword(ctx, application.UpdatePasswordRequest{
-		UserId:      userId,
-		NewPassword: newPassword,
+	err := s.Application.UpdateUserPassword(ctx, application.UpdatePasswordRequest{
+		UserId:      ct.Id(userId),
+		NewPassword: ct.Password(newPassword),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "UpdateUserPassword: %v", err)
@@ -120,9 +121,9 @@ func (s *Server) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailRequest
 		return nil, err
 	}
 
-	err := s.Service.UpdateUserEmail(ctx, application.UpdateEmailRequest{
-		UserId: userId,
-		Email:  newEmail,
+	err := s.Application.UpdateUserEmail(ctx, application.UpdateEmailRequest{
+		UserId: ct.Id(userId),
+		Email:  ct.Email(newEmail),
 	})
 	if err != nil {
 		fmt.Println("Error in UpdateUserEmail:", err)
@@ -149,12 +150,12 @@ func (s *Server) GetFollowersPaginated(ctx context.Context, req *pb.Pagination) 
 	}
 
 	pag := application.Pagination{
-		UserId: userId,
-		Limit:  limit,
-		Offset: offset,
+		UserId: ct.Id(userId),
+		Limit:  ct.Limit(limit),
+		Offset: ct.Offset(offset),
 	}
 
-	resp, err := s.Service.GetFollowersPaginated(ctx, pag)
+	resp, err := s.Application.GetFollowersPaginated(ctx, pag)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetFollowersPaginated: %v", err)
 	}
@@ -178,12 +179,12 @@ func (s *Server) GetFollowingPaginated(ctx context.Context, req *pb.Pagination) 
 	}
 
 	pag := application.Pagination{
-		UserId: userId,
-		Limit:  limit,
-		Offset: offset,
+		UserId: ct.Id(userId),
+		Limit:  ct.Limit(limit),
+		Offset: ct.Offset(offset),
 	}
 
-	resp, err := s.Service.GetFollowingPaginated(ctx, pag)
+	resp, err := s.Application.GetFollowingPaginated(ctx, pag)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetFollowingPaginated: %v", err)
 	}
@@ -205,9 +206,9 @@ func (s *Server) FollowUser(ctx context.Context, req *pb.FollowUserRequest) (*pb
 		return nil, err
 	}
 
-	resp, err := s.Service.FollowUser(ctx, application.FollowUserReq{
-		FollowerId:   followerId,
-		TargetUserId: targetUserId,
+	resp, err := s.Application.FollowUser(ctx, application.FollowUserReq{
+		FollowerId:   ct.Id(followerId),
+		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "FollowUser: %v", err)
@@ -234,9 +235,9 @@ func (s *Server) UnFollowUser(ctx context.Context, req *pb.FollowUserRequest) (*
 		return nil, err
 	}
 
-	resp, err := s.Service.UnFollowUser(ctx, application.FollowUserReq{
-		FollowerId:   followerId,
-		TargetUserId: targetUserId,
+	resp, err := s.Application.UnFollowUser(ctx, application.FollowUserReq{
+		FollowerId:   ct.Id(followerId),
+		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "UnFollowUser: %v", err)
@@ -262,9 +263,9 @@ func (s *Server) HandleFollowRequest(ctx context.Context, req *pb.HandleFollowRe
 
 	acc := req.GetAccept()
 
-	err := s.Service.HandleFollowRequest(ctx, application.HandleFollowRequestReq{
-		UserId:      userID,
-		RequesterId: RequesterId,
+	err := s.Application.HandleFollowRequest(ctx, application.HandleFollowRequestReq{
+		UserId:      ct.Id(userID),
+		RequesterId: ct.Id(RequesterId),
 		Accept:      acc,
 	})
 	if err != nil {
@@ -282,7 +283,7 @@ func (s *Server) GetFollowingIds(ctx context.Context, req *wrapperspb.Int64Value
 		return nil, err
 	}
 
-	resp, err := s.Service.GetFollowingIds(ctx, userId)
+	resp, err := s.Application.GetFollowingIds(ctx, ct.Id(userId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetFollowingIds: %v", err)
 	}
@@ -299,7 +300,7 @@ func (s *Server) GetFollowSuggestions(ctx context.Context, req *wrapperspb.Int64
 		return nil, err
 	}
 
-	resp, err := s.Service.GetFollowSuggestions(ctx, userId)
+	resp, err := s.Application.GetFollowSuggestions(ctx, ct.Id(userId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetFollowSuggestions: %v", err)
 	}
@@ -325,12 +326,12 @@ func (s *Server) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagination) 
 	}
 
 	pag := application.Pagination{
-		UserId: userId,
-		Limit:  limit,
-		Offset: offset,
+		UserId: ct.Id(userId),
+		Limit:  ct.Limit(limit),
+		Offset: ct.Offset(offset),
 	}
 
-	resp, err := s.Service.GetAllGroupsPaginated(ctx, pag)
+	resp, err := s.Application.GetAllGroupsPaginated(ctx, pag)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetAllGroupsPaginated: %v", err)
 	}
@@ -354,12 +355,12 @@ func (s *Server) GetUserGroupsPaginated(ctx context.Context, req *pb.Pagination)
 	}
 
 	pag := application.Pagination{
-		UserId: userId,
-		Limit:  limit,
-		Offset: offset,
+		UserId: ct.Id(userId),
+		Limit:  ct.Limit(limit),
+		Offset: ct.Offset(offset),
 	}
 
-	resp, err := s.Service.GetUserGroupsPaginated(ctx, pag)
+	resp, err := s.Application.GetUserGroupsPaginated(ctx, pag)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetUserGroupsPaginated: %v", err)
 	}
@@ -381,20 +382,20 @@ func (s *Server) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupRequest) 
 		return nil, err
 	}
 
-	resp, err := s.Service.GetGroupInfo(ctx, application.GeneralGroupReq{
-		UserId:  userId,
-		GroupId: groupId,
+	resp, err := s.Application.GetGroupInfo(ctx, application.GeneralGroupReq{
+		UserId:  ct.Id(userId),
+		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetGroupInfo: %v", err)
 	}
 
 	return &pb.Group{
-		GroupId:          resp.GroupId,
-		GroupOwnerId:     resp.GroupOwnerId,
-		GroupTitle:       resp.GroupTitle,
-		GroupDescription: resp.GroupDescription,
-		GroupImage:       resp.GroupDescription,
+		GroupId:          resp.GroupId.Int64(),
+		GroupOwnerId:     resp.GroupOwnerId.Int64(),
+		GroupTitle:       resp.GroupTitle.String(),
+		GroupDescription: resp.GroupDescription.String(),
+		GroupImage:       resp.GroupDescription.String(),
 		MembersCount:     resp.MembersCount,
 		IsMember:         resp.IsMember,
 		IsOwner:          resp.IsOwner,
@@ -422,11 +423,11 @@ func (s *Server) GetGroupMembers(ctx context.Context, req *pb.GroupMembersReques
 		return nil, err
 	}
 
-	resp, err := s.Service.GetGroupMembers(ctx, application.GroupMembersReq{
-		UserId:  userId,
-		GroupId: groupId,
-		Limit:   limit,
-		Offset:  offset,
+	resp, err := s.Application.GetGroupMembers(ctx, application.GroupMembersReq{
+		UserId:  ct.Id(userId),
+		GroupId: ct.Id(groupId),
+		Limit:   ct.Limit(limit),
+		Offset:  ct.Offset(offset),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetGroupMembers: %v", err)
@@ -454,11 +455,11 @@ func (s *Server) SearchGroups(ctx context.Context, req *pb.GroupSearchRequest) (
 		return nil, err
 	}
 
-	resp, err := s.Service.SearchGroups(ctx, application.GroupSearchReq{
-		UserId:     userId,
+	resp, err := s.Application.SearchGroups(ctx, application.GroupSearchReq{
+		UserId:     ct.Id(userId),
 		SearchTerm: search,
-		Limit:      limit,
-		Offset:     offset,
+		Limit:      ct.Limit(limit),
+		Offset:     ct.Offset(offset),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "SearchGroups: %v", err)
@@ -487,10 +488,10 @@ func (s *Server) InviteToGroup(ctx context.Context, req *pb.InviteToGroupRequest
 		return nil, err
 	}
 
-	err := s.Service.InviteToGroup(ctx, application.InviteToGroupReq{
-		InviterId: inviterId,
-		InvitedId: invitedId,
-		GroupId:   groupId,
+	err := s.Application.InviteToGroup(ctx, application.InviteToGroupReq{
+		InviterId: ct.Id(inviterId),
+		InvitedId: ct.Id(invitedId),
+		GroupId:   ct.Id(groupId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "InviteToGroup: %v", err)
@@ -514,9 +515,9 @@ func (s *Server) RequestJoinGroupOrCancel(ctx context.Context, req *pb.GroupJoin
 		return nil, err
 	}
 
-	err := s.Service.RequestJoinGroupOrCancel(ctx, application.GroupJoinRequest{
-		GroupId:     groupId,
-		RequesterId: requesterId,
+	err := s.Application.RequestJoinGroupOrCancel(ctx, application.GroupJoinRequest{
+		GroupId:     ct.Id(groupId),
+		RequesterId: ct.Id(requesterId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "RequestJoinGroupOrCancel: %v", err)
@@ -541,9 +542,9 @@ func (s *Server) RespondToGroupInvite(ctx context.Context, req *pb.HandleGroupIn
 
 	acc := req.Accepted
 
-	err := s.Service.RespondToGroupInvite(ctx, application.HandleGroupInviteRequest{
-		GroupId:   groupId,
-		InvitedId: InvitedId,
+	err := s.Application.RespondToGroupInvite(ctx, application.HandleGroupInviteRequest{
+		GroupId:   ct.Id(groupId),
+		InvitedId: ct.Id(InvitedId),
 		Accepted:  acc,
 	})
 	if err != nil {
@@ -575,10 +576,10 @@ func (s *Server) HandleGroupJoinRequest(ctx context.Context, req *pb.HandleJoinR
 
 	acc := req.Accepted
 
-	err := s.Service.HandleGroupJoinRequest(ctx, application.HandleJoinRequest{
-		GroupId:     groupId,
-		RequesterId: RequesterId,
-		OwnerId:     ownerId,
+	err := s.Application.HandleGroupJoinRequest(ctx, application.HandleJoinRequest{
+		GroupId:     ct.Id(groupId),
+		RequesterId: ct.Id(RequesterId),
+		OwnerId:     ct.Id(ownerId),
 		Accepted:    acc,
 	})
 	if err != nil {
@@ -602,9 +603,9 @@ func (s *Server) LeaveGroup(ctx context.Context, req *pb.GeneralGroupRequest) (*
 		return nil, err
 	}
 
-	err := s.Service.LeaveGroup(ctx, application.GeneralGroupReq{
-		UserId:  userId,
-		GroupId: groupId,
+	err := s.Application.LeaveGroup(ctx, application.GeneralGroupReq{
+		UserId:  ct.Id(userId),
+		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "LeaveGroup: %v", err)
@@ -637,10 +638,10 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 		return nil, err
 	}
 
-	resp, err := s.Service.CreateGroup(ctx, application.CreateGroupRequest{
-		OwnerId:          OwnerId,
-		GroupTitle:       GroupTitle,
-		GroupDescription: GroupDescription,
+	resp, err := s.Application.CreateGroup(ctx, application.CreateGroupRequest{
+		OwnerId:          ct.Id(OwnerId),
+		GroupTitle:       ct.Title(GroupTitle),
+		GroupDescription: ct.About(GroupDescription),
 		GroupImage:       GroupImage,
 	})
 	if err != nil {
@@ -660,14 +661,14 @@ func (s *Server) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Valu
 		return nil, err
 	}
 
-	u, err := s.Service.GetBasicUserInfo(ctx, req.GetValue())
+	u, err := s.Application.GetBasicUserInfo(ctx, ct.Id(req.GetValue()))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetBasicUserInfo: %v", err)
 	}
 
 	return &pb.User{
-		UserId:   u.UserId,
-		Username: u.Username,
+		UserId:   u.UserId.Int64(),
+		Username: u.Username.String(),
 		Avatar:   u.Avatar,
 	}, nil
 }
@@ -688,19 +689,19 @@ func (s *Server) GetUserProfile(ctx context.Context, req *pb.GetUserProfileReque
 	}
 
 	userProfileRequest := application.UserProfileRequest{
-		UserId:      req.GetUserId(),
-		RequesterId: req.GetRequesterId(),
+		UserId:      ct.Id(req.GetUserId()),
+		RequesterId: ct.Id(req.GetRequesterId()),
 	}
 
-	profile, err := s.Service.GetUserProfile(ctx, userProfileRequest)
+	profile, err := s.Application.GetUserProfile(ctx, userProfileRequest)
 	if err != nil {
 		fmt.Println("Error in GetUserProfile:", err)
 		return nil, status.Errorf(codes.Internal, "GetUserProfile: %v", err)
 	}
 
 	return &pb.UserProfileResponse{
-		UserId:   profile.UserId,
-		Username: profile.Username,
+		UserId:   profile.UserId.Int64(),
+		Username: profile.Username.String(),
 	}, nil
 }
 
@@ -719,9 +720,9 @@ func (s *Server) SearchUsers(ctx context.Context, req *pb.UserSearchRequest) (*p
 		return nil, err
 	}
 
-	resp, err := s.Service.SearchUsers(ctx, application.UserSearchReq{
+	resp, err := s.Application.SearchUsers(ctx, application.UserSearchReq{
 		SearchTerm: SearchTerm,
-		Limit:      limit,
+		Limit:      ct.Limit(limit),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "SearchUsers: %v", err)
@@ -739,32 +740,32 @@ func (s *Server) UpdateUserProfile(ctx context.Context, req *pb.UpdateProfileReq
 		return nil, err
 	}
 
-	resp, err := s.Service.UpdateUserProfile(ctx, application.UpdateProfileRequest{
-		UserId:      userId,
-		Username:    req.GetUsername(),
-		FirstName:   req.GetFirstName(),
-		LastName:    req.GetLastName(),
-		DateOfBirth: req.GetDateOfBirth().AsTime(),
+	resp, err := s.Application.UpdateUserProfile(ctx, application.UpdateProfileRequest{
+		UserId:      ct.Id(userId),
+		Username:    ct.Username(req.GetUsername()),
+		FirstName:   ct.Name(req.GetFirstName()),
+		LastName:    ct.Name(req.GetLastName()),
+		DateOfBirth: ct.DateOfBirth(req.GetDateOfBirth().AsTime()),
 		Avatar:      req.GetAvatar(),
-		About:       req.GetAbout(),
+		About:       ct.About(req.GetAbout()),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "UpdateUserProfile: %v", err)
 	}
 
-	dob := timestamppb.New(resp.DateOfBirth)
-	if resp.DateOfBirth.IsZero() {
+	dob := timestamppb.New(resp.DateOfBirth.Time())
+	if resp.DateOfBirth.Time().IsZero() {
 		dob = nil
 	}
 
 	return &pb.UserProfileResponse{
-		UserId:      resp.UserId,
-		Username:    resp.Username,
-		FirstName:   resp.FirstName,
-		LastName:    resp.LastName,
+		UserId:      resp.UserId.Int64(),
+		Username:    resp.Username.String(),
+		FirstName:   resp.FirstName.String(),
+		LastName:    resp.LastName.String(),
 		DateOfBirth: dob,
 		Avatar:      resp.Avatar,
-		About:       resp.About,
+		About:       resp.About.String(),
 		Public:      resp.Public,
 	}, nil
 }
@@ -781,8 +782,8 @@ func (s *Server) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateProfile
 
 	public := req.Public
 
-	err := s.Service.UpdateProfilePrivacy(ctx, application.UpdateProfilePrivacyRequest{
-		UserId: userId,
+	err := s.Application.UpdateProfilePrivacy(ctx, application.UpdateProfilePrivacyRequest{
+		UserId: ct.Id(userId),
 		Public: public,
 	})
 	if err != nil {
@@ -797,8 +798,8 @@ func usersToPB(dbUsers []application.User) *pb.ListUsers {
 
 	for _, u := range dbUsers {
 		pbUsers = append(pbUsers, &pb.User{
-			UserId:   u.UserId,
-			Username: u.Username,
+			UserId:   u.UserId.Int64(),
+			Username: u.Username.String(),
 			Avatar:   u.Avatar,
 		})
 	}
@@ -810,10 +811,10 @@ func groupsToPb(groups []application.Group) *pb.GroupArr {
 	pbGroups := make([]*pb.Group, 0, len(groups))
 	for _, g := range groups {
 		pbGroups = append(pbGroups, &pb.Group{
-			GroupId:          g.GroupId,
-			GroupOwnerId:     g.GroupOwnerId,
-			GroupTitle:       g.GroupTitle,
-			GroupDescription: g.GroupDescription,
+			GroupId:          g.GroupId.Int64(),
+			GroupOwnerId:     g.GroupOwnerId.Int64(),
+			GroupTitle:       g.GroupTitle.String(),
+			GroupDescription: g.GroupDescription.String(),
 			GroupImage:       g.GroupImage,
 			MembersCount:     g.MembersCount,
 			IsMember:         g.IsMember,
@@ -834,8 +835,8 @@ func groupUsersToPB(users []application.GroupUser) *pb.GroupUserArr {
 
 	for _, u := range users {
 		out.GroupUserArr = append(out.GroupUserArr, &pb.GroupUser{
-			UserId:    u.UserId,
-			Username:  u.Username,
+			UserId:    u.UserId.Int64(),
+			Username:  u.Username.String(),
 			Avatar:    u.Avatar,
 			GroupRole: u.GroupRole,
 		})

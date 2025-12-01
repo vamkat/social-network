@@ -43,7 +43,7 @@ func main() {
 	log.Println("Service ready!")
 
 	queries := sqlc.New(pool)
-	userService := userservice.NewUserService(queries, pool)
+	userService := userservice.NewApplication(queries, pool)
 
 	server := server.NewUsersServer(userService)
 	server.InitClients()

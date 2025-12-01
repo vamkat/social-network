@@ -13,9 +13,9 @@ import (
 // Holds Client conns, services and handler funcs
 type Server struct {
 	pb.UnimplementedUserServiceServer
-	Clients Clients
-	Port    string
-	Service *us.UserService
+	Clients     Clients
+	Port        string
+	Application *us.Application
 }
 
 // Holds connections to clients
@@ -39,10 +39,10 @@ func (s *Server) RunGRPCServer() {
 	}
 }
 
-func NewUsersServer(service *us.UserService) *Server {
+func NewUsersServer(service *us.Application) *Server {
 	return &Server{
-		Port:    ":50051",
-		Clients: Clients{},
-		Service: service,
+		Port:        ":50051",
+		Clients:     Clients{},
+		Application: service,
 	}
 }

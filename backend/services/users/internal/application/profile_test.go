@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"social-network/services/users/internal/db/sqlc"
+	ct "social-network/shared/customtypes"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 
 func TestGetBasicUserInfo_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -28,7 +29,7 @@ func TestGetBasicUserInfo_Success(t *testing.T) {
 
 	mockDB.On("GetUserBasic", ctx, userID).Return(expectedRow, nil)
 
-	user, err := service.GetBasicUserInfo(ctx, userID)
+	user, err := service.GetBasicUserInfo(ctx, ct.Id(userID))
 
 	assert.NoError(t, err)
 	assert.Equal(t, userID, user.UserId)
@@ -39,14 +40,14 @@ func TestGetBasicUserInfo_Success(t *testing.T) {
 
 func TestGetBasicUserInfo_NotFound(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	userID := int64(999)
 
 	mockDB.On("GetUserBasic", ctx, userID).Return(nil, errors.New("user not found"))
 
-	_, err := service.GetBasicUserInfo(ctx, userID)
+	_, err := service.GetBasicUserInfo(ctx, ct.Id(userID))
 
 	assert.Error(t, err)
 	assert.Equal(t, "user not found", err.Error())
@@ -55,7 +56,7 @@ func TestGetBasicUserInfo_NotFound(t *testing.T) {
 
 func TestGetUserProfile_Public_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -79,8 +80,8 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 	}
 
 	req := UserProfileRequest{
-		UserId:      userID,
-		RequesterId: requesterID,
+		UserId:      ct.Id(userID),
+		RequesterId: ct.Id(requesterID),
 	}
 
 	mockDB.On("GetUserProfile", ctx, userID).Return(expectedRow, nil)
@@ -112,7 +113,7 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 
 func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -136,8 +137,8 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 	}
 
 	req := UserProfileRequest{
-		UserId:      userID,
-		RequesterId: requesterID,
+		UserId:      ct.Id(userID),
+		RequesterId: ct.Id(requesterID),
 	}
 
 	mockDB.On("GetUserProfile", ctx, userID).Return(expectedRow, nil)
@@ -158,7 +159,7 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 
 func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -182,8 +183,8 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 	}
 
 	req := UserProfileRequest{
-		UserId:      userID,
-		RequesterId: requesterID,
+		UserId:      ct.Id(userID),
+		RequesterId: ct.Id(requesterID),
 	}
 
 	mockDB.On("GetUserProfile", ctx, userID).Return(expectedRow, nil)
@@ -212,7 +213,7 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 
 func TestSearchUsers_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	searchReq := UserSearchReq{
@@ -251,7 +252,7 @@ func TestSearchUsers_Success(t *testing.T) {
 
 func TestSearchUsers_NoResults(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	searchReq := UserSearchReq{
@@ -273,7 +274,7 @@ func TestSearchUsers_NoResults(t *testing.T) {
 
 func TestUpdateUserProfile_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -287,7 +288,7 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 		Username:    "newusername",
 		FirstName:   "NewFirst",
 		LastName:    "NewLast",
-		DateOfBirth: dob,
+		DateOfBirth: ct.DateOfBirth(dob),
 		Avatar:      "newavatar.jpg",
 		About:       "New about",
 	}
@@ -321,7 +322,7 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 
 func TestUpdateProfilePrivacy_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 
@@ -343,7 +344,7 @@ func TestUpdateProfilePrivacy_Success(t *testing.T) {
 
 func TestUpdateProfilePrivacy_Error(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewUserService(mockDB, nil)
+	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
 

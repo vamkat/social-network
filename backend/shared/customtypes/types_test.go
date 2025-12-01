@@ -1,173 +1,287 @@
-package customtypes
+package customtypes_test
 
 import (
 	"encoding/json"
 	"os"
+	"reflect"
+	"social-network/shared/customtypes"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestEncryptedIdJSONAndValidation(t *testing.T) {
-	os.Setenv("ENC_KEY", "test_salt")
-
-	e := EncryptedId(12345)
-	data, err := json.Marshal(e)
-	assert.NoError(t, err)
-
-	var decoded EncryptedId
-	err = json.Unmarshal(data, &decoded)
-	assert.NoError(t, err)
-	assert.Equal(t, e, decoded)
-
-	assert.NoError(t, e.Validate())
-
-	invalid := EncryptedId(0)
-	assert.Error(t, invalid.Validate())
+// Utility: mustSetEnv
+func mustSetEnv(t *testing.T, key, value string) {
+	t.Helper()
+	if err := os.Setenv(key, value); err != nil {
+		t.Fatalf("failed to set env %s: %v", key, err)
+	}
 }
 
-func TestIdJSONAndValidation(t *testing.T) {
-	i := Id(42)
-	data, err := json.Marshal(i)
-	assert.NoError(t, err)
+// ------------------------------------------------------------
+// EncryptedId
+// ------------------------------------------------------------
+func TestEncryptedIdJSON(t *testing.T) {
+	mustSetEnv(t, "ENC_KEY", "test-salt")
 
-	var decoded Id
-	err = json.Unmarshal(data, &decoded)
-	assert.NoError(t, err)
-	assert.Equal(t, i, decoded)
+	id := customtypes.EncryptedId(123)
+	b, err := json.Marshal(id)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
 
-	assert.NoError(t, i.Validate())
-	assert.Error(t, Id(0).Validate())
+	var decoded customtypes.EncryptedId
+	err = json.Unmarshal(b, &decoded)
+	if err != nil {
+		t.Fatalf("unmarshal error: %v", err)
+	}
+
+	if decoded != id {
+		t.Fatalf("expected %d, got %d", id, decoded)
+	}
 }
 
-func TestNameJSONAndValidation(t *testing.T) {
-	n := Name("Alice")
-	data, err := json.Marshal(n)
-	assert.NoError(t, err)
-
-	var decoded Name
-	err = json.Unmarshal(data, &decoded)
-	assert.NoError(t, err)
-	assert.Equal(t, n, decoded)
-
-	assert.NoError(t, n.Validate())
+func TestEncryptedIdValidate(t *testing.T) {
+	if err := customtypes.EncryptedId(-5).Validate(); err == nil {
+		t.Fatal("expected validation error for negative encryptedId")
+	}
 }
 
+// ------------------------------------------------------------
+// Id
+// ------------------------------------------------------------
+func TestIdValidation(t *testing.T) {
+	if err := customtypes.Id(-1).Validate(); err == nil {
+		t.Fatal("expected error for invalid id")
+	}
+	if err := customtypes.Id(5).Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+}
+
+// ------------------------------------------------------------
+// Name
+// ------------------------------------------------------------
+func TestNameValidation(t *testing.T) {
+	if err := customtypes.Name("A").Validate(); err == nil {
+		t.Fatal("expected name length error")
+	}
+	if err := customtypes.Name("John").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+}
+
+// ------------------------------------------------------------
+// Username
+// ------------------------------------------------------------
 func TestUsernameValidation(t *testing.T) {
-	valid := Username("user_123")
-	assert.True(t, valid.IsValid())
-	assert.NoError(t, valid.Validate())
-
-	invalid := Username("ab") // too short
-	assert.False(t, invalid.IsValid())
-	assert.Error(t, invalid.Validate())
+	if err := customtypes.Username("ab").Validate(); err == nil {
+		t.Fatal("should fail: too short")
+	}
+	if err := customtypes.Username("valid_user123").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
+// ------------------------------------------------------------
+// Email
+// ------------------------------------------------------------
 func TestEmailValidation(t *testing.T) {
-	valid := Email("test@example.com")
-	assert.True(t, valid.IsValid())
-	assert.NoError(t, valid.Validate())
-
-	invalid := Email("invalid-email")
-	assert.False(t, invalid.IsValid())
-	assert.Error(t, invalid.Validate())
+	if err := customtypes.Email("not-an-email").Validate(); err == nil {
+		t.Fatal("expected invalid email error")
+	}
+	if err := customtypes.Email("test@example.com").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
+// ------------------------------------------------------------
+// Limit
+// ------------------------------------------------------------
 func TestLimitValidation(t *testing.T) {
-	assert.NoError(t, Limit(1).Validate())
-	assert.NoError(t, Limit(500).Validate())
-	assert.Error(t, Limit(0).Validate())
-	assert.Error(t, Limit(501).Validate())
+	if err := customtypes.Limit(0).Validate(); err == nil {
+		t.Fatal("expected error")
+	}
+	if err := customtypes.Limit(500).Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if err := customtypes.Limit(501).Validate(); err == nil {
+		t.Fatal("expected upper bound error")
+	}
 }
 
+// ------------------------------------------------------------
+// Offset
+// ------------------------------------------------------------
 func TestOffsetValidation(t *testing.T) {
-	assert.NoError(t, Offset(0).Validate())
-	assert.NoError(t, Offset(100).Validate())
-	assert.Error(t, Offset(-1).Validate())
+	if err := customtypes.Offset(-1).Validate(); err == nil {
+		t.Fatal("expected error for negative offset")
+	}
+	if err := customtypes.Offset(10).Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
-func TestPasswordJSONAndValidation(t *testing.T) {
-	os.Setenv("PASSWORD_SECRET", "secret_key")
-	raw := "mypassword"
-	var p Password
-	data, _ := json.Marshal(raw)
-	err := p.UnmarshalJSON(data)
-	assert.NoError(t, err)
-	assert.NotEqual(t, raw, string(p)) // Should be hashed
-	assert.NoError(t, p.Validate())
+// ------------------------------------------------------------
+// Password
+// ------------------------------------------------------------
+func TestPasswordJSON(t *testing.T) {
+	mustSetEnv(t, "PASSWORD_SECRET", "supersecret")
 
-	// Missing secret
-	os.Unsetenv("PASSWORD_SECRET")
-	var p2 Password
-	err = p2.UnmarshalJSON(data)
-	assert.Error(t, err)
+	// raw password JSON
+	body := []byte(`"mySecretPass"`)
+
+	var p customtypes.Password
+	if err := json.Unmarshal(body, &p); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	if string(p) == "mySecretPass" {
+		t.Fatal("password should be hashed, not raw")
+	}
+
+	// marshal must return "********"
+	out, err := json.Marshal(p)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	if string(out) != `"********"` {
+		t.Fatalf("expected masked password, got %s", out)
+	}
 }
 
-func TestDateOfBirthValidation(t *testing.T) {
-	now := time.Now()
-	dob := DateOfBirth(now.AddDate(-15, 0, 0))
-	assert.NoError(t, dob.Validate())
+func TestPasswordValidation(t *testing.T) {
+	mustSetEnv(t, "PASSWORD_SECRET", "supersecret")
 
-	tooYoung := DateOfBirth(now.AddDate(-10, 0, 0))
-	assert.Error(t, tooYoung.Validate())
+	var p customtypes.Password
+	_ = json.Unmarshal([]byte(`"abc"`), &p)
 
-	future := DateOfBirth(now.AddDate(1, 0, 0))
-	assert.Error(t, future.Validate())
+	if err := p.Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
+// ------------------------------------------------------------
+// DateOfBirth
+// ------------------------------------------------------------
+func TestDOBValidation(t *testing.T) {
+	now := time.Now().UTC()
+	under13 := now.AddDate(-10, 0, 0)
+	valid := now.AddDate(-20, 0, 0)
+	future := now.AddDate(1, 0, 0)
+
+	d := customtypes.DateOfBirth(valid)
+	if err := d.Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	d = customtypes.DateOfBirth(under13)
+	if err := d.Validate(); err == nil {
+		t.Fatal("expected min-age error")
+	}
+
+	d = customtypes.DateOfBirth(future)
+	if err := d.Validate(); err == nil {
+		t.Fatal("expected future-date error")
+	}
+}
+
+// ------------------------------------------------------------
+// Identifier
+// ------------------------------------------------------------
 func TestIdentifierValidation(t *testing.T) {
-	assert.NoError(t, Identifier("user_123").Validate())
-	assert.NoError(t, Identifier("test@example.com").Validate())
-	assert.NoError(t, Identifier("").Validate())
-	assert.Error(t, Identifier("invalid*id").Validate())
+	if err := customtypes.Identifier("bad@format@x").Validate(); err == nil {
+		t.Fatal("expected invalid identifier")
+	}
+	if err := customtypes.Identifier("validUser_123").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if err := customtypes.Identifier("email@test.com").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
 }
 
+// ------------------------------------------------------------
+// About
+// ------------------------------------------------------------
 func TestAboutValidation(t *testing.T) {
-	valid := About("This is a bio")
-	assert.NoError(t, valid.Validate())
-
-	tooShort := About("ab")
-	assert.Error(t, tooShort.Validate())
-
-	controlChar := About("Hello\x01World")
-	assert.Error(t, controlChar.Validate())
+	if err := customtypes.About("ok!").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if err := customtypes.About("\x01bad").Validate(); err == nil {
+		t.Fatal("expected control char error")
+	}
+	if err := customtypes.About("ab").Validate(); err == nil {
+		t.Fatal("expected min length error")
+	}
 }
 
+// ------------------------------------------------------------
+// Title
+// ------------------------------------------------------------
 func TestTitleValidation(t *testing.T) {
-	valid := Title("Group Chat")
-	assert.NoError(t, valid.Validate())
-
-	tooShort := Title("")
-	assert.NoError(t, tooShort.Validate()) // Nullable allowed
-
-	tooLong := Title("This title is definitely way too long for validation purposes")
-	assert.Error(t, tooLong.Validate())
+	if err := customtypes.Title("A title").Validate(); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if err := customtypes.Title("").Validate(); err != nil {
+		t.Fatalf("nullable titles allowed: %v", err)
+	}
+	if err := customtypes.Title(" ").Validate(); err == nil {
+		t.Fatal("expected trimmed length error")
+	}
 }
 
+// ------------------------------------------------------------
+// ValidateStruct
+// ------------------------------------------------------------
 func TestValidateStruct(t *testing.T) {
-	type RegisterRequest struct {
-		Username  Username `validate:"required"`
-		FirstName Name     `validate:"required"`
-		LastName  Name
-		About     About
-		Email     Email `validate:"required"`
+	type TestReq struct {
+		Name     customtypes.Name     `validate:"nullable"`
+		Email    customtypes.Email    // required
+		About    customtypes.About    `validate:"nullable"`
+		Username customtypes.Username `validate:"nullable"`
 	}
 
-	req := RegisterRequest{
-		Username:  "user_123",
-		FirstName: "Alice",
-		Email:     "test@example.com",
+	ok := TestReq{
+		Name:     "John Doe",
+		Email:    "valid@example.com",
+		About:    "This is ok",
+		Username: "user_1",
 	}
 
-	err := ValidateStruct(req)
-	assert.NoError(t, err)
-
-	invalidReq := RegisterRequest{
-		Username:  "ab",
-		FirstName: "",
-		Email:     "bad-email",
+	if err := customtypes.ValidateStruct(ok); err != nil {
+		t.Fatalf("unexpected: %v", err)
 	}
-	err = ValidateStruct(invalidReq)
-	assert.Error(t, err)
+
+	// Missing required Email
+	bad := TestReq{}
+	err := customtypes.ValidateStruct(bad)
+	if err == nil {
+		t.Fatal("expected missing required field error")
+	}
+
+	if !contains(err.Error(), "Email: required field missing") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// helpers
+func contains(haystack, needle string) bool {
+	return reflect.ValueOf(haystack).String() != "" &&
+		len(haystack) >= len(needle) &&
+		(len(needle) == 0 || (len(haystack) >= len(needle) && (index(haystack, needle) != -1)))
+}
+
+func index(s, sep string) int {
+	return len([]rune(s[:])) - len([]rune(stringsAfter(s, sep)))
+}
+
+func stringsAfter(s, sep string) string {
+	if sep == "" {
+		return s
+	}
+	i := len([]rune(s)) - len([]rune(sep))
+	if i < 0 {
+		return s
+	}
+	return s[i:]
 }

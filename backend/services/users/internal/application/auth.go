@@ -3,54 +3,49 @@ package application
 import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
+	ct "social-network/shared/customtypes"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest) (User, error) {
+func (s *Application) RegisterUser(ctx context.Context, req RegisterUserRequest) (User, error) {
 	//TODO add checks for all fields
 
 	//if no username assign full name
 	if req.Username == "" {
-		req.Username = req.FirstName + "_" + req.LastName
+		req.Username = ct.Username(string(req.FirstName) + "_" + string(req.LastName))
 	}
 
 	// convert date
 	dob := pgtype.Date{
-		Time:  req.DateOfBirth,
+		Time:  req.DateOfBirth.Time(),
 		Valid: true,
 	}
 
-	//hash password
-	passwordHash, err := hashPassword(req.Password)
-	if err != nil {
-		return User{}, err
-	}
+	var newId ct.Id
 
-	var newId int64
-
-	err = s.runTx(ctx, func(q *sqlc.Queries) error {
+	err := s.runTx(ctx, func(q *sqlc.Queries) error {
 
 		// Insert user
 		userId, err := q.InsertNewUser(ctx, sqlc.InsertNewUserParams{
-			Username:      req.Username,
-			FirstName:     req.FirstName,
-			LastName:      req.LastName,
+			Username:      req.Username.String(),
+			FirstName:     req.FirstName.String(),
+			LastName:      req.LastName.String(),
 			DateOfBirth:   dob,
 			Avatar:        req.Avatar,
-			AboutMe:       req.About,
+			AboutMe:       req.About.String(),
 			ProfilePublic: req.Public,
 		})
 		if err != nil {
 			return err //TODO check how to return correct error
 		}
-		newId = userId
+		newId = ct.Id(userId)
 
 		// Insert auth
 		return q.InsertNewUserAuth(ctx, sqlc.InsertNewUserAuthParams{
-			UserID:       newId,
-			Email:        req.Email,
-			PasswordHash: passwordHash,
+			UserID:       newId.Int64(),
+			Email:        req.Email.String(),
+			PasswordHash: req.Password.String(),
 		})
 	})
 
@@ -66,22 +61,26 @@ func (s *UserService) RegisterUser(ctx context.Context, req RegisterUserRequest)
 
 }
 
-func (s *UserService) LoginUser(ctx context.Context, req LoginRequest) (User, error) {
+func (s *Application) LoginUser(ctx context.Context, req LoginRequest) (User, error) {
 	var u User
 
+	if err := ct.ValidateStruct(req); err != nil {
+		return u, err
+	}
+
 	err := s.runTx(ctx, func(q *sqlc.Queries) error {
-		row, err := q.GetUserForLogin(ctx, req.Identifier)
+		row, err := q.GetUserForLogin(ctx, req.Identifier.String())
 		if err != nil {
 			return err
 		}
 
 		u = User{
-			UserId:   row.ID,
-			Username: row.Username,
+			UserId:   ct.Id(row.ID),
+			Username: ct.Username(row.Username),
 			Avatar:   row.Avatar,
 		}
 
-		if !checkPassword(row.PasswordHash, req.Password) {
+		if !checkPassword(row.PasswordHash, req.Password.String()) {
 			return err
 		}
 		return nil
@@ -94,28 +93,26 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginRequest) (User, er
 	return u, nil
 }
 
-func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePasswordRequest) error {
+func (s *Application) UpdateUserPassword(ctx context.Context, req UpdatePasswordRequest) error {
 	//TODO validate password (length, special characters, etc)
 
 	//TODO think whether transaction is needed here
+	if err := ct.ValidateStruct(req); err != nil {
+		return err
+	}
 
-	hashedPassword, err := s.db.GetUserPassword(ctx, req.UserId)
+	hashedPassword, err := s.db.GetUserPassword(ctx, req.UserId.Int64())
 	if err != nil {
 		return err
 	}
 
-	if !checkPassword(hashedPassword, req.OldPassword) {
+	if !checkPassword(hashedPassword, req.OldPassword.String()) {
 		return ErrNotAuthorized
 	}
 
-	newPasswordHash, err := hashPassword(req.NewPassword)
-	if err != nil {
-		return err
-	}
-
 	err = s.db.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
-		UserID:       req.UserId,
-		PasswordHash: newPasswordHash,
+		UserID:       req.UserId.Int64(),
+		PasswordHash: req.NewPassword.String(),
 	})
 	if err != nil {
 		return err
@@ -124,13 +121,16 @@ func (s *UserService) UpdateUserPassword(ctx context.Context, req UpdatePassword
 	return nil
 }
 
-func (s *UserService) UpdateUserEmail(ctx context.Context, req UpdateEmailRequest) error {
+func (s *Application) UpdateUserEmail(ctx context.Context, req UpdateEmailRequest) error {
 
 	//TODO validate email
+	if err := ct.ValidateStruct(req); err != nil {
+		return err
+	}
 
 	err := s.db.UpdateUserEmail(ctx, sqlc.UpdateUserEmailParams{
-		UserID: req.UserId,
-		Email:  req.Email,
+		UserID: req.UserId.Int64(),
+		Email:  req.Email.String(),
 	})
 	if err != nil {
 		return err
