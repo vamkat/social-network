@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
-	"social-network/shared/customtypes"
+	"social-network/shared/go/customtypes"
+
 	"strings"
 	"testing"
 	"time"
