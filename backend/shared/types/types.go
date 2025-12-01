@@ -12,7 +12,12 @@ import (
 	"time"
 
 	"github.com/speps/go-hashids/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type Validator interface {
+	Validate() error
+}
 
 // ------------------------------------------------------------
 // EncryptedId
@@ -357,6 +362,10 @@ func (d DateOfBirth) Validate() error {
 // Helper to get time.Time if needed
 func (d DateOfBirth) Time() time.Time {
 	return time.Time(d)
+}
+
+func (d DateOfBirth) ToProto() *timestamppb.Timestamp {
+	return timestamppb.New(time.Time(d))
 }
 
 // ------------------------------------------------------------

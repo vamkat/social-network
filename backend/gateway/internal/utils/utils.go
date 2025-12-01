@@ -1,13 +1,48 @@
 package utils
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
+	"social-network/shared/types"
 
 	"github.com/google/uuid"
 )
+
+// Type that holds the context with value keys
+type ctxKey string
+
+// Holds the keys to values on request context.
+const (
+	ClaimsKey        ctxKey = "jwtClaims"
+	ReqId            ctxKey = "X-Request-Id"
+	ReqActionDetails ctxKey = "X-Action-Details"
+	ReqTimestamp     ctxKey = "X-Timestamp"
+)
+
+// Adds value val to r context with key 'key'
+func RequestWithValue[T any](r *http.Request, key ctxKey, val T) *http.Request {
+	ctx := context.WithValue(r.Context(), key, val)
+	return r.WithContext(ctx)
+}
+
+// Get value T from request context with key 'key'
+func GetValue[T any](r *http.Request, key ctxKey) (T, bool) {
+	v := r.Context().Value(key)
+	if v == nil {
+		fmt.Println("v is nil")
+		var zero T
+		return zero, false
+	}
+	c, ok := v.(T)
+	if !ok {
+		panic(1) // this should never happen, which is why I'm putting a panic here so that this mistake is obvious
+	}
+	return c, ok
+}
 
 func WriteJSON(w http.ResponseWriter, code int, v any) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -37,4 +72,35 @@ func B64urlDecode(s string) ([]byte, error) {
 func GenUUID() string {
 	uuid := uuid.New()
 	return uuid.String()
+}
+
+func ValidateStruct(s interface{}) error {
+	v := reflect.ValueOf(s)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	t := v.Type()
+
+	var allErrors []string
+
+	for i := 0; i < v.NumField(); i++ {
+		fieldVal := v.Field(i)
+		fieldType := t.Field(i)
+
+		// Only exported fields can be validated
+		if !fieldVal.CanInterface() {
+			continue
+		}
+
+		if validator, ok := fieldVal.Interface().(types.Validator); ok {
+			if err := validator.Validate(); err != nil {
+				allErrors = append(allErrors, fmt.Sprintf("%s: %v", fieldType.Name, err))
+			}
+		}
+	}
+
+	if len(allErrors) > 0 {
+		return fmt.Errorf("validation errors: %v", allErrors)
+	}
+	return nil
 }

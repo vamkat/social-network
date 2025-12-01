@@ -7,9 +7,8 @@ import (
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
 	"social-network/shared/gen-go/users"
+	"social-network/shared/types"
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (h *Handlers) loginHandler() http.HandlerFunc {
@@ -90,15 +89,15 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		fmt.Println("register handler called, with: ", r.Body)
 		//READ REQUEST BODY
 		type registerHttpRequest struct {
-			Username    string                 `json:"username,omitempty"`
-			FirstName   string                 `json:"first_name,omitempty"`
-			LastName    string                 `json:"last_name,omitempty"`
-			DateOfBirth *timestamppb.Timestamp `json:"date_of_birth,omitempty"`
-			Avatar      string                 `json:"avatar,omitempty"`
-			About       string                 `json:"about,omitempty"`
-			Public      bool                   `json:"public,omitempty"`
-			Email       string                 `json:"email,omitempty"`
-			Password    string                 `json:"password,omitempty"`
+			Username    types.Username    `json:"username,omitempty"`
+			FirstName   types.Name        `json:"first_name,omitempty"`
+			LastName    types.Name        `json:"last_name,omitempty"`
+			DateOfBirth types.DateOfBirth `json:"date_of_birth,omitempty"`
+			Avatar      string            `json:"avatar,omitempty"`
+			About       types.About       `json:"about,omitempty"`
+			Public      bool              `json:"public,omitempty"`
+			Email       types.Email       `json:"email,omitempty"`
+			Password    types.Password    `json:"password,omitempty"`
 		}
 
 		httpReq := registerHttpRequest{}
@@ -109,23 +108,27 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			return
 		}
 
-		//VALIDATE INPUT
-		if httpReq.Username == "" || httpReq.Email == "" || httpReq.Password == "" {
-			utils.ErrorJSON(w, http.StatusBadRequest, "missing required fields")
-			return
+		if err := utils.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 		}
+
+		//VALIDATE INPUT
+		// if httpReq.Username == "" || httpReq.Email == "" || httpReq.Password == "" {
+		// 	utils.ErrorJSON(w, http.StatusBadRequest, "missing required fields")
+		// 	return
+		// }
 
 		//MAKE GRPC REQUEST
 		gRpcReq := users.RegisterUserRequest{
-			Username:    httpReq.Username,
-			FirstName:   httpReq.FirstName,
-			LastName:    httpReq.LastName,
-			DateOfBirth: httpReq.DateOfBirth,
+			Username:    string(httpReq.Username),
+			FirstName:   string(httpReq.FirstName),
+			LastName:    string(httpReq.LastName),
+			DateOfBirth: httpReq.DateOfBirth.ToProto(),
 			Avatar:      httpReq.Avatar,
-			About:       httpReq.About,
+			About:       string(httpReq.About),
 			Public:      httpReq.Public,
-			Email:       httpReq.Email,
-			Password:    httpReq.Password,
+			Email:       string(httpReq.Email),
+			Password:    string(httpReq.Password),
 		}
 
 		_, err := h.Services.Users.RegisterUser(r.Context(), &gRpcReq)
