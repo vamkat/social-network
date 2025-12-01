@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 export default function GroupCard({ group }) {
@@ -8,10 +9,12 @@ export default function GroupCard({ group }) {
             {/* Image Section */}
             <div className="aspect-video w-full bg-(--muted)/10 relative overflow-hidden">
                 {group.Image ? (
-                    <img
+                    <Image
                         src={group.Image}
                         alt={group.Title[0]}
                         className="w-full h-full object-cover"
+                        width={500}
+                        height={500}
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-(--muted)/20 text-4xl font-bold bg-linear-to-br from-(--muted)/5 to-(--muted)/20">
