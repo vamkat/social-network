@@ -51,6 +51,7 @@ func (s *Server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) 
 
 func (s *Server) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.User, error) {
 	fmt.Println("LoginUser gRPC method called")
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "LoginUser: request is nil")
 	}

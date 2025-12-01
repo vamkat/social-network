@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"social-network/shared/db"
+	"social-network/shared/go/db"
 )
 
 func main() {
