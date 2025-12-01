@@ -106,3 +106,4 @@ export const getCommentsForPost = (postID, offset = 0, limit = 2) => {
     const reversedComments = [...comments].reverse();
     return reversedComments.slice(offset, offset + limit);
 }
+
