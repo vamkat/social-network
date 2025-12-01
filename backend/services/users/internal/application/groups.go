@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
-	ct "social-network/shared/customtypes"
+	ct "social-network/shared/go/customtypes"
 )
 
 func (s *Application) GetAllGroupsPaginated(ctx context.Context, req Pagination) ([]Group, error) {

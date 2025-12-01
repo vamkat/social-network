@@ -1,7 +1,7 @@
 package application
 
 import (
-	ct "social-network/shared/customtypes"
+	ct "social-network/shared/go/customtypes"
 	"time"
 )
 

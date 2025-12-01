@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
-	ct "social-network/shared/customtypes"
+	ct "social-network/shared/go/customtypes"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )

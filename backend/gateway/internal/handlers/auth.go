@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
-	ct "social-network/shared/customtypes"
 	"social-network/shared/gen-go/users"
+	ct "social-network/shared/go/customtypes"
 	"time"
 )
 

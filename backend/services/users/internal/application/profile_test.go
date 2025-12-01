@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"social-network/services/users/internal/db/sqlc"
-	ct "social-network/shared/customtypes"
+	ct "social-network/shared/go/customtypes"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"

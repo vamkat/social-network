@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"social-network/services/users/internal/db/sqlc"
-	ct "social-network/shared/customtypes"
+	ct "social-network/shared/go/customtypes"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"

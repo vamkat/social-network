@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"runtime"
 	"social-network/services/users/internal/application"
-	ct "social-network/shared/customtypes"
 	pb "social-network/shared/gen-go/users"
+	ct "social-network/shared/go/customtypes"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -51,6 +51,7 @@ func (s *Server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) 
 
 func (s *Server) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.User, error) {
 	fmt.Println("LoginUser gRPC method called")
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "LoginUser: request is nil")
 	}
