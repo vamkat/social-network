@@ -673,7 +673,7 @@ func ValidateStruct(s any) error {
 
 		nullable := fieldType.Tag.Get("validate") == "nullable"
 		isPrimitive := fieldVal.Type().PkgPath() == "" // exclude primitives
-		zeroOk := allowedZeroVal[fieldVal.Type().Name()]
+		_, zeroOk := allowedZeroVal[fieldVal.Type().Name()]
 
 		if !nullable && !isPrimitive && !zeroOk {
 			if isZeroValue(fieldVal) {
@@ -696,8 +696,8 @@ func ValidateStruct(s any) error {
 }
 
 // Excluded types from nul check
-var allowedZeroVal = map[string]bool{
-	"Offset": true,
+var allowedZeroVal = map[string]struct{}{
+	"Offset": {},
 }
 
 // isZeroValue returns true if the reflect.Value is its type's zero value
