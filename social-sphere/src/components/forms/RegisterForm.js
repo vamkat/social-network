@@ -50,7 +50,7 @@ export default function RegisterForm() {
         }
 
         // Client-side validation for email
-        const email = formData.get("email");
+        const email = formData.get("email")?.trim() || "";
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailPattern.test(email)) {
             setError("Please enter a valid email address.");
@@ -108,34 +108,19 @@ export default function RegisterForm() {
                 setIsLoading(false);
                 return;
             }
-            const safePattern = /^[A-Za-z0-9_.-]+$/; // basic “safe” set; adjust as needed
+            const safePattern = /^[A-Za-z0-9_.-]+$/; // basic safe set; adjust as needed
             if (!safePattern.test(username)) {
                 setError("Username can only use letters, numbers, dots, underscores, or dashes.");
                 setIsLoading(false);
                 return;
             }
         }
-
-        // Client-side validation for first name
-        
-
         const aboutMe = formData.get("aboutMe")?.trim() || "";
-        if (aboutMe) {
-            if (aboutMe.length > 800) {
-                setError("About me must be at most 800 characters.");
-                setIsLoading(false);
-                return;
-            }
-            const safePattern = /^[A-Za-z0-9_.-]+$/; // basic “safe” set; adjust as needed
-            if (!safePattern.test(aboutMe)) {
-                setError("This section can only use letters, numbers, dots, underscores, or dashes.");
-                setIsLoading(false);
-                return;
-            }
+        if (aboutMe && aboutMe.length > 800) {
+            setError("About me must be at most 800 characters.");
+            setIsLoading(false);
+            return;
         }
-
-        
-
         // Append base64 avatar if present
         if (avatarPreview) {
             const allowedDataUrl = /^data:image\/(jpeg|png|gif);base64,[A-Za-z0-9+/]+=*$/i;
@@ -144,7 +129,7 @@ export default function RegisterForm() {
                 setIsLoading(false);
                 return;
             }
-            formData.set("avatar", avatarPreview);handleAvatarChange
+            formData.set("avatar", avatarPreview);
         }
 
         try {
@@ -218,7 +203,7 @@ export default function RegisterForm() {
                     <input
                         type="file"
                         name="avatar"
-                        accept="image/png, image/jpeg"
+                        accept="image/png, image/jpeg, image/gif"
                         onChange={handleAvatarChange}
                         className="avatar-input"
                     />
