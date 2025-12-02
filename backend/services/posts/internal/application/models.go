@@ -1,79 +1,82 @@
 package application
 
-import "time"
+import (
+	ct "social-network/shared/go/customtypes"
+	"time"
+)
 
 type GenericReq struct {
-	RequesterId int64
-	EntityId    int64
+	RequesterId ct.Id
+	EntityId    ct.Id
 }
 
 type GenericPaginatedReq struct {
-	RequesterId int64
-	EntityId    int64 //nil or 0 in case of personalized feed, or different model?
-	Limit       int
-	Offset      int
+	RequesterId ct.Id
+	EntityId    ct.Id `validate:"nullable"`
+	Limit       ct.Limit
+	Offset      ct.Offset
 }
 
 type hasRightToView struct {
-	RequesterId         int64
-	ParentEntityId      int64
-	RequesterFollowsIds []int64
-	RequesterGroups     []int64
+	RequesterId         ct.Id
+	ParentEntityId      ct.Id
+	RequesterFollowsIds []ct.Id
+	RequesterGroups     []ct.Id
 }
 
-//-------------------------------------------
+// -------------------------------------------
 // Posts
-//-------------------------------------------
+// -------------------------------------------
 type Post struct {
-	PostId          int64
-	Body            string
-	CreatorId       int64
-	GroupId         int64  //can be nil (or 0?)
-	Audience        string //everyone, selected, group, followers
+	PostId          ct.Id
+	Body            ct.PostBody
+	CreatorId       ct.Id
+	GroupId         ct.Id `validate:"nullable"` //add check that if audience=group it can't be nil
+	Audience        ct.Audience
 	CommentsCount   int
 	ReactionsCount  int
 	ImagesCount     int
-	LastCommentedAt time.Time //can be nil
+	LastCommentedAt time.Time
 	CreatedAt       time.Time
-	UpdatedAt       time.Time //can be nil
+	UpdatedAt       time.Time
 	LikedByUser     bool
-	FirstImage      string //can be nil (or "")
+	FirstImage      string
 }
 
 type CreatePostReq struct {
-	CreatorId   int64
-	Body        string
-	GroupId     *int64  //can be nil (or 0?)
-	Audience    string  //everyone, selected, group, followers
-	AudienceIds []int64 //if audience=selected, audience ids go here, otherwise empty
+	CreatorId   ct.Id
+	Body        ct.PostBody
+	GroupId     ct.Id `validate:"nullable"`
+	Audience    ct.Audience
+	AudienceIds []ct.Id `validate:"nullable"`
 }
 
 type EditPostContentReq struct {
-	RequesterId int64
-	PostId      int64
-	NewBody     string
+	RequesterId ct.Id
+	PostId      ct.Id
+	NewBody     ct.PostBody
 }
 
 type EditPostAudienceReq struct {
-	RequesterId int64
-	PostId      int64
-	Audience    string
-	AudienceIds []int64 //if audience=selected, audience ids go here, otherwise empty
+	RequesterId ct.Id
+	PostId      ct.Id
+	Audience    ct.Audience
+	AudienceIds []ct.Id `validate:"nullable"`
 }
 
 type GetUserPostsReq struct {
-	CreatorId        int64
-	CreatorFollowers []int64 //from user service
-	RequesterId      int64
-	Limit            int
-	Offset           int
+	CreatorId        ct.Id
+	CreatorFollowers []ct.Id `validate:"nullable"`
+	RequesterId      ct.Id
+	Limit            ct.Limit
+	Offset           ct.Offset
 }
 
 type GetPersonalizedFeedReq struct {
-	RequesterId         int64
-	RequesterFollowsIds []int64 //from user service
-	Limit               int
-	Offset              int
+	RequesterId         ct.Id
+	RequesterFollowsIds []ct.Id //from user service
+	Limit               ct.Limit
+	Offset              ct.Offset
 }
 
 //-------------------------------------------
@@ -81,10 +84,10 @@ type GetPersonalizedFeedReq struct {
 //-------------------------------------------
 
 type Comment struct {
-	CommentId      int64
-	ParentId       int64
-	Body           string
-	CreatorId      int64
+	CommentId      ct.Id
+	ParentId       ct.Id
+	Body           ct.CommentBody
+	CreatorId      ct.Id
 	ReactionsCount int
 	ImagesCount    int
 	CreatedAt      time.Time
@@ -94,15 +97,15 @@ type Comment struct {
 }
 
 type CreateCommentReq struct {
-	CreatorId int64
-	ParentId  int64
-	Body      string
+	CreatorId ct.Id
+	ParentId  ct.Id
+	Body      ct.CommentBody
 }
 
 type EditCommentReq struct {
-	CreatorId int64
-	CommentId int64
-	Body      string
+	CreatorId ct.Id
+	CommentId ct.Id
+	Body      ct.CommentBody
 }
 
 //-------------------------------------------
@@ -110,12 +113,12 @@ type EditCommentReq struct {
 //-------------------------------------------
 
 type Event struct {
-	EventId       int64
-	Title         string
-	Body          string
-	CreatorId     int64
-	GroupId       int64
-	EventDate     time.Time
+	EventId       ct.Id
+	Title         ct.Title
+	Body          ct.EventBody
+	CreatorId     ct.Id
+	GroupId       ct.Id
+	EventDate     ct.EventDate
 	StillValid    bool //still not sure this is needed
 	GoingCount    int
 	NotGoingCount int
@@ -125,24 +128,24 @@ type Event struct {
 }
 
 type CreateEventReq struct {
-	Title     string
-	Body      string
-	CreatorId int64
-	GroupId   int64
-	EventDate time.Time
+	Title     ct.Title
+	Body      ct.EventBody
+	CreatorId ct.Id
+	GroupId   ct.Id
+	EventDate ct.EventDate
 }
 
 type EditEventReq struct {
-	EventId     int64
-	RequesterId int64
-	Title       string
-	Body        string
-	EventDate   time.Time
+	EventId     ct.Id
+	RequesterId ct.Id
+	Title       ct.Title
+	Body        ct.EventBody
+	EventDate   ct.EventDate
 }
 
 type RespondToEventReq struct {
-	EventId     int64
-	ResponderId int64
+	EventId     ct.Id
+	ResponderId ct.Id
 	Going       bool
 }
 
@@ -155,6 +158,6 @@ type RespondToEventReq struct {
 //-------------------------------------------
 
 type InsertImagesReq struct {
-	PostId int64
+	PostId ct.Id
 	Images []string
 }

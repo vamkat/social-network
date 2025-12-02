@@ -364,6 +364,7 @@ type DateOfBirth time.Time
 const (
 	dobLayout     = "2006-01-02" // JSON date format
 	minAgeInYears = 13
+	maxAgeInYears = 120
 )
 
 func (d DateOfBirth) MarshalJSON() ([]byte, error) {
@@ -399,13 +400,22 @@ func (d DateOfBirth) IsValid() bool {
 		return false
 	}
 
-	// must be minimum age
+	// compute age
 	age := now.Year() - t.Year()
 	if now.YearDay() < t.YearDay() {
 		age--
 	}
 
-	return age >= minAgeInYears
+	// must be at least minAge and not older than maxAge
+	if age < minAgeInYears {
+		return false
+	}
+
+	if age > maxAgeInYears {
+		return false
+	}
+
+	return true
 }
 
 func (d DateOfBirth) Validate() error {
@@ -423,6 +433,82 @@ func (d DateOfBirth) Time() time.Time {
 // Helper to parse time.Time value to proto *timestamppb.Timestamp
 func (d DateOfBirth) ToProto() *timestamppb.Timestamp {
 	return timestamppb.New(time.Time(d))
+}
+
+// ------------------------------------------------------------
+// EventDate
+// ------------------------------------------------------------
+
+// TODO: Make not nullable
+// DateOfBirth is non nullable. If value is the zero time instant, January 1, year 1, 00:00:00 UTC validation returns error.
+type EventDate time.Time
+
+const (
+	edLayout       = "2006-01-02" // JSON date format
+	maxMonthsAhead = 6
+)
+
+func (ed EventDate) MarshalJSON() ([]byte, error) {
+	t := time.Time(ed)
+	return json.Marshal(t.Format(edLayout))
+}
+
+func (ed *EventDate) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	t, err := time.Parse(edLayout, s)
+	if err != nil {
+		return err
+	}
+
+	*ed = EventDate(t)
+	return nil
+}
+
+func (ed EventDate) IsValid() bool {
+	t := time.Time(ed)
+	if t.IsZero() {
+		return false
+	}
+
+	now := time.Now().UTC()
+
+	// Normalize to the same location and remove time-of-day if needed
+	t = t.In(now.Location())
+
+	// Must be today or later
+	if t.Before(now) {
+		return false
+	}
+
+	// Must not be more than N months ahead
+	limit := now.AddDate(0, maxMonthsAhead, 0)
+	if t.After(limit) {
+		return false
+	}
+
+	return true
+
+}
+
+func (ed EventDate) Validate() error {
+	if !ed.IsValid() {
+		return errors.Join(ErrValidation, errors.New("invalid event date"))
+	}
+	return nil
+}
+
+// Helper to get time.Time if needed
+func (ed EventDate) Time() time.Time {
+	return time.Time(ed)
+}
+
+// Helper to parse time.Time value to proto *timestamppb.Timestamp
+func (ed EventDate) ToProto() *timestamppb.Timestamp {
+	return timestamppb.New(time.Time(ed))
 }
 
 // ------------------------------------------------------------
@@ -635,6 +721,216 @@ func (t Title) Validate() error {
 
 func (t Title) String() string {
 	return string(t)
+}
+
+// ------------------------------------------------------------
+// PostBody
+// ------------------------------------------------------------
+
+// Can be used for post body. PostBody is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
+type PostBody string
+
+var (
+	postBodyCharsMin = 3
+	postBodyCharsMax = 500
+)
+
+func (b PostBody) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(b))
+}
+
+func (b *PostBody) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*b = PostBody(s)
+	return nil
+}
+
+func (b PostBody) IsValid() bool {
+	if len(b) == 0 {
+		return true
+	}
+	if len(b) < postBodyCharsMin || len(b) > postBodyCharsMax {
+		return false
+	}
+	for _, r := range b {
+		if r < 32 { // control characters
+			return false
+		}
+	}
+	return true
+}
+
+func (b PostBody) Validate() error {
+	if !b.IsValid() {
+		return errors.Join(ErrValidation,
+			fmt.Errorf("post body must be %d–%d chars and contain no control characters",
+				postBodyCharsMin,
+				postBodyCharsMax,
+			))
+	}
+	return nil
+}
+
+func (b PostBody) String() string {
+	return string(b)
+}
+
+// ------------------------------------------------------------
+// CommentBody
+// ------------------------------------------------------------
+
+// Can be used for comment body. CommentBody is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
+type CommentBody string
+
+var (
+	commentBodyCharsMin = 3
+	commentBodyCharsMax = 400
+)
+
+func (c CommentBody) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(c))
+}
+
+func (c *CommentBody) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*c = CommentBody(s)
+	return nil
+}
+
+func (c CommentBody) IsValid() bool {
+	if len(c) == 0 {
+		return true
+	}
+	if len(c) < commentBodyCharsMin || len(c) > commentBodyCharsMax {
+		return false
+	}
+	for _, r := range c {
+		if r < 32 { // control characters
+			return false
+		}
+	}
+	return true
+}
+
+func (c CommentBody) Validate() error {
+	if !c.IsValid() {
+		return errors.Join(ErrValidation,
+			fmt.Errorf("comment body must be %d–%d chars and contain no control characters",
+				commentBodyCharsMin,
+				commentBodyCharsMax,
+			))
+	}
+	return nil
+}
+
+func (c CommentBody) String() string {
+	return string(c)
+}
+
+// ------------------------------------------------------------
+// EventBody
+// ------------------------------------------------------------
+
+// Can be used for event body. EventBody is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
+type EventBody string
+
+var (
+	eventBodyCharsMin = 3
+	eventBodyCharsMax = 400
+)
+
+func (eb EventBody) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(eb))
+}
+
+func (eb *EventBody) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*eb = EventBody(s)
+	return nil
+}
+
+func (eb EventBody) IsValid() bool {
+	if len(eb) == 0 {
+		return true
+	}
+	if len(eb) < eventBodyCharsMin || len(eb) > eventBodyCharsMax {
+		return false
+	}
+	for _, r := range eb {
+		if r < 32 { // control characters
+			return false
+		}
+	}
+	return true
+}
+
+func (eb EventBody) Validate() error {
+	if !eb.IsValid() {
+		return errors.Join(ErrValidation,
+			fmt.Errorf("event body must be %d–%d chars and contain no control characters",
+				eventBodyCharsMin,
+				eventBodyCharsMax,
+			))
+	}
+	return nil
+}
+
+func (eb EventBody) String() string {
+	return string(eb)
+}
+
+// ------------------------------------------------------------
+// Audience
+// ------------------------------------------------------------
+
+// Can be used for post, comment, event body. Audience is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
+type Audience string
+
+var permittedAudienceValues = []string{"everyone", "group", "followers", "selected"}
+
+func (au Audience) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(au))
+}
+
+func (au *Audience) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*au = Audience(s)
+	return nil
+}
+
+func (au Audience) IsValid() bool {
+	for _, permittedValue := range permittedAudienceValues {
+		if strings.EqualFold(au.String(), permittedValue) {
+			return true
+		}
+	}
+	return false
+}
+
+func (au Audience) Validate() error {
+	if !au.IsValid() {
+		return errors.Join(ErrValidation,
+			fmt.Errorf("audience must be one of the following: %v",
+				permittedAudienceValues,
+			))
+	}
+	return nil
+}
+
+func (au Audience) String() string {
+	return string(au)
 }
 
 // ValidateStruct iterates over exported struct fields and validates them.
