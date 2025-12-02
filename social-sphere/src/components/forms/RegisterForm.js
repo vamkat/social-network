@@ -22,7 +22,33 @@ export default function RegisterForm() {
 
         const formData = new FormData(event.currentTarget);
 
+        const firstName = formData.get("firstName")?.trim() || "";
+        if (!firstName) {
+            setError("First name is required.");
+            setIsLoading(false);
+            return;
+        } else {
+            if (firstName.length < 2) {
+                setError("First name must be at least 2 characters.");
+                setIsLoading(false);
+                return;
+            }
+        }
         
+        // Client-side validation for last name
+        const lastName = formData.get("lastName")?.trim() || "";
+        if (!lastName) {
+            setError("Last name is required.");
+            setIsLoading(false);
+            return;
+        } else {
+            if (lastName.length < 2) {
+                setError("Last name must be at least 2 characters.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
         // Client-side validation for email
         const email = formData.get("email");
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,6 +85,21 @@ export default function RegisterForm() {
             setIsLoading(false);
             return;
         }
+
+        const dateOfBirth = formData.get("dateOfBirth")?.trim() || "";
+        if (!dateOfBirth) {
+            setError("Date of birth is required.");
+            setIsLoading(false);
+            return;
+        } else {
+            const age = calculateAge(dateOfBirth);
+            if (age < 13 || age > 111) {
+                setError("You must be between 13 and 111 years old.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
         // Client-side validation for username
         const username = formData.get("nickname")?.trim() || "";
         if (username) {
@@ -76,31 +117,7 @@ export default function RegisterForm() {
         }
 
         // Client-side validation for first name
-        const firstName = formData.get("firstName")?.trim() || "";
-        if (!firstName) {
-            setError("First name is required.");
-            setIsLoading(false);
-            return;
-        } else {
-            if (firstName.length < 2) {
-                setError("First name must be at least 2 characters.");
-                setIsLoading(false);
-                return;
-            }
-        }
-        // Client-side validation for last name
-        const lastName = formData.get("lastName")?.trim() || "";
-        if (!lastName) {
-            setError("Last name is required.");
-            setIsLoading(false);
-            return;
-        } else {
-            if (lastName.length < 2) {
-                setError("Last name must be at least 2 characters.");
-                setIsLoading(false);
-                return;
-            }
-        }
+        
 
         const aboutMe = formData.get("aboutMe")?.trim() || "";
         if (aboutMe) {
@@ -117,19 +134,7 @@ export default function RegisterForm() {
             }
         }
 
-        const dateOfBirth = formData.get("dateOfBirth")?.trim() || "";
-        if (!dateOfBirth) {
-            setError("Date of birth is required.");
-            setIsLoading(false);
-            return;
-        } else {
-            const age = calculateAge(dateOfBirth);
-            if (age < 13 || age > 111) {
-                setError("You must be between 13 and 111 years old.");
-                setIsLoading(false);
-                return;
-            }
-        }
+        
 
         // Append base64 avatar if present
         if (avatarPreview) {
