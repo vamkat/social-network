@@ -30,7 +30,7 @@ func Start() {
 
 	fmt.Println("gRPC services connections started")
 
-	redisClient := redis_connector.NewRedisClient("127.0.0.1:6379", "", 0)
+	redisClient := redis_connector.NewRedisClient("redis:6379", "", 0)
 	err = redisClient.TestRedisConnection()
 	if err != nil {
 		log.Fatalf("failed to connect to redis: %v", err)
@@ -40,7 +40,7 @@ func Start() {
 	// set server
 	var server http.Server
 	server.Handler = handlers.BuildMux()
-	server.Addr = "localhost:8081" //todo get from a config file or something
+	server.Addr = "0.0.0.0:8081" //todo get from a config file or something
 
 	go func() {
 		log.Printf("Starting server on http://%s\n", server.Addr)

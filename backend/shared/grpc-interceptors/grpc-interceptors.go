@@ -26,19 +26,19 @@ import (
 =====  SERVER ==================
 */
 
-type wrappedStream struct {
+type wrappedServerStream struct {
 	grpc.ServerStream
 }
 
-func newWrappedStream(s grpc.ServerStream) grpc.ServerStream {
-	return &wrappedStream{s}
+func newWrappedServerStream(s grpc.ServerStream) grpc.ServerStream {
+	return &wrappedServerStream{s}
 }
 
-func (w *wrappedStream) RecvMsg(m any) error {
+func (w *wrappedServerStream) RecvMsg(m any) error {
 	return w.ServerStream.RecvMsg(m)
 }
 
-func (w *wrappedStream) SendMsg(m any) error {
+func (w *wrappedServerStream) SendMsg(m any) error {
 	return w.ServerStream.SendMsg(m)
 }
 
@@ -58,8 +58,8 @@ func UnaryServerInterceptorWithContextKeys(keys []string) grpc.UnaryServerInterc
 // StreamServerInterceptorWithContextKeys returns a server interceptor that extracts specified keys from metadata and adds them to the context.
 func StreamServerInterceptorWithContextKeys(keys []string) grpc.StreamServerInterceptor {
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		handler(srv, ss)
-		return nil
+		err := handler(srv, newWrappedServerStream(ss))
+		return err
 	}
 }
 

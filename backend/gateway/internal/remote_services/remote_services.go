@@ -18,7 +18,7 @@ func NewServices() GRpcServices {
 }
 
 func (g *GRpcServices) StartConnections() (func(), error) {
-	usersConn, err := grpc.NewClient("127.0.0.1:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	usersConn, err := grpc.NewClient("users:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err.Error())
 	}

@@ -30,7 +30,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", ")+", OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Timestamp")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		// w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		if r.Method == http.MethodOptions {
 			fmt.Println("Method in options")

@@ -181,6 +181,19 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+
+  # ---------------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+      
       
 volumes:
   users-db-data:
