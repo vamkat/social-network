@@ -120,18 +120,6 @@ export default function PostForm({
             }
         >
             <div className="flex-1 space-y-3">
-                {/* <div>
-                    <input
-                        type="text"
-                        name="post_title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 px-3 py-2 text-sm text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-purple-500/30"
-                        placeholder="Give your post a title..."
-                        required
-                    />
-                </div> */}
-
                 <div>
                     <textarea
                         name="post_body"

@@ -14,7 +14,7 @@ export default async function FriendsFeedPage() {
 
             <FeedActions
                 ctaProps={{
-                    title: "Create new friends post",
+                    title: "Post something new",
                     subtitle: "Share what is on your mind with your friends.",
                     actionLabel: "+ Post",
                 }}
