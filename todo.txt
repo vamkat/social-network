@@ -1,0 +1,28 @@
+--check how can we cache rarely used/updated data => FETCH API REVALIDATE
+
+
+TODOS:
+
+1. Create-Post component ACCORDING TO CURRENT DESIGN.
+2. Create-Comment component ACCORDING TO CURRENT DESIGN.
+3. Create-Group component ACCORDING TO CURRENT DESIGN.
+
+
+4. Form Validations (COMMUNICATE CONSTRAINTS WITH BACKEND/Katerina)
+
+-> registration form (
+      Username: optional, (IF ADDED, Check GOOD PRACTICES, prevent sql injection, etc )
+      Email: required, valid email (Check GOOD PRACTICES, theres a regex for that)
+      FirstName: required (Check GOOD PRACTICES)
+      LastName: required (Check GOOD PRACTICES)
+      Password: required (Check GOOD PRACTICES, maybe a nice ui for password strength??)
+      Confirm Password: required(for front only), need to match Password
+      Avatar: optional (IF ADDED, check image file, type, size, etc)
+      AboutMe: optional (IF ADDED, check max length, good practices, preventsql injection, etc)
+      DateOfBirth: required (Check GOOD PRACTICES, no babies, mathusallas, or some random future fuckers allowed)
+      )
+
+-> login form (
+      Identifier: required (Check GOOD PRACTICES)
+      Password: required (Check GOOD PRACTICES)
+      )
