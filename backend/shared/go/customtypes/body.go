@@ -10,8 +10,6 @@ import (
 // PostBody
 // ------------------------------------------------------------
 
-// Can be used for post body. PostBody is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
-
 func (b PostBody) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(b))
 }
@@ -59,8 +57,6 @@ func (b PostBody) String() string {
 // CommentBody
 // ------------------------------------------------------------
 
-// Can be used for comment body. CommentBody is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
-
 func (c CommentBody) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(c))
 }
@@ -107,8 +103,6 @@ func (c CommentBody) String() string {
 // ------------------------------------------------------------
 // EventBody
 // ------------------------------------------------------------
-
-// Can be used for event body. EventBody is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 
 func (eb EventBody) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(eb))

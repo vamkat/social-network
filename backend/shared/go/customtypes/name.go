@@ -9,8 +9,6 @@ import (
 // Name
 // ------------------------------------------------------------
 
-// General type for names and surnames. Name type is not nullable. All smaller than len 2 values return error
-
 func (n Name) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(n))
 }

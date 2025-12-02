@@ -10,8 +10,6 @@ import (
 // Search
 // ------------------------------------------------------------
 
-// SearchTerm represents a validated search query term. Not nullable value
-
 func (s SearchTerm) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(s))
 }

@@ -11,8 +11,6 @@ import (
 // Audience
 // ------------------------------------------------------------
 
-// Can be used for post, comment, event body. Audience is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
-
 func (au Audience) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(au))
 }

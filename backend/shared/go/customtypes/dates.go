@@ -84,9 +84,6 @@ func (d DateOfBirth) ToProto() *timestamppb.Timestamp {
 // EventDate
 // ------------------------------------------------------------
 
-// TODO: Make not nullable
-// DateOfBirth is non nullable. If value is the zero time instant, January 1, year 1, 00:00:00 UTC validation returns error.
-
 func (ed EventDate) MarshalJSON() ([]byte, error) {
 	t := time.Time(ed)
 	return json.Marshal(t.Format(eventDateLayout))

@@ -8,12 +8,6 @@ import (
 	"github.com/speps/go-hashids/v2"
 )
 
-// ------------------------------------------------------------
-// EncryptedId
-// ------------------------------------------------------------
-
-// Encrypted id is nullable. If `validation:"nullable` tag is present zero values don't return error.
-
 var salt string = os.Getenv("ENC_KEY")
 
 var hd = func() *hashids.HashID {
@@ -65,9 +59,6 @@ func (e EncryptedId) Int64() int64 {
 // ------------------------------------------------------------
 // Id
 // ------------------------------------------------------------
-
-// Id is nullable. If `validation:"nullable"` tag is present zero values don't return error.
-// Negative values return error.
 
 func (i Id) MarshalJSON() ([]byte, error) {
 	return json.Marshal(int64(i))

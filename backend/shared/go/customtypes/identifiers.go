@@ -9,9 +9,6 @@ import (
 // Email
 // ------------------------------------------------------------
 
-// Not nullable.
-// Error upon validation is returned if string doesn't match email format or is empty.
-
 func (e Email) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(e))
 }
@@ -43,8 +40,6 @@ func (e Email) String() string {
 // ------------------------------------------------------------
 // Username
 // ------------------------------------------------------------
-
-// Username is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 
 func (u Username) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(u))
@@ -80,8 +75,6 @@ func (u Username) String() string {
 // ------------------------------------------------------------
 // Identifier (username or email)
 // ------------------------------------------------------------
-
-// Represents user name or email. Identifier is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 
 func (i Identifier) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(i))

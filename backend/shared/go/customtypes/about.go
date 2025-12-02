@@ -6,12 +6,6 @@ import (
 	"fmt"
 )
 
-// ------------------------------------------------------------
-// About
-// ------------------------------------------------------------
-
-// Can be used for bio or descritpion. About is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
-
 func (a About) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(a))
 }
