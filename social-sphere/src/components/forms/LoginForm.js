@@ -20,6 +20,24 @@ export default function LoginForm() {
 
         const formData = new FormData(event.currentTarget);
 
+        const identifier = formData.get("identifier");
+        const password = formData.get("password");
+
+        if (!identifier || !password) {
+            setError("Please enter both identifier and password.");
+            setIsLoading(false);
+            return;
+        }
+
+        if (identifier.includes("@")) {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(identifier)) {
+                setError("Please enter a valid email address.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
         try {
             const result = await login(formData);
 
