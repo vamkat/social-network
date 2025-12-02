@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
 	"social-network/shared/gen-go/users"
 	"strconv"
@@ -24,13 +25,13 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			return
 		}
 
-		// claims, ok := utils.GetValue[security.Claims](r, utils.ClaimsKey)
-		// if !ok {
-		// 	panic(1)
-		// }
-		// requesterId := int64(claims.UserId)
+		claims, ok := utils.GetValue[security.Claims](r, utils.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+		requesterId := int64(claims.UserId)
 
-		var requesterId int64 = 0
+		// var requesterId int64 = 0
 
 		grpcReq := users.GetUserProfileRequest{
 			UserId:      userId,

@@ -54,7 +54,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		exp := time.Now().AddDate(0, 6, 0).Unix() // six months from now
 
 		claims := security.Claims{
-			UserId: int64(user.UserId),
+			UserId: user.UserId,
 			Iat:    now,
 			Exp:    exp,
 		}
@@ -131,11 +131,31 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			Password:    string(httpReq.Password),
 		}
 
-		_, err := h.Services.Users.RegisterUser(r.Context(), &gRpcReq)
+		resp, err := h.Services.Users.RegisterUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "registration failed")
 			return
 		}
+
+		now := time.Now().Unix()
+		exp := time.Now().AddDate(0, 6, 0).Unix()
+
+		security.CreateToken(security.Claims{
+			UserId: resp.UserId,
+			Exp:    exp,
+			Iat:    now,
+			Nbf:    time.Now().Unix(),
+		})
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "jwt",
+			Value:    "",
+			Path:     "/",
+			Expires:  time.Unix(0, 0),
+			HttpOnly: true,
+			Secure:   false, //TODO: set to true in production
+			SameSite: http.SameSiteLaxMode,
+		})
 
 		//SEND RESPONSE
 		if err := utils.WriteJSON(w, http.StatusCreated, "registered successfully"); err != nil {

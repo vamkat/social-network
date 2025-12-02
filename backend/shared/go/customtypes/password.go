@@ -14,9 +14,6 @@ import (
 // (Hash on Unmarshal; store hashed value only)
 // ------------------------------------------------------------
 
-// Password is not nullable. The length is checked and error is returned during json unmarshall.
-// Password unmarshaling depends on "PASSWORD_SECRET" env variable to be present.
-
 func (p Password) MarshalJSON() ([]byte, error) {
 	// No encoder required – return placeholder or omit
 	return json.Marshal("********")

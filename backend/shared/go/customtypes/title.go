@@ -11,8 +11,6 @@ import (
 // Title (group/chat title)
 // ------------------------------------------------------------
 
-// Refers to title of content not mr, mrs. Title is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
-
 func (t Title) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(t))
 }
