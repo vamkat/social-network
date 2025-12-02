@@ -22,19 +22,124 @@ export default function RegisterForm() {
 
         const formData = new FormData(event.currentTarget);
 
+        
+        // Client-side validation for email
+        const email = formData.get("email");
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            setError("Please enter a valid email address.");
+            setIsLoading(false);
+            return;
+        }
+
         // Client-side validation for password match
         const password = formData.get("password");
         const confirmPassword = formData.get("confirmPassword");
+        if (!password || !confirmPassword) {
+            setError("Please enter both password and confirm password.");
+            setIsLoading(false);
+            return;
+        }
+        if (password.length < 8 ) {
+            setError("Password must be at least 8 characters.");
+            setIsLoading(false);
+            return;
+        }
 
+        
+        const strongPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$/;
+        if (!strongPattern.test(password)) {
+        setError("Password needs 1 lowercase, 1 uppercase, 1 number, and 1 symbol.");
+        setIsLoading(false);
+        return;
+        }
+        // Check if password and confirm password match
         if (password !== confirmPassword) {
             setError("Passwords do not match");
             setIsLoading(false);
             return;
         }
+        // Client-side validation for username
+        const username = formData.get("nickname")?.trim() || "";
+        if (username) {
+            if (username.length < 4) {
+                setError("Username must be at least 4 characters.");
+                setIsLoading(false);
+                return;
+            }
+            const safePattern = /^[A-Za-z0-9_.-]+$/; // basic “safe” set; adjust as needed
+            if (!safePattern.test(username)) {
+                setError("Username can only use letters, numbers, dots, underscores, or dashes.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
+        // Client-side validation for first name
+        const firstName = formData.get("firstName")?.trim() || "";
+        if (!firstName) {
+            setError("First name is required.");
+            setIsLoading(false);
+            return;
+        } else {
+            if (firstName.length < 2) {
+                setError("First name must be at least 2 characters.");
+                setIsLoading(false);
+                return;
+            }
+        }
+        // Client-side validation for last name
+        const lastName = formData.get("lastName")?.trim() || "";
+        if (!lastName) {
+            setError("Last name is required.");
+            setIsLoading(false);
+            return;
+        } else {
+            if (lastName.length < 2) {
+                setError("Last name must be at least 2 characters.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
+        const aboutMe = formData.get("aboutMe")?.trim() || "";
+        if (aboutMe) {
+            if (aboutMe.length > 800) {
+                setError("About me must be at most 800 characters.");
+                setIsLoading(false);
+                return;
+            }
+            const safePattern = /^[A-Za-z0-9_.-]+$/; // basic “safe” set; adjust as needed
+            if (!safePattern.test(aboutMe)) {
+                setError("This section can only use letters, numbers, dots, underscores, or dashes.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
+        const dateOfBirth = formData.get("dateOfBirth")?.trim() || "";
+        if (!dateOfBirth) {
+            setError("Date of birth is required.");
+            setIsLoading(false);
+            return;
+        } else {
+            const age = calculateAge(dateOfBirth);
+            if (age < 13 || age > 111) {
+                setError("You must be between 13 and 111 years old.");
+                setIsLoading(false);
+                return;
+            }
+        }
 
         // Append base64 avatar if present
         if (avatarPreview) {
-            formData.set("avatar", avatarPreview);
+            const allowedDataUrl = /^data:image\/(jpeg|png|gif);base64,[A-Za-z0-9+/]+=*$/i;
+            if (!allowedDataUrl.test(avatarPreview)) {
+                setError("Avatar must be base64 JPEG, PNG, or GIF.");
+                setIsLoading(false);
+                return;
+            }
+            formData.set("avatar", avatarPreview);handleAvatarChange
         }
 
         try {
@@ -56,6 +161,11 @@ export default function RegisterForm() {
     function handleAvatarChange(event) {
         const file = event.target.files[0];
         if (file) {
+            const allowed = ["image/jpeg", "image/png", "image/gif"];
+            if (!allowed.includes(file.type)) {
+                setError("Avatar must be JPEG, PNG, or GIF.");
+                return;
+            }
             setAvatarName(file.name);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -71,6 +181,16 @@ export default function RegisterForm() {
         // Reset file input if needed (requires ref)
     }
 
+    function calculateAge(dateOfBirth) {
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const month = today.getMonth() - birthDate.getMonth();
+        if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
     return (
         <form onSubmit={handleSubmit} className="w-full max-w-lg space-y-6">
             {/* Avatar Upload */}
