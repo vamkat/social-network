@@ -1,4 +1,7 @@
-export const getMockPosts = (offset = 0, limit = 10) => {
+const normalizeVisibility = (post) =>
+    (post.visibility ?? post.Visibility ?? "public").toString().toLowerCase();
+
+export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, groupId = null) => {
     const posts = [
         {
             ID: "1",
@@ -7,12 +10,13 @@ export const getMockPosts = (offset = 0, limit = 10) => {
                 Username: "watermelon_musk",
                 Avatar: "/elon.jpeg"
             },
-            Content: "Sunday mornings are for slow breakfasts and even slower jazz. 🎷🥐 There's something magical about the quiet before the city wakes up.",
+            Content: "Sunday mornings are for slow breakfasts and even slower jazz. There's something magical about the quiet before the city wakes up.",
             PostImage: "/elon.jpeg",
             CreatedAt: "10m ago",
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
+            Visibility: "public",
         },
         {
             ID: "2",
@@ -27,6 +31,7 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
+            Visibility: "friends",
         },
         {
             ID: "3",
@@ -41,6 +46,8 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
+            Visibility: "group",
+            GroupID: "2",
         },
         {
             ID: "4",
@@ -49,12 +56,13 @@ export const getMockPosts = (offset = 0, limit = 10) => {
                 Username: "watermelon_musk",
                 Avatar: "/elon.jpeg"
             },
-            Content: "Sunday mornings are for slow breakfasts and even slower jazz. 🎷🥐 There's something magical about the quiet before the city wakes up.",
+            Content: "Sunday mornings are for slow breakfasts and even slower jazz. There's something magical about the quiet before the city wakes up.",
             PostImage: null,
             CreatedAt: "10m ago",
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
+            Visibility: "public",
         },
         {
             ID: "5",
@@ -69,6 +77,7 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
+            Visibility: "friends",
         },
         {
             ID: "6",
@@ -83,6 +92,8 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
+            Visibility: "group",
+            GroupID: "7",
         },
         {
             ID: "7",
@@ -97,6 +108,7 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
+            Visibility: "public",
         },
         {
             ID: "8",
@@ -111,6 +123,7 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
+            Visibility: "friends",
         },
         {
             ID: "9",
@@ -125,6 +138,7 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 42,
             NumOfHearts: 145,
             IsHearted: false,
+            Visibility: "public",
         },
         {
             ID: "10",
@@ -139,6 +153,7 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 7,
             NumOfHearts: 12,
             IsHearted: false,
+            Visibility: "friends",
         },
         {
             ID: "11",
@@ -153,14 +168,27 @@ export const getMockPosts = (offset = 0, limit = 10) => {
             NumOfComments: 7,
             NumOfHearts: 12,
             IsHearted: false,
+            Visibility: "public",
         }
     ];
 
-    return posts.slice(offset, offset + limit);
-}
+    let filtered = posts;
+
+    if (visibilityFilter?.length) {
+        const allowed = visibilityFilter.map((v) => v.toLowerCase());
+        filtered = filtered.filter((post) => allowed.includes(normalizeVisibility(post)));
+    }
+
+    if (groupId) {
+        const scoped = filtered.filter((post) => (post.GroupID ?? post.group_id) === groupId);
+        filtered = scoped.length > 0 ? scoped : filtered;
+    }
+
+    return filtered.slice(offset, offset + limit);
+};
 
 export const GetPostsByUserId = (userId, offset = 0, limit = 10) => {
     const allPosts = getMockPosts(0, 1000);
     const userPosts = allPosts.filter(post => post.BasicUserInfo.UserID === userId);
     return userPosts.slice(offset, offset + limit);
-}
+};

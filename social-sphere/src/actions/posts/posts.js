@@ -6,14 +6,14 @@ export async function fetchPublicPosts(offset = 0, limit = 5) {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return getMockPosts(offset, limit);
+    return getMockPosts(offset, limit, ["public"]);
 }
 
 export async function fetchFeedPosts(offset = 0, limit = 5) {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return getMockPosts(offset, limit);
+    return getMockPosts(offset, limit, ["public", "friends"]);
 }
 
 import { unstable_cache } from "next/cache";

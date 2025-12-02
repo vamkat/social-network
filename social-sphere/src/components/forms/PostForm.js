@@ -1,15 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000"; // dummy
 
-export default function PostForm({ onPostCreated, onCancel, embed = false }) {
+const DEFAULT_VISIBILITY_OPTIONS = [
+    {
+        value: "public",
+        label: "Public",
+        helper: "Visible in both Public and Friends feeds.",
+    },
+    {
+        value: "friends",
+        label: "Friends",
+        helper: "Visible only to Friends feed.",
+    },
+    {
+        value: "custom",
+        label: "Select members",
+        helper: "Choose specific members who can view this post.",
+    },
+    {
+        value: "group",
+        label: "Group",
+        helper: "Visible only inside groups.",
+    },
+];
+
+export default function PostForm({
+    onPostCreated,
+    onCancel,
+    embed = false,
+    defaultVisibility = "public",
+    visibilityOptions,
+    groupId = null,
+    showVisibilityPicker = true,
+    audienceMarker,
+}) {
    // const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
+    const [visibility, setVisibility] = useState(defaultVisibility);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+
+    const options = useMemo(() => {
+        if (visibilityOptions?.length) return visibilityOptions;
+        return DEFAULT_VISIBILITY_OPTIONS;
+    }, [visibilityOptions]);
+
+    useEffect(() => {
+        // Keep the current selection in sync with the default the parent passes.
+        setVisibility(defaultVisibility);
+    }, [defaultVisibility]);
+
+    const selectedOption = options.find((option) => option.value === visibility) ?? options[0];
+    const hasOptions = Array.isArray(options) && options.length > 0;
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -27,6 +73,8 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                 body: JSON.stringify({
                     //post_title: title,
                     post_body: body,
+                    visibility,
+                    group_id: visibility === "group" ? groupId : null,
                 }),
             });
 
@@ -41,8 +89,8 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                 //post_title: data.post_title,
                 post_body: data.post_body,
                 post_creator: data.post_creator,
-                group_id: data.group_id ?? null,
-                visibility: data.visibility ?? "public",
+                group_id: data.group_id ?? (visibility === "group" ? groupId : null),
+                visibility: data.visibility ?? visibility,
                 image_id: data.image_id ?? null,
                 created_at: data.created_at,
             };
@@ -53,6 +101,7 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
 
             //setTitle("");
             setBody("");
+            setVisibility(defaultVisibility);
         } catch (err) {
             console.error(err);
             setError("Could not publish your post. Try again.");
@@ -104,18 +153,35 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
                         📷 <span>Add photo</span>
                     </div>
-                    {/* <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                        📊 <span>Create poll</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-900/80">
-                        📅 <span>Start event</span>
-                    </div> */}
+                    {showVisibilityPicker && hasOptions && (
+                        <div className="flex items-center gap-2 text-(--muted)">
+                            <span className="font-semibold text-(--foreground)">Post to</span>
+                            <select
+                                value={visibility}
+                                onChange={(e) => setVisibility(e.target.value)}
+                                title={selectedOption?.helper}
+                                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 px-2 py-1 text-xs text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-purple-500/30"
+                            >
+                                {options.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    {!showVisibilityPicker && audienceMarker && (
+                        <span className="px-3 py-1 rounded-full border border-(--muted)/30 text-(--muted) bg-(--muted)/10">
+                            {audienceMarker}
+                        </span>
+                    )}
                     <div className="ml-auto flex items-center gap-2">
                         <button
                             type="button"
                             onClick={() => {
                                 //setTitle("");
                                 setBody("");
+                                setVisibility(defaultVisibility);
                                 if (onCancel) {
                                     onCancel();
                                 } else if (onPostCreated) {
@@ -135,6 +201,12 @@ export default function PostForm({ onPostCreated, onCancel, embed = false }) {
                         </button>
                     </div>
                 </div>
+
+                {visibility === "custom" && (
+                    <p className="text-[11px] text-(--muted)">
+                        Member picker coming soon. Your post will target selected members once configured.
+                    </p>
+                )}
             </div>
         </form>
     );

@@ -95,7 +95,11 @@ export default function PostCard({ post }) {
                             @{post.BasicUserInfo.Username}
                         </h3>
                     </Link>
-                    <span className="post-timestamp">{post.CreatedAt}</span>
+                    <div className="flex items-center gap-2 text-xs text-(--muted)">
+                        <span className="post-timestamp">{post.CreatedAt}</span>
+                        <span>•</span>
+                        <span className="capitalize">{post.Visibility ?? post.visibility ?? "public"}</span>
+                    </div>
                 </div>
 
                 {/* Content */}

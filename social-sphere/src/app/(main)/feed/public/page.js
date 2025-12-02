@@ -18,6 +18,14 @@ export default async function PublicFeedPage() {
                     subtitle: "Share what is happening around you with the world.",
                     actionLabel: "+ Post",
                 }}
+                postFormProps={{
+                    defaultVisibility: "public",
+                    visibilityOptions: [
+                        { value: "public", label: "Public", helper: "Shown in both Public and Friends feeds." },
+                        { value: "friends", label: "Friends", helper: "Only visible in Friends feed." },
+                        { value: "custom", label: "Select members", helper: "Choose specific members who can view this post." },
+                    ],
+                }}
             />
 
             <FeedList initialPosts={initialPosts} fetchPosts={fetchPublicPosts} />

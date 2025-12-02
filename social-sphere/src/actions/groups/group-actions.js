@@ -26,13 +26,11 @@ export async function getAllGroups() {
     return fetchMockGroups();
 }
 
-export async function getGroupPosts() {
+export async function getGroupPosts(groupId, offset = 0, limit = 5) {
     // simulate api delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // For mock purposes, return all posts
-    // In a real app, this would filter by groupId
-    return getMockPosts();
+    return getMockPosts(offset, limit, ["group"], groupId);
 }
 
 export async function getGroupMembers() {
