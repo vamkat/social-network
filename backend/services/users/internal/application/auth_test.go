@@ -6,57 +6,60 @@ import (
 	"testing"
 
 	"social-network/services/users/internal/db/sqlc"
+	ct "social-network/shared/go/customtypes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestLoginUser_InvalidCredentials(t *testing.T) {
 	t.Skip("Requires transaction support with real pool - use integration tests")
 }
 
-// func TestUpdateUserPassword_Success(t *testing.T) {
-// 	mockDB := new(MockQuerier)
-// 	service := NewApplication(mockDB, nil)
+func TestUpdateUserPassword_Success(t *testing.T) {
+	mockDB := new(MockQuerier)
+	service := NewApplication(mockDB, nil)
 
-// 	oldPassword := "oldpassword"
-// 	newPassword := "newpassword"
-// 	hashedOld, _ := hashPassword(oldPassword)
+	oldPassword := "oldpassword"
+	newPassword := "newpassword"
+	hashedOld, _ := bcrypt.GenerateFromPassword([]byte(oldPassword), bcrypt.DefaultCost)
 
-// 	req := UpdatePasswordRequest{
-// 		UserId:      1,
-// 		OldPassword: oldPassword,
-// 		NewPassword: newPassword,
-// 	}
+	req := UpdatePasswordRequest{
+		UserId:      ct.Id(1),
+		OldPassword: ct.Password(oldPassword),
+		NewPassword: ct.Password(newPassword),
+	}
 
-// 	ctx := context.Background()
+	ctx := context.Background()
 
-// 	mockDB.On("GetUserPassword", ctx, int64(1)).Return(hashedOld, nil)
-// 	mockDB.On("UpdateUserPassword", ctx, mock.MatchedBy(func(arg sqlc.UpdateUserPasswordParams) bool {
-// 		return arg.UserID == 1
-// 	})).Return(nil)
+	mockDB.On("GetUserPassword", ctx, int64(1)).Return(string(hashedOld), nil)
+	mockDB.On("UpdateUserPassword", ctx, mock.MatchedBy(func(arg sqlc.UpdateUserPasswordParams) bool {
+		return arg.UserID == 1
+	})).Return(nil)
 
-// 	err := service.UpdateUserPassword(ctx, req)
+	err := service.UpdateUserPassword(ctx, req)
 
-// 	assert.NoError(t, err)
-// 	mockDB.AssertExpectations(t)
-// }
+	assert.NoError(t, err)
+	mockDB.AssertExpectations(t)
+}
 
 func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewApplication(mockDB, nil)
 
 	correctPassword := "correctpassword"
-	hashedCorrect := correctPassword
+	hashedCorrect, _ := bcrypt.GenerateFromPassword([]byte(correctPassword), bcrypt.DefaultCost)
 
 	req := UpdatePasswordRequest{
-		UserId:      1,
-		OldPassword: "wrongpassword",
-		NewPassword: "newpassword",
+		UserId:      ct.Id(1),
+		OldPassword: ct.Password("wrongpassword"),
+		NewPassword: ct.Password("newpassword"),
 	}
 
 	ctx := context.Background()
 
-	mockDB.On("GetUserPassword", ctx, int64(1)).Return(hashedCorrect, nil)
+	mockDB.On("GetUserPassword", ctx, int64(1)).Return(string(hashedCorrect), nil)
 
 	err := service.UpdateUserPassword(ctx, req)
 
@@ -69,8 +72,8 @@ func TestUpdateUserEmail_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	req := UpdateEmailRequest{
-		UserId: 1,
-		Email:  "newemail@example.com",
+		UserId: ct.Id(1),
+		Email:  ct.Email("newemail@example.com"),
 	}
 
 	ctx := context.Background()
@@ -91,8 +94,8 @@ func TestUpdateUserEmail_Error(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	req := UpdateEmailRequest{
-		UserId: 1,
-		Email:  "duplicate@example.com",
+		UserId: ct.Id(1),
+		Email:  ct.Email("duplicate@example.com"),
 	}
 
 	ctx := context.Background()

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"social-network/services/users/internal/db/sqlc"
+	ct "social-network/shared/go/customtypes"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,9 +17,9 @@ func TestGetFollowersPaginated_Success(t *testing.T) {
 
 	ctx := context.Background()
 	req := Pagination{
-		UserId: 1,
-		Limit:  10,
-		Offset: 0,
+		UserId: ct.Id(1),
+		Limit:  ct.Limit(10),
+		Offset: ct.Offset(0),
 	}
 
 	expectedRows := []sqlc.GetFollowersRow{
@@ -46,8 +47,8 @@ func TestGetFollowersPaginated_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, users, 2)
-	assert.Equal(t, "follower1", users[0].Username)
-	assert.Equal(t, "follower2", users[1].Username)
+	assert.Equal(t, "follower1", users[0].Username.String())
+	assert.Equal(t, "follower2", users[1].Username.String())
 	mockDB.AssertExpectations(t)
 }
 
@@ -57,9 +58,9 @@ func TestGetFollowersPaginated_Empty(t *testing.T) {
 
 	ctx := context.Background()
 	req := Pagination{
-		UserId: 999,
-		Limit:  10,
-		Offset: 0,
+		UserId: ct.Id(999),
+		Limit:  ct.Limit(10),
+		Offset: ct.Offset(0),
 	}
 
 	mockDB.On("GetFollowers", ctx, sqlc.GetFollowersParams{
@@ -81,9 +82,9 @@ func TestGetFollowingPaginated_Success(t *testing.T) {
 
 	ctx := context.Background()
 	req := Pagination{
-		UserId: 1,
-		Limit:  10,
-		Offset: 0,
+		UserId: ct.Id(1),
+		Limit:  ct.Limit(10),
+		Offset: ct.Offset(0),
 	}
 
 	expectedRows := []sqlc.GetFollowingRow{
@@ -111,8 +112,8 @@ func TestGetFollowingPaginated_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, users, 2)
-	assert.Equal(t, "following1", users[0].Username)
-	assert.Equal(t, "following2", users[1].Username)
+	assert.Equal(t, "following1", users[0].Username.String())
+	assert.Equal(t, "following2", users[1].Username.String())
 	mockDB.AssertExpectations(t)
 }
 
@@ -122,9 +123,9 @@ func TestGetFollowingPaginated_Empty(t *testing.T) {
 
 	ctx := context.Background()
 	req := Pagination{
-		UserId: 999,
-		Limit:  10,
-		Offset: 0,
+		UserId: ct.Id(999),
+		Limit:  ct.Limit(10),
+		Offset: ct.Offset(0),
 	}
 
 	mockDB.On("GetFollowing", ctx, sqlc.GetFollowingParams{
@@ -146,8 +147,8 @@ func TestFollowUser_Immediate(t *testing.T) {
 
 	ctx := context.Background()
 	req := FollowUserReq{
-		FollowerId:   1,
-		TargetUserId: 2,
+		FollowerId:   ct.Id(1),
+		TargetUserId: ct.Id(2),
 	}
 
 	mockDB.On("FollowUser", ctx, sqlc.FollowUserParams{
@@ -169,8 +170,8 @@ func TestFollowUser_Pending(t *testing.T) {
 
 	ctx := context.Background()
 	req := FollowUserReq{
-		FollowerId:   1,
-		TargetUserId: 2,
+		FollowerId:   ct.Id(1),
+		TargetUserId: ct.Id(2),
 	}
 
 	mockDB.On("FollowUser", ctx, sqlc.FollowUserParams{
@@ -192,8 +193,8 @@ func TestFollowUser_Error(t *testing.T) {
 
 	ctx := context.Background()
 	req := FollowUserReq{
-		FollowerId:   1,
-		TargetUserId: 2,
+		FollowerId:   ct.Id(1),
+		TargetUserId: ct.Id(2),
 	}
 
 	mockDB.On("FollowUser", ctx, sqlc.FollowUserParams{
@@ -213,8 +214,8 @@ func TestUnFollowUser_Success(t *testing.T) {
 
 	ctx := context.Background()
 	req := FollowUserReq{
-		FollowerId:   1,
-		TargetUserId: 2,
+		FollowerId:   ct.Id(1),
+		TargetUserId: ct.Id(2),
 	}
 
 	mockDB.On("UnfollowUser", ctx, sqlc.UnfollowUserParams{
@@ -257,8 +258,8 @@ func TestHandleFollowRequest_Accept(t *testing.T) {
 
 	ctx := context.Background()
 	req := HandleFollowRequestReq{
-		UserId:      1,
-		RequesterId: 2,
+		UserId:      ct.Id(1),
+		RequesterId: ct.Id(2),
 		Accept:      true,
 	}
 
@@ -279,8 +280,8 @@ func TestHandleFollowRequest_Reject(t *testing.T) {
 
 	ctx := context.Background()
 	req := HandleFollowRequestReq{
-		UserId:      1,
-		RequesterId: 2,
+		UserId:      ct.Id(1),
+		RequesterId: ct.Id(2),
 		Accept:      false,
 	}
 
@@ -301,8 +302,8 @@ func TestHandleFollowRequest_AcceptError(t *testing.T) {
 
 	ctx := context.Background()
 	req := HandleFollowRequestReq{
-		UserId:      1,
-		RequesterId: 2,
+		UserId:      ct.Id(1),
+		RequesterId: ct.Id(2),
 		Accept:      true,
 	}
 

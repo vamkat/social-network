@@ -32,8 +32,8 @@ func TestGetBasicUserInfo_Success(t *testing.T) {
 	user, err := service.GetBasicUserInfo(ctx, ct.Id(userID))
 
 	assert.NoError(t, err)
-	assert.Equal(t, userID, user.UserId)
-	assert.Equal(t, "testuser", user.Username)
+	assert.Equal(t, ct.Id(userID), user.UserId)
+	assert.Equal(t, "testuser", user.Username.String())
 	assert.Equal(t, "avatar.jpg", user.Avatar)
 	mockDB.AssertExpectations(t)
 }
@@ -104,8 +104,8 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 	profile, err := service.GetUserProfile(ctx, req)
 
 	assert.NoError(t, err)
-	assert.Equal(t, userID, profile.UserId)
-	assert.Equal(t, "testuser", profile.Username)
+	assert.Equal(t, ct.Id(userID), profile.UserId)
+	assert.Equal(t, "testuser", profile.Username.String())
 	assert.Equal(t, int64(10), profile.FollowersCount)
 	assert.Equal(t, int64(5), profile.FollowingCount)
 	mockDB.AssertExpectations(t)
@@ -207,7 +207,7 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 	profile, err := service.GetUserProfile(ctx, req)
 
 	assert.NoError(t, err)
-	assert.Equal(t, userID, profile.UserId)
+	assert.Equal(t, ct.Id(userID), profile.UserId)
 	mockDB.AssertExpectations(t)
 }
 
@@ -217,8 +217,8 @@ func TestSearchUsers_Success(t *testing.T) {
 
 	ctx := context.Background()
 	searchReq := UserSearchReq{
-		SearchTerm: "test",
-		Limit:      10,
+		SearchTerm: ct.SearchTerm("test"),
+		Limit:      ct.Limit(10),
 	}
 
 	expectedRows := []sqlc.SearchUsersRow{
@@ -245,8 +245,8 @@ func TestSearchUsers_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, users, 2)
-	assert.Equal(t, "testuser1", users[0].Username)
-	assert.Equal(t, "testuser2", users[1].Username)
+	assert.Equal(t, "testuser1", users[0].Username.String())
+	assert.Equal(t, "testuser2", users[1].Username.String())
 	mockDB.AssertExpectations(t)
 }
 
@@ -284,13 +284,13 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 	}
 
 	req := UpdateProfileRequest{
-		UserId:      1,
-		Username:    "newusername",
-		FirstName:   "NewFirst",
-		LastName:    "NewLast",
+		UserId:      ct.Id(1),
+		Username:    ct.Username("newusername"),
+		FirstName:   ct.Name("NewFirst"),
+		LastName:    ct.Name("NewLast"),
 		DateOfBirth: ct.DateOfBirth(dob),
 		Avatar:      "newavatar.jpg",
-		About:       "New about",
+		About:       ct.About("New about"),
 	}
 
 	expectedUser := sqlc.User{
@@ -311,14 +311,10 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 	profile, err := service.UpdateUserProfile(ctx, req)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "newusername", profile.Username)
-	assert.Equal(t, "NewFirst", profile.FirstName)
+	assert.Equal(t, "newusername", profile.Username.String())
+	assert.Equal(t, "NewFirst", profile.FirstName.String())
 	mockDB.AssertExpectations(t)
 }
-
-// DateOfBirth is now a time.Time in the request model; invalid string parsing
-// tests are no longer applicable at the domain layer. If needed, validate
-// parsing at the API layer. Omit invalid-format test here.
 
 func TestUpdateProfilePrivacy_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
@@ -327,7 +323,7 @@ func TestUpdateProfilePrivacy_Success(t *testing.T) {
 	ctx := context.Background()
 
 	req := UpdateProfilePrivacyRequest{
-		UserId: 1,
+		UserId: ct.Id(1),
 		Public: false,
 	}
 
@@ -349,7 +345,7 @@ func TestUpdateProfilePrivacy_Error(t *testing.T) {
 	ctx := context.Background()
 
 	req := UpdateProfilePrivacyRequest{
-		UserId: 999,
+		UserId: ct.Id(999),
 		Public: false,
 	}
 

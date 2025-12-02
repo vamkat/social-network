@@ -3,6 +3,8 @@ package application
 import (
 	"testing"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +32,9 @@ func TestCheckPassword_Correct(t *testing.T) {
 	password := "mypassword123"
 	// hash, _ := password
 
-	result := checkPassword(password, password)
+	// generate bcrypt hash
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	result := checkPassword(string(hash), password)
 
 	assert.True(t, result)
 }

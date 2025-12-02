@@ -10,12 +10,12 @@ import (
 //-------------------------------------------
 
 type RegisterUserRequest struct {
-	Username    ct.Username
+	Username    ct.Username `validate:"nullable"`
 	FirstName   ct.Name
 	LastName    ct.Name
 	DateOfBirth ct.DateOfBirth
 	Avatar      string
-	About       ct.About
+	About       ct.About `validate:"nullable"`
 	Public      bool
 	Email       ct.Email
 	Password    ct.Password
@@ -89,7 +89,7 @@ type UpdateProfileRequest struct {
 	LastName    ct.Name
 	DateOfBirth ct.DateOfBirth
 	Avatar      string
-	About       ct.About
+	About       ct.About `validate:"nullable"`
 }
 
 type UpdateProfilePrivacyRequest struct {

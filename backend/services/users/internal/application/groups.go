@@ -93,7 +93,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req GeneralGroupReq) (Gr
 	}
 	row, err := s.db.GetGroupInfo(ctx, req.GroupId.Int64())
 	if err != nil {
-		return Group{}, nil
+		return Group{}, err
 	}
 	group := Group{
 		GroupId:          ct.Id(row.ID),
