@@ -6,20 +6,6 @@ import (
 	"strings"
 )
 
-// ValidateStruct iterates over exported struct fields and validates them.
-// - If a field implements Validator, its Validate() method is called.
-// - If a field does not have `validate:"nullable"` tag, zero values are flagged as errors.
-// - Nullable fields if empty return nil error.
-// - Primitive types are excluded
-// Example:
-//
-//	type RegisterRequest struct {
-//	    Username  customtypes.Username `json:"username,omitempty" validate:"nullable"` // optional
-//	    FirstName customtypes.Name     `json:"first_name,omitempty" validate:"nullable"` // optional
-//	    LastName  customtypes.Name     `json:"last_name"` // required
-//	    About     customtypes.About    `json:"about"`     // required
-//	    Email     customtypes.Email    `json:"email,omitempty" validate:"nullable"` // optional
-//	}
 // func ValidateStruct(s any) error {
 // 	return ValidateType(reflect.ValueOf(s), "")
 // }
@@ -140,6 +126,23 @@ import (
 // 	return v.Type().PkgPath() == ""
 // }
 
+// ValidateStruct iterates over exported struct fields and validates them.
+//   - If a field implements Validator, its Validate() method is called.
+//   - If a field does not have `validate:"nullable"` tag, zero values are flagged as errors.
+//   - Nullable fields if empty return nil error.
+//   - All primitives are excluded except slices containing custom types.
+//   - If a field is a slice and has tag `ellements:"nullable"` the custom types inside the slice are allowed to be null if that type allows it.
+//
+// Example:
+//
+//	type RegisterRequest struct {
+//		    Username  customtypes.Username 		`json:"username,omitempty" validate:"nullable"` // optional
+//		    FirstName customtypes.Name     		`json:"first_name,omitempty" validate:"nullable"` // optional
+//		    LastName  customtypes.Name     		`json:"last_name"` // required
+//		    About     customtypes.About    		`json:"about"`     // required
+//		    Email     customtypes.Email    		`json:"email,omitempty" validate:"nullable"` // optional
+//			ElementsNullableIDs []customtypes.Id 	`validate:"nullable,elements=nullable"`
+//	}
 func ValidateStruct(s any) error {
 	v := reflect.ValueOf(s)
 	if v.Kind() == reflect.Pointer {
