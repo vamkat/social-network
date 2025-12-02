@@ -26,7 +26,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		defer r.Body.Close()
 		err := decoder.Decode(&httpReq)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -104,7 +104,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			utils.ErrorJSON(w, http.StatusBadRequest, "json decoding failed: "+err.Error())
 			return
 		}
 

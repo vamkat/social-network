@@ -48,7 +48,7 @@ func WriteJSON(w http.ResponseWriter, code int, v any) error {
 	if code == http.StatusNoContent {
 		return nil
 	}
-	// fmt.Println("sending this:", v)
+	fmt.Println("sending this:", v)
 	return json.NewEncoder(w).Encode(v)
 }
 

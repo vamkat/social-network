@@ -1,5 +1,7 @@
 
 # Redundand on Kube deployment
+x-env: &common-env
+  PASSWORD_SECRET: habblablablabla
 
 services:
   # ---------------------------
@@ -13,14 +15,16 @@ services:
       context: .
       dockerfile: services/users/Dockerfile
     environment:
-       - DATABASE_URL=postgres://postgres:secret@users-db:5432/social_users?sslmode=disable
+      <<: *common-env
+      #fix this
+      DATABASE_URL: postgres://postgres:secret@users-db:5432/social_users?sslmode=disable
        # Explicit DB_* variables for clarity and local tooling
-       - DB_HOST=users-db
-       - DB_PORT=5432
-       - DB_USER=postgres
-       - DB_PASSWORD=secret
-       - DB_NAME=social_users
-       - SSL_MODE=disable
+      DB_HOST: users-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      DB_NAME: social_users
+      SSL_MODE: disable
     depends_on:
       users-db:
         condition: service_healthy
@@ -32,6 +36,7 @@ services:
     image: postgres:16
     container_name: users-db
     environment:
+      <<: *common-env
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: social_users
@@ -54,14 +59,15 @@ services:
       context: .
       dockerfile: services/posts/Dockerfile
     environment:
-       - DATABASE_URL=postgres://postgres:secret@posts-db:5432/social_posts?sslmode=disable
-       # Explicit DB_* variables for clarity and local tooling
-       - DB_HOST=posts-db
-       - DB_PORT=5432
-       - DB_USER=postgres
-       - DB_PASSWORD=secret
-       - DB_NAME=social_posts
-       - SSL_MODE=disable
+      <<: *common-env
+      DATABASE_URL: postgres://postgres:secret@posts-db:5432/social_posts?sslmode=disable
+      # Explicit DB_* variables for clarity and local tooling
+      DB_HOST: posts-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      DB_NAME: social_posts
+      SSL_MODE: disable
     depends_on:
       posts-db:
         condition: service_healthy
@@ -73,6 +79,7 @@ services:
     image: postgres:16
     container_name: posts-db
     environment:
+      <<: *common-env
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: social_posts
@@ -86,6 +93,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    
 
 
  # ---------------------------
@@ -96,14 +104,15 @@ services:
   #     context: .
   #     dockerfile: services/chat/Dockerfile
   #   environment:
-  #      - DATABASE_URL=postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
+  #     <<: *common-env
+  #     DATABASE_URL: postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
   #      # Explicit DB_* variables for clarity and local tooling
-  #      - DB_HOST=chat-db
-  #      - DB_PORT=5432
-  #      - DB_USER=postgres
-  #      - DB_PASSWORD=secret
-  #      - DB_NAME=social_chat
-  #      - SSL_MODE=disable
+  #     DB_HOST: chat-db
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: secret
+  #     DB_NAME: social_chat
+  #     SSL_MODE: disable
   #   depends_on:
   #     posts-db:
   #       condition: service_healthy
@@ -115,6 +124,8 @@ services:
   #   image: postgres:16
   #   container_name: chat-db
   #   environment:
+  #    environment:
+  #     <<: *common-env
   #     POSTGRES_USER: postgres
   #     POSTGRES_PASSWORD: secret
   #     POSTGRES_DB: social_chat
@@ -138,14 +149,15 @@ services:
       context: .
       dockerfile: services/notifications/Dockerfile
     environment:
-       - DATABASE_URL=postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable
+      <<: *common-env
+      DATABASE_URL: postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable
        # Explicit DB_* variables for clarity and local tooling
-       - DB_HOST=notifications-db
-       - DB_PORT=5432
-       - DB_USER=postgres
-       - DB_PASSWORD=secret
-       - DB_NAME=social_notifications
-       - SSL_MODE=disable
+      DB_HOST: notifications-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      DB_NAME: social_notifications
+      SSL_MODE: disable
     depends_on:
       notifications-db:
         condition: service_healthy
@@ -157,6 +169,7 @@ services:
     image: postgres:16
     container_name: notifications-db
     environment:
+      <<: *common-env
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: social_notifications
@@ -188,12 +201,13 @@ services:
       context: .
       dockerfile: gateway/Dockerfile
     container_name: api-gateway
+    environment:
+      <<: *common-env
     ports:
       - "8081:8081"
     depends_on:
       redis:
-        condition: service_healthy
-      
+        condition: service_started
       
 volumes:
   users-db-data:

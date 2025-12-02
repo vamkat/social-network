@@ -13,9 +13,6 @@ downloads
 idea
 /.idea
 /idea
-<<<<<<< HEAD
-backend/services/post-service
-=======
 backend/services/post-service
 
 
@@ -61,4 +58,3 @@ social-sphere/.pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
->>>>>>> f164803fc6420be91dba8fd4ccbfe1514d3da9ff
