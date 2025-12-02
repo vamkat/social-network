@@ -57,57 +57,31 @@ export default function PostForm({
     const selectedOption = options.find((option) => option.value === visibility) ?? options[0];
     const hasOptions = Array.isArray(options) && options.length > 0;
 
-    async function handleSubmit(e) {
+    // NOTE: API call temporarily disabled; this stub only resets the form and emits a mock post.
+    function handleSubmit(e) {
         e.preventDefault();
         if (!body.trim()) return;
-
-        setIsLoading(true);
         setError("");
 
-        try {
-            const res = await fetch(`${API_BASE}/api/posts`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    //post_title: title,
-                    post_body: body,
-                    visibility,
-                    group_id: visibility === "group" ? groupId : null,
-                }),
-            });
+        const newPost = {
+            id: Date.now().toString(),
+            //post_title: title,
+            post_body: body,
+            post_creator: "me",
+            group_id: visibility === "group" ? groupId : null,
+            visibility,
+            image_id: null,
+            created_at: new Date().toISOString(),
+        };
 
-            if (!res.ok) {
-                throw new Error("Failed to create post");
-            }
-
-            const data = await res.json();
-
-            const newPost = {
-                id: data.id,
-                //post_title: data.post_title,
-                post_body: data.post_body,
-                post_creator: data.post_creator,
-                group_id: data.group_id ?? (visibility === "group" ? groupId : null),
-                visibility: data.visibility ?? visibility,
-                image_id: data.image_id ?? null,
-                created_at: data.created_at,
-            };
-
-            if (onPostCreated) {
-                onPostCreated(newPost);
-            }
-
-            //setTitle("");
-            setBody("");
-            setVisibility(defaultVisibility);
-        } catch (err) {
-            console.error(err);
-            setError("Could not publish your post. Try again.");
-        } finally {
-            setIsLoading(false);
+        if (onPostCreated) {
+            onPostCreated(newPost);
         }
+
+        //setTitle("");
+        setBody("");
+        setVisibility(defaultVisibility);
+        setIsLoading(false);
     }
 
     return (
