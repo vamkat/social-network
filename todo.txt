@@ -1,29 +1,49 @@
---check how can we cache rarely used/updated data => FETCH API REVALIDATE
+(UI/UX appealing. Follow good practices)
 
-
-TODOS:
-
-1. Create-Post component ACCORDING TO CURRENT DESIGN. add button for selection
+1. Create-Post component ACCORDING TO CURRENT DESIGN.
 2. Create-Comment component ACCORDING TO CURRENT DESIGN.
 3. Create-Group component ACCORDING TO CURRENT DESIGN.
-4. Edit-Post component
 
 
-4. Form Validations (COMMUNICATE CONSTRAINTS WITH BACKEND/Katerina)
-optional must be sent as an empty string ("")
--> registration form (
-      Username: optional, (IF ADDED, Check GOOD PRACTICES, prevent sql injection, etc )
-      Email: required, valid email (Check GOOD PRACTICES, theres a regex for that)
-      FirstName: required (Check GOOD PRACTICES)
-      LastName: required (Check GOOD PRACTICES)
-      Password: required (Check GOOD PRACTICES, maybe a nice ui for password strength??)
-      Confirm Password: required(for front only), need to match Password
-      Avatar: optional (IF ADDED, check image file, type, size, etc)
-      AboutMe: optional (IF ADDED, check max length, good practices, preventsql injection, etc)
-      DateOfBirth: required (Check GOOD PRACTICES, no babies, mathusallas, or some random future fuckers allowed)
-      )
 
--> login form (
-      Identifier: required (Check GOOD PRACTICES)
-      Password: required (Check GOOD PRACTICES)
-      )
+============= Stamatis Todos =============
+
+1. Create single post page
+
+2. Post structure has changed. Update mock data, and post cards.
+- Currently post cards fetch last comment on hover. Update this.
+- Create navigational links with below schema. examples below: 
+      /profile/${basicUserInfo.UserID} -> navigates to profile page.
+      /profile/LastComment.Creator.UserID -> navigates to profile page.
+      /posts/${post.ID} -> navigates to post page.
+
+NumOfHearts should be a button as we will want to triger a reaction on click when ready.
+NumOfComments should stay as it is. We dynamically have a button to show comments on hover.
+
+post = {
+      ID: "1",
+      BasicUserInfo: {
+            UserID: "4",
+            Username: "watermelon_musk",
+            Avatar: "/elon.jpeg"
+      },
+      Content: "Sunday mornings are for slow breakfasts and even slower jazz. 🎷🥐 There's something magical about the quiet before the city wakes up.",
+      PostImage: "/elon.jpeg",
+      CreatedAt: "10m ago",
+      NumOfComments: 3,
+      NumOfHearts: 1345,
+      IsHearted: false,
+      LastComment: {
+            CommentId: "1",
+            Body: "This is a comment",
+            Creator: {
+                  UserID: "4",
+                  Username: "watermelon_musk",
+                  Avatar: "/elon.jpeg"
+            },
+            ReactionsCount: 1,
+            LikedByUser: false,
+            Image: null,
+            CreatedAt: "10m ago",
+      }
+}
