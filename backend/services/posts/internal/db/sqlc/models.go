@@ -125,7 +125,6 @@ type Comment struct {
 	ParentID         int64
 	CommentBody      string
 	ReactionsCount   int32
-	ImagesCount      int32
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 	DeletedAt        pgtype.Timestamptz
@@ -138,10 +137,8 @@ type Event struct {
 	EventCreatorID int64
 	GroupID        int64
 	EventDate      pgtype.Date
-	StillValid     pgtype.Bool
 	GoingCount     int32
 	NotGoingCount  int32
-	ImagesCount    int32
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
 	DeletedAt      pgtype.Timestamptz
@@ -159,8 +156,7 @@ type EventResponse struct {
 
 type Image struct {
 	ID        int64
-	FileName  string
-	EntityID  int64
+	ParentID  int64
 	SortOrder int32
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
@@ -183,7 +179,6 @@ type Post struct {
 	Audience        IntendedAudience
 	CommentsCount   int32
 	ReactionsCount  int32
-	ImagesCount     int32
 	LastCommentedAt pgtype.Timestamptz
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz

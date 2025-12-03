@@ -4,6 +4,8 @@ import (
 	"context"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // GENERAL NOTE For every response that includes a userId, actual basic user info will be retrieved by Gateway from Users
@@ -18,17 +20,33 @@ func (s *PostsService) CreatePost(ctx context.Context, req CreatePostReq) (err e
 	return s.runTx(ctx, func(q sqlc.Querier) error {
 
 		// 1) create a post
-		_, err := q.CreatePost(ctx, sqlc.CreatePostParams{
+
+		var groupId pgtype.Int8
+		groupId.Int64 = req.GroupId.Int64()
+		if req.GroupId == 0 {
+			groupId.Valid = false
+		}
+
+		audience := sqlc.IntendedAudience(req.Audience.String())
+
+		postId, err := q.CreatePost(ctx, sqlc.CreatePostParams{
 			PostBody:  req.Body.String(),
 			CreatorID: req.CreatorId.Int64(),
-			//GroupID:   req.GroupId.Int64(),
-			//Audience:  req.Audience,
+			GroupID:   groupId,
+			Audience:  audience,
 		})
 		if err != nil {
 			return err
 		}
 
-		return nil // commit
+		if audience == "selected" {
+			q.InsertPostAudience(ctx, sqlc.InsertPostAudienceParams{
+				PostID: postId,
+				//Column2:req.AudienceIds,
+			})
+		}
+
+		return nil
 	})
 	//if audience=selected, s.InsertPostAudience in transaction
 	//if there are images, insert in transaction
@@ -61,15 +79,15 @@ func (s *PostsService) EditPostContent(ctx context.Context, req EditPostContentR
 	return nil
 }
 
-// FRONT: do you prefer full post instead of just error?
-func (s *PostsService) EditPostAudience(ctx context.Context, req EditPostAudienceReq) error {
-	// check requester is post creator
-	//run in transaction
-	//s.ClearPostAudience to remove previous audience
-	//s.db.UpdatePostAudience
-	// if audience=selected, s.InsertPostAudience
-	return nil
-}
+// // FRONT: do you prefer full post instead of just error?
+// func (s *PostsService) EditPostAudience(ctx context.Context, req EditPostAudienceReq) error {
+// 	// check requester is post creator
+// 	//run in transaction
+// 	//s.ClearPostAudience to remove previous audience
+// 	//s.db.UpdatePostAudience
+// 	// if audience=selected, s.InsertPostAudience
+// 	return nil
+// }
 
 func (s *PostsService) GetGroupPostsPaginated(ctx context.Context, req GenericPaginatedReq) ([]Post, error) {
 	//check requester is group member (cross service, API gateway should do it?)

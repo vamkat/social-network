@@ -1,28 +1,17 @@
--- name: InsertImages :many
-INSERT INTO images (file_name, entity_id)
-SELECT unnest($2::text[]), $1::BIGINT
-RETURNING id, file_name, sort_order, created_at;
+-- name: InsertImage :exec
+INSERT INTO images (id, parent_id)
+VALUES ($2::BIGINT, $1::BIGINT);
 
--- name: GetImages :many
-SELECT
-    id,
-    file_name,
-    sort_order,
-    created_at
+-- name: GetImages :one
+SELECT id
 FROM images
-WHERE entity_id = $1
+WHERE parent_id = $1
   AND deleted_at IS NULL
-ORDER BY sort_order;
+ORDER BY sort_order
+  LIMIT 1;
 
--- name: UpdateImage :one
-UPDATE images
-SET file_name = $1,
-    sort_order = $2
-WHERE id = $3 AND deleted_at IS NULL
-RETURNING *;
-
--- name: DeleteImage :one
+-- name: DeleteImage :exec 
 UPDATE images
 SET deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING *;
+WHERE id = $1 AND deleted_at IS NULL;
+

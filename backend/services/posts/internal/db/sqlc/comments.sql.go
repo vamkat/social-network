@@ -11,10 +11,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createComment = `-- name: CreateComment :one
+const createComment = `-- name: CreateComment :exec
 INSERT INTO comments (comment_creator_id, parent_id, comment_body)
 VALUES ($1, $2, $3)
-RETURNING id
 `
 
 type CreateCommentParams struct {
@@ -23,42 +22,26 @@ type CreateCommentParams struct {
 	CommentBody      string
 }
 
-func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error) {
-	row := q.db.QueryRow(ctx, createComment, arg.CommentCreatorID, arg.ParentID, arg.CommentBody)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) error {
+	_, err := q.db.Exec(ctx, createComment, arg.CommentCreatorID, arg.ParentID, arg.CommentBody)
+	return err
 }
 
-const deleteComment = `-- name: DeleteComment :one
+const deleteComment = `-- name: DeleteComment :exec
 UPDATE comments
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, comment_creator_id, parent_id, comment_body, reactions_count, images_count, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) DeleteComment(ctx context.Context, id int64) (Comment, error) {
-	row := q.db.QueryRow(ctx, deleteComment, id)
-	var i Comment
-	err := row.Scan(
-		&i.ID,
-		&i.CommentCreatorID,
-		&i.ParentID,
-		&i.CommentBody,
-		&i.ReactionsCount,
-		&i.ImagesCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) DeleteComment(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteComment, id)
+	return err
 }
 
-const editComment = `-- name: EditComment :one
+const editComment = `-- name: EditComment :exec
 UPDATE comments
 SET comment_body = $1
 WHERE id = $2 AND deleted_at IS NULL
-RETURNING id, comment_creator_id, parent_id, comment_body, reactions_count, images_count, created_at, updated_at, deleted_at
 `
 
 type EditCommentParams struct {
@@ -66,21 +49,9 @@ type EditCommentParams struct {
 	ID          int64
 }
 
-func (q *Queries) EditComment(ctx context.Context, arg EditCommentParams) (Comment, error) {
-	row := q.db.QueryRow(ctx, editComment, arg.CommentBody, arg.ID)
-	var i Comment
-	err := row.Scan(
-		&i.ID,
-		&i.CommentCreatorID,
-		&i.ParentID,
-		&i.CommentBody,
-		&i.ReactionsCount,
-		&i.ImagesCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) EditComment(ctx context.Context, arg EditCommentParams) error {
+	_, err := q.db.Exec(ctx, editComment, arg.CommentBody, arg.ID)
+	return err
 }
 
 const getCommentsByPostId = `-- name: GetCommentsByPostId :many
@@ -89,7 +60,6 @@ SELECT
     c.comment_creator_id,
     c.comment_body,
     c.reactions_count,
-    c.images_count,
     c.created_at,
     c.updated_at,
 
@@ -101,12 +71,12 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    (SELECT i.file_name
+    (SELECT i.id
      FROM images i
-     WHERE i.entity_id = c.id AND i.deleted_at IS NULL
+     WHERE i.parent_id = c.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS preview_image
+    ) AS image
 
 FROM comments c
 WHERE c.parent_id = $1
@@ -128,11 +98,10 @@ type GetCommentsByPostIdRow struct {
 	CommentCreatorID int64
 	CommentBody      string
 	ReactionsCount   int32
-	ImagesCount      int32
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 	LikedByUser      bool
-	PreviewImage     string
+	Image            int64
 }
 
 func (q *Queries) GetCommentsByPostId(ctx context.Context, arg GetCommentsByPostIdParams) ([]GetCommentsByPostIdRow, error) {
@@ -154,11 +123,10 @@ func (q *Queries) GetCommentsByPostId(ctx context.Context, arg GetCommentsByPost
 			&i.CommentCreatorID,
 			&i.CommentBody,
 			&i.ReactionsCount,
-			&i.ImagesCount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.LikedByUser,
-			&i.PreviewImage,
+			&i.Image,
 		); err != nil {
 			return nil, err
 		}
@@ -177,7 +145,6 @@ SELECT
     c.parent_id,
     c.comment_body,
     c.reactions_count,
-    c.images_count,
     c.created_at,
     c.updated_at,
 
@@ -188,12 +155,12 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    (SELECT i.file_name
+    (SELECT i.id
      FROM images i
-     WHERE i.entity_id = c.id AND i.deleted_at IS NULL
+     WHERE i.parent_id = c.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS preview_image
+    ) AS image
 
 
 FROM comments c
@@ -214,11 +181,10 @@ type GetLatestCommentforPostIdRow struct {
 	ParentID         int64
 	CommentBody      string
 	ReactionsCount   int32
-	ImagesCount      int32
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 	LikedByUser      bool
-	PreviewImage     string
+	Image            int64
 }
 
 func (q *Queries) GetLatestCommentforPostId(ctx context.Context, arg GetLatestCommentforPostIdParams) (GetLatestCommentforPostIdRow, error) {
@@ -230,11 +196,10 @@ func (q *Queries) GetLatestCommentforPostId(ctx context.Context, arg GetLatestCo
 		&i.ParentID,
 		&i.CommentBody,
 		&i.ReactionsCount,
-		&i.ImagesCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.LikedByUser,
-		&i.PreviewImage,
+		&i.Image,
 	)
 	return i, err
 }

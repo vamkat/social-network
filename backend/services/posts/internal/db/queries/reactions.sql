@@ -1,9 +1,3 @@
--- name: GetUserReactionForEntityId :one
-SELECT 1 FROM reactions r
-WHERE r.content_id = p.id
-AND r.user_id = $1
-AND r.deleted_at IS NULL;
-
 -- name: ToggleReactionIfExists :one
 UPDATE reactions
 SET deleted_at = CASE

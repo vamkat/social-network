@@ -12,35 +12,32 @@ import (
 
 type Querier interface {
 	ClearPostAudience(ctx context.Context, postID int64) error
-	CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error)
-	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	CreateComment(ctx context.Context, arg CreateCommentParams) error
+	CreateEvent(ctx context.Context, arg CreateEventParams) error
 	CreatePost(ctx context.Context, arg CreatePostParams) (int64, error)
-	DeleteComment(ctx context.Context, id int64) (Comment, error)
-	DeleteEvent(ctx context.Context, id int64) (Event, error)
-	DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) (EventResponse, error)
-	DeleteImage(ctx context.Context, id int64) (Image, error)
+	DeleteComment(ctx context.Context, id int64) error
+	DeleteEvent(ctx context.Context, id int64) error
+	DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) error
+	DeleteImage(ctx context.Context, id int64) error
 	DeletePost(ctx context.Context, id int64) error
-	EditComment(ctx context.Context, arg EditCommentParams) (Comment, error)
-	EditEvent(ctx context.Context, arg EditEventParams) (Event, error)
+	EditComment(ctx context.Context, arg EditCommentParams) error
+	EditEvent(ctx context.Context, arg EditEventParams) error
 	EditPostContent(ctx context.Context, arg EditPostContentParams) (Post, error)
 	GetCommentsByPostId(ctx context.Context, arg GetCommentsByPostIdParams) ([]GetCommentsByPostIdRow, error)
 	GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error)
 	GetGroupPostsPaginated(ctx context.Context, arg GetGroupPostsPaginatedParams) ([]GetGroupPostsPaginatedRow, error)
-	GetImages(ctx context.Context, entityID int64) ([]GetImagesRow, error)
+	GetImages(ctx context.Context, parentID int64) (int64, error)
 	GetLatestCommentforPostId(ctx context.Context, arg GetLatestCommentforPostIdParams) (GetLatestCommentforPostIdRow, error)
 	GetMostPopularPostInGroup(ctx context.Context, groupID pgtype.Int8) (GetMostPopularPostInGroupRow, error)
 	GetPersonalizedFeed(ctx context.Context, arg GetPersonalizedFeedParams) ([]GetPersonalizedFeedRow, error)
 	GetPostAudience(ctx context.Context, postID int64) ([]int64, error)
-	GetPostById(ctx context.Context, arg GetPostByIdParams) (GetPostByIdRow, error)
 	GetPublicFeed(ctx context.Context, arg GetPublicFeedParams) ([]GetPublicFeedRow, error)
 	// pagination
 	GetUserPostsPaginated(ctx context.Context, arg GetUserPostsPaginatedParams) ([]GetUserPostsPaginatedRow, error)
-	GetUserReactionForEntityId(ctx context.Context, userID int64) (int32, error)
 	GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]int64, error)
-	InsertImages(ctx context.Context, arg InsertImagesParams) ([]InsertImagesRow, error)
+	InsertImage(ctx context.Context, arg InsertImageParams) error
 	InsertPostAudience(ctx context.Context, arg InsertPostAudienceParams) error
 	InsertReaction(ctx context.Context, arg InsertReactionParams) (InsertReactionRow, error)
-	RespondToEvent(ctx context.Context, arg RespondToEventParams) (EventResponse, error)
 	// U1: Users who liked one or more of *your public posts*
 	// U2: Users who commented on your public posts
 	// U3: Users who liked the same posts as you
@@ -48,10 +45,7 @@ type Querier interface {
 	// Combine scores
 	SuggestUsersByPostActivity(ctx context.Context, creatorID int64) ([]int64, error)
 	ToggleReactionIfExists(ctx context.Context, arg ToggleReactionIfExistsParams) (ToggleReactionIfExistsRow, error)
-	UpdateImage(ctx context.Context, arg UpdateImageParams) (Image, error)
 	UpdatePostAudience(ctx context.Context, arg UpdatePostAudienceParams) error
-	// needs to be run periodically, eg every day
-	UpdateStillValid(ctx context.Context) error
 }
 
 var _ Querier = (*Queries)(nil)

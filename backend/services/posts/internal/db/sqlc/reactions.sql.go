@@ -11,20 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getUserReactionForEntityId = `-- name: GetUserReactionForEntityId :one
-SELECT 1 FROM reactions r
-WHERE r.content_id = p.id
-AND r.user_id = $1
-AND r.deleted_at IS NULL
-`
-
-func (q *Queries) GetUserReactionForEntityId(ctx context.Context, userID int64) (int32, error) {
-	row := q.db.QueryRow(ctx, getUserReactionForEntityId, userID)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const getWhoLikedEntityId = `-- name: GetWhoLikedEntityId :many
 SELECT user_id
 FROM reactions

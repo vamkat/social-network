@@ -87,3 +87,50 @@ func (i Id) Validate() error {
 func (i Id) Int64() int64 {
 	return int64(i)
 }
+
+// ------------------------------------------------------------
+// Ids
+// ------------------------------------------------------------
+
+func (ids Ids) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ids.Int64())
+}
+
+func (ids *Ids) UnmarshalJSON(data []byte) error {
+	var raw []int64
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	out := make(Ids, len(raw))
+	for i, v := range raw {
+		out[i] = Id(v)
+	}
+
+	*ids = out
+	return nil
+}
+
+func (ids Ids) IsValid() bool {
+	for _, i := range ids {
+		if !i.IsValid() {
+			return false
+		}
+	}
+	return true
+}
+
+func (ids Ids) Validate() error {
+	if !ids.IsValid() {
+		return errors.Join(ErrValidation, errors.New("all ids must be positive"))
+	}
+	return nil
+}
+
+func (ids Ids) Int64() []int64 {
+	out := make([]int64, len(ids))
+	for i, v := range ids {
+		out[i] = int64(v)
+	}
+	return out
+}

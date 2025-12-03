@@ -7,144 +7,46 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteImage = `-- name: DeleteImage :one
+const deleteImage = `-- name: DeleteImage :exec
 UPDATE images
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, file_name, entity_id, sort_order, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) DeleteImage(ctx context.Context, id int64) (Image, error) {
-	row := q.db.QueryRow(ctx, deleteImage, id)
-	var i Image
-	err := row.Scan(
-		&i.ID,
-		&i.FileName,
-		&i.EntityID,
-		&i.SortOrder,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) DeleteImage(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteImage, id)
+	return err
 }
 
-const getImages = `-- name: GetImages :many
-SELECT
-    id,
-    file_name,
-    sort_order,
-    created_at
+const getImages = `-- name: GetImages :one
+SELECT id
 FROM images
-WHERE entity_id = $1
+WHERE parent_id = $1
   AND deleted_at IS NULL
 ORDER BY sort_order
+  LIMIT 1
 `
 
-type GetImagesRow struct {
-	ID        int64
-	FileName  string
-	SortOrder int32
-	CreatedAt pgtype.Timestamptz
+func (q *Queries) GetImages(ctx context.Context, parentID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, getImages, parentID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-func (q *Queries) GetImages(ctx context.Context, entityID int64) ([]GetImagesRow, error) {
-	rows, err := q.db.Query(ctx, getImages, entityID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetImagesRow{}
-	for rows.Next() {
-		var i GetImagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.FileName,
-			&i.SortOrder,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const insertImages = `-- name: InsertImages :many
-INSERT INTO images (file_name, entity_id)
-SELECT unnest($2::text[]), $1::BIGINT
-RETURNING id, file_name, sort_order, created_at
+const insertImage = `-- name: InsertImage :exec
+INSERT INTO images (id, parent_id)
+VALUES ($2::BIGINT, $1::BIGINT)
 `
 
-type InsertImagesParams struct {
+type InsertImageParams struct {
 	Column1 int64
-	Column2 []string
+	Column2 int64
 }
 
-type InsertImagesRow struct {
-	ID        int64
-	FileName  string
-	SortOrder int32
-	CreatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) ([]InsertImagesRow, error) {
-	rows, err := q.db.Query(ctx, insertImages, arg.Column1, arg.Column2)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []InsertImagesRow{}
-	for rows.Next() {
-		var i InsertImagesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.FileName,
-			&i.SortOrder,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateImage = `-- name: UpdateImage :one
-UPDATE images
-SET file_name = $1,
-    sort_order = $2
-WHERE id = $3 AND deleted_at IS NULL
-RETURNING id, file_name, entity_id, sort_order, created_at, updated_at, deleted_at
-`
-
-type UpdateImageParams struct {
-	FileName  string
-	SortOrder int32
-	ID        int64
-}
-
-func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) (Image, error) {
-	row := q.db.QueryRow(ctx, updateImage, arg.FileName, arg.SortOrder, arg.ID)
-	var i Image
-	err := row.Scan(
-		&i.ID,
-		&i.FileName,
-		&i.EntityID,
-		&i.SortOrder,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) InsertImage(ctx context.Context, arg InsertImageParams) error {
+	_, err := q.db.Exec(ctx, insertImage, arg.Column1, arg.Column2)
+	return err
 }

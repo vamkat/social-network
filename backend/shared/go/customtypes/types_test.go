@@ -323,13 +323,13 @@ func TestValidateStruct_BoolAndOffsetExempt(t *testing.T) {
 func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 	type TestStruct struct {
 		// Slice of custom types - nullable
-		NullableIDs []customtypes.Id `validate:"nullable"`
+		NullableIDs customtypes.Ids `validate:"nullable"`
 
 		// Slice of custom types - elements can be empty
-		ElementsNullableIDs []customtypes.Id `validate:"nullable,elements=nullable"`
+		ElementsNullableIDs customtypes.Ids `validate:"nullable,elements=nullable"`
 
 		// Slice of custom types - both nullable
-		BothNullableIDs []customtypes.Id `validate:"nullable,elements=nullable"`
+		BothNullableIDs customtypes.Ids `validate:"nullable,elements=nullable"`
 
 		// Required field to satisfy other validations
 		Email customtypes.Email

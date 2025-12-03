@@ -4,7 +4,6 @@ SELECT
     c.comment_creator_id,
     c.comment_body,
     c.reactions_count,
-    c.images_count,
     c.created_at,
     c.updated_at,
 
@@ -16,12 +15,12 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    (SELECT i.file_name
+    (SELECT i.id
      FROM images i
-     WHERE i.entity_id = c.id AND i.deleted_at IS NULL
+     WHERE i.parent_id = c.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS preview_image
+    ) AS image
 
 FROM comments c
 WHERE c.parent_id = $1
@@ -31,23 +30,20 @@ OFFSET $3
 LIMIT $4; 
 
 
--- name: CreateComment :one
+-- name: CreateComment :exec
 INSERT INTO comments (comment_creator_id, parent_id, comment_body)
-VALUES ($1, $2, $3)
-RETURNING id;
+VALUES ($1, $2, $3);
 
 
--- name: EditComment :one
+-- name: EditComment :exec
 UPDATE comments
 SET comment_body = $1
-WHERE id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE id = $2 AND deleted_at IS NULL;
 
--- name: DeleteComment :one
+-- name: DeleteComment :exec
 UPDATE comments
 SET deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING *;
+WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: GetLatestCommentforPostId :one
 SELECT
@@ -56,7 +52,6 @@ SELECT
     c.parent_id,
     c.comment_body,
     c.reactions_count,
-    c.images_count,
     c.created_at,
     c.updated_at,
 
@@ -67,12 +62,12 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    (SELECT i.file_name
+    (SELECT i.id
      FROM images i
-     WHERE i.entity_id = c.id AND i.deleted_at IS NULL
+     WHERE i.parent_id = c.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS preview_image
+    ) AS image
 
 
 FROM comments c

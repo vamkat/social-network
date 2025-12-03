@@ -10,7 +10,7 @@ type GenericReq struct {
 	EntityId    ct.Id
 }
 
-type GenericPaginatedReq struct {
+type GenericPaginatedReq struct { //two different ones with nullable and not?
 	RequesterId ct.Id
 	EntityId    ct.Id `validate:"nullable"`
 	Limit       ct.Limit
@@ -20,8 +20,8 @@ type GenericPaginatedReq struct {
 type hasRightToView struct {
 	RequesterId         ct.Id
 	ParentEntityId      ct.Id
-	RequesterFollowsIds []ct.Id
-	RequesterGroups     []ct.Id
+	RequesterFollowsIds []ct.Id `validate:"nullable"`
+	RequesterGroups     []ct.Id `validate:"nullable"`
 }
 
 // -------------------------------------------
@@ -35,12 +35,12 @@ type Post struct {
 	Audience        ct.Audience
 	CommentsCount   int
 	ReactionsCount  int
-	ImagesCount     int
 	LastCommentedAt time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	LikedByUser     bool
-	FirstImage      string
+	Image           ct.Id `validate:"nullable"`
+	LatestComment   Comment
 }
 
 type CreatePostReq struct {
@@ -54,13 +54,12 @@ type CreatePostReq struct {
 type EditPostContentReq struct {
 	RequesterId ct.Id
 	PostId      ct.Id
-	NewBody     ct.PostBody
+	NewBody     ct.PostBody `validate:"nullable"`
+	Image       ct.Id       `validate:"nullable"`
 }
 
-type EditPostAudienceReq struct {
-	RequesterId ct.Id
+type insertPostAudienceReq struct {
 	PostId      ct.Id
-	Audience    ct.Audience
 	AudienceIds []ct.Id `validate:"nullable"`
 }
 
@@ -89,11 +88,10 @@ type Comment struct {
 	Body           ct.CommentBody
 	CreatorId      ct.Id
 	ReactionsCount int
-	ImagesCount    int
 	CreatedAt      time.Time
 	UpdatedAt      time.Time //can be nil
 	LikedByUser    bool
-	FirstImage     string //can be nil (or "")
+	Image          ct.Id `validate:"nullable"`
 }
 
 type CreateCommentReq struct {
@@ -105,7 +103,8 @@ type CreateCommentReq struct {
 type EditCommentReq struct {
 	CreatorId ct.Id
 	CommentId ct.Id
-	Body      ct.CommentBody
+	Body      ct.CommentBody `validate:"nullable"`
+	Image     ct.Id          `validate:"nullable"`
 }
 
 //-------------------------------------------
@@ -119,10 +118,9 @@ type Event struct {
 	CreatorId     ct.Id
 	GroupId       ct.Id
 	EventDate     ct.EventDate
-	StillValid    bool //still not sure this is needed
 	GoingCount    int
 	NotGoingCount int
-	ImagesCount   int
+	Image         ct.Id `validate:"nullable"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
@@ -132,6 +130,7 @@ type CreateEventReq struct {
 	Body      ct.EventBody
 	CreatorId ct.Id
 	GroupId   ct.Id
+	Image     ct.Id `validate:"nullable"`
 	EventDate ct.EventDate
 }
 
@@ -140,6 +139,7 @@ type EditEventReq struct {
 	RequesterId ct.Id
 	Title       ct.Title
 	Body        ct.EventBody
+	Image       ct.Id `validate:"nullable"`
 	EventDate   ct.EventDate
 }
 
@@ -157,7 +157,8 @@ type RespondToEventReq struct {
 // Images
 //-------------------------------------------
 
-type InsertImagesReq struct {
-	PostId ct.Id
-	Images []string
+type ImageReq struct {
+	RequesterId ct.Id
+	PostId      ct.Id
+	Image       ct.Id
 }

@@ -6,7 +6,6 @@ SELECT
     p.comments_count,
     p.reactions_count,
     p.last_commented_at,
-    p.images_count,
     p.created_at,
     p.updated_at,
 
@@ -17,14 +16,55 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    (SELECT file_name
+    (SELECT i.id
      FROM images i
-     WHERE i.entity_id = p.id AND i.deleted_at IS NULL
+     WHERE i.parent_id = p.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS preview_image
+    ) AS image,
+
+    -- latest comment using LATERAL join
+    lc.id AS latest_comment_id,
+    lc.comment_creator_id AS latest_comment_creator_id,
+    lc.comment_body AS latest_comment_body,
+    lc.reactions_count AS latest_comment_reactions_count,
+    lc.created_at AS latest_comment_created_at,
+    lc.updated_at AS latest_comment_updated_at,
+    lc.liked_by_user AS latest_comment_liked_by_user,
+    lc.image AS latest_comment_image
 
 FROM posts p
+
+LEFT JOIN LATERAL (
+    SELECT
+        c.id,
+        c.comment_creator_id,
+        c.comment_body,
+        c.reactions_count,
+        c.created_at,
+        c.updated_at,
+        EXISTS (
+            SELECT 1 FROM reactions r
+            WHERE r.content_id = c.id
+              AND r.user_id = $1
+              AND r.deleted_at IS NULL
+        ) AS liked_by_user,
+        (
+            SELECT i.id
+            FROM images i
+            WHERE i.parent_id = c.id
+              AND i.deleted_at IS NULL
+            ORDER BY i.sort_order
+            LIMIT 1
+        ) AS image
+    FROM comments c
+    WHERE c.parent_id = p.id
+      AND c.deleted_at IS NULL
+    ORDER BY c.created_at DESC
+    LIMIT 1
+) lc ON TRUE
+
+
 WHERE p.deleted_at IS NULL
   AND p.audience = 'everyone'
 ORDER BY p.created_at DESC
@@ -38,7 +78,6 @@ SELECT
     p.creator_id,
     p.comments_count,
     p.reactions_count,
-    p.images_count,
     p.last_commented_at,
     p.created_at,
     p.updated_at,
@@ -51,17 +90,58 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    -- first image preview
+    -- image
     (
-      SELECT file_name
+      SELECT i.id
       FROM images i
-      WHERE i.entity_id = p.id
+      WHERE i.parent_id = p.id
         AND i.deleted_at IS NULL
       ORDER BY i.sort_order
       LIMIT 1
-    ) AS preview_image
+    ) AS image,
+
+     -- latest comment using LATERAL join
+    lc.id AS latest_comment_id,
+    lc.comment_creator_id AS latest_comment_creator_id,
+    lc.comment_body AS latest_comment_body,
+    lc.reactions_count AS latest_comment_reactions_count,
+    lc.created_at AS latest_comment_created_at,
+    lc.updated_at AS latest_comment_updated_at,
+    lc.liked_by_user AS latest_comment_liked_by_user,
+    lc.image AS latest_comment_image
 
 FROM posts p
+
+LEFT JOIN LATERAL (
+    SELECT
+        c.id,
+        c.comment_creator_id,
+        c.comment_body,
+        c.reactions_count,
+        c.created_at,
+        c.updated_at,
+        EXISTS (
+            SELECT 1 FROM reactions r
+            WHERE r.content_id = c.id
+              AND r.user_id = $1
+              AND r.deleted_at IS NULL
+        ) AS liked_by_user,
+        (
+            SELECT i.id
+            FROM images i
+            WHERE i.parent_id = c.id
+              AND i.deleted_at IS NULL
+            ORDER BY i.sort_order
+            LIMIT 1
+        ) AS image
+    FROM comments c
+    WHERE c.parent_id = p.id
+      AND c.deleted_at IS NULL
+    ORDER BY c.created_at DESC
+    LIMIT 1
+) lc ON TRUE
+
+
 WHERE p.deleted_at IS NULL
   AND (
        -- SELECTED audience → only manually approved viewers

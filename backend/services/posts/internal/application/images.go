@@ -3,7 +3,7 @@ package application
 import "context"
 
 // FRONT: If user edits post to change the image, what do you send me exactly?
-func (s *PostsService) InsertImages(ctx context.Context, req InsertImagesReq) error {
+func (s *PostsService) InsertImages(ctx context.Context, req ImageReq) error {
 	//runs in transaction from createPost (edit signature to include tx?)
 	// also if user edits post to change image
 	//accepts multiple images for scalability

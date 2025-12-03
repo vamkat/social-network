@@ -11,6 +11,7 @@ sql:
         sql_package: pgx/v5
         emit_empty_slices: true 
         emit_enum_valid_method: true
+        emit_interface: true
 
     
 

@@ -11,18 +11,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createEvent = `-- name: CreateEvent :one
+const createEvent = `-- name: CreateEvent :exec
 
 INSERT INTO events (
     event_title,
     event_body,
     event_creator_id,
     group_id,
-    event_date,
-    still_valid
+    event_date
 )
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, event_title, event_body, event_creator_id, group_id, event_date, still_valid, going_count, not_going_count, images_count, created_at, updated_at, deleted_at
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateEventParams struct {
@@ -31,72 +29,36 @@ type CreateEventParams struct {
 	EventCreatorID int64
 	GroupID        int64
 	EventDate      pgtype.Date
-	StillValid     pgtype.Bool
 }
 
-func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
-	row := q.db.QueryRow(ctx, createEvent,
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error {
+	_, err := q.db.Exec(ctx, createEvent,
 		arg.EventTitle,
 		arg.EventBody,
 		arg.EventCreatorID,
 		arg.GroupID,
 		arg.EventDate,
-		arg.StillValid,
 	)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.EventTitle,
-		&i.EventBody,
-		&i.EventCreatorID,
-		&i.GroupID,
-		&i.EventDate,
-		&i.StillValid,
-		&i.GoingCount,
-		&i.NotGoingCount,
-		&i.ImagesCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+	return err
 }
 
-const deleteEvent = `-- name: DeleteEvent :one
+const deleteEvent = `-- name: DeleteEvent :exec
 UPDATE events
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, event_title, event_body, event_creator_id, group_id, event_date, still_valid, going_count, not_going_count, images_count, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) DeleteEvent(ctx context.Context, id int64) (Event, error) {
-	row := q.db.QueryRow(ctx, deleteEvent, id)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.EventTitle,
-		&i.EventBody,
-		&i.EventCreatorID,
-		&i.GroupID,
-		&i.EventDate,
-		&i.StillValid,
-		&i.GoingCount,
-		&i.NotGoingCount,
-		&i.ImagesCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) DeleteEvent(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteEvent, id)
+	return err
 }
 
-const deleteEventResponse = `-- name: DeleteEventResponse :one
+const deleteEventResponse = `-- name: DeleteEventResponse :exec
 UPDATE event_responses
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE event_id = $1
   AND user_id = $2
   AND deleted_at IS NULL
-RETURNING id, event_id, user_id, going, created_at, updated_at, deleted_at
 `
 
 type DeleteEventResponseParams struct {
@@ -104,28 +66,17 @@ type DeleteEventResponseParams struct {
 	UserID  int64
 }
 
-func (q *Queries) DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) (EventResponse, error) {
-	row := q.db.QueryRow(ctx, deleteEventResponse, arg.EventID, arg.UserID)
-	var i EventResponse
-	err := row.Scan(
-		&i.ID,
-		&i.EventID,
-		&i.UserID,
-		&i.Going,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) error {
+	_, err := q.db.Exec(ctx, deleteEventResponse, arg.EventID, arg.UserID)
+	return err
 }
 
-const editEvent = `-- name: EditEvent :one
+const editEvent = `-- name: EditEvent :exec
 UPDATE events
 SET event_title = $1,
     event_body = $2,
     event_date = $3
 WHERE id = $4 AND deleted_at IS NULL
-RETURNING id, event_title, event_body, event_creator_id, group_id, event_date, still_valid, going_count, not_going_count, images_count, created_at, updated_at, deleted_at
 `
 
 type EditEventParams struct {
@@ -135,30 +86,14 @@ type EditEventParams struct {
 	ID         int64
 }
 
-func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) (Event, error) {
-	row := q.db.QueryRow(ctx, editEvent,
+func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) error {
+	_, err := q.db.Exec(ctx, editEvent,
 		arg.EventTitle,
 		arg.EventBody,
 		arg.EventDate,
 		arg.ID,
 	)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.EventTitle,
-		&i.EventBody,
-		&i.EventCreatorID,
-		&i.GroupID,
-		&i.EventDate,
-		&i.StillValid,
-		&i.GoingCount,
-		&i.NotGoingCount,
-		&i.ImagesCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+	return err
 }
 
 const getEventsByGroupId = `-- name: GetEventsByGroupId :many
@@ -174,17 +109,13 @@ SELECT
     e.going_count,
     e.not_going_count,
 
-    (SELECT i.file_name
+    (SELECT i.id
      FROM images i
-     WHERE i.entity_id = e.id AND i.deleted_at IS NULL
+     WHERE i.parent_id = e.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS preview_image,
+    ) AS image
 
-    (SELECT COUNT(1)
-     FROM images i
-     WHERE i.entity_id = e.id AND i.deleted_at IS NULL
-    ) AS total_images
 
 FROM events e
 WHERE e.group_id = $1
@@ -212,8 +143,7 @@ type GetEventsByGroupIdRow struct {
 	UpdatedAt      pgtype.Timestamptz
 	GoingCount     int32
 	NotGoingCount  int32
-	PreviewImage   string
-	TotalImages    int64
+	Image          int64
 }
 
 func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error) {
@@ -236,8 +166,7 @@ func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupId
 			&i.UpdatedAt,
 			&i.GoingCount,
 			&i.NotGoingCount,
-			&i.PreviewImage,
-			&i.TotalImages,
+			&i.Image,
 		); err != nil {
 			return nil, err
 		}
@@ -247,49 +176,4 @@ func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupId
 		return nil, err
 	}
 	return items, nil
-}
-
-const respondToEvent = `-- name: RespondToEvent :one
-INSERT INTO event_responses (event_id, user_id, going)
-VALUES ($1, $2, $3)
-ON CONFLICT (event_id, user_id)
-DO UPDATE
-SET going = EXCLUDED.going,
-    deleted_at = NULL,           -- restore if it was soft-deleted
-    updated_at = CURRENT_TIMESTAMP
-RETURNING id, event_id, user_id, going, created_at, updated_at, deleted_at
-`
-
-type RespondToEventParams struct {
-	EventID int64
-	UserID  int64
-	Going   bool
-}
-
-func (q *Queries) RespondToEvent(ctx context.Context, arg RespondToEventParams) (EventResponse, error) {
-	row := q.db.QueryRow(ctx, respondToEvent, arg.EventID, arg.UserID, arg.Going)
-	var i EventResponse
-	err := row.Scan(
-		&i.ID,
-		&i.EventID,
-		&i.UserID,
-		&i.Going,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const updateStillValid = `-- name: UpdateStillValid :exec
-UPDATE events
-SET still_valid = FALSE
-WHERE event_date < CURRENT_DATE
-  AND still_valid = TRUE
-`
-
-// needs to be run periodically, eg every day
-func (q *Queries) UpdateStillValid(ctx context.Context) error {
-	_, err := q.db.Exec(ctx, updateStillValid)
-	return err
 }

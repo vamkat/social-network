@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS posts (
     audience intended_audience NOT NULL DEFAULT 'everyone',
     comments_count INT DEFAULT 0 NOT NULL,
     reactions_count INT DEFAULT 0 NOT NULL,
-    images_count INT DEFAULT 0 NOT NULL,
     last_commented_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -67,7 +66,6 @@ CREATE TABLE IF NOT EXISTS comments (
     parent_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     comment_body TEXT NOT NULL,
     reactions_count INT DEFAULT 0 NOT NULL,
-    images_count INT DEFAULT 0 NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
@@ -88,10 +86,8 @@ CREATE TABLE IF NOT EXISTS events (
     event_creator_id BIGINT NOT NULL, -- in users service
     group_id BIGINT NOT NULL, -- in user service
     event_date DATE NOT NULL,
-    still_valid BOOLEAN DEFAULT TRUE, --do we need this?
     going_count INT DEFAULT 0 NOT NULL,
     not_going_count INT DEFAULT 0 NOT NULL,
-    images_count INT DEFAULT 0 NOT NULL, --keep this or not?
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
@@ -121,18 +117,17 @@ CREATE INDEX idx_event_responses_event ON event_responses(event_id);
 -- Images
 ------------------------------------------
 CREATE TABLE IF NOT EXISTS images (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    file_name TEXT NOT NULL,
-    entity_id BIGINT NOT NULL REFERENCES master_index(id) ON DELETE CASCADE,
+    id BIGINT PRIMARY KEY,
+    parent_id BIGINT NOT NULL REFERENCES master_index(id) ON DELETE CASCADE,
     sort_order INT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ,
-    CONSTRAINT unique_image_sort_order UNIQUE(entity_id, sort_order)
+    CONSTRAINT unique_image_sort_order UNIQUE(parent_id, sort_order)
 );
 
-CREATE INDEX idx_images_entity_id ON images(entity_id);
-CREATE INDEX idx_images_entity_active ON images(entity_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_images_parent_id ON images(parent_id);
+CREATE INDEX idx_images_entity_active ON images(parent_id) WHERE deleted_at IS NULL;
 
 
 ------------------------------------------
@@ -325,7 +320,7 @@ BEGIN
     IF _type IN ('POST', 'COMMENT', 'EVENT') THEN
         UPDATE images
         SET deleted_at = CURRENT_TIMESTAMP
-        WHERE entity_id = OLD.id AND deleted_at IS NULL;
+        WHERE parent_id = OLD.id AND deleted_at IS NULL;
     END IF;
 
     RETURN OLD;
@@ -435,7 +430,7 @@ BEGIN
         SELECT COALESCE(MAX(sort_order),0) 
         INTO max_order
         FROM images
-        WHERE entity_id = NEW.entity_id
+        WHERE parent_id = NEW.parent_id
         FOR UPDATE;
 
         NEW.sort_order := max_order + 1;
@@ -449,54 +444,3 @@ CREATE TRIGGER trg_set_sort_order
 BEFORE INSERT ON images
 FOR EACH ROW
 EXECUTE FUNCTION set_next_sort_order();
-
-------------------------------------------------
--- trigger to update image count for posts, comments, events
-------------------------------------------------
-CREATE OR REPLACE FUNCTION update_entity_image_count()
-RETURNS TRIGGER AS $$
-DECLARE
-    _type TEXT;
-    _entity_id BIGINT;
-BEGIN
-    -- Determine which row to count against depending on event type
-    _entity_id := COALESCE(NEW.entity_id, OLD.entity_id);
-
-    SELECT content_type INTO _type
-    FROM master_index
-    WHERE id = _entity_id;
-
-    -- Update appropriate table based on entity type
-    IF _type = 'POST' THEN
-        UPDATE posts
-        SET images_count = (
-            SELECT COUNT(*) FROM images 
-            WHERE entity_id = _entity_id AND deleted_at IS NULL
-        )
-        WHERE id = _entity_id;
-
-    ELSIF _type = 'COMMENT' THEN
-        UPDATE comments
-        SET images_count = (
-            SELECT COUNT(*) FROM images 
-            WHERE entity_id = _entity_id AND deleted_at IS NULL
-        )
-        WHERE id = _entity_id;
-
-    ELSIF _type = 'EVENT' THEN
-        UPDATE events
-        SET images_count = (
-            SELECT COUNT(*) FROM images 
-            WHERE entity_id = _entity_id AND deleted_at IS NULL
-        )
-        WHERE id = _entity_id;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- AFTER INSERT/UPDATE/DELETE → Any change recalc counts automatically
-CREATE TRIGGER trg_images_count
-AFTER INSERT OR UPDATE OR DELETE ON images
-FOR EACH ROW EXECUTE FUNCTION update_entity_image_count();
