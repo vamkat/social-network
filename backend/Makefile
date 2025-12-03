@@ -1,6 +1,6 @@
 NAMESPACE=social-network
 
-.PHONY: build-base apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db all reset
+.PHONY: build-base delete-volumes apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db all reset
 
 # ==== Docker ====
 
@@ -10,6 +10,14 @@ build-base:
 build-services:
 	docker build -t social-network/users:dev -f services/users/Dockerfile .
 # 	docker build -t social-network/api-gateway:dev -f gateway/Dockerfile .
+
+docker-up:
+	$(MAKE) build-base
+	docker-compose up --build
+
+delete-volumes:
+	docker compose down
+	docker volume rm backend_users-db-data backend_posts-db-data backend_chat-db-data backend_notifications-db-data
 
 # ==== K8s ====
 
@@ -62,9 +70,6 @@ reset:
 	kubectl delete namespace users --ignore-not-found=true
 	kubectl create namespace users
 
-docker-up:
-	$(MAKE) build-base
-	docker-compose up --build
 
 all: build-base build-services apply-namespace deploy-nginx apply-pvc apply-db  deploy-users run-migrations apply-ingress
 
