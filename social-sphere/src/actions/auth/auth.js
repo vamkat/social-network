@@ -47,6 +47,7 @@ export async function register(formData) {
     if (!validation.valid) {
         return { success: false, error: validation.error };
     }
+    console.log("Validation passed");
 
     // Extract fields for backend request
     const firstName = formData.get("firstName")?.trim();
@@ -70,6 +71,9 @@ export async function register(formData) {
     if (aboutMe) backendFormData.append("about", aboutMe);
     if (avatar && avatar.size > 0) backendFormData.append("avatar", avatar);
 
+    console.log("Backend data prepared");
+    console.log("Backend data:", backendFormData);
+    console.log("Sending request");
     try {
         const apiBase = process.env.API_BASE || "http://localhost:8081";
         const registerEndpoint = process.env.REGISTER || "/register";
@@ -82,7 +86,7 @@ export async function register(formData) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error("Registration failed:", errorData);
+            console.error("Registration failed, Backend response:", errorData);
             return { success: false, error: errorData.error || "Registration failed. Please try again." };
         }
 

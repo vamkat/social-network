@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/actions/auth/auth";
-import { validateLoginForm } from "@/utils/validation";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -23,14 +22,6 @@ export default function LoginForm() {
         setError("");
 
         const formData = new FormData(event.currentTarget);
-
-        // Client-side validation using validation utilities
-        const validation = validateLoginForm(formData);
-        if (!validation.valid) {
-            setError(validation.error);
-            setIsLoading(false);
-            return;
-        }
 
         try {
             const result = await login(formData);

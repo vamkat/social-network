@@ -1,10 +1,7 @@
-"use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { register } from "@/actions/auth/auth";
-import { validateRegistrationForm } from "@/utils/validation";
 
 export default function RegisterForm() {
     const router = useRouter();
@@ -13,7 +10,7 @@ export default function RegisterForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(null);
-    const [avatarName, setAvatarName] = useState("");
+    const [avatarName, setAvatarName] = useState(null);
     const [avatarFile, setAvatarFile] = useState(null);
 
     // Real-time validation state
@@ -26,14 +23,6 @@ export default function RegisterForm() {
         setError("");
 
         const formData = new FormData(event.currentTarget);
-
-        // Client-side validation using validation utilities
-        const validation = validateRegistrationForm(formData, avatarFile);
-        if (!validation.valid) {
-            setError(validation.error);
-            setIsLoading(false);
-            return;
-        }
 
         // Append avatar file if present
         if (avatarFile) {

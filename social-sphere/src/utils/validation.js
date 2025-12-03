@@ -66,7 +66,9 @@ export function isValidUsername(username) {
  * @returns {{valid: boolean, error: string}} Validation result
  */
 export function isValidAvatarFile(file) {
-    if (!file) return { valid: true, error: "" }; // Optional
+    if (file.name === "blob") return { valid: true, error: "" }; // Optional
+
+    console.log(file);
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
         return { valid: false, error: "Avatar must be JPEG, PNG, or GIF." };
