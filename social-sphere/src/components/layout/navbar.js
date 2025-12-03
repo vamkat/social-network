@@ -7,12 +7,20 @@ import { Home, Users, MessageCircle, Bell, User, LogOut, Settings, Menu, X, Boxe
 import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/tooltip";
 import { getUserByID } from "@/mock-data/users";
+import { getMockNotifications } from "@/mock-data/notifications";
+import { getMockMessages } from "@/mock-data/messages";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [notifications] = useState(getMockNotifications());
+  const [messages] = useState(getMockMessages());
   const dropdownRef = useRef(null);
+  const notificationsRef = useRef(null);
+  const messagesRef = useRef(null);
 
   // Mock user data - replace with actual auth context later
   const user = getUserByID("1");
@@ -22,6 +30,20 @@ export default function Navbar() {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
+        setIsNotificationsOpen(false);
+      }
+
+      if (
+        messagesRef.current &&
+        !messagesRef.current.contains(event.target)
+      ) {
+        setIsMessagesOpen(false);
       }
     }
 
@@ -50,6 +72,12 @@ export default function Navbar() {
   ];
 
   const isActive = (path) => pathname === path;
+
+  const hasUnreadNotifications = notifications.some(
+    (notification) => notification.isUnread
+  );
+
+  const hasUnreadMessages = messages.some((message) => message.isUnread);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-black/5 dark:border-white/5 bg-(--background)/80 backdrop-blur-md">
@@ -109,28 +137,124 @@ export default function Navbar() {
 
 
           {/* Messages */}
-          <Tooltip content="Messages">
-            <button
-              className={`p-2.5 rounded-xl transition-all duration-200 relative ${isActive('/messages')
-                ? "text-(--foreground) bg-(--muted)/10"
-                : "text-(--muted) hover:text-(--foreground) hover:bg-(--muted)/10"}`}
-            >
-              <MessageCircle className={`w-6 h-6 ${isActive('/messages') ? "stroke-[2.5px]" : "stroke-2"}`} />
-              <span className="absolute top-0 right-0.5 text-xs text-red-500 font-extrabold flex items-center justify-center rounded-full">1</span>
-            </button>
-          </Tooltip>
+          <div className="relative" ref={messagesRef}>
+            <Tooltip content="Messages">
+              <button
+                aria-expanded={isMessagesOpen}
+                onClick={() => setIsMessagesOpen(!isMessagesOpen)}
+                className={`p-2.5 rounded-xl transition-all duration-200 relative ${isActive("/messages")
+                  ? "text-(--foreground) bg-(--muted)/10"
+                  : "text-(--muted) hover:text-(--foreground) hover:bg-(--muted)/10"}`}
+              >
+                <MessageCircle className={`w-6 h-6 ${isActive("/messages") ? "stroke-[2.5px]" : "stroke-2"}`} />
+                {hasUnreadMessages && (
+                  <span className="absolute top-0 right-0.5 text-xs text-red-500 font-extrabold flex items-center justify-center rounded-full">1</span>
+                )}
+              </button>
+            </Tooltip>
+
+            {isMessagesOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-black/5 dark:border-white/5 bg-(--background) shadow-lg shadow-black/5 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                <div className="px-4 py-3 border-b border-(--muted)/10">
+                  <p className="text-sm font-semibold text-(--foreground)">Messages</p>
+                </div>
+
+                <div className="divide-y divide-(--muted)/10">
+                  {messages.map((message) => (
+                    <button
+                      key={message.id}
+                      type="button"
+                      className="w-full text-left p-4 flex gap-3 hover:bg-(--muted)/10 transition-colors"
+                    >
+                      <span
+                        className={`mt-1 w-2 h-2 rounded-full ${message.isUnread ? "bg-blue-500" : "bg-(--muted)/30"}`}
+                      />
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-(--foreground)">{message.sender}</p>
+                          <span className="text-xs text-(--muted) whitespace-nowrap">
+                            {message.createdAt}
+                          </span>
+                        </div>
+                        <p className="text-xs text-(--muted) line-clamp-2">{message.snippet}</p>
+                      </div>
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-(--muted)/10 transition-colors"
+                  >
+                    View All Messages
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Notifications */}
-          <Tooltip content="Notifications">
-            <button
-              className={`p-2.5 rounded-xl transition-all duration-200 relative ${isActive('/notifications')
-                ? "text-(--foreground) bg-(--muted)/10"
-                : "text-(--muted) hover:text-(--foreground) hover:bg-(--muted)/10"}`}
-            >
-              <Bell className={`w-6 h-6 ${isActive('/notifications') ? "stroke-[2.5px]" : "stroke-2"}`} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-(--background)" />
-            </button>
-          </Tooltip>
+          <div className="relative" ref={notificationsRef}>
+            <Tooltip content="Notifications">
+              <button
+                aria-expanded={isNotificationsOpen}
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className={`p-2.5 rounded-xl transition-all duration-200 relative ${isActive("/notifications")
+                  ? "text-(--foreground) bg-(--muted)/10"
+                  : "text-(--muted) hover:text-(--foreground) hover:bg-(--muted)/10"}`}
+              >
+                <Bell className={`w-6 h-6 ${isActive("/notifications") ? "stroke-[2.5px]" : "stroke-2"}`} />
+                {hasUnreadNotifications && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-(--background)" />
+                )}
+              </button>
+            </Tooltip>
+
+            {isNotificationsOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-black/5 dark:border-white/5 bg-(--background) shadow-lg shadow-black/5 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                <div className="px-4 py-3 border-b border-(--muted)/10">
+                  <p className="text-sm font-semibold text-(--foreground)">Notifications</p>
+                </div>
+
+                <div className="divide-y divide-(--muted)/10">
+                  {notifications.map((notification) => (
+                    <div key={notification.id} className="p-4 flex gap-3">
+                      <div className="flex-1 flex gap-3">
+                        <span
+                          className={`mt-1 w-2 h-2 rounded-full ${notification.isUnread ? "bg-blue-500" : "bg-(--muted)/30"}`}
+                        />
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-(--foreground)">
+                            {notification.title}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {notification.ctaLabels.map((label) => (
+                              <button
+                                key={label}
+                                type="button"
+                                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-(--muted)/10 hover:bg-(--muted)/20 transition-colors"
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-(--muted) whitespace-nowrap">
+                        {notification.createdAt}
+                      </span>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-(--muted)/10 transition-colors"
+                  >
+                    View All Notifications
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User Menu (Desktop) */}
           <div className="hidden md:block relative ml-2" ref={dropdownRef}>
