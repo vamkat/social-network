@@ -14,6 +14,7 @@ export default function RegisterForm() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [avatarName, setAvatarName] = useState("");
+    const [avatarFile, setAvatarFile] = useState(null);
 
     // Real-time validation state
     const [fieldErrors, setFieldErrors] = useState({});
@@ -27,16 +28,16 @@ export default function RegisterForm() {
         const formData = new FormData(event.currentTarget);
 
         // Client-side validation using validation utilities
-        const validation = validateRegistrationForm(formData, avatarPreview);
+        const validation = validateRegistrationForm(formData, avatarFile);
         if (!validation.valid) {
             setError(validation.error);
             setIsLoading(false);
             return;
         }
 
-        // Append base64 avatar if present
-        if (avatarPreview) {
-            formData.set("avatar", avatarPreview);
+        // Append avatar file if present
+        if (avatarFile) {
+            formData.set("avatar", avatarFile);
         }
 
         try {
@@ -59,6 +60,7 @@ export default function RegisterForm() {
         const file = event.target.files[0];
         if (file) {
             setAvatarName(file.name);
+            setAvatarFile(file); // Store the file object
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAvatarPreview(reader.result);
@@ -70,6 +72,7 @@ export default function RegisterForm() {
     function removeAvatar() {
         setAvatarPreview(null);
         setAvatarName("");
+        setAvatarFile(null);
         // Reset file input if needed (requires ref)
     }
 
@@ -163,8 +166,8 @@ export default function RegisterForm() {
 
             case "aboutMe":
                 setAboutMeCount(value.length);
-                if (value.length > 800) {
-                    errors.aboutMe = "About me must be at most 800 characters.";
+                if (value.length > 400) {
+                    errors.aboutMe = "About me must be at most 400 characters.";
                 } else {
                     delete errors.aboutMe;
                 }
@@ -265,7 +268,7 @@ export default function RegisterForm() {
                             type={showPassword ? "text" : "password"}
                             required
                             className="form-input pr-10"
-                            placeholder="Min. 8 chars"
+                            placeholder="HelloWorld123!"
                             minLength={8}
                             onChange={(e) => validateField("password", e.target.value)}
                         />
@@ -343,14 +346,14 @@ export default function RegisterForm() {
                 <div className="flex items-center justify-between mb-1">
                     <label htmlFor="aboutMe" className="form-label">About Me (Optional)</label>
                     <span className="text-xs text-gray-500">
-                        {aboutMeCount}/800
+                        {aboutMeCount}/400
                     </span>
                 </div>
                 <textarea
                     id="aboutMe"
                     name="aboutMe"
                     rows={3}
-                    maxLength={800}
+                    maxLength={400}
                     className="form-input resize-none"
                     placeholder="Tell us a bit about yourself..."
                     onChange={(e) => validateField("aboutMe", e.target.value)}

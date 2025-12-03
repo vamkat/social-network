@@ -11,8 +11,9 @@ export const STRONG_PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w
 // Username/nickname pattern: letters, numbers, dots, underscores, dashes
 export const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
-// Base64 image pattern for avatar validation
-export const BASE64_IMAGE_PATTERN = /^data:image\/(jpeg|png|gif);base64,[A-Za-z0-9+/]+=*$/i;
+// File validation constants
+export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+export const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif"];
 
 /**
  * Calculate age from date of birth
@@ -60,21 +61,31 @@ export function isValidUsername(username) {
 }
 
 /**
- * Validate base64 image data
- * @param {string} dataUrl - Base64 data URL to validate
- * @returns {boolean} True if valid
+ * Validate avatar file
+ * @param {File} file - File object to validate
+ * @returns {{valid: boolean, error: string}} Validation result
  */
-export function isValidBase64Image(dataUrl) {
-    return BASE64_IMAGE_PATTERN.test(dataUrl);
+export function isValidAvatarFile(file) {
+    if (!file) return { valid: true, error: "" }; // Optional
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        return { valid: false, error: "Avatar must be JPEG, PNG, or GIF." };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        return { valid: false, error: "Avatar must be less than 5MB." };
+    }
+
+    return { valid: true, error: "" };
 }
 
 /**
  * Validate registration form data (client-side)
  * @param {FormData} formData - Form data to validate
- * @param {string|null} avatarPreview - Base64 avatar preview
+ * @param {File|null} avatarFile - Avatar file object
  * @returns {{valid: boolean, error: string}} Validation result
  */
-export function validateRegistrationForm(formData, avatarPreview = null) {
+export function validateRegistrationForm(formData, avatarFile = null) {
     // First name validation
     const firstName = formData.get("firstName")?.trim() || "";
     if (!firstName) {
@@ -138,14 +149,15 @@ export function validateRegistrationForm(formData, avatarPreview = null) {
 
     // About me validation (optional)
     const aboutMe = formData.get("aboutMe")?.trim() || "";
-    if (aboutMe && aboutMe.length > 800) {
-        return { valid: false, error: "About me must be at most 800 characters." };
+    if (aboutMe && aboutMe.length > 400) {
+        return { valid: false, error: "About me must be at most 400 characters." };
     }
 
     // Avatar validation (optional)
-    if (avatarPreview) {
-        if (!isValidBase64Image(avatarPreview)) {
-            return { valid: false, error: "Avatar must be base64 JPEG, PNG, or GIF." };
+    if (avatarFile) {
+        const avatarValidation = isValidAvatarFile(avatarFile);
+        if (!avatarValidation.valid) {
+            return avatarValidation;
         }
     }
 
@@ -168,9 +180,6 @@ export function validateLoginForm(formData) {
     const password = formData.get("password");
     if (!password) {
         return { valid: false, error: "Password is required." };
-    }
-    if (password.length < 8) {
-        return { valid: false, error: "Password must be at least 8 characters." };
     }
 
     return { valid: true, error: "" };

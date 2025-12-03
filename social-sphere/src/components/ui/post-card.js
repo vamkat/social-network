@@ -10,21 +10,20 @@ export default function PostCard({ post }) {
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
 
-    useEffect(() => {
-        const loadInitialComment = async () => {
-            try {
-                // Fetch the last comment (offset 0, limit 1)
-                const initialComments = await fetchComments(post.ID, 0, 1);
-                setComments(initialComments);
-                if (initialComments.length === 0) setHasMore(false);
-            } catch (error) {
-                console.error("Failed to load comments", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadInitialComment();
-    }, [post.ID]);
+    const handleMouseEnter = async () => {
+        if (!loading || post.NumOfComments === 0) return;
+
+        try {
+            // Fetch the last comment (offset 0, limit 1)
+            const initialComments = await fetchComments(post.ID, 0, 1);
+            setComments(initialComments);
+            if (initialComments.length === 0) setHasMore(false);
+        } catch (error) {
+            console.error("Failed to load comments", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLoadMore = async (e) => {
         e.preventDefault(); // Prevent link navigation if inside a link (though button should handle it)
@@ -60,7 +59,7 @@ export default function PostCard({ post }) {
     };
 
     return (
-        <div className="post-card group">
+        <div className="post-card group" onMouseEnter={handleMouseEnter}>
             <Link href={`/profile/${post.BasicUserInfo.UserID}`}>
                 {/* Avatar Column */}
                 <div className="post-avatar-container">
