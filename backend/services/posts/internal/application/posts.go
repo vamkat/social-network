@@ -38,6 +38,9 @@ func (s *PostsService) CreatePost(ctx context.Context, req CreatePostReq) (err e
 		}
 
 		if audience == "selected" {
+			if len(req.AudienceIds) < 1 {
+				return ErrNoAudienceSelected
+			}
 			err = q.InsertPostAudience(ctx, sqlc.InsertPostAudienceParams{
 				PostID:  postId,
 				Column2: req.AudienceIds.Int64(), //does nil work here? And do I allow it? TODO test
