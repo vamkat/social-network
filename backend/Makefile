@@ -63,7 +63,7 @@ reset:
 	kubectl create namespace users
 
 docker-up:
-	build-base
+	$(MAKE) build-base
 	docker-compose up --build
 
 all: build-base build-services apply-namespace deploy-nginx apply-pvc apply-db  deploy-users run-migrations apply-ingress

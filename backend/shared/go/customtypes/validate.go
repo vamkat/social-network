@@ -188,6 +188,11 @@ func ValidateStruct(s any) error {
 			}
 		}
 
+		// Skip validation for nullable fields that are empty
+		if nullable && isZeroValue(fieldVal) {
+			continue
+		}
+
 		// --- SLICE VALIDATION ---
 		if fieldVal.Kind() == reflect.Slice {
 
