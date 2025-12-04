@@ -2,7 +2,7 @@ package application
 
 import "context"
 
-func (s *PostsService) SuggestUsersByPostActivity(ctx context.Context, userId int64) ([]int64, error) {
+func (s *Application) SuggestUsersByPostActivity(ctx context.Context, userId int64) ([]int64, error) {
 	//returns five random ids that fit one of the following criteria:
 	//Users who liked one or more of *your public posts*
 	// Users who commented on your public posts

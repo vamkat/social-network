@@ -1,10 +1,12 @@
 package customtypes
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"os"
 
+	"github.com/lib/pq"
 	"github.com/speps/go-hashids/v2"
 )
 
@@ -133,4 +135,28 @@ func (ids Ids) Int64() []int64 {
 		out[i] = int64(v)
 	}
 	return out
+}
+
+// Value implements driver.Valuer
+func (ids Ids) Value() (driver.Value, error) {
+	// Convert []Id to []int64
+	int64s := make([]int64, len(ids))
+	for i, id := range ids {
+		int64s[i] = int64(id)
+	}
+	return pq.Int64Array(int64s).Value()
+}
+
+// Scan implements sql.Scanner
+func (ids *Ids) Scan(src interface{}) error {
+	var int64Array pq.Int64Array
+	if err := int64Array.Scan(src); err != nil {
+		return err
+	}
+	// Convert []int64 to []Id
+	*ids = make(Ids, len(int64Array))
+	for i, v := range int64Array {
+		(*ids)[i] = Id(v)
+	}
+	return nil
 }

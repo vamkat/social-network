@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"social-network/services/posts/internal/application"
+	"social-network/services/posts/internal/db/sqlc"
 
 	"time"
 
@@ -38,7 +39,8 @@ func main() {
 
 	log.Println("Service ready!")
 
-	postsService := application.NewPostsService(pool)
+	queries := sqlc.New(pool)
+	postsService := application.NewApplication(queries, pool)
 	_ = postsService
 
 	// server := server.NewPostsServer(postsService)

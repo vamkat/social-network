@@ -2,24 +2,36 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"social-network/services/posts/internal/db/sqlc"
 )
 
-func (s *PostsService) runTx(ctx context.Context, fn func(q sqlc.Querier) error) error {
+// runTx runs a function inside a database transaction.
+// If fn returns an error, the tx is rolled back.
+func (s *Application) runTx(ctx context.Context, fn func(q *sqlc.Queries) error) error {
+	// start tx
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	if err := fn(s.q.WithTx(tx)); err != nil {
+	// db must be a *sqlc.Queries to use WithTx
+	base, ok := s.db.(*sqlc.Queries)
+	if !ok {
+		return fmt.Errorf("UserService.db must be *sqlc.Queries for transactions")
+	}
+
+	qtx := base.WithTx(tx)
+
+	if err := fn(qtx); err != nil {
 		return err
 	}
 
 	return tx.Commit(ctx)
 }
 
-func (s *PostsService) hasRightToView(ctx context.Context, req hasRightToView) (bool, error) {
+func (s *Application) hasRightToView(ctx context.Context, req hasRightToView) (bool, error) {
 	// get the requester id, the parent entity id (so post or event even if the request is for comments)
 	// user ids the requester follows and group ids the requester belongs to
 	// group and post audience=group: only members can see

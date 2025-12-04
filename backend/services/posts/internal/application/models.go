@@ -52,11 +52,13 @@ type CreatePostReq struct {
 	Image       ct.Id  `validate:"nullable"`
 }
 
-type EditPostContentReq struct {
+type EditPostReq struct {
 	RequesterId ct.Id
 	PostId      ct.Id
 	NewBody     ct.PostBody `validate:"nullable"`
 	Image       ct.Id       `validate:"nullable"`
+	Audience    ct.Audience
+	AudienceIds ct.Ids `validate:"nullable"`
 }
 
 type insertPostAudienceReq struct {
