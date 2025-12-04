@@ -16,6 +16,12 @@ export async function fetchFeedPosts(offset = 0, limit = 5) {
     return getMockPosts(offset, limit, ["public", "friends"]);
 }
 
+export async function fetchPostById(postId) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const post = getMockPosts(0, 1000).find((p) => String(p.ID) === String(postId));
+    return post ?? null;
+}
+
 import { unstable_cache } from "next/cache";
 
 export async function fetchUserPosts(userID, offset = 0, limit = 5) {

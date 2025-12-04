@@ -17,6 +17,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 1345,
             IsHearted: false,
             Visibility: "public",
+            LastComment: {
+                CommentId: "101",
+                Body: "Love this vibe.",
+                Creator: {
+                    UserID: "2",
+                    Username: "sunny_side",
+                    Avatar: "/elon.jpeg"
+                },
+                ReactionsCount: 2,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "2m ago"
+            }
         },
         {
             ID: "2",
@@ -32,6 +45,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 1345,
             IsHearted: false,
             Visibility: "friends",
+            LastComment: {
+                CommentId: "102",
+                Body: "Good morning!",
+                Creator: {
+                    UserID: "3",
+                    Username: "earlybird",
+                    Avatar: "/elon.jpeg"
+                },
+                ReactionsCount: 1,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "5m ago"
+            }
         },
         {
             ID: "3",
@@ -48,6 +74,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             IsHearted: false,
             Visibility: "group",
             GroupID: "2",
+            LastComment: {
+                CommentId: "103",
+                Body: "Spicy take.",
+                Creator: {
+                    UserID: "5",
+                    Username: "trumpet",
+                    Avatar: "/trump.jpeg"
+                },
+                ReactionsCount: 4,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "8m ago"
+            }
         },
         {
             ID: "4",
@@ -63,6 +102,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 1345,
             IsHearted: false,
             Visibility: "public",
+            LastComment: {
+                CommentId: "104",
+                Body: "Craving brunch now.",
+                Creator: {
+                    UserID: "6",
+                    Username: "kimpossible",
+                    Avatar: "/kim.jpeg"
+                },
+                ReactionsCount: 0,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "12m ago"
+            }
         },
         {
             ID: "5",
@@ -78,6 +130,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 6,
             IsHearted: false,
             Visibility: "friends",
+            LastComment: {
+                CommentId: "105",
+                Body: "Need to see pics!",
+                Creator: {
+                    UserID: "7",
+                    Username: "Xi_aomi",
+                    Avatar: "/xi.jpeg"
+                },
+                ReactionsCount: 3,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "2h ago"
+            }
         },
         {
             ID: "6",
@@ -94,6 +159,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             IsHearted: false,
             Visibility: "group",
             GroupID: "7",
+            LastComment: {
+                CommentId: "106",
+                Body: "Legend indeed.",
+                Creator: {
+                    UserID: "1",
+                    Username: "ychaniot",
+                    Avatar: "/putin.jpeg"
+                },
+                ReactionsCount: 2,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "1h ago"
+            }
         },
         {
             ID: "7",
@@ -109,6 +187,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 6,
             IsHearted: false,
             Visibility: "public",
+            LastComment: {
+                CommentId: "107",
+                Body: "Whoa, harsh.",
+                Creator: {
+                    UserID: "2",
+                    Username: "sunny_side",
+                    Avatar: "/elon.jpeg"
+                },
+                ReactionsCount: 5,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "1h ago"
+            }
         },
         {
             ID: "8",
@@ -124,6 +215,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 6,
             IsHearted: false,
             Visibility: "friends",
+            LastComment: {
+                CommentId: "108",
+                Body: "This escalated fast.",
+                Creator: {
+                    UserID: "6",
+                    Username: "kimpossible",
+                    Avatar: "/kim.jpeg"
+                },
+                ReactionsCount: 1,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "1h ago"
+            }
         },
         {
             ID: "9",
@@ -139,6 +243,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 145,
             IsHearted: false,
             Visibility: "public",
+            LastComment: {
+                CommentId: "109",
+                Body: "Same here!",
+                Creator: {
+                    UserID: "4",
+                    Username: "watermelon_musk",
+                    Avatar: "/elon.jpeg"
+                },
+                ReactionsCount: 7,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "3h ago"
+            }
         },
         {
             ID: "10",
@@ -154,6 +271,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 12,
             IsHearted: false,
             Visibility: "friends",
+            LastComment: {
+                CommentId: "110",
+                Body: "Donut well deserved.",
+                Creator: {
+                    UserID: "5",
+                    Username: "trumpet",
+                    Avatar: "/trump.jpeg"
+                },
+                ReactionsCount: 0,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "12h ago"
+            }
         },
         {
             ID: "11",
@@ -169,6 +299,19 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfHearts: 12,
             IsHearted: false,
             Visibility: "public",
+            LastComment: {
+                CommentId: "111",
+                Body: "No clue, following.",
+                Creator: {
+                    UserID: "3",
+                    Username: "earlybird",
+                    Avatar: "/elon.jpeg"
+                },
+                ReactionsCount: 1,
+                LikedByUser: false,
+                Image: null,
+                CreatedAt: "20h ago"
+            }
         }
     ];
 

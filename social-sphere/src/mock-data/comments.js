@@ -1,89 +1,90 @@
 export const getMockComments = () => {
     return [
         {
-            ID: "1",
+            CommentId: "1",
             PostID: "8",
-            BasicUserInfo: {
-                ID: "6",
+            Creator: {
+                UserID: "6",
                 Username: "kimpossible",
                 Avatar: "/kim.jpeg"
             },
-            Content: "Ti les re malaka?!?",
-            CommentImage: null,
+            Body: "Ti les re malaka?!?",
+            Image: null,
             CreatedAt: "10 minutes ago",
-            NumOfHearts: 372847
+            ReactionsCount: 372847,
+            LikedByUser: false
         },
         {
-            ID: "2",
+            CommentId: "2",
             PostID: "8",
-            BasicUserInfo: {
-                ID: "1",
+            Creator: {
+                UserID: "1",
                 Username: "ychaniot",
                 Avatar: "/putin.jpeg"
             },
-            Content: "HAHAHAHHAHA",
-            CommentImage: null,
+            Body: "HAHAHAHHAHA",
+            Image: null,
             CreatedAt: "21 minutes ago",
-            NumOfHearts: 372847
+            ReactionsCount: 372847,
+            LikedByUser: false
         },
         {
-            ID: "3",
+            CommentId: "3",
             PostID: "8",
-            BasicUserInfo: {
-                ID: "7",
+            Creator: {
+                UserID: "7",
                 Username: "Xi_aomi",
                 Avatar: "/xi.jpeg"
             },
-            Content: "Confirmed",
-            CommentImage: null,
+            Body: "Confirmed",
+            Image: null,
             CreatedAt: "21 minutes ago",
-            NumOfHearts: 372847
+            ReactionsCount: 372847,
+            LikedByUser: false
         },
         {
-            ID: "4",
+            CommentId: "4",
             PostID: "8",
-            BasicUserInfo: {
-                ID: "5",
+            Creator: {
+                UserID: "5",
                 Username: "trumpet",
                 Avatar: "/trump.jpeg"
             },
-            Content: "This guy also told me so",
-            CommentImage: "/logos.png",
+            Body: "This guy also told me so",
+            Image: "/logos.png",
             CreatedAt: "21 minutes ago",
-            NumOfHearts: 372847
+            ReactionsCount: 372847,
+            LikedByUser: false
         },
         {
-            ID: "5",
+            CommentId: "5",
             PostID: "8",
-            BasicUserInfo: {
-                ID: "5",
+            Creator: {
+                UserID: "5",
                 Username: "trumpet",
                 Avatar: "/trump.jpeg"
             },
-            Content: "lasjnljkndfhaoisuhxkskjdix oiasuhdk jkqzhk kjhsdiqkw jd",
-            CommentImage: null,
+            Body: "lasjnljkndfhaoisuhxkskjdix oiasuhdk jkqzhk kjhsdiqkw jd",
+            Image: null,
             CreatedAt: "21 minutes ago",
-            NumOfHearts: 372847
+            ReactionsCount: 372847,
+            LikedByUser: false
         },
         {
-            ID: "6",
+            CommentId: "6",
             PostID: "8",
-            BasicUserInfo: {
-                ID: "5",
+            Creator: {
+                UserID: "5",
                 Username: "trumpet",
                 Avatar: "/trump.jpeg"
             },
-            Content: "yoyoyoyyoyoyoy",
-            CommentImage: null,
+            Body: "yoyoyoyyoyoyoy",
+            Image: null,
             CreatedAt: "21 minutes ago",
-            NumOfHearts: 372847
+            ReactionsCount: 372847,
+            LikedByUser: false
         }
     ];
-}
-
-export const getLastCommentForPostID = (postID) => {
-    const comments = getMockComments().filter(comment => comment.PostID === postID);
-    return comments[comments.length - 1];
 }
 
 export const getCommentsForPost = (postID, offset = 0, limit = 2) => {
@@ -106,4 +107,3 @@ export const getCommentsForPost = (postID, offset = 0, limit = 2) => {
     const reversedComments = [...comments].reverse();
     return reversedComments.slice(offset, offset + limit);
 }
-

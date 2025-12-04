@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { fetchComments } from "@/actions/comments/comments";
 import { getUserByID } from "@/mock-data/users";
@@ -17,6 +18,7 @@ export default function PostCard({ post }) {
     const [postDraft, setPostDraft] = useState(post.Content ?? "");
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingText, setEditingText] = useState("");
+    const router = useRouter();
     const currentUser = getUserByID("1"); // Mock current user (matches Navbar)
     const isOwnPost = Boolean(
         currentUser &&
@@ -25,19 +27,17 @@ export default function PostCard({ post }) {
     );
 
     useEffect(() => {
-        const loadInitialComment = async () => {
-            try {
-                const initialComments = await fetchComments(post.ID, 0, 1);
-                setComments(initialComments);
-                if (initialComments.length === 0) setHasMore(false);
-            } catch (error) {
-                console.error("Failed to load comments", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadInitialComment();
-    }, [post.ID]);
+        const lastComment = post.LastComment;
+        if (lastComment) {
+            setComments([lastComment]);
+            const total = Number(post.NumOfComments ?? 0);
+            setHasMore(total > 1);
+        } else {
+            setComments([]);
+            setHasMore(false);
+        }
+        setLoading(false);
+    }, [post.ID, post.LastComment, post.NumOfComments]);
 
     const handleToggleComposer = (e) => {
         e.preventDefault();
@@ -79,8 +79,8 @@ export default function PostCard({ post }) {
     };
 
     const handleStartEdit = (comment) => {
-        setEditingCommentId(comment.ID);
-        setEditingText(comment.Content);
+        setEditingCommentId(comment.CommentId);
+        setEditingText(comment.Body);
     };
 
     const handleCancelEdit = () => {
@@ -95,7 +95,7 @@ export default function PostCard({ post }) {
         }
         setComments((prev) =>
             prev.map((c) =>
-                c.ID === commentId ? { ...c, Content: editingText } : c
+                c.CommentId === commentId ? { ...c, Body: editingText } : c
             )
         );
         handleCancelEdit();
@@ -111,13 +111,15 @@ export default function PostCard({ post }) {
             const currentCount = comments.length;
             const limit = 2;
             const newComments = await fetchComments(post.ID, currentCount, limit);
+            const existingIds = new Set(comments.map((c) => c.CommentId));
+            const uniqueNew = newComments.filter((c) => !existingIds.has(c.CommentId));
 
-            if (newComments.length < limit) {
+            if (uniqueNew.length < limit) {
                 setHasMore(false);
             }
 
-            if (newComments.length > 0) {
-                setComments((prev) => [...newComments.reverse(), ...prev]);
+            if (uniqueNew.length > 0) {
+                setComments((prev) => [...uniqueNew.reverse(), ...prev]);
             } else {
                 setHasMore(false);
             }
@@ -128,8 +130,22 @@ export default function PostCard({ post }) {
         }
     };
 
+    const handleHeartClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Heart clicked");
+        // TODO: wire up heart reaction
+    };
+
+    const handleOpenPost = (e) => {
+        const interactive = e.target.closest("button, a, textarea, input, select, option");
+        if (interactive) return;
+        e.preventDefault();
+        router.push(`/posts/${post.ID}`);
+    };
+
     return (
-        <div className="post-card group">
+        <div className="post-card group" onClick={handleOpenPost}>
             <Link href={`/profile/${post.BasicUserInfo.UserID}`}>
                 <div className="post-avatar-container">
                     <img src={post.BasicUserInfo.Avatar} alt="Post Avatar" className="post-avatar" />
@@ -209,7 +225,7 @@ export default function PostCard({ post }) {
                 <div className="post-footer flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                         <div className="post-actions mt-2">
-                            <button className="action-btn action-btn-heart group/heart">
+                            <button className="action-btn action-btn-heart group/heart" onClick={handleHeartClick}>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="icon-heart">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                                 </svg>
@@ -283,16 +299,16 @@ export default function PostCard({ post }) {
 
                         <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                             {comments.map((comment, index) => {
-                                const isOwner = currentUser && String(comment.BasicUserInfo?.ID ?? comment.BasicUserInfo?.UserID) === String(currentUser.ID);
-                                const isEditing = editingCommentId === comment.ID;
+                                const isOwner = currentUser && String(comment.Creator?.UserID) === String(currentUser.ID);
+                                const isEditing = editingCommentId === comment.CommentId;
                                 return (
-                                    <div key={comment.ID || index} className="flex gap-3">
+                                    <div key={comment.CommentId || index} className="flex gap-3">
                                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-(--muted)/20">
-                                            <img src={comment.BasicUserInfo.Avatar} alt={comment.BasicUserInfo.Username} className="w-full h-full object-cover" />
+                                            <img src={comment.Creator.Avatar} alt={comment.Creator.Username} className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm font-semibold">@{comment.BasicUserInfo.Username}</span>
+                                                <span className="text-sm font-semibold">@{comment.Creator.Username}</span>
                                                 <div className="flex items-center gap-2 text-xs text-(--muted)">
                                                     <span>{comment.CreatedAt}</span>
                                                     {isOwner && !isEditing && (
@@ -319,18 +335,18 @@ export default function PostCard({ post }) {
                                                         onChange={(e) => setEditingText(e.target.value)}
                                                     />
                                                     <div className="flex items-center gap-2 text-xs">
-                                                        <button
-                                                            type="button"
-                                                            className="px-3 py-1 rounded-md bg-(--foreground) text-(--background) disabled:opacity-60"
-                                                            disabled={!editingText.trim()}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                handleSaveEdit(comment.ID);
-                                                            }}
-                                                        >
-                                                            Save
-                                                        </button>
+                                                    <button
+                                                        type="button"
+                                                        className="px-3 py-1 rounded-md bg-(--foreground) text-(--background) disabled:opacity-60"
+                                                        disabled={!editingText.trim()}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handleSaveEdit(comment.CommentId);
+                                                        }}
+                                                    >
+                                                        Save
+                                                    </button>
                                                         <button
                                                             type="button"
                                                             className="px-3 py-1 rounded-md border border-(--muted)/30 text-(--muted) hover:text-(--foreground)"
@@ -346,7 +362,7 @@ export default function PostCard({ post }) {
                                                 </div>
                                             ) : (
                                                 <p className="text-sm text-(--foreground)/90 mt-1 leading-relaxed">
-                                                    {comment.Content}
+                                                    {comment.Body}
                                                 </p>
                                             )}
 
@@ -355,7 +371,7 @@ export default function PostCard({ post }) {
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5 group-hover/comment-heart:fill-current">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                                                     </svg>
-                                                    <span className="font-medium">{comment.NumOfHearts}</span>
+                                                    <span className="font-medium">{comment.ReactionsCount}</span>
                                                 </button>
                                             )}
                                         </div>
