@@ -45,11 +45,16 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 const deleteEvent = `-- name: DeleteEvent :execrows
 UPDATE events
 SET deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND event_creator_id=$2 AND deleted_at IS NULL
 `
 
-func (q *Queries) DeleteEvent(ctx context.Context, id int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteEvent, id)
+type DeleteEventParams struct {
+	ID             int64
+	EventCreatorID int64
+}
+
+func (q *Queries) DeleteEvent(ctx context.Context, arg DeleteEventParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteEvent, arg.ID, arg.EventCreatorID)
 	if err != nil {
 		return 0, err
 	}
@@ -82,14 +87,15 @@ UPDATE events
 SET event_title = $1,
     event_body = $2,
     event_date = $3
-WHERE id = $4 AND deleted_at IS NULL
+WHERE id = $4 AND event_creator_id=$5 AND deleted_at IS NULL
 `
 
 type EditEventParams struct {
-	EventTitle string
-	EventBody  string
-	EventDate  pgtype.Date
-	ID         int64
+	EventTitle     string
+	EventBody      string
+	EventDate      pgtype.Date
+	ID             int64
+	EventCreatorID int64
 }
 
 func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) (int64, error) {
@@ -98,6 +104,7 @@ func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) (int64, er
 		arg.EventBody,
 		arg.EventDate,
 		arg.ID,
+		arg.EventCreatorID,
 	)
 	if err != nil {
 		return 0, err
@@ -123,13 +130,21 @@ SELECT
      WHERE i.parent_id = e.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS image
+    ) AS image,
 
+    -- user response (NULL if no response)
+    er.going AS user_response
 
 FROM events e
+LEFT JOIN event_responses er
+    ON er.event_id = e.id
+   AND er.user_id = $4
+   AND er.deleted_at IS NULL
+
 WHERE e.group_id = $1
   AND e.deleted_at IS NULL
   AND e.event_date >= CURRENT_DATE
+
 ORDER BY e.event_date ASC
 OFFSET $2
 LIMIT $3
@@ -139,6 +154,7 @@ type GetEventsByGroupIdParams struct {
 	GroupID int64
 	Offset  int32
 	Limit   int32
+	UserID  int64
 }
 
 type GetEventsByGroupIdRow struct {
@@ -153,10 +169,16 @@ type GetEventsByGroupIdRow struct {
 	GoingCount     int32
 	NotGoingCount  int32
 	Image          int64
+	UserResponse   pgtype.Bool
 }
 
 func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error) {
-	rows, err := q.db.Query(ctx, getEventsByGroupId, arg.GroupID, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, getEventsByGroupId,
+		arg.GroupID,
+		arg.Offset,
+		arg.Limit,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -176,6 +198,7 @@ func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupId
 			&i.GoingCount,
 			&i.NotGoingCount,
 			&i.Image,
+			&i.UserResponse,
 		); err != nil {
 			return nil, err
 		}
@@ -185,4 +208,29 @@ func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupId
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertEventResponse = `-- name: UpsertEventResponse :execrows
+INSERT INTO event_responses (event_id, user_id, going)
+VALUES ($1, $2, $3)
+ON CONFLICT (event_id, user_id)
+DO UPDATE
+SET
+    going = EXCLUDED.going,
+    deleted_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
+`
+
+type UpsertEventResponseParams struct {
+	EventID int64
+	UserID  int64
+	Going   bool
+}
+
+func (q *Queries) UpsertEventResponse(ctx context.Context, arg UpsertEventResponseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertEventResponse, arg.EventID, arg.UserID, arg.Going)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

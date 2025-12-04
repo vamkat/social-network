@@ -172,3 +172,12 @@ func (ids *Ids) Scan(src interface{}) error {
 	}
 	return nil
 }
+
+// FromInt64s converts a []int64 to Ids.
+func FromInt64s(src []int64) Ids {
+	out := make(Ids, len(src))
+	for i, v := range src {
+		out[i] = Id(v)
+	}
+	return out
+}

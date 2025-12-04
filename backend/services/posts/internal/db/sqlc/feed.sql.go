@@ -91,17 +91,17 @@ WHERE p.deleted_at IS NULL
        ))
 
        -- FOLLOWERS → allowed if creator ∈ list passed in
-       OR (p.audience = 'followers' AND p.creator_id = ANY($2))
+       OR (p.audience = 'followers' AND p.creator_id = ANY($2::bigint[]))
   )
 ORDER BY p.created_at DESC
 OFFSET $3 LIMIT $4
 `
 
 type GetPersonalizedFeedParams struct {
-	UserID    int64
-	CreatorID int64
-	Offset    int32
-	Limit     int32
+	UserID  int64
+	Column2 []int64
+	Offset  int32
+	Limit   int32
 }
 
 type GetPersonalizedFeedRow struct {
@@ -128,7 +128,7 @@ type GetPersonalizedFeedRow struct {
 func (q *Queries) GetPersonalizedFeed(ctx context.Context, arg GetPersonalizedFeedParams) ([]GetPersonalizedFeedRow, error) {
 	rows, err := q.db.Query(ctx, getPersonalizedFeed,
 		arg.UserID,
-		arg.CreatorID,
+		arg.Column2,
 		arg.Offset,
 		arg.Limit,
 	)

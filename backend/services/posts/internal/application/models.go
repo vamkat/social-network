@@ -127,6 +127,7 @@ type Event struct {
 	Image         ct.Id `validate:"nullable"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	UserResponse  *bool
 }
 
 type CreateEventReq struct {

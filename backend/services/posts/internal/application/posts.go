@@ -112,7 +112,7 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 				return ErrNotFound
 			}
 		}
-		//edit image
+		//edit image //does this also delete the image?
 		if req.Image > 0 {
 			err := s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
 				ID:       req.Image.Int64(),
@@ -121,7 +121,14 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 			if err != nil {
 				return err
 			}
-
+		} else {
+			rowsAffected, err := s.db.DeleteImage(ctx, req.Image.Int64())
+			if err != nil {
+				return err
+			}
+			if rowsAffected != 1 {
+				fmt.Println("image not found")
+			}
 		}
 		// edit audience
 		rowsAffected, err := s.db.UpdatePostAudience(ctx, sqlc.UpdatePostAudienceParams{

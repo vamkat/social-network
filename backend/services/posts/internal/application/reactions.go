@@ -1,15 +1,28 @@
 package application
 
-import "context"
+import (
+	"context"
+	"social-network/services/posts/internal/db/sqlc"
+	ct "social-network/shared/go/customtypes"
+)
 
-// FRONT: reaction count changes. What do you need returned? If only error, you'll change count on your side optimistically - OPTMISTICALLY
-func (s *Application) InsertReaction(ctx context.Context, req GenericReq) error {
-	//runs in transaction
-	//tries toggle reaction if exists first, then inserts reaction if it didn't exist
+func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq) error {
+	// check requester can actually view parent entity?
+	if err := ct.ValidateStruct(req); err != nil {
+		return err
+	}
+	rowsAffected, err := s.db.ToggleOrInsertReaction(ctx, sqlc.ToggleOrInsertReactionParams{
+		ContentID: req.EntityId.Int64(),
+		UserID:    req.RequesterId.Int64(),
+	})
+	if err != nil || rowsAffected != 1 {
+		return err
+	}
+
 	return nil
 }
 
-// FRONT: Do you want to show this info or skip?
+// SKIP FOR NOW
 func (s *Application) GetWhoLikedEntityId(ctx context.Context, req GenericReq) ([]int64, error) {
 	return nil, nil
 }

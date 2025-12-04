@@ -7,8 +7,6 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getWhoLikedEntityId = `-- name: GetWhoLikedEntityId :many
@@ -37,72 +35,25 @@ func (q *Queries) GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]i
 	return items, nil
 }
 
-const insertReaction = `-- name: InsertReaction :one
+const toggleOrInsertReaction = `-- name: ToggleOrInsertReaction :execrows
 INSERT INTO reactions (content_id, user_id)
 VALUES ($1, $2)
-RETURNING id, content_id, user_id, deleted_at, updated_at
-`
-
-type InsertReactionParams struct {
-	ContentID int64
-	UserID    int64
-}
-
-type InsertReactionRow struct {
-	ID        int64
-	ContentID int64
-	UserID    int64
-	DeletedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) InsertReaction(ctx context.Context, arg InsertReactionParams) (InsertReactionRow, error) {
-	row := q.db.QueryRow(ctx, insertReaction, arg.ContentID, arg.UserID)
-	var i InsertReactionRow
-	err := row.Scan(
-		&i.ID,
-		&i.ContentID,
-		&i.UserID,
-		&i.DeletedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const toggleReactionIfExists = `-- name: ToggleReactionIfExists :one
-UPDATE reactions
+ON CONFLICT (content_id, user_id) DO UPDATE
 SET deleted_at = CASE
-                     WHEN deleted_at IS NULL THEN NOW()   -- make inactive
-                     ELSE NULL                           -- restore
-                 END,
-    updated_at = NOW()
-WHERE content_id = $1
-  AND user_id = $2
-RETURNING id, content_id, user_id, deleted_at, updated_at
+                     WHEN reactions.deleted_at IS NULL THEN NOW()
+                     ELSE NULL
+                 END
 `
 
-type ToggleReactionIfExistsParams struct {
+type ToggleOrInsertReactionParams struct {
 	ContentID int64
 	UserID    int64
 }
 
-type ToggleReactionIfExistsRow struct {
-	ID        int64
-	ContentID int64
-	UserID    int64
-	DeletedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) ToggleReactionIfExists(ctx context.Context, arg ToggleReactionIfExistsParams) (ToggleReactionIfExistsRow, error) {
-	row := q.db.QueryRow(ctx, toggleReactionIfExists, arg.ContentID, arg.UserID)
-	var i ToggleReactionIfExistsRow
-	err := row.Scan(
-		&i.ID,
-		&i.ContentID,
-		&i.UserID,
-		&i.DeletedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) ToggleOrInsertReaction(ctx context.Context, arg ToggleOrInsertReactionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, toggleOrInsertReaction, arg.ContentID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
