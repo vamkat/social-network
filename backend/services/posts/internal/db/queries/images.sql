@@ -1,6 +1,8 @@
--- name: InsertImage :exec
+-- name: UpsertImage :exec
 INSERT INTO images (id, parent_id)
-VALUES ($2::BIGINT, $1::BIGINT);
+VALUES (sqlc.arg(id)::BIGINT, sqlc.arg(parent_id)::BIGINT)
+ON CONFLICT (id) DO UPDATE
+SET parent_id = EXCLUDED.parent_id;
 
 -- name: GetImages :one
 SELECT id
@@ -10,7 +12,7 @@ WHERE parent_id = $1
 ORDER BY sort_order
   LIMIT 1;
 
--- name: DeleteImage :exec 
+-- name: DeleteImage :execrows 
 UPDATE images
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL;

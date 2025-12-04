@@ -15,14 +15,14 @@ type Querier interface {
 	CreateComment(ctx context.Context, arg CreateCommentParams) error
 	CreateEvent(ctx context.Context, arg CreateEventParams) error
 	CreatePost(ctx context.Context, arg CreatePostParams) (int64, error)
-	DeleteComment(ctx context.Context, id int64) error
-	DeleteEvent(ctx context.Context, id int64) error
-	DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) error
-	DeleteImage(ctx context.Context, id int64) error
-	DeletePost(ctx context.Context, id int64) error
-	EditComment(ctx context.Context, arg EditCommentParams) error
-	EditEvent(ctx context.Context, arg EditEventParams) error
-	EditPostContent(ctx context.Context, arg EditPostContentParams) (Post, error)
+	DeleteComment(ctx context.Context, id int64) (int64, error)
+	DeleteEvent(ctx context.Context, id int64) (int64, error)
+	DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) (int64, error)
+	DeleteImage(ctx context.Context, id int64) (int64, error)
+	DeletePost(ctx context.Context, arg DeletePostParams) (int64, error)
+	EditComment(ctx context.Context, arg EditCommentParams) (int64, error)
+	EditEvent(ctx context.Context, arg EditEventParams) (int64, error)
+	EditPostContent(ctx context.Context, arg EditPostContentParams) (int64, error)
 	GetCommentsByPostId(ctx context.Context, arg GetCommentsByPostIdParams) ([]GetCommentsByPostIdRow, error)
 	GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error)
 	GetGroupPostsPaginated(ctx context.Context, arg GetGroupPostsPaginatedParams) ([]GetGroupPostsPaginatedRow, error)
@@ -35,8 +35,7 @@ type Querier interface {
 	// pagination
 	GetUserPostsPaginated(ctx context.Context, arg GetUserPostsPaginatedParams) ([]GetUserPostsPaginatedRow, error)
 	GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]int64, error)
-	InsertImage(ctx context.Context, arg InsertImageParams) error
-	InsertPostAudience(ctx context.Context, arg InsertPostAudienceParams) error
+	InsertPostAudience(ctx context.Context, arg InsertPostAudienceParams) (int64, error)
 	InsertReaction(ctx context.Context, arg InsertReactionParams) (InsertReactionRow, error)
 	// U1: Users who liked one or more of *your public posts*
 	// U2: Users who commented on your public posts
@@ -45,7 +44,8 @@ type Querier interface {
 	// Combine scores
 	SuggestUsersByPostActivity(ctx context.Context, creatorID int64) ([]int64, error)
 	ToggleReactionIfExists(ctx context.Context, arg ToggleReactionIfExistsParams) (ToggleReactionIfExistsRow, error)
-	UpdatePostAudience(ctx context.Context, arg UpdatePostAudienceParams) error
+	UpdatePostAudience(ctx context.Context, arg UpdatePostAudienceParams) (int64, error)
+	UpsertImage(ctx context.Context, arg UpsertImageParams) error
 }
 
 var _ Querier = (*Queries)(nil)

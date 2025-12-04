@@ -27,18 +27,21 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) er
 	return err
 }
 
-const deleteComment = `-- name: DeleteComment :exec
+const deleteComment = `-- name: DeleteComment :execrows
 UPDATE comments
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) DeleteComment(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteComment, id)
-	return err
+func (q *Queries) DeleteComment(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteComment, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const editComment = `-- name: EditComment :exec
+const editComment = `-- name: EditComment :execrows
 UPDATE comments
 SET comment_body = $1
 WHERE id = $2 AND deleted_at IS NULL
@@ -49,9 +52,12 @@ type EditCommentParams struct {
 	ID          int64
 }
 
-func (q *Queries) EditComment(ctx context.Context, arg EditCommentParams) error {
-	_, err := q.db.Exec(ctx, editComment, arg.CommentBody, arg.ID)
-	return err
+func (q *Queries) EditComment(ctx context.Context, arg EditCommentParams) (int64, error) {
+	result, err := q.db.Exec(ctx, editComment, arg.CommentBody, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getCommentsByPostId = `-- name: GetCommentsByPostId :many

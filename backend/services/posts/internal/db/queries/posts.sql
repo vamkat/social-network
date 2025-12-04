@@ -161,7 +161,7 @@ WHERE p.creator_id = $1                      -- target user we are viewing
         )
          OR (
             p.audience = 'followers'
-            AND p.creator_id = ANY($3)          -- viewer follows creator
+            AND p.creator_id = ANY($3::bigint[])          -- viewer follows creator
         )
      )
 
@@ -205,30 +205,35 @@ INSERT INTO posts (post_body, creator_id, group_id, audience)
 VALUES ($1, $2, $3, $4)
 RETURNING id;
 
--- name: InsertPostAudience :exec
+-- name: InsertPostAudience :execrows
 INSERT INTO post_audience (post_id, allowed_user_id)
-SELECT $1, allowed_user_id
-FROM unnest($2::bigint[]) AS allowed_user_id;
+SELECT sqlc.arg(post_id)::bigint,
+       allowed_user_id
+FROM unnest(sqlc.arg(allowed_user_ids)::bigint[]) AS allowed_user_id;
 
--- name: EditPostContent :one
+-- name: EditPostContent :execrows
 UPDATE posts
 SET post_body  = $1
-WHERE id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE id = $2 AND creator_id = $3 AND deleted_at IS NULL;
 
--- name: UpdatePostAudience :exec
+-- name: UpdatePostAudience :execrows
 UPDATE posts
-SET audience = $2, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL;
+SET audience = $3,
+    updated_at = NOW()
+WHERE 
+    id = $1
+    AND creator_id = $2
+    AND deleted_at IS NULL
+    AND (audience IS DISTINCT FROM $3);
 
 -- name: ClearPostAudience :exec
 DELETE FROM post_audience
 WHERE post_id = $1;
 
--- name: DeletePost :exec
+-- name: DeletePost :execrows
 UPDATE posts
 SET deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND deleted_at IS NULL;
+WHERE id = $1 AND creator_id=$2 AND deleted_at IS NULL;
 
 -- name: GetPostAudience :many
 SELECT allowed_user_id

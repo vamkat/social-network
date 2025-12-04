@@ -35,12 +35,12 @@ INSERT INTO comments (comment_creator_id, parent_id, comment_body)
 VALUES ($1, $2, $3);
 
 
--- name: EditComment :exec
+-- name: EditComment :execrows
 UPDATE comments
 SET comment_body = $1
 WHERE id = $2 AND deleted_at IS NULL;
 
--- name: DeleteComment :exec
+-- name: DeleteComment :execrows
 UPDATE comments
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL;

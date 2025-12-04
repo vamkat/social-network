@@ -9,15 +9,18 @@ import (
 	"context"
 )
 
-const deleteImage = `-- name: DeleteImage :exec
+const deleteImage = `-- name: DeleteImage :execrows
 UPDATE images
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) DeleteImage(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteImage, id)
-	return err
+func (q *Queries) DeleteImage(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteImage, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getImages = `-- name: GetImages :one
@@ -36,17 +39,19 @@ func (q *Queries) GetImages(ctx context.Context, parentID int64) (int64, error) 
 	return id, err
 }
 
-const insertImage = `-- name: InsertImage :exec
+const upsertImage = `-- name: UpsertImage :exec
 INSERT INTO images (id, parent_id)
-VALUES ($2::BIGINT, $1::BIGINT)
+VALUES ($1::BIGINT, $2::BIGINT)
+ON CONFLICT (id) DO UPDATE
+SET parent_id = EXCLUDED.parent_id
 `
 
-type InsertImageParams struct {
-	Column1 int64
-	Column2 int64
+type UpsertImageParams struct {
+	ID       int64
+	ParentID int64
 }
 
-func (q *Queries) InsertImage(ctx context.Context, arg InsertImageParams) error {
-	_, err := q.db.Exec(ctx, insertImage, arg.Column1, arg.Column2)
+func (q *Queries) UpsertImage(ctx context.Context, arg UpsertImageParams) error {
+	_, err := q.db.Exec(ctx, upsertImage, arg.ID, arg.ParentID)
 	return err
 }

@@ -46,46 +46,43 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (int64, 
 	return id, err
 }
 
-const deletePost = `-- name: DeletePost :exec
+const deletePost = `-- name: DeletePost :execrows
 UPDATE posts
 SET deleted_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND creator_id=$2 AND deleted_at IS NULL
 `
 
-func (q *Queries) DeletePost(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deletePost, id)
-	return err
+type DeletePostParams struct {
+	ID        int64
+	CreatorID int64
 }
 
-const editPostContent = `-- name: EditPostContent :one
+func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePost, arg.ID, arg.CreatorID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const editPostContent = `-- name: EditPostContent :execrows
 UPDATE posts
 SET post_body  = $1
-WHERE id = $2 AND deleted_at IS NULL
-RETURNING id, post_body, creator_id, group_id, audience, comments_count, reactions_count, last_commented_at, created_at, updated_at, deleted_at
+WHERE id = $2 AND creator_id = $3 AND deleted_at IS NULL
 `
 
 type EditPostContentParams struct {
-	PostBody string
-	ID       int64
+	PostBody  string
+	ID        int64
+	CreatorID int64
 }
 
-func (q *Queries) EditPostContent(ctx context.Context, arg EditPostContentParams) (Post, error) {
-	row := q.db.QueryRow(ctx, editPostContent, arg.PostBody, arg.ID)
-	var i Post
-	err := row.Scan(
-		&i.ID,
-		&i.PostBody,
-		&i.CreatorID,
-		&i.GroupID,
-		&i.Audience,
-		&i.CommentsCount,
-		&i.ReactionsCount,
-		&i.LastCommentedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) EditPostContent(ctx context.Context, arg EditPostContentParams) (int64, error) {
+	result, err := q.db.Exec(ctx, editPostContent, arg.PostBody, arg.ID, arg.CreatorID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getGroupPostsPaginated = `-- name: GetGroupPostsPaginated :many
@@ -423,7 +420,7 @@ WHERE p.creator_id = $1                      -- target user we are viewing
         )
          OR (
             p.audience = 'followers'
-            AND p.creator_id = ANY($3)          -- viewer follows creator
+            AND p.creator_id = ANY($3::bigint[])          -- viewer follows creator
         )
      )
 
@@ -433,11 +430,11 @@ LIMIT $4 OFFSET $5
 `
 
 type GetUserPostsPaginatedParams struct {
-	CreatorID   int64
-	UserID      int64
-	CreatorID_2 int64
-	Limit       int32
-	Offset      int32
+	CreatorID int64
+	UserID    int64
+	Column3   []int64
+	Limit     int32
+	Offset    int32
 }
 
 type GetUserPostsPaginatedRow struct {
@@ -466,7 +463,7 @@ func (q *Queries) GetUserPostsPaginated(ctx context.Context, arg GetUserPostsPag
 	rows, err := q.db.Query(ctx, getUserPostsPaginated,
 		arg.CreatorID,
 		arg.UserID,
-		arg.CreatorID_2,
+		arg.Column3,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -507,34 +504,47 @@ func (q *Queries) GetUserPostsPaginated(ctx context.Context, arg GetUserPostsPag
 	return items, nil
 }
 
-const insertPostAudience = `-- name: InsertPostAudience :exec
+const insertPostAudience = `-- name: InsertPostAudience :execrows
 INSERT INTO post_audience (post_id, allowed_user_id)
-SELECT $1, allowed_user_id
+SELECT $1::bigint,
+       allowed_user_id
 FROM unnest($2::bigint[]) AS allowed_user_id
 `
 
 type InsertPostAudienceParams struct {
-	PostID  int64
-	Column2 []int64
+	PostID         int64
+	AllowedUserIds []int64
 }
 
-func (q *Queries) InsertPostAudience(ctx context.Context, arg InsertPostAudienceParams) error {
-	_, err := q.db.Exec(ctx, insertPostAudience, arg.PostID, arg.Column2)
-	return err
+func (q *Queries) InsertPostAudience(ctx context.Context, arg InsertPostAudienceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertPostAudience, arg.PostID, arg.AllowedUserIds)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const updatePostAudience = `-- name: UpdatePostAudience :exec
+const updatePostAudience = `-- name: UpdatePostAudience :execrows
 UPDATE posts
-SET audience = $2, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+SET audience = $3,
+    updated_at = NOW()
+WHERE 
+    id = $1
+    AND creator_id = $2
+    AND deleted_at IS NULL
+    AND (audience IS DISTINCT FROM $3)
 `
 
 type UpdatePostAudienceParams struct {
-	ID       int64
-	Audience IntendedAudience
+	ID        int64
+	CreatorID int64
+	Audience  IntendedAudience
 }
 
-func (q *Queries) UpdatePostAudience(ctx context.Context, arg UpdatePostAudienceParams) error {
-	_, err := q.db.Exec(ctx, updatePostAudience, arg.ID, arg.Audience)
-	return err
+func (q *Queries) UpdatePostAudience(ctx context.Context, arg UpdatePostAudienceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updatePostAudience, arg.ID, arg.CreatorID, arg.Audience)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

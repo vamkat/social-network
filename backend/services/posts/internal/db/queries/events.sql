@@ -39,21 +39,21 @@ INSERT INTO events (
 VALUES ($1, $2, $3, $4, $5);
 
 
--- name: DeleteEventResponse :exec
+-- name: DeleteEventResponse :execrows
 UPDATE event_responses
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE event_id = $1
   AND user_id = $2
   AND deleted_at IS NULL;
 
--- name: EditEvent :exec
+-- name: EditEvent :execrows
 UPDATE events
 SET event_title = $1,
     event_body = $2,
     event_date = $3
 WHERE id = $4 AND deleted_at IS NULL;
 
--- name: DeleteEvent :exec
+-- name: DeleteEvent :execrows
 UPDATE events
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL;

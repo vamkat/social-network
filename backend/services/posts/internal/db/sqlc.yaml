@@ -8,6 +8,9 @@ sql:
       go:
         package: sqlc
         out: "./sqlc"
+        overrides:
+        - db_type: "bigint[]"
+          go_type: "customtypes.Ids"
         sql_package: pgx/v5
         emit_empty_slices: true 
         emit_enum_valid_method: true

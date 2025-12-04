@@ -42,18 +42,21 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 	return err
 }
 
-const deleteEvent = `-- name: DeleteEvent :exec
+const deleteEvent = `-- name: DeleteEvent :execrows
 UPDATE events
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) DeleteEvent(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteEvent, id)
-	return err
+func (q *Queries) DeleteEvent(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteEvent, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const deleteEventResponse = `-- name: DeleteEventResponse :exec
+const deleteEventResponse = `-- name: DeleteEventResponse :execrows
 UPDATE event_responses
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE event_id = $1
@@ -66,12 +69,15 @@ type DeleteEventResponseParams struct {
 	UserID  int64
 }
 
-func (q *Queries) DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) error {
-	_, err := q.db.Exec(ctx, deleteEventResponse, arg.EventID, arg.UserID)
-	return err
+func (q *Queries) DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteEventResponse, arg.EventID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const editEvent = `-- name: EditEvent :exec
+const editEvent = `-- name: EditEvent :execrows
 UPDATE events
 SET event_title = $1,
     event_body = $2,
@@ -86,14 +92,17 @@ type EditEventParams struct {
 	ID         int64
 }
 
-func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) error {
-	_, err := q.db.Exec(ctx, editEvent,
+func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) (int64, error) {
+	result, err := q.db.Exec(ctx, editEvent,
 		arg.EventTitle,
 		arg.EventBody,
 		arg.EventDate,
 		arg.ID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getEventsByGroupId = `-- name: GetEventsByGroupId :many
