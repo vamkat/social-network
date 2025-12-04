@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { registerClient } from "@/actions/auth/register-client";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function RegisterForm() {
     const router = useRouter();
+    const { fetchUserProfile } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -36,8 +38,14 @@ export default function RegisterForm() {
             const result = await registerClient(formData);
 
             if (result.success) {
-                console.log("Registration successful");
-                router.refresh();
+                console.log("Registration successful", result.user);
+
+                // Fetch user profile using the UserId from response
+                if (result.user && result.user.UserId) {
+                    await fetchUserProfile(result.user.UserId);
+                }
+
+                // Navigate to feed
                 router.push("/feed/public");
             } else {
                 setError(result.error || "Registration failed");

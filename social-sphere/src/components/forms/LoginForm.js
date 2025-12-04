@@ -6,9 +6,11 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 import { loginClient } from "@/actions/auth/login-client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginForm() {
     const router = useRouter();
+    const { fetchUserProfile } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -27,9 +29,14 @@ export default function LoginForm() {
             const result = await loginClient(formData);
 
             if (result.success) {
-                console.log("Login successful");
-                // Refresh to trigger AuthProvider to fetch user data
-                router.refresh();
+                console.log("Login successful", result);
+
+                // Fetch user profile using the UserId from response
+                if (result.user && result.user.UserId) {
+                    await fetchUserProfile(result.user.UserId);
+                }
+
+                // Navigate to feed
                 router.push("/feed/public");
             } else {
                 setError(result.error || "Invalid credentials");

@@ -8,15 +8,18 @@ import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/tooltip";
 import { getUserByID } from "@/mock-data/users";
 import { logoutClient } from "@/actions/auth/logout-client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user: authUser, clearUser } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Mock user data - replace with actual auth context later
-  const user = getUserByID("1");
+  // Use auth context user if available, otherwise fall back to mock data
+  const user = authUser || getUserByID("1");
+  console.log(user);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -167,7 +170,7 @@ export default function Navbar() {
               <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-black/5 dark:border-white/5 bg-(--background) shadow-lg shadow-black/5 animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-1">
                   <Link
-                    href={`/profile/${user.ID}`}
+                    href={`/profile/${user.user_id}`}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-(--muted)/10 transition-colors"
                     onClick={() => setIsDropdownOpen(false)}
                   >
@@ -185,7 +188,10 @@ export default function Navbar() {
                   <div className="h-px bg-(--muted)/10 my-1" />
                   <button
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-red-500 hover:bg-red-500/5 transition-colors text-left"
-                    onClick={() => logoutClient() && setIsDropdownOpen(false)}
+                    onClick={() => {
+                      logoutClient(clearUser);
+                      setIsDropdownOpen(false);
+                    }}
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out
@@ -246,7 +252,7 @@ export default function Navbar() {
             </Link>
             <button
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/5 transition-colors text-left"
-              onClick={() => logoutClient()}
+              onClick={() => logoutClient(clearUser)}
             >
               <LogOut className="w-5 h-5" />
               Sign Out
