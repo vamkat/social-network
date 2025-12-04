@@ -23,13 +23,28 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, a
 	if err != nil {
 		return err
 	}
+	err = s.runTx(ctx, func(q *sqlc.Queries) error {
+		err = s.db.CreateComment(ctx, sqlc.CreateCommentParams{
+			CommentCreatorID: req.CreatorId.Int64(),
+			ParentID:         req.ParentId.Int64(),
+			CommentBody:      req.Body.String(),
+		})
 
-	err = s.db.CreateComment(ctx, sqlc.CreateCommentParams{
-		CommentCreatorID: req.CreatorId.Int64(),
-		ParentID:         req.ParentId.Int64(),
-		CommentBody:      req.Body.String(),
+		if err != nil {
+			return err
+		}
+
+		if req.Image != 0 {
+			err = s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
+				ID:       req.Image.Int64(),
+				ParentID: req.ParentId.Int64(),
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	})
-
 	if err != nil {
 		return err
 	}
