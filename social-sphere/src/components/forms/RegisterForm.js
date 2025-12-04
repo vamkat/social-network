@@ -37,6 +37,7 @@ export default function RegisterForm() {
 
             if (result.success) {
                 console.log("Registration successful");
+                router.refresh();
                 router.push("/feed/public");
             } else {
                 setError(result.error || "Registration failed");

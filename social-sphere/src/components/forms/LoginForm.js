@@ -28,6 +28,8 @@ export default function LoginForm() {
 
             if (result.success) {
                 console.log("Login successful");
+                // Refresh to trigger AuthProvider to fetch user data
+                router.refresh();
                 router.push("/feed/public");
             } else {
                 setError(result.error || "Invalid credentials");
