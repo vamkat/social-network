@@ -30,7 +30,7 @@ func (s *Application) CreatePost(ctx context.Context, req CreatePostReq) (err er
 		return ErrNotAllowed
 	}
 
-	err = s.runTx(ctx, func(q *sqlc.Queries) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 
 		var groupId pgtype.Int8
 		groupId.Int64 = req.GroupId.Int64()
@@ -78,10 +78,7 @@ func (s *Application) CreatePost(ctx context.Context, req CreatePostReq) (err er
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+
 }
 
 func (s *Application) DeletePost(ctx context.Context, req GenericReq) error {
@@ -107,10 +104,10 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 		return err
 	}
 
-	err := s.runTx(ctx, func(q *sqlc.Queries) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 		//edit content
 		if len(req.NewBody) > 0 {
-			rowsAffected, err := s.db.EditPostContent(ctx, sqlc.EditPostContentParams{
+			rowsAffected, err := q.EditPostContent(ctx, sqlc.EditPostContentParams{
 				PostBody:  req.NewBody.String(),
 				ID:        req.PostId.Int64(),
 				CreatorID: req.RequesterId.Int64(),
@@ -124,7 +121,7 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 		}
 		//edit image //does this also delete the image?
 		if req.Image > 0 {
-			err := s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
 				ID:       req.Image.Int64(),
 				ParentID: req.PostId.Int64(),
 			})
@@ -132,7 +129,7 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 				return err
 			}
 		} else {
-			rowsAffected, err := s.db.DeleteImage(ctx, req.Image.Int64())
+			rowsAffected, err := q.DeleteImage(ctx, req.Image.Int64())
 			if err != nil {
 				return err
 			}
@@ -141,7 +138,7 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 			}
 		}
 		// edit audience
-		rowsAffected, err := s.db.UpdatePostAudience(ctx, sqlc.UpdatePostAudienceParams{
+		rowsAffected, err := q.UpdatePostAudience(ctx, sqlc.UpdatePostAudienceParams{
 			ID:        req.PostId.Int64(),
 			CreatorID: req.RequesterId.Int64(),
 			Audience:  sqlc.IntendedAudience(req.Audience),
@@ -159,7 +156,7 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 				return ErrNoAudienceSelected
 			}
 			//delete previous audience ids
-			err := s.db.ClearPostAudience(ctx, req.PostId.Int64())
+			err := q.ClearPostAudience(ctx, req.PostId.Int64())
 			if err != nil {
 				return err
 			}
@@ -178,10 +175,7 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+
 }
 
 func (s *Application) GetGroupPostsPaginated(ctx context.Context, req GetGroupPostsReq) ([]Post, error) {

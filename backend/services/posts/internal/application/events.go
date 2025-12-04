@@ -97,13 +97,13 @@ func (s *Application) EditEvent(ctx context.Context, req EditEventReq, accessCtx
 		return err
 	}
 
-	err = s.runTx(ctx, func(q *sqlc.Queries) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 		// convert date
 		eventDate := pgtype.Date{
 			Time:  req.EventDate.Time(),
 			Valid: true,
 		}
-		rowsAffected, err := s.db.EditEvent(ctx, sqlc.EditEventParams{
+		rowsAffected, err := q.EditEvent(ctx, sqlc.EditEventParams{
 			EventTitle:     req.Title.String(),
 			EventBody:      req.Body.String(),
 			EventDate:      eventDate,
@@ -117,7 +117,7 @@ func (s *Application) EditEvent(ctx context.Context, req EditEventReq, accessCtx
 			return ErrNotFound
 		}
 		if req.Image > 0 {
-			err := s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
 				ID:       req.Image.Int64(),
 				ParentID: req.EventId.Int64(),
 			})
@@ -125,7 +125,7 @@ func (s *Application) EditEvent(ctx context.Context, req EditEventReq, accessCtx
 				return err
 			}
 		} else {
-			rowsAffected, err := s.db.DeleteImage(ctx, req.Image.Int64())
+			rowsAffected, err := q.DeleteImage(ctx, req.Image.Int64())
 			if err != nil {
 				return err
 			}
@@ -135,10 +135,7 @@ func (s *Application) EditEvent(ctx context.Context, req EditEventReq, accessCtx
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+
 }
 
 func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPaginatedReq, accessCtx AccessContext) ([]Event, error) {

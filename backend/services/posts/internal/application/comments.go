@@ -23,8 +23,8 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, a
 	if err != nil {
 		return err
 	}
-	err = s.runTx(ctx, func(q *sqlc.Queries) error {
-		err = s.db.CreateComment(ctx, sqlc.CreateCommentParams{
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
+		err = q.CreateComment(ctx, sqlc.CreateCommentParams{
 			CommentCreatorID: req.CreatorId.Int64(),
 			ParentID:         req.ParentId.Int64(),
 			CommentBody:      req.Body.String(),
@@ -35,7 +35,7 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, a
 		}
 
 		if req.Image != 0 {
-			err = s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err = q.UpsertImage(ctx, sqlc.UpsertImageParams{
 				ID:       req.Image.Int64(),
 				ParentID: req.ParentId.Int64(),
 			})
@@ -45,10 +45,7 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, a
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+
 }
 
 func (s *Application) EditComment(ctx context.Context, req EditCommentReq, accessCtx AccessContext) error {
@@ -69,8 +66,8 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq, acces
 		return err
 	}
 
-	err = s.runTx(ctx, func(q *sqlc.Queries) error {
-		rowsAffected, err := s.db.EditComment(ctx, sqlc.EditCommentParams{
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
+		rowsAffected, err := q.EditComment(ctx, sqlc.EditCommentParams{
 			CommentBody:      req.Body.String(),
 			ID:               req.CommentId.Int64(),
 			CommentCreatorID: req.CreatorId.Int64(),
@@ -82,7 +79,7 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq, acces
 			return ErrNotFound
 		}
 		if req.Image > 0 {
-			err := s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
 				ID:       req.Image.Int64(),
 				ParentID: req.CommentId.Int64(),
 			})
@@ -90,7 +87,7 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq, acces
 				return err
 			}
 		} else {
-			rowsAffected, err := s.db.DeleteImage(ctx, req.Image.Int64())
+			rowsAffected, err := q.DeleteImage(ctx, req.Image.Int64())
 			if err != nil {
 				return err
 			}
@@ -100,10 +97,7 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq, acces
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+
 }
 
 func (s *Application) DeleteComment(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
