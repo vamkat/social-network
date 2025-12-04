@@ -45,7 +45,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			Password:   httpReq.Password.String(),
 		}
 
-		user, err := h.Services.Users.LoginUser(r.Context(), &gRpcReq)
+		resp, err := h.Services.Users.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return
@@ -56,7 +56,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		exp := time.Now().AddDate(0, 6, 0).Unix() // six months from now
 
 		claims := security.Claims{
-			UserId: user.UserId,
+			UserId: resp.UserId,
 			Iat:    now,
 			Exp:    exp,
 		}
@@ -78,9 +78,13 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		})
 
 		type httpResponse struct {
-			UserId int64
+			UserId string
 		}
-		httpResp := httpResponse{UserId: user.UserId}
+		encrypted, err := ct.EncryptId(resp.UserId)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+		}
+		httpResp := httpResponse{UserId: encrypted}
 
 		//SEND RESPONSE
 		err = utils.WriteJSON(w, http.StatusCreated, httpResp)
@@ -216,9 +220,13 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		})
 
 		type httpResponse struct {
-			UserId int64
+			UserId string
 		}
-		httpResp := httpResponse{UserId: resp.UserId}
+		encrypted, err := ct.EncryptId(resp.UserId)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+		}
+		httpResp := httpResponse{UserId: encrypted}
 
 		//SEND RESPONSE
 		if err := utils.WriteJSON(w, http.StatusCreated, httpResp); err != nil {
