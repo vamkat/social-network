@@ -6,11 +6,24 @@ import (
 	ct "social-network/shared/go/customtypes"
 )
 
-func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq) error {
-	// check requester can actually view parent entity?
+func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
+
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
+
+	if err := ct.ValidateStruct(accessCtx); err != nil {
+		return err
+	}
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if !hasAccess {
+		return ErrNotAllowed
+	}
+	if err != nil {
+		return err
+	}
+
 	rowsAffected, err := s.db.ToggleOrInsertReaction(ctx, sqlc.ToggleOrInsertReactionParams{
 		ContentID: req.EntityId.Int64(),
 		UserID:    req.RequesterId.Int64(),

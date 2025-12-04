@@ -7,9 +7,20 @@ import (
 	ct "social-network/shared/go/customtypes"
 )
 
-func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq) (err error) {
-	// check requester can actually view parent entity? (probably not needed?)
+func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, accessCtx AccessContext) (err error) {
+
 	if err := ct.ValidateStruct(req); err != nil {
+		return err
+	}
+	if err := ct.ValidateStruct(accessCtx); err != nil {
+		return err
+	}
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if !hasAccess {
+		return ErrNotAllowed
+	}
+	if err != nil {
 		return err
 	}
 
@@ -25,12 +36,25 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq) (
 	return nil
 }
 
-func (s *Application) EditComment(ctx context.Context, req EditCommentReq) error {
+func (s *Application) EditComment(ctx context.Context, req EditCommentReq, accessCtx AccessContext) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
-	err := s.runTx(ctx, func(q *sqlc.Queries) error {
+
+	if err := ct.ValidateStruct(accessCtx); err != nil {
+		return err
+	}
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if !hasAccess {
+		return ErrNotAllowed
+	}
+	if err != nil {
+		return err
+	}
+
+	err = s.runTx(ctx, func(q *sqlc.Queries) error {
 		rowsAffected, err := s.db.EditComment(ctx, sqlc.EditCommentParams{
 			CommentBody:      req.Body.String(),
 			ID:               req.CommentId.Int64(),
@@ -67,11 +91,24 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq) error
 	return nil
 }
 
-func (s *Application) DeleteComment(ctx context.Context, req GenericReq) error {
+func (s *Application) DeleteComment(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
+
+	if err := ct.ValidateStruct(accessCtx); err != nil {
+		return err
+	}
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if !hasAccess {
+		return ErrNotAllowed
+	}
+	if err != nil {
+		return err
+	}
+
 	rowsAffected, err := s.db.DeleteComment(ctx, sqlc.DeleteCommentParams{
 		ID:               req.EntityId.Int64(),
 		CommentCreatorID: req.RequesterId.Int64(),
@@ -85,11 +122,24 @@ func (s *Application) DeleteComment(ctx context.Context, req GenericReq) error {
 	return nil
 }
 
-func (s *Application) GetCommentsByParentId(ctx context.Context, req GenericPaginatedReq) ([]Comment, error) {
-	// check requester can actually view parent entity?
+func (s *Application) GetCommentsByParentId(ctx context.Context, req EntityIdPaginatedReq, accessCtx AccessContext) ([]Comment, error) {
+
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
+
+	if err := ct.ValidateStruct(accessCtx); err != nil {
+		return nil, err
+	}
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if !hasAccess {
+		return nil, ErrNotAllowed
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := s.db.GetCommentsByPostId(ctx, sqlc.GetCommentsByPostIdParams{
 		ParentID: req.EntityId.Int64(),
 		UserID:   req.RequesterId.Int64(),

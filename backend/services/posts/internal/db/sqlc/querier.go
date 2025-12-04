@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CanUserSeeEntity(ctx context.Context, arg CanUserSeeEntityParams) (bool, error)
 	ClearPostAudience(ctx context.Context, postID int64) error
 	CreateComment(ctx context.Context, arg CreateCommentParams) error
 	CreateEvent(ctx context.Context, arg CreateEventParams) error

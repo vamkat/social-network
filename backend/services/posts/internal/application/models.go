@@ -10,14 +10,20 @@ type GenericReq struct {
 	EntityId    ct.Id
 }
 
-type GenericPaginatedReq struct { //two different ones with nullable and not?
+type EntityIdPaginatedReq struct {
 	RequesterId ct.Id
-	EntityId    ct.Id `validate:"nullable"`
+	EntityId    ct.Id
 	Limit       ct.Limit
 	Offset      ct.Offset
 }
 
-type hasRightToView struct {
+type GenericPaginatedReq struct {
+	RequesterId ct.Id
+	Limit       ct.Limit
+	Offset      ct.Offset
+}
+
+type AccessContext struct {
 	RequesterId         ct.Id
 	ParentEntityId      ct.Id
 	RequesterFollowsIds ct.Ids `validate:"nullable"`
@@ -44,12 +50,13 @@ type Post struct {
 }
 
 type CreatePostReq struct {
-	CreatorId   ct.Id
-	Body        ct.PostBody
-	GroupId     ct.Id `validate:"nullable"`
-	Audience    ct.Audience
-	AudienceIds ct.Ids `validate:"nullable"`
-	Image       ct.Id  `validate:"nullable"`
+	CreatorId       ct.Id
+	Body            ct.PostBody
+	GroupId         ct.Id `validate:"nullable"`
+	Audience        ct.Audience
+	AudienceIds     ct.Ids `validate:"nullable"`
+	Image           ct.Id  `validate:"nullable"`
+	RequesterGroups ct.Ids `validate:"nullable"`
 }
 
 type EditPostReq struct {
@@ -58,11 +65,6 @@ type EditPostReq struct {
 	NewBody     ct.PostBody `validate:"nullable"`
 	Image       ct.Id       `validate:"nullable"`
 	Audience    ct.Audience
-	AudienceIds ct.Ids `validate:"nullable"`
-}
-
-type insertPostAudienceReq struct {
-	PostId      ct.Id
 	AudienceIds ct.Ids `validate:"nullable"`
 }
 
@@ -79,6 +81,14 @@ type GetPersonalizedFeedReq struct {
 	RequesterFollowsIds ct.Ids //from user service
 	Limit               ct.Limit
 	Offset              ct.Offset
+}
+
+type GetGroupPostsReq struct {
+	RequesterId     ct.Id
+	GroupId         ct.Id
+	Limit           ct.Limit
+	Offset          ct.Offset
+	RequesterGroups ct.Ids `validate:"nullable"`
 }
 
 //-------------------------------------------
@@ -152,18 +162,4 @@ type RespondToEventReq struct {
 	EventId     ct.Id
 	ResponderId ct.Id
 	Going       bool
-}
-
-//-------------------------------------------
-// Reactions
-//-------------------------------------------
-
-//-------------------------------------------
-// Images
-//-------------------------------------------
-
-type ImageReq struct {
-	RequesterId ct.Id
-	PostId      ct.Id
-	Image       ct.Id
 }

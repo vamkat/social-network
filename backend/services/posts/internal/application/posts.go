@@ -14,10 +14,20 @@ import (
 // GENERAL NOTE For every response that includes a userId, actual basic user info will be retrieved by Gateway from Users
 
 func (s *Application) CreatePost(ctx context.Context, req CreatePostReq) (err error) {
-	// if group post, check creator is a member (HANDLER)
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
+	}
+
+	var isMember bool
+	for _, group := range req.RequesterGroups {
+		if req.GroupId == group {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		return ErrNotAllowed
 	}
 
 	err = s.runTx(ctx, func(q *sqlc.Queries) error {
@@ -174,18 +184,29 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 	return nil
 }
 
-func (s *Application) GetGroupPostsPaginated(ctx context.Context, req GenericPaginatedReq) ([]Post, error) {
-	//check requester is group member (HANDLER)
+func (s *Application) GetGroupPostsPaginated(ctx context.Context, req GetGroupPostsReq) ([]Post, error) {
+
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
 
 	var groupId pgtype.Int8
-	groupId.Int64 = req.EntityId.Int64()
-	if req.EntityId == 0 {
+	groupId.Int64 = req.GroupId.Int64()
+	if req.GroupId == 0 {
 		return nil, ErrNoGroupIdGiven
 	}
 	groupId.Valid = true
+
+	var isMember bool
+	for _, group := range req.RequesterGroups {
+		if req.GroupId == group {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		return nil, ErrNotAllowed
+	}
 
 	rows, err := s.db.GetGroupPostsPaginated(ctx, sqlc.GetGroupPostsPaginatedParams{
 		GroupID: groupId,
@@ -202,7 +223,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req GenericPag
 			PostId:          ct.Id(r.ID),
 			Body:            ct.PostBody(r.PostBody),
 			CreatorId:       ct.Id(r.CreatorID),
-			GroupId:         req.EntityId,
+			GroupId:         req.GroupId,
 			Audience:        ct.Audience(r.Audience),
 			CommentsCount:   int(r.CommentsCount),
 			ReactionsCount:  int(r.ReactionsCount),
@@ -264,8 +285,6 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, groupID ct.
 }
 
 func (s *Application) GetUserPostsPaginated(ctx context.Context, req GetUserPostsReq) ([]Post, error) {
-	// other than followers, rest of checks happen in query
-	// HANDLER needs to get FOLLOWERS LIST for creatorId from users
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
