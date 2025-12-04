@@ -47,8 +47,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 		user, err := h.Services.Users.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
-			//TODO: distinguish error types
-			utils.ErrorJSON(w, http.StatusInternalServerError, "login failed")
+			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -78,8 +77,13 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			SameSite: http.SameSiteLaxMode,
 		})
 
+		type httpResponse struct {
+			UserId int64
+		}
+		httpResp := httpResponse{UserId: user.UserId}
+
 		//SEND RESPONSE
-		err = utils.WriteJSON(w, http.StatusOK, user)
+		err = utils.WriteJSON(w, http.StatusCreated, httpResp)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusUnauthorized, "failed to send login ACK")
 			return
@@ -181,7 +185,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 		resp, err := h.Services.Users.RegisterUser(r.Context(), &gRpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "registration failed")
+			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -211,8 +215,13 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			SameSite: http.SameSiteLaxMode,
 		})
 
+		type httpResponse struct {
+			UserId int64
+		}
+		httpResp := httpResponse{UserId: resp.UserId}
+
 		//SEND RESPONSE
-		if err := utils.WriteJSON(w, http.StatusCreated, "registered successfully"); err != nil {
+		if err := utils.WriteJSON(w, http.StatusCreated, httpResp); err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send registration ACK")
 			return
 		}

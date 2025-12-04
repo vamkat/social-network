@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
-import { register } from "@/actions/auth/auth";
+import { registerClient } from "@/actions/auth/register-client";
 
 
 export default function RegisterForm() {
@@ -33,7 +33,7 @@ export default function RegisterForm() {
         }
 
         try {
-            const result = await register(formData);
+            const result = await registerClient(formData);
 
             if (result.success) {
                 console.log("Registration successful");

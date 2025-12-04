@@ -7,6 +7,7 @@ import { Home, Users, MessageCircle, Bell, User, LogOut, Settings, Menu, X, Boxe
 import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/tooltip";
 import { getUserByID } from "@/mock-data/users";
+import { logoutClient } from "@/actions/auth/logout-client";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -184,7 +185,7 @@ export default function Navbar() {
                   <div className="h-px bg-(--muted)/10 my-1" />
                   <button
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-red-500 hover:bg-red-500/5 transition-colors text-left"
-                    onClick={() => setIsDropdownOpen(false)}
+                    onClick={() => logoutClient() && setIsDropdownOpen(false)}
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out
@@ -245,6 +246,7 @@ export default function Navbar() {
             </Link>
             <button
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/5 transition-colors text-left"
+              onClick={() => logoutClient()}
             >
               <LogOut className="w-5 h-5" />
               Sign Out

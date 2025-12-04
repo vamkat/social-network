@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
-import { login } from "@/actions/auth/auth";
+import { loginClient } from "@/actions/auth/login-client";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -24,7 +24,7 @@ export default function LoginForm() {
         const formData = new FormData(event.currentTarget);
 
         try {
-            const result = await login(formData);
+            const result = await loginClient(formData);
 
             if (result.success) {
                 console.log("Login successful");
