@@ -47,6 +47,18 @@ func (e EncryptedId) IsValid() bool {
 	return e >= 0
 }
 
+func DecryptId(hash string) (EncryptedId, error) {
+	decoded, err := hd.DecodeInt64WithError(hash)
+	if err != nil || len(decoded) == 0 {
+		return 0, err
+	}
+	return EncryptedId(decoded[0]), nil
+}
+
+func EncryptId(id int64) (encrypted string, err error) {
+	return hd.EncodeInt64([]int64{int64(id)})
+}
+
 func (e EncryptedId) Validate() error {
 	if !e.IsValid() {
 		return errors.Join(ErrValidation, errors.New("encryptedId must be positive"))
@@ -159,4 +171,13 @@ func (ids *Ids) Scan(src interface{}) error {
 		(*ids)[i] = Id(v)
 	}
 	return nil
+}
+
+// FromInt64s converts a []int64 to Ids.
+func FromInt64s(src []int64) Ids {
+	out := make(Ids, len(src))
+	for i, v := range src {
+		out[i] = Id(v)
+	}
+	return out
 }

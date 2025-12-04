@@ -151,7 +151,7 @@ WHERE p.deleted_at IS NULL
        ))
 
        -- FOLLOWERS → allowed if creator ∈ list passed in
-       OR (p.audience = 'followers' AND p.creator_id = ANY($2))
+       OR (p.audience = 'followers' AND p.creator_id = ANY($2::bigint[]))
   )
 ORDER BY p.created_at DESC
 OFFSET $3 LIMIT $4;

@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
 )
@@ -29,19 +30,40 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq) error
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
-
-	rowsAffected, err := s.db.EditComment(ctx, sqlc.EditCommentParams{
-		CommentBody:      req.Body.String(),
-		ID:               req.CommentId.Int64(),
-		CommentCreatorID: req.CreatorId.Int64(),
+	err := s.runTx(ctx, func(q *sqlc.Queries) error {
+		rowsAffected, err := s.db.EditComment(ctx, sqlc.EditCommentParams{
+			CommentBody:      req.Body.String(),
+			ID:               req.CommentId.Int64(),
+			CommentCreatorID: req.CreatorId.Int64(),
+		})
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return ErrNotFound
+		}
+		if req.Image > 0 {
+			err := s.db.UpsertImage(ctx, sqlc.UpsertImageParams{
+				ID:       req.Image.Int64(),
+				ParentID: req.CommentId.Int64(),
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			rowsAffected, err := s.db.DeleteImage(ctx, req.Image.Int64())
+			if err != nil {
+				return err
+			}
+			if rowsAffected != 1 {
+				fmt.Println("image not found")
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		return err
 	}
-	if rowsAffected != 1 {
-		return ErrNotFound
-	}
-
 	return nil
 }
 
