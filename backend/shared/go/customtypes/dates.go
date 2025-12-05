@@ -77,7 +77,11 @@ func (d DateOfBirth) Time() time.Time {
 }
 
 // Helper to parse time.Time value to proto *timestamppb.Timestamp
+// If 'd' is the zero time instant returns nil
 func (d DateOfBirth) ToProto() *timestamppb.Timestamp {
+	if d.Time().IsZero() {
+		return nil
+	}
 	return timestamppb.New(time.Time(d))
 }
 
@@ -159,5 +163,8 @@ func (ed EventDate) Time() time.Time {
 
 // Helper to parse time.Time value to proto *timestamppb.Timestamp
 func (ed EventDate) ToProto() *timestamppb.Timestamp {
+	if ed.Time().IsZero() {
+		return nil
+	}
 	return timestamppb.New(time.Time(ed))
 }

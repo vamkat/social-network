@@ -11,6 +11,7 @@ import (
 	"social-network/services/users/internal/application"
 	pb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -701,8 +702,22 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 	}
 
 	return &pb.UserProfileResponse{
-		UserId:   profile.UserId.Int64(),
-		Username: profile.Username.String(),
+		UserId:      profile.UserId.Int64(),
+		Username:    profile.Username.String(),
+		FirstName:   profile.FirstName.String(),
+		LastName:    profile.LastName.String(),
+		DateOfBirth: profile.DateOfBirth.ToProto(),
+		// Avatar: ,
+		About:             profile.About.String(),
+		Public:            profile.Public,
+		CreatedAt:         dateToProto(profile.CreatedAt),
+		FollowersCount:    profile.FollowersCount,
+		FollowingCount:    profile.FollowingCount,
+		GroupsCount:       profile.GroupsCount,
+		OwnedGroupsCount:  profile.OwnedGroupsCount,
+		ViewerIsFollowing: profile.ViewerIsFollowing,
+		OwnProfile:        profile.OwnProfile,
+		IsPending:         profile.IsPending,
 	}, nil
 }
 
@@ -910,4 +925,11 @@ func checkLimOff(limit, offset int32) error {
 		)
 	}
 	return nil
+}
+
+func dateToProto(d time.Time) *timestamppb.Timestamp {
+	if d.IsZero() {
+		return nil
+	}
+	return timestamppb.New(time.Time(d))
 }

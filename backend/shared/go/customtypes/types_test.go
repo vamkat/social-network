@@ -325,20 +325,6 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		// Slice of custom types - nullable
 		NullableIDs customtypes.Ids `validate:"nullable"`
 
-		// // Slice of custom types - elements can be empty
-		// ElementsNullableIDs customtypes.Ids `validate:"nullable,elements=nullable"`
-
-		// // Slice of custom types - both nullable
-		// BothNullableIDs customtypes.Ids `validate:"nullable,elements=nullable"`
-
-		// Required field to satisfy other validations
-		Email customtypes.Email
-	}
-
-	type TestStructElementsOnly struct {
-		// Slice of custom types - elements can be empty but slice required
-		// ElementsNullableIDs []customtypes.Id `validate:"elements=nullable"`
-
 		// Required field to satisfy other validations
 		Email customtypes.Email
 	}
@@ -426,39 +412,6 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 			wantError: true,
 			errorMsg:  "NullableIDs[1]: required element missing",
 		},
-		// {
-		// 	name: "elements nullable with zero element - should pass",
-		// 	input: TestStructElementsOnly{
-		// 		ElementsNullableIDs: []customtypes.Id{1, 0},
-		// 		Email:               "test@example.com",
-		// 	},
-		// 	wantError: false,
-		// },
-		// {
-		// 	name: "elements nullable but slice nil - should fail",
-		// 	input: TestStructElementsOnly{
-		// 		ElementsNullableIDs: nil,
-		// 		Email:               "test@example.com",
-		// 	},
-		// 	wantError: true,
-		// 	errorMsg:  "ElementsNullableIDs: required field missing",
-		// },
-		// {
-		// 	name: "both nullable with nil - should pass",
-		// 	input: TestStruct{
-		// 		BothNullableIDs: nil,
-		// 		Email:           "test@example.com",
-		// 	},
-		// 	wantError: false,
-		// },
-		// {
-		// 	name: "both nullable with zero elements - should pass",
-		// 	input: TestStruct{
-		// 		BothNullableIDs: []customtypes.Id{0, 0},
-		// 		Email:           "test@example.com",
-		// 	},
-		// 	wantError: false,
-		// },
 	}
 
 	for _, tt := range tests {
@@ -469,9 +422,6 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 					t.Errorf("expected error on %v but got none", tt)
 					return
 				}
-				// if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
-				// 	t.Errorf("expected error containing %q, got %q", tt.errorMsg, err.Error())
-				// }
 			} else {
 				if err != nil {
 					t.Errorf("expected no error but got: %v", err)
