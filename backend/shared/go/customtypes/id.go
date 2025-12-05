@@ -88,7 +88,7 @@ func (i *Id) UnmarshalJSON(data []byte) error {
 }
 
 func (i Id) IsValid() bool {
-	return i >= 0
+	return i > 0
 }
 
 func (i Id) Validate() error {
