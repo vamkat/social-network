@@ -303,12 +303,14 @@ export default function PostCard({ post }) {
                                 const isEditing = editingCommentId === comment.CommentId;
                                 return (
                                     <div key={comment.CommentId || index} className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-(--muted)/20">
+                                        <Link href={`/profile/${comment.Creator.UserID}`} className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-(--muted)/20">
                                             <img src={comment.Creator.Avatar} alt={comment.Creator.Username} className="w-full h-full object-cover" />
-                                        </div>
+                                        </Link>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm font-semibold">@{comment.Creator.Username}</span>
+                                                <Link href={`/profile/${comment.Creator.UserID}`} className="text-sm font-semibold hover:underline">
+                                                    @{comment.Creator.Username}
+                                                </Link>
                                                 <div className="flex items-center gap-2 text-xs text-(--muted)">
                                                     <span>{comment.CreatedAt}</span>
                                                     {isOwner && !isEditing && (

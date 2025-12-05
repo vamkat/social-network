@@ -13,8 +13,8 @@ export default async function SinglePostPage({ params }) {
     return (
         <div className="feed-container">
             <div className="feed-header">
-                <h1 className="feed-title">Post</h1>
-                <p className="feed-subtitle">Full conversation and activity</p>
+                <h1 className="feed-title">Single Post Page</h1>
+                <p className="feed-subtitle">View post conversation and activity</p>
             </div>
 
             <PostCard post={post} />
