@@ -1,0 +1,37 @@
+package application
+
+import (
+	"time"
+)
+
+// NotificationType represents the type of notification
+type NotificationType string
+
+const (
+	FollowRequest      NotificationType = "follow_request"
+	NewFollower        NotificationType = "new_follower"
+	GroupInvite        NotificationType = "group_invite"
+	GroupJoinRequest   NotificationType = "group_join_request"
+	NewEvent           NotificationType = "new_event"
+	PostLike           NotificationType = "like"
+	PostComment        NotificationType = "post_reply"
+	Mention            NotificationType = "mention"
+)
+
+// Notification represents a notification entity
+type Notification struct {
+	ID             int64             `json:"id"`
+	UserID         int64             `json:"user_id"`
+	Type           NotificationType  `json:"type"`
+	SourceService  string            `json:"source_service"`
+	SourceEntityID int64             `json:"source_entity_id"`
+	Seen           bool              `json:"seen"`
+	NeedsAction    bool              `json:"needs_action"`
+	Acted          bool              `json:"acted"`
+	Payload        map[string]string `json:"payload"`
+	CreatedAt      time.Time         `json:"created_at"`
+	ExpiresAt      *time.Time        `json:"expires_at"`
+	DeletedAt      *time.Time        `json:"deleted_at"`
+	Title          string            `json:"title"`
+	Message        string            `json:"message"`
+}

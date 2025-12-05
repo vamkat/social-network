@@ -4,23 +4,27 @@ import (
 	"log"
 	"net"
 
-	pb "social-network/shared/gen-go/users"
+	"social-network/services/notifications/internal/application"
+	pb "social-network/shared/gen-go/notifications"
+	usersPb "social-network/shared/gen-go/users"
 
 	"google.golang.org/grpc"
 )
 
 // Holds Client conns, services and handler funcs
 type Server struct {
-	pb.UnimplementedUserServiceServer
-	Clients Clients
-	Port    string
-	// Service
-	// Define here the db service so your hanlders can access it
+	pb.UnimplementedNotificationServiceServer
+	Clients     Clients
+	Port        string
+	Application *application.Application
 }
 
 // Holds connections to clients
 type Clients struct {
 	// define here all grpc connections
+	// Example client definitions (uncomment when respective service clients are generated):
+	UsersClient usersPb.UserServiceClient
+	// PostsClient postsPb.PostsServiceClient
 }
 
 // RunGRPCServer starts the gRPC server and blocks
@@ -32,7 +36,7 @@ func (s *Server) RunGRPCServer() {
 
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterUserServiceServer(grpcServer, s)
+	pb.RegisterNotificationServiceServer(grpcServer, s)
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	if err := grpcServer.Serve(lis); err != nil {
@@ -40,9 +44,11 @@ func (s *Server) RunGRPCServer() {
 	}
 }
 
-// func NewUsersServer(service *us.UserService) *Server {
-// 	return &Server{
-// 		Port:    ":50051",
-// 		Clients: Clients{},
-// 	}
-// }
+// NewNotificationsServer creates a new notification server
+func NewNotificationsServer(app *application.Application) *Server {
+	return &Server{
+		Port:        ":50051", // Default port for notifications service (internal)
+		Application: app,
+		Clients:     Clients{},
+	}
+}

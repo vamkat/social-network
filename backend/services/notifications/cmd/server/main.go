@@ -4,12 +4,13 @@ import (
 	"context"
 	"log"
 	"os"
+	"social-network/services/notifications/internal/application"
 	"social-network/services/notifications/internal/server"
 	"time"
 
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"social-network/services/notifications/internal/db/sqlc"
+
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -32,11 +33,21 @@ func main() {
 	}
 	defer pool.Close()
 
-	log.Println("Connected to users database")
+	log.Println("Connected to notifications database")
 
-	s := &server.Server{
-		Port: "50052",
+	// Create the database queries instance
+	queries := sqlc.New(pool)
+
+	// Create the application service
+	app := application.NewApplication(queries)
+
+	// Initialize default notification types
+	if err := app.CreateDefaultNotificationTypes(ctx); err != nil {
+		log.Printf("Warning: failed to create default notification types: %v", err)
 	}
+
+	// Create and initialize the server
+	s := server.NewNotificationsServer(app)
 	s.InitClients()
 	s.RunGRPCServer()
 }

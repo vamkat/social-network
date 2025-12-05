@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package notifications;
+
+option go_package = "social-network/shared/gen-go/notifications;notifications";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+service NotificationService {
+  // Create notifications
+  rpc CreateNotification (CreateNotificationRequest) returns (Notification);
+  rpc CreateNotifications (CreateNotificationsRequest) returns (CreateNotificationsResponse);
+  
+  // Get user notifications
+  rpc GetUserNotifications (GetUserNotificationsRequest) returns (GetUserNotificationsResponse);
+  rpc GetUnreadNotificationsCount (google.protobuf.Int64Value) returns (google.protobuf.Int64Value);
+  
+  // Update notifications
+  rpc MarkNotificationAsRead (MarkNotificationAsReadRequest) returns (google.protobuf.Empty);
+  rpc MarkAllAsRead (google.protobuf.Int64Value) returns (google.protobuf.Empty);
+  rpc DeleteNotification (DeleteNotificationRequest) returns (google.protobuf.Empty);
+  
+  // Notification preferences
+  rpc GetNotificationPreferences (google.protobuf.Int64Value) returns (NotificationPreferences);
+  rpc UpdateNotificationPreferences (UpdateNotificationPreferencesRequest) returns (google.protobuf.Empty);
+}
+
+// Notification types
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TYPE_FOLLOW_REQUEST = 1;
+  NOTIFICATION_TYPE_NEW_FOLLOWER = 2;
+  NOTIFICATION_TYPE_GROUP_INVITE = 3;
+  NOTIFICATION_TYPE_GROUP_JOIN_REQUEST = 4;
+  NOTIFICATION_TYPE_NEW_EVENT = 5;
+  NOTIFICATION_TYPE_POST_LIKE = 6;
+  NOTIFICATION_TYPE_POST_COMMENT = 7;
+  NOTIFICATION_TYPE_MENTION = 8;
+}
+
+// Notification status
+enum NotificationStatus {
+  NOTIFICATION_STATUS_UNSPECIFIED = 0;
+  NOTIFICATION_STATUS_UNREAD = 1;
+  NOTIFICATION_STATUS_READ = 2;
+  NOTIFICATION_STATUS_DELETED = 3;
+}
+
+// Main notification message
+message Notification {
+  int64 id = 1;
+  int64 user_id = 2; // recipient user id
+  NotificationType type = 3;
+  string title = 4;
+  string message = 5;
+  string source_service = 6; // e.g. "users", "posts", "groups"
+  int64 source_entity_id = 7; // id of the entity that triggered the notification
+  bool needs_action = 8; // whether user needs to take action (e.g., accept/decline)
+  bool acted = 9; // whether user has taken action
+  map<string, string> payload = 10; // additional data in key-value pairs
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp expires_at = 12;
+  NotificationStatus status = 13;
+}
+
+// Request to create a single notification
+message CreateNotificationRequest {
+  int64 user_id = 1; // recipient
+  NotificationType type = 2;
+  string title = 3;
+  string message = 4;
+  string source_service = 5;
+  int64 source_entity_id = 6;
+  bool needs_action = 7;
+  map<string, string> payload = 8;
+}
+
+// Request to create multiple notifications
+message CreateNotificationsRequest {
+  repeated CreateNotificationRequest notifications = 1;
+}
+
+// Response for creating multiple notifications
+message CreateNotificationsResponse {
+  repeated Notification created_notifications = 1;
+}
+
+// Request to get user notifications
+message GetUserNotificationsRequest {
+  int64 user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  repeated NotificationType types = 4; // filter by types
+  bool unread_only = 5; // if true, only return unread notifications
+}
+
+// Response with user notifications
+message GetUserNotificationsResponse {
+  repeated Notification notifications = 1;
+  int32 total_count = 2;
+  int32 unread_count = 3;
+}
+
+// Request to mark notification as read
+message MarkNotificationAsReadRequest {
+  int64 notification_id = 1;
+  int64 user_id = 2;
+}
+
+// Request to delete notification
+message DeleteNotificationRequest {
+  int64 notification_id = 1;
+  int64 user_id = 2;
+}
+
+// Notification preferences
+message NotificationPreferences {
+  int64 user_id = 1;
+  map<string, bool> preferences = 2; // map of notification type to enabled status
+}
+
+message UpdateNotificationPreferencesRequest {
+  int64 user_id = 1;
+  map<string, bool> preferences = 2;
+}

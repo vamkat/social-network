@@ -8,3 +8,7 @@ generate:
 		--go_out=paths=source_relative:shared/gen-go/users \
 		--go-grpc_out=paths=source_relative:shared/gen-go/users \
 		shared/proto/users.proto
+	protoc --proto_path=shared/proto \
+		--go_out=paths=source_relative:shared/gen-go/notifications \
+		--go-grpc_out=paths=source_relative:shared/gen-go/notifications \
+		shared/proto/notifications.proto
