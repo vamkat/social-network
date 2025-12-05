@@ -11,9 +11,12 @@ import (
 )
 
 type Querier interface {
-	AddConversationMember(ctx context.Context, arg AddConversationMemberParams) (ConversationMember, error)
-	CreateConversation(ctx context.Context, groupID pgtype.Int8) (Conversation, error)
+	AddConversationMembers(ctx context.Context, arg AddConversationMembersParams) error
+	CreateGroupConv(ctx context.Context, groupID pgtype.Int8) (int64, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
+	// Creates a Conversation if and only if a DM between the same 2 users does not exist.
+	// Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
+	CreatePrivateConv(ctx context.Context, arg CreatePrivateConvParams) (int64, error)
 	GetConversationMembers(ctx context.Context, arg GetConversationMembersParams) ([]int64, error)
 	GetMessages(ctx context.Context, arg GetMessagesParams) ([]Message, error)
 	GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error)

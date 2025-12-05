@@ -137,10 +137,10 @@ services:
       DB_NAME: social_chat
       SSL_MODE: disable
     depends_on:
-      posts-db:
+      chat-db:
         condition: service_healthy
     ports:
-      - "8082:8080" 
+      - "50053:50051" 
 
 
   chat-db:

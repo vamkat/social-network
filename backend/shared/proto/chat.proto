@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "social-network/shared/gen/chat;chat";
+
+service UserService {
+    rpc CreatePrivateConversation (CreatePrivateConvParams) returns (ConvId);
+    rpc CreateGroupConversation (CreateGroupConvParams) returns (ConvId);
+}
+message UserId {
+    int64 id = 1;
+}
+message CreatePrivateConvParams {
+    int64 user_a = 1;
+    int64 user_b = 2;
+}
+
+message ConvId {
+    int64 conv_id = 1;
+}
+
+message CreateGroupConvParams {
+    int64 group_id = 1;
+    repeated int64 user_ids = 2;
+}

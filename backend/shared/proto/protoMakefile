@@ -12,3 +12,7 @@ generate:
 		--go_out=paths=source_relative:shared/gen-go/notifications \
 		--go-grpc_out=paths=source_relative:shared/gen-go/notifications \
 		shared/proto/notifications.proto
+	protoc --proto_path=shared/proto \
+		--go_out=paths=source_relative:shared/gen-go/chat \
+		--go-grpc_out=paths=source_relative:shared/gen-go/chat \
+		shared/proto/chat.proto
