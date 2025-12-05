@@ -10,71 +10,51 @@ import (
 )
 
 const canUserSeeEntity = `-- name: CanUserSeeEntity :one
-WITH
-    ctx_user AS (
-        SELECT $1::bigint AS user_id
-    ),
-    ctx_following AS (
-        SELECT UNNEST($2::bigint[]) AS following_id
-    ),
-    ctx_groups AS (
-        SELECT UNNEST($3::bigint[]) AS group_id
-    ),
+WITH ent AS (
+    -- Post
+    SELECT 
+        id,
+        creator_id,
+        audience,
+        group_id
+    FROM posts
+    WHERE id = $4::bigint
+      AND deleted_at IS NULL
 
-    -- Entities normalized into one row
-    ent AS (
-        SELECT 
-            id,
-            creator_id,
-            audience,
-            group_id
-        FROM posts
-        WHERE id = $4::bigint
-          AND deleted_at IS NULL
+    UNION ALL
 
-        UNION ALL
-
-        SELECT
-            id,
-            creator_id,
-            NULL AS audience,   -- events don't use audience
-            group_id
-        FROM events
-        WHERE id = $4::bigint
-          AND deleted_at IS NULL
-    )
-
+    -- Event
+    SELECT
+        id,
+        creator_id,
+        NULL AS audience,
+        group_id
+    FROM events
+    WHERE id = $4::bigint
+      AND deleted_at IS NULL
+)
 SELECT EXISTS (
     SELECT 1
     FROM ent e
-    CROSS JOIN ctx_user u
-
-    -- group membership check
-    LEFT JOIN ctx_groups g
-        ON g.group_id = e.group_id
-
-    -- following check
-    LEFT JOIN ctx_following f
-        ON f.following_id = e.creator_id
-
     WHERE
         (
-            -- CASE 1: group entity (group_id != NULL)
+            -- CASE 1: group entity
             e.group_id IS NOT NULL
-            AND g.group_id IS NOT NULL
+            AND $1::bool = TRUE
         )
         OR
         (
-            -- CASE 2: post (no group_id), apply audience rules
-            e.group_id IS NULL AND (
+            -- CASE 2: post (no group)
+            e.group_id IS NULL
+            AND (
                 e.audience = 'everyone'
-                OR (e.audience = 'followers' AND f.following_id IS NOT NULL)
+                OR (e.audience = 'followers' AND $2::bool = TRUE)
                 OR (
                     e.audience = 'selected'
                     AND EXISTS (
                         SELECT 1 FROM post_audience pa
                         WHERE pa.post_id = e.id
-                          AND pa.allowed_user_id = u.user_id
+                          AND pa.allowed_user_id = $3::bigint
                     )
                 )
             )
@@ -83,20 +63,70 @@ SELECT EXISTS (
 `
 
 type CanUserSeeEntityParams struct {
-	UserID       int64
-	FollowingIds []int64
-	GroupIds     []int64
-	EntityID     int64
+	IsMember    bool
+	IsFollowing bool
+	UserID      int64
+	EntityID    int64
 }
 
 func (q *Queries) CanUserSeeEntity(ctx context.Context, arg CanUserSeeEntityParams) (bool, error) {
 	row := q.db.QueryRow(ctx, canUserSeeEntity,
+		arg.IsMember,
+		arg.IsFollowing,
 		arg.UserID,
-		arg.FollowingIds,
-		arg.GroupIds,
 		arg.EntityID,
 	)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const getEntityCreatorAndGroup = `-- name: GetEntityCreatorAndGroup :one
+SELECT
+    mi.content_type,
+
+    -- creator_id: post.creator_id, event.event_creator_id, or parent post creator for comments
+    (
+        CASE
+            WHEN mi.content_type = 'post'
+                THEN p.creator_id
+            WHEN mi.content_type = 'event'
+                THEN e.event_creator_id
+            WHEN mi.content_type = 'comment'
+                THEN p2.creator_id  -- comment's parent post
+        END
+    )::BIGINT AS creator_id,
+
+    -- group_id: post.group_id, event.group_id, or parent post group for comments
+    (
+        CASE
+            WHEN mi.content_type = 'post'
+                THEN p.group_id
+            WHEN mi.content_type = 'event'
+                THEN e.group_id
+            WHEN mi.content_type = 'comment'
+                THEN p2.group_id  -- comment's parent post
+        END
+    )::BIGINT AS group_id
+
+FROM master_index mi
+LEFT JOIN posts p ON p.id = mi.id
+LEFT JOIN events e ON e.id = mi.id
+LEFT JOIN comments c ON c.id = mi.id
+LEFT JOIN posts p2 ON p2.id = c.parent_id  -- parent post for comments
+WHERE mi.id = $1
+LIMIT 1
+`
+
+type GetEntityCreatorAndGroupRow struct {
+	ContentType ContentType
+	CreatorID   int64
+	GroupID     int64
+}
+
+func (q *Queries) GetEntityCreatorAndGroup(ctx context.Context, id int64) (GetEntityCreatorAndGroupRow, error) {
+	row := q.db.QueryRow(ctx, getEntityCreatorAndGroup, id)
+	var i GetEntityCreatorAndGroupRow
+	err := row.Scan(&i.ContentType, &i.CreatorID, &i.GroupID)
+	return i, err
 }

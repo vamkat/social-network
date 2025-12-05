@@ -9,22 +9,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Application) CreateEvent(ctx context.Context, req CreateEventReq, accessCtx AccessContext) error {
+func (s *Application) CreateEvent(ctx context.Context, req CreateEventReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
-	}
-
-	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
+	isMember, err := s.clients.IsGroupMember(ctx, req.CreatorId.Int64(), req.GroupId.Int64())
 	if err != nil {
 		return err
+	}
+	if !isMember {
+		return ErrNotAllowed
 	}
 
 	// convert date
@@ -47,22 +43,23 @@ func (s *Application) CreateEvent(ctx context.Context, req CreateEventReq, acces
 	return nil
 }
 
-func (s *Application) DeleteEvent(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
+func (s *Application) DeleteEvent(ctx context.Context, req GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	rowsAffected, err := s.db.DeleteEvent(ctx, sqlc.DeleteEventParams{
@@ -79,22 +76,23 @@ func (s *Application) DeleteEvent(ctx context.Context, req GenericReq, accessCtx
 	return nil
 }
 
-func (s *Application) EditEvent(ctx context.Context, req EditEventReq, accessCtx AccessContext) error {
+func (s *Application) EditEvent(ctx context.Context, req EditEventReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EventId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
@@ -138,24 +136,24 @@ func (s *Application) EditEvent(ctx context.Context, req EditEventReq, accessCtx
 
 }
 
-func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPaginatedReq, accessCtx AccessContext) ([]Event, error) {
+func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPaginatedReq) ([]Event, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return nil, err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return nil, ErrNotAllowed
-	}
 	if err != nil {
 		return nil, err
 	}
-
+	if !hasAccess {
+		return nil, ErrNotAllowed
+	}
 	rows, err := s.db.GetEventsByGroupId(ctx, sqlc.GetEventsByGroupIdParams{
 		GroupID: req.EntityId.Int64(),
 		Offset:  req.Offset.Int32(),
@@ -187,22 +185,23 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPagina
 	return events, nil
 }
 
-func (s *Application) RespondToEvent(ctx context.Context, req RespondToEventReq, accessCtx AccessContext) error {
+func (s *Application) RespondToEvent(ctx context.Context, req RespondToEventReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.ResponderId.Int64(),
+		entityId:    req.EventId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	rowsAffected, err := s.db.UpsertEventResponse(ctx, sqlc.UpsertEventResponseParams{
@@ -219,22 +218,23 @@ func (s *Application) RespondToEvent(ctx context.Context, req RespondToEventReq,
 	return nil
 }
 
-func (s *Application) RemoveEventResponse(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
+func (s *Application) RemoveEventResponse(ctx context.Context, req GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	rowsAffected, err := s.db.DeleteEventResponse(ctx, sqlc.DeleteEventResponseParams{

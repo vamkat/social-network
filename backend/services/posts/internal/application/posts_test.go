@@ -173,6 +173,11 @@ func (m *MockQuerier) UpsertImage(ctx context.Context, arg sqlc.UpsertImageParam
 	return args.Error(0)
 }
 
+func (m *MockQuerier) GetEntityCreatorAndGroup(ctx context.Context, arg int64) (sqlc.GetEntityCreatorAndGroupRow, error) {
+	args := m.Called(ctx, arg)
+	return args.Get(0).(sqlc.GetEntityCreatorAndGroupRow), args.Error(1)
+}
+
 // MockTxRunner is a mock implementation of TxRunner
 type MockTxRunner struct {
 	mock.Mock

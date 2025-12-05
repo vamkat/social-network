@@ -27,11 +27,9 @@ type GenericPaginatedReq struct {
 	Offset      ct.Offset
 }
 
-type AccessContext struct {
-	RequesterId         ct.Id
-	ParentEntityId      ct.Id
-	RequesterFollowsIds ct.Ids `validate:"nullable"`
-	RequesterGroups     ct.Ids `validate:"nullable"`
+type accessContext struct {
+	requesterId int64
+	entityId    int64
 }
 
 // -------------------------------------------

@@ -21,6 +21,15 @@ SELECT
 FROM users
 WHERE id = $1;
   
+
+-- name: GetBatchUsersBasic :many
+SELECT
+  id,
+  username,
+  avatar_id
+FROM users
+WHERE id = ANY($1::bigint[]);
+
   
 -- name: UpdateUserProfile :one
 UPDATE users

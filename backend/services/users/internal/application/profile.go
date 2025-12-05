@@ -30,6 +30,27 @@ func (s *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (resp 
 
 }
 
+func (s *Application) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) ([]User, error) {
+	if err := userIds.Validate(); err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.GetBatchUsersBasic(ctx, userIds.Int64())
+	if err != nil {
+		return nil, err
+	}
+
+	users := make([]User, 0, len(rows))
+	for _, r := range rows {
+		users = append(users, User{
+			UserId:   ct.Id(r.ID),
+			Username: ct.Username(r.Username),
+			AvatarId: ct.Id(r.AvatarID),
+		})
+	}
+	return users, nil
+}
+
 func (s *Application) GetUserProfile(ctx context.Context, req UserProfileRequest) (UserProfileResponse, error) {
 	var profile UserProfileResponse
 	if err := ct.ValidateStruct(req); err != nil {

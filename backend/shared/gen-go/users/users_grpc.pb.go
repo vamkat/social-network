@@ -32,6 +32,7 @@ const (
 	UserService_HandleFollowRequest_FullMethodName      = "/users.UserService/HandleFollowRequest"
 	UserService_GetFollowingIds_FullMethodName          = "/users.UserService/GetFollowingIds"
 	UserService_GetFollowSuggestions_FullMethodName     = "/users.UserService/GetFollowSuggestions"
+	UserService_IsFollowing_FullMethodName              = "/users.UserService/IsFollowing"
 	UserService_GetAllGroupsPaginated_FullMethodName    = "/users.UserService/GetAllGroupsPaginated"
 	UserService_GetUserGroupsPaginated_FullMethodName   = "/users.UserService/GetUserGroupsPaginated"
 	UserService_GetGroupInfo_FullMethodName             = "/users.UserService/GetGroupInfo"
@@ -43,7 +44,9 @@ const (
 	UserService_HandleGroupJoinRequest_FullMethodName   = "/users.UserService/HandleGroupJoinRequest"
 	UserService_LeaveGroup_FullMethodName               = "/users.UserService/LeaveGroup"
 	UserService_CreateGroup_FullMethodName              = "/users.UserService/CreateGroup"
+	UserService_IsGroupMember_FullMethodName            = "/users.UserService/IsGroupMember"
 	UserService_GetBasicUserInfo_FullMethodName         = "/users.UserService/GetBasicUserInfo"
+	UserService_GetBatchUserInfo_FullMethodName         = "/users.UserService/GetBatchUserInfo"
 	UserService_GetUserProfile_FullMethodName           = "/users.UserService/GetUserProfile"
 	UserService_SearchUsers_FullMethodName              = "/users.UserService/SearchUsers"
 	UserService_UpdateUserProfile_FullMethodName        = "/users.UserService/UpdateUserProfile"
@@ -67,6 +70,7 @@ type UserServiceClient interface {
 	HandleFollowRequest(ctx context.Context, in *HandleFollowRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*Int64Arr, error)
 	GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*ListUsers, error)
+	IsFollowing(ctx context.Context, in *IsFollowingRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 	// GROUPS
 	GetAllGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
 	GetUserGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
@@ -81,8 +85,10 @@ type UserServiceClient interface {
 	LeaveGroup(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
 	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
+	IsGroupMember(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 	// Profile
 	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error)
+	GetBatchUserInfo(ctx context.Context, in *Int64Arr, opts ...grpc.CallOption) (*ListUsers, error)
 	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
 	SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*ListUsers, error)
 	UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
@@ -207,6 +213,16 @@ func (c *userServiceClient) GetFollowSuggestions(ctx context.Context, in *wrappe
 	return out, nil
 }
 
+func (c *userServiceClient) IsFollowing(ctx context.Context, in *IsFollowingRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(wrapperspb.BoolValue)
+	err := c.cc.Invoke(ctx, UserService_IsFollowing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) GetAllGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GroupArr)
@@ -317,10 +333,30 @@ func (c *userServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequ
 	return out, nil
 }
 
+func (c *userServiceClient) IsGroupMember(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(wrapperspb.BoolValue)
+	err := c.cc.Invoke(ctx, UserService_IsGroupMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(User)
 	err := c.cc.Invoke(ctx, UserService_GetBasicUserInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetBatchUserInfo(ctx context.Context, in *Int64Arr, opts ...grpc.CallOption) (*ListUsers, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsers)
+	err := c.cc.Invoke(ctx, UserService_GetBatchUserInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -384,6 +420,7 @@ type UserServiceServer interface {
 	HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error)
 	GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*Int64Arr, error)
 	GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*ListUsers, error)
+	IsFollowing(context.Context, *IsFollowingRequest) (*wrapperspb.BoolValue, error)
 	// GROUPS
 	GetAllGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
 	GetUserGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
@@ -398,8 +435,10 @@ type UserServiceServer interface {
 	LeaveGroup(context.Context, *GeneralGroupRequest) (*emptypb.Empty, error)
 	// rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
 	CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error)
+	IsGroupMember(context.Context, *GeneralGroupRequest) (*wrapperspb.BoolValue, error)
 	// Profile
 	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error)
+	GetBatchUserInfo(context.Context, *Int64Arr) (*ListUsers, error)
 	GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error)
 	SearchUsers(context.Context, *UserSearchRequest) (*ListUsers, error)
 	UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error)
@@ -447,6 +486,9 @@ func (UnimplementedUserServiceServer) GetFollowingIds(context.Context, *wrappers
 func (UnimplementedUserServiceServer) GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*ListUsers, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFollowSuggestions not implemented")
 }
+func (UnimplementedUserServiceServer) IsFollowing(context.Context, *IsFollowingRequest) (*wrapperspb.BoolValue, error) {
+	return nil, status.Error(codes.Unimplemented, "method IsFollowing not implemented")
+}
 func (UnimplementedUserServiceServer) GetAllGroupsPaginated(context.Context, *Pagination) (*GroupArr, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllGroupsPaginated not implemented")
 }
@@ -480,8 +522,14 @@ func (UnimplementedUserServiceServer) LeaveGroup(context.Context, *GeneralGroupR
 func (UnimplementedUserServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateGroup not implemented")
 }
+func (UnimplementedUserServiceServer) IsGroupMember(context.Context, *GeneralGroupRequest) (*wrapperspb.BoolValue, error) {
+	return nil, status.Error(codes.Unimplemented, "method IsGroupMember not implemented")
+}
 func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBasicUserInfo not implemented")
+}
+func (UnimplementedUserServiceServer) GetBatchUserInfo(context.Context, *Int64Arr) (*ListUsers, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBatchUserInfo not implemented")
 }
 func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
@@ -714,6 +762,24 @@ func _UserService_GetFollowSuggestions_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_IsFollowing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsFollowingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).IsFollowing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_IsFollowing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).IsFollowing(ctx, req.(*IsFollowingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_GetAllGroupsPaginated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Pagination)
 	if err := dec(in); err != nil {
@@ -912,6 +978,24 @@ func _UserService_CreateGroup_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_IsGroupMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GeneralGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).IsGroupMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_IsGroupMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).IsGroupMember(ctx, req.(*GeneralGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_GetBasicUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(wrapperspb.Int64Value)
 	if err := dec(in); err != nil {
@@ -926,6 +1010,24 @@ func _UserService_GetBasicUserInfo_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).GetBasicUserInfo(ctx, req.(*wrapperspb.Int64Value))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetBatchUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Int64Arr)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetBatchUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetBatchUserInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetBatchUserInfo(ctx, req.(*Int64Arr))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1054,6 +1156,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_GetFollowSuggestions_Handler,
 		},
 		{
+			MethodName: "IsFollowing",
+			Handler:    _UserService_IsFollowing_Handler,
+		},
+		{
 			MethodName: "GetAllGroupsPaginated",
 			Handler:    _UserService_GetAllGroupsPaginated_Handler,
 		},
@@ -1098,8 +1204,16 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_CreateGroup_Handler,
 		},
 		{
+			MethodName: "IsGroupMember",
+			Handler:    _UserService_IsGroupMember_Handler,
+		},
+		{
 			MethodName: "GetBasicUserInfo",
 			Handler:    _UserService_GetBasicUserInfo_Handler,
+		},
+		{
+			MethodName: "GetBatchUserInfo",
+			Handler:    _UserService_GetBatchUserInfo_Handler,
 		},
 		{
 			MethodName: "GetUserProfile",

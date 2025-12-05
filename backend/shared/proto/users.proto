@@ -22,6 +22,7 @@ service UserService {
   rpc HandleFollowRequest (HandleFollowRequestRequest) returns (google.protobuf.Empty);
   rpc GetFollowingIds (google.protobuf.Int64Value) returns (Int64Arr);
   rpc GetFollowSuggestions (google.protobuf.Int64Value) returns (ListUsers);
+  rpc IsFollowing (isFollowingRequest) returns (google.protobuf.BoolValue);
   // GROUPS
   rpc GetAllGroupsPaginated (Pagination) returns (GroupArr);
   rpc GetUserGroupsPaginated (Pagination) returns (GroupArr);
@@ -36,8 +37,10 @@ service UserService {
   rpc LeaveGroup (GeneralGroupRequest) returns (google.protobuf.Empty);
   // rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
   rpc CreateGroup (CreateGroupRequest) returns (google.protobuf.Int64Value);
+  rpc IsGroupMember (GeneralGroupRequest) returns (google.protobuf.BoolValue);
   // Profile
   rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (User);
+  rpc GetBatchUserInfo (Int64Arr) returns (ListUsers);
   rpc GetUserProfile (GetUserProfileRequest) returns (UserProfileResponse);
   rpc SearchUsers (UserSearchRequest) returns (ListUsers);
   rpc UpdateUserProfile (UpdateProfileRequest) returns (UserProfileResponse);
@@ -133,6 +136,11 @@ message HandleFollowRequestRequest {
     int64 user_id = 1;
     int64 requester_id = 2;
     bool accept = 3;
+}
+
+message isFollowingRequest {
+    int64 follower_id = 1;
+    int64 target_user_id = 2;
 }
 
 // GROUPS
