@@ -122,46 +122,45 @@ services:
   # ---------------------------
   # CHAT SERVICE + DATABASE
   # ---------------------------
-  # chat:
-  #   build:
-  #     context: .
-  #     dockerfile: services/chat/Dockerfile
-  #   environment:
-  #     <<: *common-env
-  #     DATABASE_URL: postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
-  #      # Explicit DB_* variables for clarity and local tooling
-  #     DB_HOST: chat-db
-  #     DB_PORT: 5432
-  #     DB_USER: postgres
-  #     DB_PASSWORD: secret
-  #     DB_NAME: social_chat
-  #     SSL_MODE: disable
-  #   depends_on:
-  #     posts-db:
-  #       condition: service_healthy
-  #   ports:
-  #     - "8082:8080" 
+  chat:
+    build:
+      context: .
+      dockerfile: services/chat/Dockerfile
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
+       # Explicit DB_* variables for clarity and local tooling
+      DB_HOST: chat-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      DB_NAME: social_chat
+      SSL_MODE: disable
+    depends_on:
+      posts-db:
+        condition: service_healthy
+    ports:
+      - "8082:8080" 
 
 
-  # chat-db:
-  #   image: postgres:16
-  #   container_name: chat-db
-  #   environment:
-  #    environment:
-  #     <<: *common-env
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: secret
-  #     POSTGRES_DB: social_chat
-  #   ports:
-  #     - "5435:5432"
-  #   volumes:
-  #     - chat-db-data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres -d social_chat"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 5s
+  chat-db:
+    image: postgres:16
+    container_name: chat-db
+    environment:
+      <<: *common-env
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_chat
+    ports:
+      - "5435:5432"
+    volumes:
+      - chat-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d social_chat"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 
   # ---------------------------

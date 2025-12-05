@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"social-network/services/chat/internal/client"
+	"social-network/services/chat/internal/db/sqlc"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,9 +14,9 @@ import (
 
 // Holds logic for requests and calls
 type ChatService struct {
-	pool    *pgxpool.Pool // needed to start transactions
+	pool    *pgxpool.Pool
 	clients *client.Clients
-	// db   sqlc.Querier  // interface, can be *sqlc.Queries or mock
+	db      sqlc.Querier
 }
 
 func Run(ctx context.Context) (*ChatService, error) {
@@ -38,14 +39,9 @@ func Run(ctx context.Context) (*ChatService, error) {
 	defer pool.Close()
 	log.Println("Connected to chat database")
 
-	// queries := sqlc.New(pool)
-
-	clients := client.InitClients()
-	log.Println("Connected to clients")
-
 	return &ChatService{
 		pool:    pool,
-		clients: clients,
-		// db: queries
+		clients: client.InitClients(),
+		db:      sqlc.New(pool),
 	}, nil
 }
