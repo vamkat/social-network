@@ -1,10 +1,10 @@
 package models
 
 type ImageMeta struct {
-	Id        int64
-	Filename  string
-	MimeType  string
+	Id        int64  // db row Id
+	Filename  string // the original name given by sender
+	MimeType  string // content type
 	SizeBytes int64
-	Bucket    string
-	ObjectKey string
+	Bucket    string // images, videos etc
+	ObjectKey string // the name given to file in minIO
 }

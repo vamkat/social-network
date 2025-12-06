@@ -12,6 +12,7 @@ import (
 	"social-network/services/media/internal/client"
 	"social-network/services/media/internal/db/sqlc"
 	"social-network/services/media/internal/handler"
+	"social-network/shared/gen-go/media"
 	"syscall"
 	"time"
 
@@ -77,7 +78,7 @@ func RunGRPCServer(s *handler.MediaHandler) *grpc.Server {
 
 	grpcServer := grpc.NewServer()
 
-	// chat.RegisterMediaServiceServer(grpcServer, s)
+	media.RegisterMediaServiceServer(grpcServer, s)
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	go func() {
