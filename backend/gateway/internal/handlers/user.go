@@ -6,7 +6,7 @@ import (
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
 	"social-network/shared/gen-go/users"
-	"social-network/shared/go/customtypes"
+	ct "social-network/shared/go/customtypes"
 	"strings"
 )
 
@@ -19,13 +19,13 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusBadRequest, "missing user_id in URL path")
 		}
 
-		userId, err := customtypes.DecryptId(pathParts[len(pathParts)-1])
+		userId, err := ct.DecryptId(pathParts[len(pathParts)-1])
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusBadRequest, "invalid user_id query param")
 			return
 		}
 
-		claims, ok := utils.GetValue[security.Claims](r, utils.ClaimsKey)
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
 		}

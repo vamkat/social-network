@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"social-network/gateway/internal/utils"
+	ct "social-network/shared/go/customtypes"
 )
 
 func (h *Handlers) testHandler() http.HandlerFunc {
@@ -11,7 +12,7 @@ func (h *Handlers) testHandler() http.HandlerFunc {
 		fmt.Println("test handler called")
 
 		err := utils.WriteJSON(w, http.StatusOK, map[string]string{
-			"message": "this request id is: " + r.Context().Value("requestId").(string),
+			"message": "this request id is: " + r.Context().Value(ct.ReqID).(string),
 		})
 
 		if err != nil {

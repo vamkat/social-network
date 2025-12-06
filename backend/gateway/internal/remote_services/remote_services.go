@@ -3,9 +3,9 @@ package remoteservices
 import (
 	"fmt"
 	"log"
-	"social-network/gateway/internal/utils"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/users"
+	ct "social-network/shared/go/customtypes"
 	interceptor "social-network/shared/go/grpc-interceptors"
 
 	"google.golang.org/grpc"
@@ -13,22 +13,37 @@ import (
 )
 
 type GRpcServices struct {
-	Users users.UserServiceClient
-	Chat  chat.ChatServiceClient
+	Users       users.UserServiceClient
+	Chat        chat.ChatServiceClient
+	contextKeys []ct.CtxKey
 }
 
-func NewServices() GRpcServices {
-	return GRpcServices{}
+// NewService creates a services object, it contains grpc clients and you use it to talk to grpc servers
+//
+// CtxKeys are the context keys that will be propagated to other services through the context object
+func NewServices(contextKeys []ct.CtxKey) GRpcServices {
+	return GRpcServices{
+		contextKeys: contextKeys,
+	}
 }
 
 func (g *GRpcServices) StartConnections() (func(), error) {
+
+	customUnaryInterceptor, err := interceptor.UnaryClientInterceptorWithContextKeys(g.contextKeys...)
+	if err != nil {
+		return nil, err
+	}
+	customStreamInterceptor, err := interceptor.StreamClientInterceptorWithContextKeys(g.contextKeys...)
+	if err != nil {
+		return nil, err
+	}
+
 	usersConn, err := grpc.NewClient(
 		"users:50051",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 
-		// Add context keys to be propagated via interceptors
-		grpc.WithStreamInterceptor(interceptor.StreamClientInterceptorWithContextKeys(utils.UserId, utils.ReqUUID, utils.TraceId)),
-		grpc.WithUnaryInterceptor(interceptor.UnaryClientInterceptorWithContextKeys(utils.UserId, utils.ReqUUID, utils.TraceId)),
+		grpc.WithUnaryInterceptor(customUnaryInterceptor),
+		grpc.WithStreamInterceptor(customStreamInterceptor),
 	)
 
 	if err != nil {

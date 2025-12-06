@@ -11,6 +11,7 @@ import (
 	"social-network/services/users/internal/db/sqlc"
 	"social-network/services/users/internal/handler"
 	"social-network/shared/gen-go/users"
+	ct "social-network/shared/go/customtypes"
 	interceptor "social-network/shared/go/grpc-interceptors"
 	"syscall"
 	"time"
@@ -32,7 +33,10 @@ func Run() error {
 	service := handler.NewUsersHanlder(app)
 
 	log.Println("Running gRpc service...")
-	grpc := RunGRPCServer(service)
+	grpc, err := RunGRPCServer(service)
+	if err != nil {
+		log.Fatalf("couldn't start gRpc Server: %s", err.Error())
+	}
 
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -61,24 +65,33 @@ func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
 }
 
 // RunGRPCServer starts the gRPC server and blocks
-func RunGRPCServer(s *handler.UsersHandler) *grpc.Server {
-	lis, err := net.Listen("tcp", s.Port)
+func RunGRPCServer(userServiceHandler *handler.UsersHandler) (*grpc.Server, error) {
+	lis, err := net.Listen("tcp", userServiceHandler.Port)
 	if err != nil {
-		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
+		log.Fatalf("Failed to listen on %s: %v", userServiceHandler.Port, err)
 	}
 
+	customUnaryInterceptor, err := interceptor.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	if err != nil {
+		return nil, err
+	}
+	customStreamInterceptor, err := interceptor.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	if err != nil {
+		return nil, err
+	}
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.UnaryServerInterceptorWithContextKeys("user_id", "request_id", "trace_id")),
+		grpc.UnaryInterceptor(customUnaryInterceptor),
+		grpc.StreamInterceptor(customStreamInterceptor),
 	)
 
 	// pb.RegisterChatServiceServer(grpcServer, s)
-	users.RegisterUserServiceServer(grpcServer, s)
+	users.RegisterUserServiceServer(grpcServer, userServiceHandler)
 
-	log.Printf("gRPC server listening on %s", s.Port)
+	log.Printf("gRPC server listening on %s", userServiceHandler.Port)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatalf("Failed to serve gRPC: %v", err)
 		}
 	}()
-	return grpcServer
+	return grpcServer, nil
 }

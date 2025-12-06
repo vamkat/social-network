@@ -6,6 +6,8 @@ import (
 	"slices"
 	"social-network/gateway/internal/security"
 	"social-network/gateway/internal/utils"
+	ct "social-network/shared/go/customtypes"
+
 	"strings"
 )
 
@@ -52,8 +54,8 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 // Enrich context with request ID
 func (m *MiddleSystem) EnrichContext() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		r = utils.RequestWithValue(r, utils.ReqUUID, utils.GenUUID())
-		r = utils.RequestWithValue(r, utils.TraceId, utils.GenUUID())
+		r = utils.RequestWithValue(r, ct.ReqID, utils.GenUUID())
+		r = utils.RequestWithValue(r, ct.TraceId, utils.GenUUID())
 		return true, r
 	})
 	return m
@@ -79,8 +81,8 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 		}
 		// enrich request with claims
 		fmt.Println("auth ok")
-		r = utils.RequestWithValue(r, utils.ClaimsKey, claims)
-		r = utils.RequestWithValue(r, utils.UserId, claims.UserId)
+		r = utils.RequestWithValue(r, ct.ClaimsKey, claims)
+		r = utils.RequestWithValue(r, ct.UserId, claims.UserId)
 		return true, r
 	})
 	return m
@@ -89,17 +91,9 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 // Bind request meta into context
 func (m *MiddleSystem) BindReqMeta() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		// rid := r.Header.Get("X-Request-Id")
-		// act := r.Header.Get("X-Action-Details")
-		// ts := r.Header.Get("X-Timestamp")
-
-		r = utils.RequestWithValue(r, utils.ReqId, r.Header.Get("X-Request-Id"))
-		r = utils.RequestWithValue(r, utils.ReqActionDetails, r.Header.Get("X-Action-Details"))
-		r = utils.RequestWithValue(r, utils.ReqTimestamp, r.Header.Get("X-Timestamp"))
-		// ctx := context.WithValue(r.Context(), utils.ReqId, rid)
-		// ctx = context.WithValue(ctx, utils.ReqActionDetails, act)
-		// ctx = context.WithValue(ctx, utils.ReqTimestamp, ts)
-
+		r = utils.RequestWithValue(r, ct.ReqID, r.Header.Get(ct.ReqID))
+		r = utils.RequestWithValue(r, ct.ReqActionDetails, r.Header.Get("X-Action-Details"))
+		r = utils.RequestWithValue(r, ct.ReqTimestamp, r.Header.Get("X-Timestamp"))
 		return true, r
 	})
 	return m

@@ -14,18 +14,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Holds the keys to values on request context.
-// warning! keys that are meant to be propagated through grpc services have strict requirements!
-const (
-	ClaimsKey        string = "jwtClaims"
-	ReqId            string = "X-Request-Id"
-	ReqActionDetails string = "X-Action-Details"
-	ReqTimestamp     string = "X-Timestamp"
-	ReqUUID          string = "request_id"
-	UserId           string = "user_id"
-	TraceId          string = "trace_id"
-)
-
 // Adds value val to r context with key 'key'
 func RequestWithValue[T any](r *http.Request, key string, val T) *http.Request {
 	ctx := context.WithValue(r.Context(), key, val)
