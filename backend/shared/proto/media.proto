@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package media;
+
+option go_package = "your_project_path/media;media";
+
+// Upload request
+message UploadImageRequest {
+  bytes file_content = 1;   // Raw file bytes
+  string filename = 2;      // Original file name
+}
+
+// Upload response
+message UploadImageResponse {
+  string id = 1;            // DB UUID
+  string mime_type = 2;     // Detected MIME type
+  int64 size_bytes = 3;     // File size
+  string bucket = 4;        // MinIO bucket
+  string object_key = 5;    // MinIO object key
+}
+
+// Service definition
+service MediaService {
+  rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
+}

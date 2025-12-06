@@ -2,13 +2,22 @@ package handler
 
 import (
 	"context"
+	"social-network/services/chat/internal/application"
 	pb "social-network/shared/gen-go/chat"
 	"social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	_ "github.com/lib/pq"
 )
+
+type ChatHandler struct {
+	pb.UnimplementedChatServiceServer
+	Application *application.ChatService
+	Port        string
+}
 
 func (h *ChatHandler) CreatePrivateConversation(ctx context.Context, params *pb.CreatePrivateConvParams) (*pb.ConvId, error) {
 	convId, err := h.Application.CreatePrivateConversation(ctx, models.CreatePrivateConvParams{

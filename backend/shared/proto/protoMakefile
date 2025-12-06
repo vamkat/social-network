@@ -16,3 +16,7 @@ generate:
 		--go_out=paths=source_relative:shared/gen-go/chat \
 		--go-grpc_out=paths=source_relative:shared/gen-go/chat \
 		shared/proto/chat.proto
+	protoc --proto_path=shared/proto \
+		--go_out=paths=source_relative:shared/gen-go/media \
+		--go-grpc_out=paths=source_relative:shared/gen-go/media \
+		shared/proto/media.proto
