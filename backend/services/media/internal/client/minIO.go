@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"social-network/shared/go/models"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -47,17 +48,11 @@ func (c *Clients) UploadToMinIO(
 }
 
 // GetFromMiniIo returns an object from MinIO
-func (c *Clients) GetFromMiniIo(ctx context.Context, info minio.UploadInfo, destPath string) (*minio.Object, error) {
-	bucket := info.Bucket
-	objectName := info.Key
-
-	// Get the object from MinIO
-	obj, err := c.MinIOClient.GetObject(ctx, bucket, objectName, minio.GetObjectOptions{})
+func (c *Clients) GetFromMiniIo(ctx context.Context, info models.FileMeta) (*minio.Object, error) {
+	obj, err := c.MinIOClient.GetObject(ctx, info.Bucket, info.ObjectKey, minio.GetObjectOptions{})
 	if err != nil {
 		return obj, fmt.Errorf("failed to get object from MinIO: %w", err)
 	}
-	// defer obj.Close()
-
-	fmt.Printf("Successfully downloaded %s from bucket %s to %s\n", objectName, bucket, destPath)
+	defer obj.Close()
 	return obj, nil
 }

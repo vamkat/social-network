@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"social-network/gateway/internal/handlers"
+	"social-network/services/gateway/internal/handlers"
 	redis_connector "social-network/shared/go/redis"
 
 	"syscall"

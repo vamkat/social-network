@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"social-network/gateway/internal/middleware"
-	remoteservices "social-network/gateway/internal/remote_services"
+	"social-network/services/gateway/internal/middleware"
+	remoteservices "social-network/services/gateway/internal/remote_services"
 	ct "social-network/shared/go/customtypes"
 
 	"github.com/minio/minio-go/v7"

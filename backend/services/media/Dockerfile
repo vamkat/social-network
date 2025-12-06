@@ -19,7 +19,7 @@ COPY --from=build /app/migrate .
 COPY --from=build /app/services/media/internal/db/migrations ./migrations
 # COPY --from=build /app/services/media/internal/db/seeds ./seeds
 
-COPY services/chat/entrypoint.sh /app/entrypoint.sh
+COPY services/media/entrypoint.sh /app/entrypoint.sh
 
 # RUN chmod +x /app/seeds/seed.sh 
  RUN chmod +x /app/entrypoint.sh

@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"social-network/gateway/internal/utils"
+	"social-network/services/gateway/internal/utils"
 	ct "social-network/shared/go/customtypes"
 )
 

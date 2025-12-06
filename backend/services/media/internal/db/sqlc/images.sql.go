@@ -11,6 +11,44 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getImageById = `-- name: GetImageById :many
+SELECT id, original_name, bucket, object_key, mime_type, size_bytes, width, height, checksum, created_at, updated_at
+FROM images
+WHERE id = $1
+`
+
+func (q *Queries) GetImageById(ctx context.Context, id int64) ([]Image, error) {
+	rows, err := q.db.Query(ctx, getImageById, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Image{}
+	for rows.Next() {
+		var i Image
+		if err := rows.Scan(
+			&i.ID,
+			&i.OriginalName,
+			&i.Bucket,
+			&i.ObjectKey,
+			&i.MimeType,
+			&i.SizeBytes,
+			&i.Width,
+			&i.Height,
+			&i.Checksum,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveImageMetadata = `-- name: SaveImageMetadata :many
 INSERT INTO images (
     original_name,
@@ -39,7 +77,7 @@ type SaveImageMetadataParams struct {
 }
 
 type SaveImageMetadataRow struct {
-	ID        pgtype.UUID
+	ID        int64
 	CreatedAt pgtype.Timestamptz
 }
 

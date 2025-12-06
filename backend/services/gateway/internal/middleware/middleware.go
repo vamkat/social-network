@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"social-network/gateway/internal/security"
-	"social-network/gateway/internal/utils"
+	"social-network/services/gateway/internal/security"
+	"social-network/services/gateway/internal/utils"
 	ct "social-network/shared/go/customtypes"
 
 	"strings"

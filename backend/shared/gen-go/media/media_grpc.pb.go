@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MediaService_UploadImage_FullMethodName = "/media.MediaService/UploadImage"
+	MediaService_UploadImage_FullMethodName   = "/media.MediaService/UploadImage"
+	MediaService_RetrieveImage_FullMethodName = "/media.MediaService/RetrieveImage"
 )
 
 // MediaServiceClient is the client API for MediaService service.
@@ -29,6 +30,7 @@ const (
 // Service definition
 type MediaServiceClient interface {
 	UploadImage(ctx context.Context, in *UploadImageRequest, opts ...grpc.CallOption) (*UploadImageResponse, error)
+	RetrieveImage(ctx context.Context, in *RetrieveImageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RetrieveImageResponse], error)
 }
 
 type mediaServiceClient struct {
@@ -49,6 +51,25 @@ func (c *mediaServiceClient) UploadImage(ctx context.Context, in *UploadImageReq
 	return out, nil
 }
 
+func (c *mediaServiceClient) RetrieveImage(ctx context.Context, in *RetrieveImageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RetrieveImageResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MediaService_ServiceDesc.Streams[0], MediaService_RetrieveImage_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[RetrieveImageRequest, RetrieveImageResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type MediaService_RetrieveImageClient = grpc.ServerStreamingClient[RetrieveImageResponse]
+
 // MediaServiceServer is the server API for MediaService service.
 // All implementations must embed UnimplementedMediaServiceServer
 // for forward compatibility.
@@ -56,6 +77,7 @@ func (c *mediaServiceClient) UploadImage(ctx context.Context, in *UploadImageReq
 // Service definition
 type MediaServiceServer interface {
 	UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error)
+	RetrieveImage(*RetrieveImageRequest, grpc.ServerStreamingServer[RetrieveImageResponse]) error
 	mustEmbedUnimplementedMediaServiceServer()
 }
 
@@ -68,6 +90,9 @@ type UnimplementedMediaServiceServer struct{}
 
 func (UnimplementedMediaServiceServer) UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+}
+func (UnimplementedMediaServiceServer) RetrieveImage(*RetrieveImageRequest, grpc.ServerStreamingServer[RetrieveImageResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method RetrieveImage not implemented")
 }
 func (UnimplementedMediaServiceServer) mustEmbedUnimplementedMediaServiceServer() {}
 func (UnimplementedMediaServiceServer) testEmbeddedByValue()                      {}
@@ -108,6 +133,17 @@ func _MediaService_UploadImage_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MediaService_RetrieveImage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RetrieveImageRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MediaServiceServer).RetrieveImage(m, &grpc.GenericServerStream[RetrieveImageRequest, RetrieveImageResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type MediaService_RetrieveImageServer = grpc.ServerStreamingServer[RetrieveImageResponse]
+
 // MediaService_ServiceDesc is the grpc.ServiceDesc for MediaService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -120,6 +156,12 @@ var MediaService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MediaService_UploadImage_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "RetrieveImage",
+			Handler:       _MediaService_RetrieveImage_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "media.proto",
 }

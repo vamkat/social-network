@@ -9,7 +9,7 @@ import (
 )
 
 type Image struct {
-	ID           pgtype.UUID
+	ID           int64
 	OriginalName string
 	Bucket       string
 	ObjectKey    string

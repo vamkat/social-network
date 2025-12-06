@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	GetImageById(ctx context.Context, id int64) ([]Image, error)
 	SaveImageMetadata(ctx context.Context, arg SaveImageMetadataParams) ([]SaveImageMetadataRow, error)
 }
 

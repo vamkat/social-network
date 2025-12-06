@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"social-network/gateway/internal/security"
-	"social-network/gateway/internal/utils"
+	"social-network/services/gateway/internal/security"
+	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	"strings"

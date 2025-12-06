@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build -o api_gateway ./gateway/cmd
+RUN go build -o api_gateway ./services/gateway/cmd
 
 FROM alpine:3.20
 

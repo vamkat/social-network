@@ -77,7 +77,7 @@ func (x *UploadImageRequest) GetFilename() string {
 // Upload response
 type UploadImageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                 // DB UUID
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	MimeType      string                 `protobuf:"bytes,2,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`     // Detected MIME type
 	SizeBytes     int64                  `protobuf:"varint,3,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"` // File size
 	Bucket        string                 `protobuf:"bytes,4,opt,name=bucket,proto3" json:"bucket,omitempty"`                         // MinIO bucket
@@ -116,11 +116,11 @@ func (*UploadImageResponse) Descriptor() ([]byte, []int) {
 	return file_media_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *UploadImageResponse) GetId() string {
+func (x *UploadImageResponse) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
-	return ""
+	return 0
 }
 
 func (x *UploadImageResponse) GetMimeType() string {
@@ -151,6 +151,264 @@ func (x *UploadImageResponse) GetObjectKey() string {
 	return ""
 }
 
+// Request
+type RetrieveImageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ImageId       int64                  `protobuf:"varint,1,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RetrieveImageRequest) Reset() {
+	*x = RetrieveImageRequest{}
+	mi := &file_media_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RetrieveImageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RetrieveImageRequest) ProtoMessage() {}
+
+func (x *RetrieveImageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_media_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RetrieveImageRequest.ProtoReflect.Descriptor instead.
+func (*RetrieveImageRequest) Descriptor() ([]byte, []int) {
+	return file_media_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RetrieveImageRequest) GetImageId() int64 {
+	if x != nil {
+		return x.ImageId
+	}
+	return 0
+}
+
+// Metadata — mirrors your ImageMeta struct
+type ImageMeta struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	MimeType      string                 `protobuf:"bytes,3,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+	SizeBytes     int64                  `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	Bucket        string                 `protobuf:"bytes,5,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	ObjectKey     string                 `protobuf:"bytes,6,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageMeta) Reset() {
+	*x = ImageMeta{}
+	mi := &file_media_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageMeta) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageMeta) ProtoMessage() {}
+
+func (x *ImageMeta) ProtoReflect() protoreflect.Message {
+	mi := &file_media_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageMeta.ProtoReflect.Descriptor instead.
+func (*ImageMeta) Descriptor() ([]byte, []int) {
+	return file_media_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ImageMeta) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *ImageMeta) GetMimeType() string {
+	if x != nil {
+		return x.MimeType
+	}
+	return ""
+}
+
+func (x *ImageMeta) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetBucket() string {
+	if x != nil {
+		return x.Bucket
+	}
+	return ""
+}
+
+func (x *ImageMeta) GetObjectKey() string {
+	if x != nil {
+		return x.ObjectKey
+	}
+	return ""
+}
+
+// File chunk
+type ImageChunk struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // raw bytes
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageChunk) Reset() {
+	*x = ImageChunk{}
+	mi := &file_media_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageChunk) ProtoMessage() {}
+
+func (x *ImageChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_media_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageChunk.ProtoReflect.Descriptor instead.
+func (*ImageChunk) Descriptor() ([]byte, []int) {
+	return file_media_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ImageChunk) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// The streamed response
+type RetrieveImageResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*RetrieveImageResponse_Meta
+	//	*RetrieveImageResponse_Chunk
+	Payload       isRetrieveImageResponse_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RetrieveImageResponse) Reset() {
+	*x = RetrieveImageResponse{}
+	mi := &file_media_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RetrieveImageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RetrieveImageResponse) ProtoMessage() {}
+
+func (x *RetrieveImageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_media_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RetrieveImageResponse.ProtoReflect.Descriptor instead.
+func (*RetrieveImageResponse) Descriptor() ([]byte, []int) {
+	return file_media_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RetrieveImageResponse) GetPayload() isRetrieveImageResponse_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *RetrieveImageResponse) GetMeta() *ImageMeta {
+	if x != nil {
+		if x, ok := x.Payload.(*RetrieveImageResponse_Meta); ok {
+			return x.Meta
+		}
+	}
+	return nil
+}
+
+func (x *RetrieveImageResponse) GetChunk() *ImageChunk {
+	if x != nil {
+		if x, ok := x.Payload.(*RetrieveImageResponse_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+type isRetrieveImageResponse_Payload interface {
+	isRetrieveImageResponse_Payload()
+}
+
+type RetrieveImageResponse_Meta struct {
+	Meta *ImageMeta `protobuf:"bytes,1,opt,name=meta,proto3,oneof"`
+}
+
+type RetrieveImageResponse_Chunk struct {
+	Chunk *ImageChunk `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
+}
+
+func (*RetrieveImageResponse_Meta) isRetrieveImageResponse_Payload() {}
+
+func (*RetrieveImageResponse_Chunk) isRetrieveImageResponse_Payload() {}
+
 var File_media_proto protoreflect.FileDescriptor
 
 const file_media_proto_rawDesc = "" +
@@ -160,15 +418,34 @@ const file_media_proto_rawDesc = "" +
 	"\ffile_content\x18\x01 \x01(\fR\vfileContent\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\"\x98\x01\n" +
 	"\x13UploadImageResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tmime_type\x18\x02 \x01(\tR\bmimeType\x12\x1d\n" +
 	"\n" +
 	"size_bytes\x18\x03 \x01(\x03R\tsizeBytes\x12\x16\n" +
 	"\x06bucket\x18\x04 \x01(\tR\x06bucket\x12\x1d\n" +
 	"\n" +
-	"object_key\x18\x05 \x01(\tR\tobjectKey2T\n" +
+	"object_key\x18\x05 \x01(\tR\tobjectKey\"1\n" +
+	"\x14RetrieveImageRequest\x12\x19\n" +
+	"\bimage_id\x18\x01 \x01(\x03R\aimageId\"\xaa\x01\n" +
+	"\tImageMeta\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1b\n" +
+	"\tmime_type\x18\x03 \x01(\tR\bmimeType\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x04 \x01(\x03R\tsizeBytes\x12\x16\n" +
+	"\x06bucket\x18\x05 \x01(\tR\x06bucket\x12\x1d\n" +
+	"\n" +
+	"object_key\x18\x06 \x01(\tR\tobjectKey\" \n" +
+	"\n" +
+	"ImageChunk\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\"u\n" +
+	"\x15RetrieveImageResponse\x12&\n" +
+	"\x04meta\x18\x01 \x01(\v2\x10.media.ImageMetaH\x00R\x04meta\x12)\n" +
+	"\x05chunk\x18\x02 \x01(\v2\x11.media.ImageChunkH\x00R\x05chunkB\t\n" +
+	"\apayload2\xa2\x01\n" +
 	"\fMediaService\x12D\n" +
-	"\vUploadImage\x12\x19.media.UploadImageRequest\x1a\x1a.media.UploadImageResponseB\x1fZ\x1dyour_project_path/media;mediab\x06proto3"
+	"\vUploadImage\x12\x19.media.UploadImageRequest\x1a\x1a.media.UploadImageResponse\x12L\n" +
+	"\rRetrieveImage\x12\x1b.media.RetrieveImageRequest\x1a\x1c.media.RetrieveImageResponse0\x01B'Z%social-network/shared/gen/media;mediab\x06proto3"
 
 var (
 	file_media_proto_rawDescOnce sync.Once
@@ -182,19 +459,27 @@ func file_media_proto_rawDescGZIP() []byte {
 	return file_media_proto_rawDescData
 }
 
-var file_media_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_media_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_media_proto_goTypes = []any{
-	(*UploadImageRequest)(nil),  // 0: media.UploadImageRequest
-	(*UploadImageResponse)(nil), // 1: media.UploadImageResponse
+	(*UploadImageRequest)(nil),    // 0: media.UploadImageRequest
+	(*UploadImageResponse)(nil),   // 1: media.UploadImageResponse
+	(*RetrieveImageRequest)(nil),  // 2: media.RetrieveImageRequest
+	(*ImageMeta)(nil),             // 3: media.ImageMeta
+	(*ImageChunk)(nil),            // 4: media.ImageChunk
+	(*RetrieveImageResponse)(nil), // 5: media.RetrieveImageResponse
 }
 var file_media_proto_depIdxs = []int32{
-	0, // 0: media.MediaService.UploadImage:input_type -> media.UploadImageRequest
-	1, // 1: media.MediaService.UploadImage:output_type -> media.UploadImageResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: media.RetrieveImageResponse.meta:type_name -> media.ImageMeta
+	4, // 1: media.RetrieveImageResponse.chunk:type_name -> media.ImageChunk
+	0, // 2: media.MediaService.UploadImage:input_type -> media.UploadImageRequest
+	2, // 3: media.MediaService.RetrieveImage:input_type -> media.RetrieveImageRequest
+	1, // 4: media.MediaService.UploadImage:output_type -> media.UploadImageResponse
+	5, // 5: media.MediaService.RetrieveImage:output_type -> media.RetrieveImageResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_media_proto_init() }
@@ -202,13 +487,17 @@ func file_media_proto_init() {
 	if File_media_proto != nil {
 		return
 	}
+	file_media_proto_msgTypes[5].OneofWrappers = []any{
+		(*RetrieveImageResponse_Meta)(nil),
+		(*RetrieveImageResponse_Chunk)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_media_proto_rawDesc), len(file_media_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

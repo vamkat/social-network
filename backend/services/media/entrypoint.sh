@@ -8,4 +8,4 @@ echo "Running migrations..."
 # /app/seeds/seed.sh || true
 
 echo "Starting service..."
-exec ./chat_service
+exec ./media_service
