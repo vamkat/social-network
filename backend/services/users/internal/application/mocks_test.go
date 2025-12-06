@@ -67,6 +67,14 @@ func (m *MockQuerier) GetUserBasic(ctx context.Context, id int64) (sqlc.GetUserB
 	return args.Get(0).(sqlc.GetUserBasicRow), args.Error(1)
 }
 
+func (m *MockQuerier) GetBatchUsersBasic(ctx context.Context, dollar_1 []int64) ([]sqlc.GetBatchUsersBasicRow, error) {
+	args := m.Called(ctx, dollar_1)
+	if args.Get(0) == nil {
+		return []sqlc.GetBatchUsersBasicRow{}, args.Error(1)
+	}
+	return args.Get(0).([]sqlc.GetBatchUsersBasicRow), args.Error(1)
+}
+
 func (m *MockQuerier) GetUserProfile(ctx context.Context, id int64) (sqlc.GetUserProfileRow, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {

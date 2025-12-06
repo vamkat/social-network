@@ -170,7 +170,6 @@ func (s *Application) isFollowRequestPending(ctx context.Context, req FollowUser
 	return isPending, nil
 }
 
-// SKIP GRPC FOR NOW
 func (s *Application) IsFollowing(ctx context.Context, req FollowUserReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err

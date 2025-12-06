@@ -11,6 +11,41 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getBatchUsersBasic = `-- name: GetBatchUsersBasic :many
+SELECT
+  id,
+  username,
+  avatar_id
+FROM users
+WHERE id = ANY($1::bigint[])
+`
+
+type GetBatchUsersBasicRow struct {
+	ID       int64
+	Username string
+	AvatarID int64
+}
+
+func (q *Queries) GetBatchUsersBasic(ctx context.Context, dollar_1 []int64) ([]GetBatchUsersBasicRow, error) {
+	rows, err := q.db.Query(ctx, getBatchUsersBasic, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetBatchUsersBasicRow{}
+	for rows.Next() {
+		var i GetBatchUsersBasicRow
+		if err := rows.Scan(&i.ID, &i.Username, &i.AvatarID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserBasic = `-- name: GetUserBasic :one
 SELECT
     id,

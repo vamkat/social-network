@@ -23,6 +23,7 @@ type Querier interface {
 	DeclineGroupInvite(ctx context.Context, arg DeclineGroupInviteParams) error
 	FollowUser(ctx context.Context, arg FollowUserParams) (string, error)
 	GetAllGroups(ctx context.Context, arg GetAllGroupsParams) ([]GetAllGroupsRow, error)
+	GetBatchUsersBasic(ctx context.Context, dollar_1 []int64) ([]GetBatchUsersBasicRow, error)
 	// S1: second-degree follows
 	// S2: shared groups
 	// Combine & score

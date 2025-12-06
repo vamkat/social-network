@@ -7,21 +7,23 @@ import (
 	ct "social-network/shared/go/customtypes"
 )
 
-func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, accessCtx AccessContext) (err error) {
+func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq) (err error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+
+	accessCtx := accessContext{
+		requesterId: req.CreatorId.Int64(),
+		entityId:    req.ParentId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
 		err = q.CreateComment(ctx, sqlc.CreateCommentParams{
@@ -48,22 +50,23 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq, a
 
 }
 
-func (s *Application) EditComment(ctx context.Context, req EditCommentReq, accessCtx AccessContext) error {
+func (s *Application) EditComment(ctx context.Context, req EditCommentReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.CreatorId.Int64(),
+		entityId:    req.CommentId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
@@ -100,22 +103,23 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq, acces
 
 }
 
-func (s *Application) DeleteComment(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
+func (s *Application) DeleteComment(ctx context.Context, req GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	rowsAffected, err := s.db.DeleteComment(ctx, sqlc.DeleteCommentParams{
@@ -131,22 +135,23 @@ func (s *Application) DeleteComment(ctx context.Context, req GenericReq, accessC
 	return nil
 }
 
-func (s *Application) GetCommentsByParentId(ctx context.Context, req EntityIdPaginatedReq, accessCtx AccessContext) ([]Comment, error) {
+func (s *Application) GetCommentsByParentId(ctx context.Context, req EntityIdPaginatedReq) ([]Comment, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return nil, err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return nil, ErrNotAllowed
-	}
 	if err != nil {
 		return nil, err
+	}
+	if !hasAccess {
+		return nil, ErrNotAllowed
 	}
 
 	rows, err := s.db.GetCommentsByPostId(ctx, sqlc.GetCommentsByPostIdParams{

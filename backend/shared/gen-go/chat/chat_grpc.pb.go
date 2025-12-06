@@ -19,139 +19,152 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_CreatePrivateConversation_FullMethodName = "/chat.UserService/CreatePrivateConversation"
-	UserService_CreateGroupConversation_FullMethodName   = "/chat.UserService/CreateGroupConversation"
+	ChatService_CreatePrivateConversation_FullMethodName = "/chat.ChatService/CreatePrivateConversation"
+	ChatService_CreateGroupConversation_FullMethodName   = "/chat.ChatService/CreateGroupConversation"
 )
 
-// UserServiceClient is the client API for UserService service.
+// ChatServiceClient is the client API for ChatService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UserServiceClient interface {
+type ChatServiceClient interface {
 	CreatePrivateConversation(ctx context.Context, in *CreatePrivateConvParams, opts ...grpc.CallOption) (*ConvId, error)
 	CreateGroupConversation(ctx context.Context, in *CreateGroupConvParams, opts ...grpc.CallOption) (*ConvId, error)
 }
 
-type userServiceClient struct {
+type chatServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
-	return &userServiceClient{cc}
+func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
+	return &chatServiceClient{cc}
 }
 
-func (c *userServiceClient) CreatePrivateConversation(ctx context.Context, in *CreatePrivateConvParams, opts ...grpc.CallOption) (*ConvId, error) {
+func (c *chatServiceClient) CreatePrivateConversation(ctx context.Context, in *CreatePrivateConvParams, opts ...grpc.CallOption) (*ConvId, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ConvId)
-	err := c.cc.Invoke(ctx, UserService_CreatePrivateConversation_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ChatService_CreatePrivateConversation_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userServiceClient) CreateGroupConversation(ctx context.Context, in *CreateGroupConvParams, opts ...grpc.CallOption) (*ConvId, error) {
+func (c *chatServiceClient) CreateGroupConversation(ctx context.Context, in *CreateGroupConvParams, opts ...grpc.CallOption) (*ConvId, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ConvId)
-	err := c.cc.Invoke(ctx, UserService_CreateGroupConversation_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ChatService_CreateGroupConversation_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// UserServiceServer is the server API for UserService service.
-// All implementations must embed UnimplementedUserServiceServer
+// ChatServiceServer is the server API for ChatService service.
+// All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
-type UserServiceServer interface {
+type ChatServiceServer interface {
 	CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error)
 	CreateGroupConversation(context.Context, *CreateGroupConvParams) (*ConvId, error)
-	mustEmbedUnimplementedUserServiceServer()
+	mustEmbedUnimplementedChatServiceServer()
 }
 
-// UnimplementedUserServiceServer must be embedded to have
+// UnimplementedChatServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedUserServiceServer struct{}
+type UnimplementedChatServiceServer struct{}
 
+<<<<<<< HEAD
 func (UnimplementedUserServiceServer) CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreatePrivateConversation not implemented")
 }
 func (UnimplementedUserServiceServer) CreateGroupConversation(context.Context, *CreateGroupConvParams) (*ConvId, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroupConversation not implemented")
+=======
+func (UnimplementedChatServiceServer) CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePrivateConversation not implemented")
 }
-func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
-func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
+func (UnimplementedChatServiceServer) CreateGroupConversation(context.Context, *CreateGroupConvParams) (*ConvId, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateGroupConversation not implemented")
+>>>>>>> 8809a55c945e08f2427bfeea87e0658fe7f48847
+}
+func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
+func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
 
-// UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserServiceServer will
+// UnsafeChatServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ChatServiceServer will
 // result in compilation errors.
-type UnsafeUserServiceServer interface {
-	mustEmbedUnimplementedUserServiceServer()
+type UnsafeChatServiceServer interface {
+	mustEmbedUnimplementedChatServiceServer()
 }
 
+<<<<<<< HEAD
 func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 	// If the following call panics, it indicates UnimplementedUserServiceServer was
+=======
+func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
+	// If the following call pancis, it indicates UnimplementedChatServiceServer was
+>>>>>>> 8809a55c945e08f2427bfeea87e0658fe7f48847
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&UserService_ServiceDesc, srv)
+	s.RegisterService(&ChatService_ServiceDesc, srv)
 }
 
-func _UserService_CreatePrivateConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatService_CreatePrivateConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreatePrivateConvParams)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).CreatePrivateConversation(ctx, in)
+		return srv.(ChatServiceServer).CreatePrivateConversation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserService_CreatePrivateConversation_FullMethodName,
+		FullMethod: ChatService_CreatePrivateConversation_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).CreatePrivateConversation(ctx, req.(*CreatePrivateConvParams))
+		return srv.(ChatServiceServer).CreatePrivateConversation(ctx, req.(*CreatePrivateConvParams))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_CreateGroupConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatService_CreateGroupConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateGroupConvParams)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).CreateGroupConversation(ctx, in)
+		return srv.(ChatServiceServer).CreateGroupConversation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserService_CreateGroupConversation_FullMethodName,
+		FullMethod: ChatService_CreateGroupConversation_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).CreateGroupConversation(ctx, req.(*CreateGroupConvParams))
+		return srv.(ChatServiceServer).CreateGroupConversation(ctx, req.(*CreateGroupConvParams))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
+// ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "chat.UserService",
-	HandlerType: (*UserServiceServer)(nil),
+var ChatService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "chat.ChatService",
+	HandlerType: (*ChatServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreatePrivateConversation",
-			Handler:    _UserService_CreatePrivateConversation_Handler,
+			Handler:    _ChatService_CreatePrivateConversation_Handler,
 		},
 		{
 			MethodName: "CreateGroupConversation",
-			Handler:    _UserService_CreateGroupConversation_Handler,
+			Handler:    _ChatService_CreateGroupConversation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

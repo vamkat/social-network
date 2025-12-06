@@ -4,7 +4,7 @@ package chat;
 
 option go_package = "social-network/shared/gen/chat;chat";
 
-service UserService {
+service ChatService {
     rpc CreatePrivateConversation (CreatePrivateConvParams) returns (ConvId);
     rpc CreateGroupConversation (CreateGroupConvParams) returns (ConvId);
 }

@@ -439,7 +439,6 @@ func (s *Application) isGroupOwner(ctx context.Context, req GeneralGroupReq) (bo
 	return true, nil
 }
 
-// NOT GRPC
 func (s *Application) isGroupMember(ctx context.Context, req GeneralGroupReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err

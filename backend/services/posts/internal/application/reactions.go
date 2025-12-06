@@ -6,22 +6,23 @@ import (
 	ct "social-network/shared/go/customtypes"
 )
 
-func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq, accessCtx AccessContext) error {
+func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	if err := ct.ValidateStruct(accessCtx); err != nil {
-		return err
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if !hasAccess {
-		return ErrNotAllowed
-	}
 	if err != nil {
 		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
 	}
 
 	rowsAffected, err := s.db.ToggleOrInsertReaction(ctx, sqlc.ToggleOrInsertReactionParams{

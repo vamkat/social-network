@@ -7,10 +7,9 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"social-network/services/chat/internal/application"
-	"social-network/services/chat/internal/db/sqlc"
-	"social-network/services/chat/internal/handler"
-	"social-network/shared/gen-go/chat"
+	"social-network/services/posts/internal/application"
+	"social-network/services/posts/internal/db/sqlc"
+	"social-network/services/posts/internal/handler"
 	"syscall"
 	"time"
 
@@ -24,22 +23,14 @@ func Run() error {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
 	defer pool.Close()
+	log.Println("Connected to posts-db database")
 
-	log.Println("Connected to chat database")
+	clients := InitClients()
+	app := application.NewApplication(sqlc.New(pool), pool, clients)
 
-	app := application.NewChatService(
-		pool,
-		InitClients(),
-		sqlc.New(pool),
-	)
-
-	service := &handler.ChatHandler{
-		Application: app,
-		Port:        ":50051",
-	}
+	service := handler.NewPostsHandler(app)
 
 	log.Println("Running gRpc service...")
-
 	grpc := RunGRPCServer(service)
 
 	// wait here for process termination signal to initiate graceful shutdown
@@ -52,6 +43,7 @@ func Run() error {
 	grpc.GracefulStop()
 	log.Println("Server stopped")
 	return nil
+
 }
 
 func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
@@ -68,7 +60,7 @@ func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
 }
 
 // RunGRPCServer starts the gRPC server and blocks
-func RunGRPCServer(s *handler.ChatHandler) *grpc.Server {
+func RunGRPCServer(s *handler.PostsHandler) *grpc.Server {
 	lis, err := net.Listen("tcp", s.Port)
 	if err != nil {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
@@ -76,7 +68,7 @@ func RunGRPCServer(s *handler.ChatHandler) *grpc.Server {
 
 	grpcServer := grpc.NewServer()
 
-	chat.RegisterChatServiceServer(grpcServer, s)
+	// pb.RegisterPostsServiceServer(grpcServer, s)
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	go func() {

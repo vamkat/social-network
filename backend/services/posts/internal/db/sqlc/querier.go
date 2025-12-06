@@ -25,6 +25,7 @@ type Querier interface {
 	EditEvent(ctx context.Context, arg EditEventParams) (int64, error)
 	EditPostContent(ctx context.Context, arg EditPostContentParams) (int64, error)
 	GetCommentsByPostId(ctx context.Context, arg GetCommentsByPostIdParams) ([]GetCommentsByPostIdRow, error)
+	GetEntityCreatorAndGroup(ctx context.Context, id int64) (GetEntityCreatorAndGroupRow, error)
 	GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error)
 	GetGroupPostsPaginated(ctx context.Context, arg GetGroupPostsPaginatedParams) ([]GetGroupPostsPaginatedRow, error)
 	GetImages(ctx context.Context, parentID int64) (int64, error)

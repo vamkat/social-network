@@ -229,7 +229,7 @@ const file_chat_proto_rawDesc = "" +
 	"\x15CreateGroupConvParams\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\x03R\agroupId\x12\x19\n" +
 	"\buser_ids\x18\x02 \x03(\x03R\auserIds2\x9d\x01\n" +
-	"\vUserService\x12H\n" +
+	"\vChatService\x12H\n" +
 	"\x19CreatePrivateConversation\x12\x1d.chat.CreatePrivateConvParams\x1a\f.chat.ConvId\x12D\n" +
 	"\x17CreateGroupConversation\x12\x1b.chat.CreateGroupConvParams\x1a\f.chat.ConvIdB%Z#social-network/shared/gen/chat;chatb\x06proto3"
 
@@ -253,10 +253,10 @@ var file_chat_proto_goTypes = []any{
 	(*CreateGroupConvParams)(nil),   // 3: chat.CreateGroupConvParams
 }
 var file_chat_proto_depIdxs = []int32{
-	1, // 0: chat.UserService.CreatePrivateConversation:input_type -> chat.CreatePrivateConvParams
-	3, // 1: chat.UserService.CreateGroupConversation:input_type -> chat.CreateGroupConvParams
-	2, // 2: chat.UserService.CreatePrivateConversation:output_type -> chat.ConvId
-	2, // 3: chat.UserService.CreateGroupConversation:output_type -> chat.ConvId
+	1, // 0: chat.ChatService.CreatePrivateConversation:input_type -> chat.CreatePrivateConvParams
+	3, // 1: chat.ChatService.CreateGroupConversation:input_type -> chat.CreateGroupConvParams
+	2, // 2: chat.ChatService.CreatePrivateConversation:output_type -> chat.ConvId
+	2, // 3: chat.ChatService.CreateGroupConversation:output_type -> chat.ConvId
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

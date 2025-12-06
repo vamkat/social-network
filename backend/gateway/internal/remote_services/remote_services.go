@@ -3,7 +3,11 @@ package remoteservices
 import (
 	"fmt"
 	"log"
+<<<<<<< HEAD
 	"social-network/gateway/internal/utils"
+=======
+	"social-network/shared/gen-go/chat"
+>>>>>>> 8809a55c945e08f2427bfeea87e0658fe7f48847
 	"social-network/shared/gen-go/users"
 	interceptor "social-network/shared/go/grpc-interceptors"
 
@@ -13,6 +17,7 @@ import (
 
 type GRpcServices struct {
 	Users users.UserServiceClient
+	Chat  chat.ChatServiceClient
 }
 
 func NewServices() GRpcServices {
@@ -39,8 +44,15 @@ func (g *GRpcServices) StartConnections() (func(), error) {
 
 	g.Users = users.NewUserServiceClient(usersConn)
 
+	chatConn, err := grpc.NewClient("chat:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	g.Chat = chat.NewChatServiceClient(chatConn)
+
 	deferMe := func() {
 		usersConn.Close()
+		chatConn.Close()
 	}
 	return deferMe, nil
 }
