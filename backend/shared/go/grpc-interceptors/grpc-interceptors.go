@@ -18,9 +18,25 @@ import (
 	ATM SERVER INTERCEPTOR ISNT NEEDED
 */
 
-func UnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	m, err := handler(ctx, req)
-	return m, err
+// IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
+func UnaryServerInterceptorWithContextKeys(keys ...string) grpc.UnaryServerInterceptor {
+	if !validateContextKeys(keys...) {
+		panic("bad context keys passed to interceptor creator, keys don't follow the validation requirements")
+	}
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		md, _ := metadata.FromIncomingContext(ctx)
+		fmt.Println("metadata:", md)
+
+		for _, key := range keys {
+			vals := md.Get(key)
+			for _, val := range vals {
+				ctx = context.WithValue(ctx, key, val)
+			}
+		}
+
+		m, err := handler(ctx, req)
+		return m, err
+	}
 }
 
 type wrappedServerStream struct {
