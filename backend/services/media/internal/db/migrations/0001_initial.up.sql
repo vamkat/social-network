@@ -1,7 +1,7 @@
 -- 001_create_images_table.sql
 
 CREATE TABLE images (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     original_name TEXT NOT NULL,
     bucket TEXT NOT NULL,
     object_key TEXT NOT NULL UNIQUE,
@@ -19,3 +19,4 @@ CREATE TRIGGER update_images_updated_at
 BEFORE UPDATE ON images
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+

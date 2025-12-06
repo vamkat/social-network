@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package media;
 
-option go_package = "your_project_path/media;media";
+option go_package = "social-network/shared/gen/media;media";
 
 // Upload request
 message UploadImageRequest {
@@ -12,7 +12,7 @@ message UploadImageRequest {
 
 // Upload response
 message UploadImageResponse {
-  string id = 1;            // DB UUID
+  int64 id = 1;            
   string mime_type = 2;     // Detected MIME type
   int64 size_bytes = 3;     // File size
   string bucket = 4;        // MinIO bucket
@@ -22,4 +22,33 @@ message UploadImageResponse {
 // Service definition
 service MediaService {
   rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
+  rpc RetrieveImage(RetrieveImageRequest) returns (stream RetrieveImageResponse);
+}
+
+// Request
+message RetrieveImageRequest {
+  int64 image_id = 1;
+}
+
+// Metadata — mirrors your ImageMeta struct
+message ImageMeta {
+  int64 id = 1;
+  string filename = 2;
+  string mime_type = 3;
+  int64 size_bytes = 4;
+  string bucket = 5;
+  string object_key = 6;
+}
+
+// File chunk
+message ImageChunk {
+  bytes data = 1; // raw bytes
+}
+
+// The streamed response
+message RetrieveImageResponse {
+  oneof payload {
+    ImageMeta meta = 1;
+    ImageChunk chunk = 2;
+  }
 }
