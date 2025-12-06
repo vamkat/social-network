@@ -11,6 +11,7 @@ import (
 	"social-network/services/users/internal/db/sqlc"
 	"social-network/services/users/internal/handler"
 	"social-network/shared/gen-go/users"
+	interceptor "social-network/shared/go/grpc-interceptors"
 	"syscall"
 	"time"
 
@@ -66,7 +67,9 @@ func RunGRPCServer(s *handler.UsersHandler) *grpc.Server {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.UnaryServerInterceptorWithContextKeys("user_id", "request_id", "trace_id")),
+	)
 
 	// pb.RegisterChatServiceServer(grpcServer, s)
 	users.RegisterUserServiceServer(grpcServer, s)
