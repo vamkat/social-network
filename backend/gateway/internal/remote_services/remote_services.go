@@ -3,11 +3,8 @@ package remoteservices
 import (
 	"fmt"
 	"log"
-<<<<<<< HEAD
 	"social-network/gateway/internal/utils"
-=======
 	"social-network/shared/gen-go/chat"
->>>>>>> 8809a55c945e08f2427bfeea87e0658fe7f48847
 	"social-network/shared/gen-go/users"
 	interceptor "social-network/shared/go/grpc-interceptors"
 

@@ -10,6 +10,7 @@ import (
 	"social-network/services/users/internal/application"
 	"social-network/services/users/internal/db/sqlc"
 	"social-network/services/users/internal/handler"
+	"social-network/shared/gen-go/users"
 	"syscall"
 	"time"
 
@@ -67,7 +68,8 @@ func RunGRPCServer(s *handler.UsersHandler) *grpc.Server {
 
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterChatServiceServer(grpcServer, s)
+	// pb.RegisterChatServiceServer(grpcServer, s)
+	users.RegisterUserServiceServer(grpcServer, s)
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	go func() {

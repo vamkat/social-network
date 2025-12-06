@@ -75,19 +75,11 @@ type ChatServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedChatServiceServer struct{}
 
-<<<<<<< HEAD
-func (UnimplementedUserServiceServer) CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error) {
+func (UnimplementedChatServiceServer) CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreatePrivateConversation not implemented")
 }
-func (UnimplementedUserServiceServer) CreateGroupConversation(context.Context, *CreateGroupConvParams) (*ConvId, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateGroupConversation not implemented")
-=======
-func (UnimplementedChatServiceServer) CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePrivateConversation not implemented")
-}
 func (UnimplementedChatServiceServer) CreateGroupConversation(context.Context, *CreateGroupConvParams) (*ConvId, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateGroupConversation not implemented")
->>>>>>> 8809a55c945e08f2427bfeea87e0658fe7f48847
+	return nil, status.Error(codes.Unimplemented, "method CreateGroupConversation not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
@@ -99,13 +91,8 @@ type UnsafeChatServiceServer interface {
 	mustEmbedUnimplementedChatServiceServer()
 }
 
-<<<<<<< HEAD
-func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
-	// If the following call panics, it indicates UnimplementedUserServiceServer was
-=======
 func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
-	// If the following call pancis, it indicates UnimplementedChatServiceServer was
->>>>>>> 8809a55c945e08f2427bfeea87e0658fe7f48847
+	// If the following call panics, it indicates UnimplementedChatServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
