@@ -53,6 +53,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 func (m *MiddleSystem) EnrichContext() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		r = utils.RequestWithValue(r, utils.ReqUUID, utils.GenUUID())
+		r = utils.RequestWithValue(r, utils.TraceId, utils.GenUUID())
 		return true, r
 	})
 	return m
@@ -79,6 +80,7 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 		// enrich request with claims
 		fmt.Println("auth ok")
 		r = utils.RequestWithValue(r, utils.ClaimsKey, claims)
+		r = utils.RequestWithValue(r, utils.UserId, claims.UserId)
 		return true, r
 	})
 	return m

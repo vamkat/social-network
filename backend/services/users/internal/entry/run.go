@@ -67,7 +67,7 @@ func RunGRPCServer(s *handler.UsersHandler) *grpc.Server {
 
 	grpcServer := grpc.NewServer()
 
-	// pb.RegisterChatServiceServer(grpcServer, s)
+	pb.RegisterChatServiceServer(grpcServer, s)
 
 	log.Printf("gRPC server listening on %s", s.Port)
 	go func() {

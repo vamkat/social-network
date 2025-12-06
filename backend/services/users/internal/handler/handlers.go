@@ -22,7 +22,7 @@ import (
 
 // AUTH
 func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.User, error) {
-	fmt.Println("RegisterUser gRPC method called")
+	fmt.Println("RegisterUser gRPC method called with request_id:", ctx.Value("request_id"))
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -51,7 +51,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 }
 
 func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.User, error) {
-	fmt.Println("LoginUser gRPC method called")
+	fmt.Println("LoginUser gRPC method called with request_id:", ctx.Value("request_id"))
 
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "LoginUser: request is nil")

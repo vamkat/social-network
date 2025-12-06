@@ -28,6 +28,9 @@ func (s *UsersHandler) RunGRPCServer() {
 
 	pb.RegisterUserServiceServer(grpcServer, s)
 
+	services := grpcServer.GetServiceInfo()
+	log.Printf("Registered services: %v", services)
+
 	log.Printf("gRPC server listening on %s", s.Port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve gRPC: %v", err)

@@ -14,26 +14,26 @@ import (
 	"github.com/google/uuid"
 )
 
-// Type that holds the context with value keys
-type ctxKey string
-
 // Holds the keys to values on request context.
+// warning! keys that are meant to be propagated through grpc services have strict requirements!
 const (
-	ClaimsKey        ctxKey = "jwtClaims"
-	ReqId            ctxKey = "X-Request-Id"
-	ReqActionDetails ctxKey = "X-Action-Details"
-	ReqTimestamp     ctxKey = "X-Timestamp"
-	ReqUUID          ctxKey = "requestId"
+	ClaimsKey        string = "jwtClaims"
+	ReqId            string = "X-Request-Id"
+	ReqActionDetails string = "X-Action-Details"
+	ReqTimestamp     string = "X-Timestamp"
+	ReqUUID          string = "request_id"
+	UserId           string = "user_id"
+	TraceId          string = "trace_id"
 )
 
 // Adds value val to r context with key 'key'
-func RequestWithValue[T any](r *http.Request, key ctxKey, val T) *http.Request {
+func RequestWithValue[T any](r *http.Request, key string, val T) *http.Request {
 	ctx := context.WithValue(r.Context(), key, val)
 	return r.WithContext(ctx)
 }
 
 // Get value T from request context with key 'key'
-func GetValue[T any](r *http.Request, key ctxKey) (T, bool) {
+func GetValue[T any](r *http.Request, key string) (T, bool) {
 	v := r.Context().Value(key)
 	if v == nil {
 		fmt.Println("v is nil")

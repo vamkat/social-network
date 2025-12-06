@@ -16,7 +16,7 @@ import (
 
 func (h *Handlers) loginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("login handler called")
+		fmt.Println("login handler called with request_id:", r.Context().Value(utils.ReqUUID))
 		//READ REQUEST BODY
 		type loginHttpRequest struct {
 			Identifier ct.Identifier `json:"identifier"`
