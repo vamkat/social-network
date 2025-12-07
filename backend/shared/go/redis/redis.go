@@ -11,17 +11,20 @@ import (
 
 var (
 	ErrNoConnection = errors.New("can't find redis")
-	ErrFailedTest   = errors.New("failed special connection test")
+	ErrFailedTest1  = errors.New("failed special connection test 1")
+	ErrFailedTest2  = errors.New("failed special connection test 2")
+	ErrFailedTest3  = errors.New("failed special connection test 3")
+	ErrFailedTest4  = errors.New("failed special connection test 4")
 	ErrNotFound     = errors.New("entry wasn't found")
 	ErrIncrExpFail  = errors.New("incr func failed to add expiration, extremely unexpected!!!")
 )
 
-type redisClient struct {
+type RedisClient struct {
 	client *redis.Client
 }
 
-func NewRedisClient(addr string, password string, db int) redisClient {
-	redisClient := redisClient{
+func NewRedisClient(addr string, password string, db int) *RedisClient {
+	redisClient := &RedisClient{
 		client: redis.NewClient(&redis.Options{
 			Addr:     addr,
 			Password: password,
@@ -33,7 +36,7 @@ func NewRedisClient(addr string, password string, db int) redisClient {
 }
 
 // IncrEx increments the integer value of a key by one.
-func (c *redisClient) IncrEx(ctx context.Context, key string, expSeconds int64) (int, error) {
+func (c *RedisClient) IncrEx(ctx context.Context, key string, expSeconds int64) (int, error) {
 	//incrementing number on redis for key, creates it if it doesn't exist
 	currentCount, err := c.client.Incr(ctx, key).Result()
 	if err != nil {
@@ -56,13 +59,13 @@ func (c *redisClient) IncrEx(ctx context.Context, key string, expSeconds int64) 
 }
 
 // SetStr stores a string value under `key` with expiration `exp`.
-func (c *redisClient) SetStr(ctx context.Context, key string, value string, exp time.Duration) error {
+func (c *RedisClient) SetStr(ctx context.Context, key string, value string, exp time.Duration) error {
 	err := c.client.Set(ctx, key, value, exp).Err()
 	return err
 }
 
 // GetStr retrieves a string value stored under `key`.
-func (c *redisClient) GetStr(ctx context.Context, key string) (any, error) {
+func (c *RedisClient) GetStr(ctx context.Context, key string) (any, error) {
 	value, err := c.client.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return nil, ErrNotFound
@@ -71,7 +74,7 @@ func (c *redisClient) GetStr(ctx context.Context, key string) (any, error) {
 }
 
 // SetObj marshals a Go value to JSON and stores it under `key` with expiration `exp`.
-func (c *redisClient) SetObj(ctx context.Context, key string, value any, exp time.Duration) error {
+func (c *RedisClient) SetObj(ctx context.Context, key string, value any, exp time.Duration) error {
 	b, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -81,7 +84,7 @@ func (c *redisClient) SetObj(ctx context.Context, key string, value any, exp tim
 
 // GetObj retrieves the JSON stored at `key` and unmarshals it into `dest`.
 // `dest` must be a pointer to the value to populate.
-func (c *redisClient) GetObj(ctx context.Context, key string, dest any) error {
+func (c *RedisClient) GetObj(ctx context.Context, key string, dest any) error {
 	val, err := c.client.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return ErrNotFound
@@ -90,13 +93,13 @@ func (c *redisClient) GetObj(ctx context.Context, key string, dest any) error {
 }
 
 // Del deletes the specified key from Redis.
-func (c *redisClient) Del(ctx context.Context, key string) error {
+func (c *RedisClient) Del(ctx context.Context, key string) error {
 	err := c.client.Del(ctx, key).Err()
 	return err
 }
 
 // TestRedisConnection performs a series of operations to verify the Redis connection is functioning correctly.
-func (c *redisClient) TestRedisConnection() error {
+func (c *RedisClient) TestRedisConnection() error {
 	ctx := context.Background()
 	ping, err := c.client.Ping(ctx).Result()
 	if err != nil || ping != "PONG" {
@@ -105,23 +108,23 @@ func (c *redisClient) TestRedisConnection() error {
 
 	err = c.SetStr(ctx, "test_key123", "value", time.Second)
 	if err != nil {
-		return ErrFailedTest
+		return errors.Join(ErrFailedTest1, err)
 	}
 
 	val, err := c.GetStr(ctx, "test_key123")
 	valStr, ok := val.(string)
 	if err != nil || !ok || valStr != "value" {
-		return ErrFailedTest
+		return errors.Join(ErrFailedTest2, err)
 	}
 
 	err = c.Del(ctx, "test_key123")
 	if err != nil {
-		return ErrFailedTest
+		return errors.Join(ErrFailedTest3, err)
 	}
 
-	_, err = c.GetStr(ctx, "test_key123")
-	if err != redis.Nil && err != nil {
-		return ErrFailedTest
+	val, err = c.GetStr(ctx, "test_key123")
+	if err != redis.Nil && val == "" {
+		return errors.Join(ErrFailedTest4, err)
 	}
 
 	return nil

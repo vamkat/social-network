@@ -18,8 +18,15 @@ import (
 // server starting sequence
 func Start() {
 
+	redisClient := redis_connector.NewRedisClient("redis:6379", "", 0)
+	err := redisClient.TestRedisConnection()
+	if err != nil {
+		log.Fatalf("connection test failed: %v", err)
+	}
+	fmt.Println("redis connection started correctly")
+
 	// set handlers
-	handlers := handlers.NewHandlers()
+	handlers := handlers.NewHandlers(redisClient)
 
 	// start gRPC connections
 	deferMe, err := handlers.Services.StartConnections()
@@ -29,13 +36,6 @@ func Start() {
 	defer deferMe()
 
 	fmt.Println("gRPC services connections started")
-
-	redisClient := redis_connector.NewRedisClient("redis:6379", "", 0)
-	err = redisClient.TestRedisConnection()
-	if err != nil {
-		log.Fatalf("failed to connect to redis: %v", err)
-	}
-	fmt.Println("redis connection started correctly")
 
 	// set server
 	var server http.Server

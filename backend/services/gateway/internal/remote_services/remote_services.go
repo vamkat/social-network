@@ -21,8 +21,8 @@ type GRpcServices struct {
 // NewService creates a services object, it contains grpc clients and you use it to talk to grpc servers
 //
 // CtxKeys are the context keys that will be propagated to other services through the context object
-func NewServices(contextKeys []ct.CtxKey) GRpcServices {
-	return GRpcServices{
+func NewServices(contextKeys []ct.CtxKey) *GRpcServices {
+	return &GRpcServices{
 		contextKeys: contextKeys,
 	}
 }
