@@ -14,10 +14,13 @@ import (
 	ct "social-network/shared/go/customtypes"
 	redis_connector "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
-
 	"syscall"
 	"time"
+
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 )
+
+var logger = otelslog.NewLogger("api-gateway")
 
 // server starting sequence
 func Start() {
@@ -86,7 +89,19 @@ func Start() {
 	/*
 
 		==============================
-		         HTTP SERVER
+		         PROMETHEUS EXPORTER SERVER
+		==============================
+	*/
+	// TODO finish setting up promethius exporting endpoint
+	// metricsServer := &http.Server{
+	// 	Addr:    ":2222",
+	// 	Handler: nil, // Will be set below
+	// }
+
+	/*
+
+		==============================
+		         API GATEWAY HTTP SERVER
 		==============================
 	*/
 	var server = &http.Server{
