@@ -1,15 +1,17 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"social-network/services/gateway/internal/middleware"
 	remoteservices "social-network/services/gateway/internal/remote_services"
-	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/ratelimit"
 	redis_connector "social-network/shared/go/redis"
 
 	"github.com/minio/minio-go/v7"
 )
+
+var ErrMinIO = errors.New("minIO failed to be created")
 
 type Handlers struct {
 	Services    *remoteservices.GRpcServices
@@ -17,14 +19,18 @@ type Handlers struct {
 	redisClient *redis_connector.RedisClient
 }
 
-func NewHandlers(redisClient *redis_connector.RedisClient) *Handlers {
+func NewHandlers(redisClient *redis_connector.RedisClient, gRpcServices *remoteservices.GRpcServices) (*Handlers, error) {
+	miniIOClient, err := remoteservices.NewMinIOConn()
+	if err != nil {
+		return nil, errors.Join(ErrMinIO, err)
+	}
 	handlers := &Handlers{
 		redisClient: redisClient,
-		Services:    remoteservices.NewServices([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}),
-		MinIOClient: remoteservices.NewMinIOConn(),
+		Services:    gRpcServices,
+		MinIOClient: miniIOClient,
 	}
 
-	return handlers
+	return handlers, nil
 }
 
 // BuildMux builds and returns the HTTP request multiplexer with all routes and middleware applied

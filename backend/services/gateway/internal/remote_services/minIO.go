@@ -13,7 +13,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func NewMinIOConn() *minio.Client {
+func NewMinIOConn() (*minio.Client, error) {
 	var minioClient *minio.Client
 	var err error
 	for range 10 {
@@ -28,7 +28,7 @@ func NewMinIOConn() *minio.Client {
 		time.Sleep(2 * time.Second)
 	}
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	// Ensure bucket exists
@@ -36,16 +36,16 @@ func NewMinIOConn() *minio.Client {
 	ctx := context.Background()
 	exists, errBucketExists := minioClient.BucketExists(ctx, bucket)
 	if errBucketExists != nil {
-		log.Fatalln(errBucketExists)
+		return nil, errBucketExists
 	}
 	if !exists {
 		err = minioClient.MakeBucket(ctx, bucket, minio.MakeBucketOptions{})
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
 		fmt.Println("Created bucket:", bucket)
 	}
-	return minioClient
+	return minioClient, nil
 }
 
 func UploadToMinIO(

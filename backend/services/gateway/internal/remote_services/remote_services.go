@@ -1,7 +1,6 @@
 package remoteservices
 
 import (
-	"fmt"
 	"log"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/users"
@@ -45,26 +44,32 @@ func (g *GRpcServices) StartConnections() (func(), error) {
 		grpc.WithUnaryInterceptor(customUnaryInterceptor),
 		grpc.WithStreamInterceptor(customStreamInterceptor),
 	)
-
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, err
 	}
-
-	fmt.Println("[DEBUG]", usersConn.CanonicalTarget())
-	fmt.Println("[DEBUG]", usersConn.GetState())
-	fmt.Println("[DEBUG]", usersConn.Target())
-
 	g.Users = users.NewUserServiceClient(usersConn)
 
 	chatConn, err := grpc.NewClient("chat:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, err
 	}
 	g.Chat = chat.NewChatServiceClient(chatConn)
 
 	deferMe := func() {
-		usersConn.Close()
-		chatConn.Close()
+		fails := 0
+		err := usersConn.Close()
+		if err != nil {
+			fails++
+			log.Println("usersConn failed to close, ERROR:", err.Error())
+		}
+		err = chatConn.Close()
+		if err != nil {
+			fails++
+			log.Println("chatConn failed to close, ERROR:", err.Error())
+		}
+		if fails == 0 {
+			log.Println("Grpc connections closed correctly")
+		}
 	}
 	return deferMe, nil
 }
