@@ -4,13 +4,14 @@ import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Application) RegisterUser(ctx context.Context, req RegisterUserRequest) (User, error) {
+func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserRequest) (models.User, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return User{}, err
+		return models.User{}, err
 	}
 
 	//if no username assign full name
@@ -52,10 +53,10 @@ func (s *Application) RegisterUser(ctx context.Context, req RegisterUserRequest)
 	})
 
 	if err != nil {
-		return User{}, err //TODO check how to return correct error
+		return models.User{}, err //TODO check how to return correct error
 	}
 
-	return User{
+	return models.User{
 		UserId:   newId,
 		Username: req.Username,
 		AvatarId: req.AvatarId,
@@ -63,8 +64,8 @@ func (s *Application) RegisterUser(ctx context.Context, req RegisterUserRequest)
 
 }
 
-func (s *Application) LoginUser(ctx context.Context, req LoginRequest) (User, error) {
-	var u User
+func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (models.User, error) {
+	var u models.User
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return u, err
@@ -76,7 +77,7 @@ func (s *Application) LoginUser(ctx context.Context, req LoginRequest) (User, er
 			return err
 		}
 
-		u = User{
+		u = models.User{
 			UserId:   ct.Id(row.ID),
 			Username: ct.Username(row.Username),
 			AvatarId: ct.Id(row.AvatarID),
@@ -89,13 +90,13 @@ func (s *Application) LoginUser(ctx context.Context, req LoginRequest) (User, er
 	})
 
 	if err != nil {
-		return User{}, ErrWrongCredentials
+		return models.User{}, ErrWrongCredentials
 	}
 
 	return u, nil
 }
 
-func (s *Application) UpdateUserPassword(ctx context.Context, req UpdatePasswordRequest) error {
+func (s *Application) UpdateUserPassword(ctx context.Context, req models.UpdatePasswordRequest) error {
 	//TODO validate password (length, special characters, etc)
 
 	//TODO think whether transaction is needed here
@@ -123,7 +124,7 @@ func (s *Application) UpdateUserPassword(ctx context.Context, req UpdatePassword
 	return nil
 }
 
-func (s *Application) UpdateUserEmail(ctx context.Context, req UpdateEmailRequest) error {
+func (s *Application) UpdateUserEmail(ctx context.Context, req models.UpdateEmailRequest) error {
 
 	//TODO validate email
 	if err := ct.ValidateStruct(req); err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestGetAllGroupsPaginated_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(1),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -84,7 +85,7 @@ func TestGetAllGroupsPaginated_Empty(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(1),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -108,7 +109,7 @@ func TestGetUserGroupsPaginated_Success(t *testing.T) {
 
 	ctx := context.Background()
 	userID := int64(1)
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(userID),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -166,7 +167,7 @@ func TestGetGroupInfo_Success(t *testing.T) {
 	ctx := context.Background()
 	groupID := int64(1)
 	userID := int64(1)
-	req := GeneralGroupReq{
+	req := models.GeneralGroupReq{
 		GroupId: ct.Id(groupID),
 		UserId:  ct.Id(userID),
 	}
@@ -209,7 +210,7 @@ func TestGetGroupInfo_NotFound(t *testing.T) {
 	ctx := context.Background()
 	groupID := int64(999)
 	userID := int64(1)
-	req := GeneralGroupReq{
+	req := models.GeneralGroupReq{
 		GroupId: ct.Id(groupID),
 		UserId:  ct.Id(userID),
 	}
@@ -229,7 +230,7 @@ func TestGetGroupMembers_Success(t *testing.T) {
 	ctx := context.Background()
 	groupID := int64(1)
 	userID := int64(1)
-	req := GroupMembersReq{
+	req := models.GroupMembersReq{
 		UserId:  ct.Id(userID),
 		GroupId: ct.Id(groupID),
 		Limit:   ct.Limit(10),
@@ -284,7 +285,7 @@ func TestSearchGroups_Success(t *testing.T) {
 
 	ctx := context.Background()
 	searchTerm := "test"
-	req := GroupSearchReq{
+	req := models.GroupSearchReq{
 		SearchTerm: ct.SearchTerm(searchTerm),
 		UserId:     ct.Id(1),
 		Limit:      ct.Limit(10),
@@ -326,7 +327,7 @@ func TestCreateGroup_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := CreateGroupRequest{
+	req := models.CreateGroupRequest{
 		OwnerId:          ct.Id(1),
 		GroupTitle:       ct.Title("New Group"),
 		GroupDescription: ct.About("New Description"),
@@ -341,7 +342,7 @@ func TestCreateGroup_Success(t *testing.T) {
 	groupID, err := service.CreateGroup(ctx, req)
 
 	assert.NoError(t, err)
-	assert.Equal(t, GroupId(5), groupID)
+	assert.Equal(t, models.GroupId(5), groupID)
 	mockDB.AssertExpectations(t)
 }
 
@@ -350,7 +351,7 @@ func TestCreateGroup_Error(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := CreateGroupRequest{
+	req := models.CreateGroupRequest{
 		OwnerId:          ct.Id(1),
 		GroupTitle:       ct.Title("New Group"),
 		GroupDescription: ct.About("New Description"),
@@ -373,7 +374,7 @@ func TestLeaveGroup_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := GeneralGroupReq{
+	req := models.GeneralGroupReq{
 		GroupId: ct.Id(1),
 		UserId:  ct.Id(2),
 	}
@@ -394,7 +395,7 @@ func TestRequestJoinGroupOrCancel_Request(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := GroupJoinRequest{
+	req := models.GroupJoinRequest{
 		GroupId:     ct.Id(1),
 		RequesterId: ct.Id(2),
 	}
@@ -415,7 +416,7 @@ func TestRequestJoinGroupOrCancel_Cancel(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := GroupJoinRequest{
+	req := models.GroupJoinRequest{
 		GroupId:     ct.Id(1),
 		RequesterId: ct.Id(2),
 	}
@@ -436,7 +437,7 @@ func TestRespondToGroupInvite_Accept(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := HandleGroupInviteRequest{
+	req := models.HandleGroupInviteRequest{
 		GroupId:   ct.Id(1),
 		InvitedId: ct.Id(2),
 		Accepted:  true,
@@ -458,7 +459,7 @@ func TestRespondToGroupInvite_Decline(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := HandleGroupInviteRequest{
+	req := models.HandleGroupInviteRequest{
 		GroupId:   ct.Id(1),
 		InvitedId: ct.Id(2),
 		Accepted:  false,

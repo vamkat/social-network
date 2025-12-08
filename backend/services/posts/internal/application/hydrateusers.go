@@ -3,9 +3,10 @@ package application
 import (
 	"context"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 )
 
-func (h *UserHydrator) HydrateUsers(ctx context.Context, items []HasUser) error {
+func (h *UserHydrator) HydrateUsers(ctx context.Context, items []models.HasUser) error {
 	idSet := make(map[int64]struct{}, len(items))
 
 	for _, item := range items {
@@ -22,9 +23,9 @@ func (h *UserHydrator) HydrateUsers(ctx context.Context, items []HasUser) error 
 		return err
 	}
 
-	userMap := make(map[int64]User, len(resp.Users))
+	userMap := make(map[int64]models.User, len(resp.Users))
 	for _, u := range resp.Users {
-		userMap[u.UserId] = User{
+		userMap[u.UserId] = models.User{
 			UserId:   ct.Id(u.UserId),
 			Username: ct.Username(u.Username),
 			AvatarId: ct.Id(u.Avatar),
@@ -41,14 +42,14 @@ func (h *UserHydrator) HydrateUsers(ctx context.Context, items []HasUser) error 
 	return nil
 }
 
-func (s *Application) hydratePost(ctx context.Context, post *Post) error {
-	items := []HasUser{post}
+func (s *Application) hydratePost(ctx context.Context, post *models.Post) error {
+	items := []models.HasUser{post}
 
 	return s.hydrator.HydrateUsers(ctx, items)
 }
 
-func (s *Application) hydratePosts(ctx context.Context, posts []Post) error {
-	items := make([]HasUser, 0, len(posts)*2)
+func (s *Application) hydratePosts(ctx context.Context, posts []models.Post) error {
+	items := make([]models.HasUser, 0, len(posts)*2)
 
 	for i := range posts {
 		// Always include post creator
@@ -59,8 +60,8 @@ func (s *Application) hydratePosts(ctx context.Context, posts []Post) error {
 	return s.hydrator.HydrateUsers(ctx, items)
 }
 
-func (s *Application) hydrateComments(ctx context.Context, comments []Comment) error {
-	items := make([]HasUser, 0, len(comments)*2)
+func (s *Application) hydrateComments(ctx context.Context, comments []models.Comment) error {
+	items := make([]models.HasUser, 0, len(comments)*2)
 
 	for i := range comments {
 		// Always include post creator
@@ -71,8 +72,8 @@ func (s *Application) hydrateComments(ctx context.Context, comments []Comment) e
 	return s.hydrator.HydrateUsers(ctx, items)
 }
 
-func (s *Application) hydrateEvents(ctx context.Context, events []Event) error {
-	items := make([]HasUser, 0, len(events)*2)
+func (s *Application) hydrateEvents(ctx context.Context, events []models.Event) error {
+	items := make([]models.HasUser, 0, len(events)*2)
 
 	for i := range events {
 		// Always include post creator

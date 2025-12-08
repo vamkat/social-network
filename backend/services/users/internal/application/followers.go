@@ -4,11 +4,12 @@ import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 )
 
-func (s *Application) GetFollowersPaginated(ctx context.Context, req Pagination) ([]User, error) {
+func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return []User{}, err
+		return []models.User{}, err
 	}
 	//paginated, sorted by newest first
 	rows, err := s.db.GetFollowers(ctx, sqlc.GetFollowersParams{
@@ -17,11 +18,11 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req Pagination)
 		Offset:      req.Offset.Int32(),
 	})
 	if err != nil {
-		return []User{}, err
+		return []models.User{}, err
 	}
-	users := make([]User, 0, len(rows))
+	users := make([]models.User, 0, len(rows))
 	for _, r := range rows {
-		users = append(users, User{
+		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
@@ -32,9 +33,9 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req Pagination)
 
 }
 
-func (s *Application) GetFollowingPaginated(ctx context.Context, req Pagination) ([]User, error) {
+func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return []User{}, err
+		return []models.User{}, err
 	}
 
 	//paginated, sorted by newest first
@@ -44,11 +45,11 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req Pagination)
 		Offset:     req.Offset.Int32(),
 	})
 	if err != nil {
-		return []User{}, err
+		return []models.User{}, err
 	}
-	users := make([]User, 0, len(rows))
+	users := make([]models.User, 0, len(rows))
 	for _, r := range rows {
-		users = append(users, User{
+		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
@@ -60,16 +61,16 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req Pagination)
 }
 
 // CHAT SERVICE EVENT should trigger event that creates conversation between two users for chat service (unless the target user was already following, so conversation exists)
-func (s *Application) FollowUser(ctx context.Context, req FollowUserReq) (resp FollowUserResp, err error) {
+func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) (resp models.FollowUserResp, err error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return FollowUserResp{}, err
+		return models.FollowUserResp{}, err
 	}
 	status, err := s.db.FollowUser(ctx, sqlc.FollowUserParams{
 		PFollower: req.FollowerId.Int64(),
 		PTarget:   req.TargetUserId.Int64(),
 	})
 	if err != nil {
-		return FollowUserResp{}, err
+		return models.FollowUserResp{}, err
 	}
 	if status == "requested" { //I don't love hardcoding this, we'll see
 		resp.IsPending = true
@@ -82,7 +83,7 @@ func (s *Application) FollowUser(ctx context.Context, req FollowUserReq) (resp F
 }
 
 // CHAT SERVICE EVENT should it trigger event to delete conversation if none of the two follow each other any more? Or just make it inactive?
-func (s *Application) UnFollowUser(ctx context.Context, req FollowUserReq) (viewerIsFollowing bool, err error) {
+func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq) (viewerIsFollowing bool, err error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
@@ -97,7 +98,7 @@ func (s *Application) UnFollowUser(ctx context.Context, req FollowUserReq) (view
 }
 
 // CHAT SERVICE EVENT accepting a follow request should also trigger event to create conversation
-func (s *Application) HandleFollowRequest(ctx context.Context, req HandleFollowRequestReq) error {
+func (s *Application) HandleFollowRequest(ctx context.Context, req models.HandleFollowRequestReq) error {
 	var err error
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -136,17 +137,17 @@ func (s *Application) GetFollowingIds(ctx context.Context, userId ct.Id) ([]int6
 // returns ten random users that people you follow follow, or are in your groups
 // TODO for extra suggestions (have liked your public posts,
 // or have commented on your public posts, or have liked posts you liked) need to ask posts service
-func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([]User, error) {
+func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([]models.User, error) {
 	if err := userId.Validate(); err != nil {
-		return []User{}, err
+		return []models.User{}, err
 	}
 	rows, err := s.db.GetFollowSuggestions(ctx, userId.Int64())
 	if err != nil {
 		return nil, err
 	}
-	users := make([]User, 0, len(rows))
+	users := make([]models.User, 0, len(rows))
 	for _, r := range rows {
-		users = append(users, User{
+		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
@@ -156,7 +157,7 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 }
 
 // NOT GRPC
-func (s *Application) isFollowRequestPending(ctx context.Context, req FollowUserReq) (bool, error) {
+func (s *Application) isFollowRequestPending(ctx context.Context, req models.FollowUserReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
@@ -170,7 +171,7 @@ func (s *Application) isFollowRequestPending(ctx context.Context, req FollowUser
 	return isPending, nil
 }
 
-func (s *Application) IsFollowing(ctx context.Context, req FollowUserReq) (bool, error) {
+func (s *Application) IsFollowing(ctx context.Context, req models.FollowUserReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
@@ -185,7 +186,7 @@ func (s *Application) IsFollowing(ctx context.Context, req FollowUserReq) (bool,
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) IsFollowingEither(ctx context.Context, req FollowUserReq) (bool, error) {
+func (s *Application) IsFollowingEither(ctx context.Context, req models.FollowUserReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}

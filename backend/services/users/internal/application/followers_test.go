@@ -7,6 +7,7 @@ import (
 
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +17,7 @@ func TestGetFollowersPaginated_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(1),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -57,7 +58,7 @@ func TestGetFollowersPaginated_Empty(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(999),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -81,7 +82,7 @@ func TestGetFollowingPaginated_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(1),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -122,7 +123,7 @@ func TestGetFollowingPaginated_Empty(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := Pagination{
+	req := models.Pagination{
 		UserId: ct.Id(999),
 		Limit:  ct.Limit(10),
 		Offset: ct.Offset(0),
@@ -146,7 +147,7 @@ func TestFollowUser_Immediate(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := FollowUserReq{
+	req := models.FollowUserReq{
 		FollowerId:   ct.Id(1),
 		TargetUserId: ct.Id(2),
 	}
@@ -169,7 +170,7 @@ func TestFollowUser_Pending(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := FollowUserReq{
+	req := models.FollowUserReq{
 		FollowerId:   ct.Id(1),
 		TargetUserId: ct.Id(2),
 	}
@@ -192,7 +193,7 @@ func TestFollowUser_Error(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := FollowUserReq{
+	req := models.FollowUserReq{
 		FollowerId:   ct.Id(1),
 		TargetUserId: ct.Id(2),
 	}
@@ -213,7 +214,7 @@ func TestUnFollowUser_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := FollowUserReq{
+	req := models.FollowUserReq{
 		FollowerId:   ct.Id(1),
 		TargetUserId: ct.Id(2),
 	}
@@ -235,7 +236,7 @@ func TestUnFollowUser_Error(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := FollowUserReq{
+	req := models.FollowUserReq{
 		FollowerId:   1,
 		TargetUserId: 999,
 	}
@@ -257,7 +258,7 @@ func TestHandleFollowRequest_Accept(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := HandleFollowRequestReq{
+	req := models.HandleFollowRequestReq{
 		UserId:      ct.Id(1),
 		RequesterId: ct.Id(2),
 		Accept:      true,
@@ -279,7 +280,7 @@ func TestHandleFollowRequest_Reject(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := HandleFollowRequestReq{
+	req := models.HandleFollowRequestReq{
 		UserId:      ct.Id(1),
 		RequesterId: ct.Id(2),
 		Accept:      false,
@@ -301,7 +302,7 @@ func TestHandleFollowRequest_AcceptError(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	req := HandleFollowRequestReq{
+	req := models.HandleFollowRequestReq{
 		UserId:      ct.Id(1),
 		RequesterId: ct.Id(2),
 		Accept:      true,

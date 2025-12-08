@@ -4,11 +4,12 @@ import (
 	"context"
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 )
 
-func (s *Application) GetAllGroupsPaginated(ctx context.Context, req Pagination) ([]Group, error) {
+func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagination) ([]models.Group, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return []Group{}, err
+		return []models.Group{}, err
 	}
 	//paginated (sorting by most members first)
 	rows, err := s.db.GetAllGroups(ctx, sqlc.GetAllGroupsParams{
@@ -19,10 +20,10 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req Pagination)
 		return nil, err
 	}
 
-	groups := make([]Group, 0, len(rows))
+	groups := make([]models.Group, 0, len(rows))
 
 	for _, r := range rows {
-		userInfo, err := s.userInRelationToGroup(ctx, GeneralGroupReq{
+		userInfo, err := s.userInRelationToGroup(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.ID),
 			UserId:  req.UserId,
 		})
@@ -30,7 +31,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req Pagination)
 			return nil, err
 		}
 
-		groups = append(groups, Group{
+		groups = append(groups, models.Group{
 			GroupId:          ct.Id(r.ID),
 			GroupOwnerId:     ct.Id(r.GroupOwner),
 			GroupTitle:       ct.Title(r.GroupTitle),
@@ -47,10 +48,10 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req Pagination)
 	return groups, nil
 }
 
-func (s *Application) GetUserGroupsPaginated(ctx context.Context, req Pagination) ([]Group, error) {
+func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pagination) ([]models.Group, error) {
 	//paginated (joined latest first)
 	if err := ct.ValidateStruct(req); err != nil {
-		return []Group{}, err
+		return []models.Group{}, err
 	}
 	rows, err := s.db.GetUserGroups(ctx, sqlc.GetUserGroupsParams{
 		GroupOwner: req.UserId.Int64(),
@@ -61,16 +62,16 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req Pagination
 		return nil, err
 	}
 
-	groups := make([]Group, 0, len(rows))
+	groups := make([]models.Group, 0, len(rows))
 	for _, r := range rows {
-		isPending, err := s.isGroupMembershipPending(ctx, GeneralGroupReq{
+		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.GroupID),
 			UserId:  req.UserId,
 		})
 		if err != nil {
 			return nil, err
 		}
-		groups = append(groups, Group{
+		groups = append(groups, models.Group{
 			GroupId:          ct.Id(r.GroupID),
 			GroupOwnerId:     ct.Id(r.GroupOwner),
 			GroupTitle:       ct.Title(r.GroupTitle),
@@ -87,15 +88,15 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req Pagination
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) GetGroupInfo(ctx context.Context, req GeneralGroupReq) (Group, error) {
+func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupReq) (models.Group, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return Group{}, err
+		return models.Group{}, err
 	}
 	row, err := s.db.GetGroupInfo(ctx, req.GroupId.Int64())
 	if err != nil {
-		return Group{}, err
+		return models.Group{}, err
 	}
-	group := Group{
+	group := models.Group{
 		GroupId:          ct.Id(row.ID),
 		GroupOwnerId:     ct.Id(row.GroupOwner),
 		GroupTitle:       ct.Title(row.GroupTitle),
@@ -103,12 +104,12 @@ func (s *Application) GetGroupInfo(ctx context.Context, req GeneralGroupReq) (Gr
 		GroupImage:       row.GroupImage,
 		MembersCount:     row.MembersCount,
 	}
-	userInfo, err := s.userInRelationToGroup(ctx, GeneralGroupReq{
+	userInfo, err := s.userInRelationToGroup(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.UserId,
 	})
 	if err != nil {
-		return Group{}, err
+		return models.Group{}, err
 	}
 	group.IsMember = userInfo.isMember
 	group.IsOwner = userInfo.isOwner
@@ -119,12 +120,12 @@ func (s *Application) GetGroupInfo(ctx context.Context, req GeneralGroupReq) (Gr
 	//different calls for chat and posts (API GATEWAY)
 }
 
-func (s *Application) GetGroupMembers(ctx context.Context, req GroupMembersReq) ([]GroupUser, error) {
+func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembersReq) ([]models.GroupUser, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return []GroupUser{}, err
+		return []models.GroupUser{}, err
 	}
 	//check request comes from member
-	isMember, err := s.isGroupMember(ctx, GeneralGroupReq{
+	isMember, err := s.isGroupMember(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.UserId,
 	})
@@ -144,7 +145,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req GroupMembersReq) 
 	if err != nil {
 		return nil, err
 	}
-	members := make([]GroupUser, 0, len(rows))
+	members := make([]models.GroupUser, 0, len(rows))
 
 	for _, r := range rows {
 		var role string
@@ -152,7 +153,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req GroupMembersReq) 
 			role = string(r.Role.GroupRole)
 		}
 
-		members = append(members, GroupUser{
+		members = append(members, models.GroupUser{
 			UserId:    ct.Id(r.ID),
 			Username:  ct.Username(r.Username),
 			AvatarId:  ct.Id(r.AvatarID),
@@ -162,9 +163,9 @@ func (s *Application) GetGroupMembers(ctx context.Context, req GroupMembersReq) 
 	return members, nil
 }
 
-func (s *Application) SearchGroups(ctx context.Context, req GroupSearchReq) ([]Group, error) {
+func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchReq) ([]models.Group, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return []Group{}, err
+		return []models.Group{}, err
 	}
 	//weighted (title more important than description)
 	//paginated (most members first)
@@ -175,18 +176,18 @@ func (s *Application) SearchGroups(ctx context.Context, req GroupSearchReq) ([]G
 		Offset:     req.Offset.Int32(),
 	})
 	if err != nil {
-		return []Group{}, err
+		return []models.Group{}, err
 	}
-	groups := make([]Group, 0, len(rows))
+	groups := make([]models.Group, 0, len(rows))
 	for _, r := range rows {
-		isPending, err := s.isGroupMembershipPending(ctx, GeneralGroupReq{
+		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.ID),
 			UserId:  req.UserId,
 		})
 		if err != nil {
 			return nil, err
 		}
-		groups = append(groups, Group{
+		groups = append(groups, models.Group{
 			GroupId:          ct.Id(r.ID),
 			GroupOwnerId:     ct.Id(r.GroupOwner),
 			GroupTitle:       ct.Title(r.GroupTitle),
@@ -203,12 +204,12 @@ func (s *Application) SearchGroups(ctx context.Context, req GroupSearchReq) ([]G
 
 }
 
-func (s *Application) InviteToGroup(ctx context.Context, req InviteToGroupReq) error {
+func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGroupReq) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 	//check request comes from member
-	isMember, err := s.isGroupMember(ctx, GeneralGroupReq{
+	isMember, err := s.isGroupMember(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.InviterId,
 	})
@@ -232,7 +233,7 @@ func (s *Application) InviteToGroup(ctx context.Context, req InviteToGroupReq) e
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) CancelInviteToGroup(ctx context.Context, req InviteToGroupReq) error {
+func (s *Application) CancelInviteToGroup(ctx context.Context, req models.InviteToGroupReq) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -247,7 +248,7 @@ func (s *Application) CancelInviteToGroup(ctx context.Context, req InviteToGroup
 	return nil
 }
 
-func (s *Application) RequestJoinGroupOrCancel(ctx context.Context, req GroupJoinRequest) error {
+func (s *Application) RequestJoinGroupOrCancel(ctx context.Context, req models.GroupJoinRequest) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -264,7 +265,7 @@ func (s *Application) RequestJoinGroupOrCancel(ctx context.Context, req GroupJoi
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) CancelJoinGroupRequest(ctx context.Context, req GroupJoinRequest) error {
+func (s *Application) CancelJoinGroupRequest(ctx context.Context, req models.GroupJoinRequest) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -279,7 +280,7 @@ func (s *Application) CancelJoinGroupRequest(ctx context.Context, req GroupJoinR
 }
 
 // CHAT SERVICE EVENT add member to group conversation if accepted
-func (s *Application) RespondToGroupInvite(ctx context.Context, req HandleGroupInviteRequest) error {
+func (s *Application) RespondToGroupInvite(ctx context.Context, req models.HandleGroupInviteRequest) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -307,12 +308,12 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req HandleGroupI
 }
 
 // CHAT SERVICE EVENT add member to group conversation if accepted
-func (s *Application) HandleGroupJoinRequest(ctx context.Context, req HandleJoinRequest) error {
+func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.HandleJoinRequest) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 
-	isOwner, err := s.isGroupOwner(ctx, GeneralGroupReq{
+	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.OwnerId,
 	})
@@ -341,7 +342,7 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req HandleJoin
 }
 
 // CHAT SERVICE EVENT soft remove member from group conversation (keep history)
-func (s *Application) LeaveGroup(ctx context.Context, req GeneralGroupReq) error {
+func (s *Application) LeaveGroup(ctx context.Context, req models.GeneralGroupReq) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -357,12 +358,12 @@ func (s *Application) LeaveGroup(ctx context.Context, req GeneralGroupReq) error
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) RemoveFromGroup(ctx context.Context, req RemoveFromGroupRequest) error {
+func (s *Application) RemoveFromGroup(ctx context.Context, req models.RemoveFromGroupRequest) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 	//check owner has indeed the owner role
-	isOwner, err := s.isGroupOwner(ctx, GeneralGroupReq{
+	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.OwnerId,
 	})
@@ -373,7 +374,7 @@ func (s *Application) RemoveFromGroup(ctx context.Context, req RemoveFromGroupRe
 		return ErrNotAuthorized
 	}
 
-	err = s.LeaveGroup(ctx, GeneralGroupReq{
+	err = s.LeaveGroup(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.MemberId,
 	})
@@ -384,7 +385,7 @@ func (s *Application) RemoveFromGroup(ctx context.Context, req RemoveFromGroupRe
 }
 
 // CHAT SERVICE EVENT create group conversation
-func (s *Application) CreateGroup(ctx context.Context, req CreateGroupRequest) (GroupId, error) {
+func (s *Application) CreateGroup(ctx context.Context, req models.CreateGroupRequest) (models.GroupId, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return 0, err
 	}
@@ -398,31 +399,31 @@ func (s *Application) CreateGroup(ctx context.Context, req CreateGroupRequest) (
 	if err != nil {
 		return 0, err
 	}
-	return GroupId(groupId), nil
+	return models.GroupId(groupId), nil
 }
 
 // NOT GRPC
-func (s *Application) userInRelationToGroup(ctx context.Context, req GeneralGroupReq) (resp UserInRelationToGroup, err error) {
+func (s *Application) userInRelationToGroup(ctx context.Context, req models.GeneralGroupReq) (resp userInRelationToGroup, err error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return UserInRelationToGroup{}, err
+		return userInRelationToGroup{}, err
 	}
 	resp.isOwner, err = s.isGroupOwner(ctx, req)
 	if err != nil {
-		return UserInRelationToGroup{}, err
+		return userInRelationToGroup{}, err
 	}
 	resp.isMember, err = s.isGroupMember(ctx, req)
 	if err != nil {
-		return UserInRelationToGroup{}, err
+		return userInRelationToGroup{}, err
 	}
 	resp.isPending, err = s.isGroupMembershipPending(ctx, req)
 	if err != nil {
-		return UserInRelationToGroup{}, err
+		return userInRelationToGroup{}, err
 	}
 	return resp, nil
 }
 
 // NOT GRPC
-func (s *Application) isGroupOwner(ctx context.Context, req GeneralGroupReq) (bool, error) {
+func (s *Application) isGroupOwner(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
@@ -439,7 +440,7 @@ func (s *Application) isGroupOwner(ctx context.Context, req GeneralGroupReq) (bo
 	return true, nil
 }
 
-func (s *Application) isGroupMember(ctx context.Context, req GeneralGroupReq) (bool, error) {
+func (s *Application) isGroupMember(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
@@ -457,7 +458,7 @@ func (s *Application) isGroupMember(ctx context.Context, req GeneralGroupReq) (b
 }
 
 // NOT GRPC
-func (s *Application) isGroupMembershipPending(ctx context.Context, req GeneralGroupReq) (bool, error) {
+func (s *Application) isGroupMembershipPending(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}

@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Application) CreatePost(ctx context.Context, req CreatePostReq) (err error) {
+func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) (err error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -81,7 +82,7 @@ func (s *Application) CreatePost(ctx context.Context, req CreatePostReq) (err er
 
 }
 
-func (s *Application) DeletePost(ctx context.Context, req GenericReq) error {
+func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func (s *Application) DeletePost(ctx context.Context, req GenericReq) error {
 	return nil
 }
 
-func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
+func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) error {
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
@@ -204,9 +205,9 @@ func (s *Application) EditPost(ctx context.Context, req EditPostReq) error {
 
 }
 
-func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req SimpleIdReq) (Post, error) {
+func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.SimpleIdReq) (models.Post, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return Post{}, err
+		return models.Post{}, err
 	}
 
 	var groupId pgtype.Int8
@@ -215,15 +216,15 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req SimpleI
 	p, err := s.db.GetMostPopularPostInGroup(ctx, groupId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Post{}, ErrNotFound
+			return models.Post{}, ErrNotFound
 		}
-		return Post{}, err
+		return models.Post{}, err
 	}
 
-	post := Post{
+	post := models.Post{
 		PostId: ct.Id(p.ID),
 		Body:   ct.PostBody(p.PostBody),
-		User: User{
+		User: models.User{
 			UserId: ct.Id(p.CreatorID),
 		},
 		GroupId:         ct.Id(req.Id.Int64()),
@@ -238,18 +239,18 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req SimpleI
 	}
 
 	if err := s.hydratePost(ctx, &post); err != nil {
-		return Post{}, err
+		return models.Post{}, err
 	}
 
 	return post, nil
 }
 
 // NOT CURRENTLY NEEDED
-func (s *Application) GetPostById(ctx context.Context, req GenericReq) (Post, error) {
+func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (models.Post, error) {
 	//check requester is allowed to view post, dependes on post audience:
 	//everyone: any requester can see
 	//followers: API GATEWAY(?) needs to get FOLLOWERS LIST for creatorId from users
 	//selected: check can happen in posts service
 	//group: API GATEWAY(?) needs to check requester is member of group
-	return Post{}, nil
+	return models.Post{}, nil
 }

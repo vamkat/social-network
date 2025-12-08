@@ -8,6 +8,7 @@ import (
 
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +80,7 @@ func TestGetUserProfile_Public_Success(t *testing.T) {
 		ProfilePublic: true,
 	}
 
-	req := UserProfileRequest{
+	req := models.UserProfileRequest{
 		UserId:      ct.Id(userID),
 		RequesterId: ct.Id(requesterID),
 	}
@@ -136,7 +137,7 @@ func TestGetUserProfile_Private_NotFollowing(t *testing.T) {
 		ProfilePublic: false,
 	}
 
-	req := UserProfileRequest{
+	req := models.UserProfileRequest{
 		UserId:      ct.Id(userID),
 		RequesterId: ct.Id(requesterID),
 	}
@@ -182,7 +183,7 @@ func TestGetUserProfile_Private_IsFollowing(t *testing.T) {
 		ProfilePublic: false,
 	}
 
-	req := UserProfileRequest{
+	req := models.UserProfileRequest{
 		UserId:      ct.Id(userID),
 		RequesterId: ct.Id(requesterID),
 	}
@@ -216,7 +217,7 @@ func TestSearchUsers_Success(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	searchReq := UserSearchReq{
+	searchReq := models.UserSearchReq{
 		SearchTerm: ct.SearchTerm("test"),
 		Limit:      ct.Limit(10),
 	}
@@ -255,7 +256,7 @@ func TestSearchUsers_NoResults(t *testing.T) {
 	service := NewApplication(mockDB, nil)
 
 	ctx := context.Background()
-	searchReq := UserSearchReq{
+	searchReq := models.UserSearchReq{
 		SearchTerm: "nonexistent",
 		Limit:      10,
 	}
@@ -283,7 +284,7 @@ func TestUpdateUserProfile_Success(t *testing.T) {
 		Valid: true,
 	}
 
-	req := UpdateProfileRequest{
+	req := models.UpdateProfileRequest{
 		UserId:      ct.Id(1),
 		Username:    ct.Username("newusername"),
 		FirstName:   ct.Name("NewFirst"),
@@ -322,7 +323,7 @@ func TestUpdateProfilePrivacy_Success(t *testing.T) {
 
 	ctx := context.Background()
 
-	req := UpdateProfilePrivacyRequest{
+	req := models.UpdateProfilePrivacyRequest{
 		UserId: ct.Id(1),
 		Public: false,
 	}
@@ -344,7 +345,7 @@ func TestUpdateProfilePrivacy_Error(t *testing.T) {
 
 	ctx := context.Background()
 
-	req := UpdateProfilePrivacyRequest{
+	req := models.UpdateProfilePrivacyRequest{
 		UserId: ct.Id(999),
 		Public: false,
 	}

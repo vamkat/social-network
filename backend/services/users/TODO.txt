@@ -1,0 +1,7 @@
+move models to shared
+
+use redis in hydrate (make client, set and get)
+basic_user_info:1
+
+να κουμπώσω intercepter στυλ users
+

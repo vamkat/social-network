@@ -4,11 +4,12 @@ import (
 	"context"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Application) GetPersonalizedFeed(ctx context.Context, req GetPersonalizedFeedReq) ([]Post, error) {
+func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPersonalizedFeedReq) ([]models.Post, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
@@ -28,12 +29,12 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req GetPersonaliz
 	if err != nil {
 		return nil, err
 	}
-	posts := make([]Post, 0, len(rows))
+	posts := make([]models.Post, 0, len(rows))
 	for _, r := range rows {
-		posts = append(posts, Post{
+		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
-			User: User{
+			User: models.User{
 				UserId: ct.Id(r.CreatorID),
 			},
 			CommentsCount:   int(r.CommentsCount),
@@ -52,7 +53,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req GetPersonaliz
 	return posts, nil
 }
 
-func (s *Application) GetPublicFeed(ctx context.Context, req EntityIdPaginatedReq) ([]Post, error) {
+func (s *Application) GetPublicFeed(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Post, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -64,12 +65,12 @@ func (s *Application) GetPublicFeed(ctx context.Context, req EntityIdPaginatedRe
 	if err != nil {
 		return nil, err
 	}
-	posts := make([]Post, 0, len(rows))
+	posts := make([]models.Post, 0, len(rows))
 	for _, r := range rows {
-		posts = append(posts, Post{
+		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
-			User: User{
+			User: models.User{
 				UserId: ct.Id(r.CreatorID),
 			},
 			CommentsCount:   int(r.CommentsCount),
@@ -89,7 +90,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req EntityIdPaginatedRe
 	return posts, nil
 }
 
-func (s *Application) GetUserPostsPaginated(ctx context.Context, req GetUserPostsReq) ([]Post, error) {
+func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetUserPostsReq) ([]models.Post, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
@@ -113,12 +114,12 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req GetUserPost
 	if len(rows) == 0 {
 		return nil, ErrNotFound
 	}
-	posts := make([]Post, 0, len(rows))
+	posts := make([]models.Post, 0, len(rows))
 	for _, r := range rows {
-		posts = append(posts, Post{
+		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
-			User: User{
+			User: models.User{
 				UserId: ct.Id(r.CreatorID),
 			},
 			CommentsCount:   int(r.CommentsCount),
@@ -138,7 +139,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req GetUserPost
 	return posts, nil
 }
 
-func (s *Application) GetGroupPostsPaginated(ctx context.Context, req GetGroupPostsReq) ([]Post, error) {
+func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.GetGroupPostsReq) ([]models.Post, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
@@ -168,12 +169,12 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req GetGroupPo
 	if len(rows) == 0 {
 		return nil, ErrNotFound
 	}
-	posts := make([]Post, 0, len(rows))
+	posts := make([]models.Post, 0, len(rows))
 	for _, r := range rows {
-		posts = append(posts, Post{
+		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
-			User: User{
+			User: models.User{
 				UserId: ct.Id(r.CreatorID),
 			},
 			GroupId:         req.GroupId,

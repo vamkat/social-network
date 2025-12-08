@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 )
 
-func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq) (err error) {
+func (s *Application) CreateComment(ctx context.Context, req models.CreateCommentReq) (err error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -50,7 +51,7 @@ func (s *Application) CreateComment(ctx context.Context, req CreateCommentReq) (
 
 }
 
-func (s *Application) EditComment(ctx context.Context, req EditCommentReq) error {
+func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -103,7 +104,7 @@ func (s *Application) EditComment(ctx context.Context, req EditCommentReq) error
 
 }
 
-func (s *Application) DeleteComment(ctx context.Context, req GenericReq) error {
+func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -135,7 +136,7 @@ func (s *Application) DeleteComment(ctx context.Context, req GenericReq) error {
 	return nil
 }
 
-func (s *Application) GetCommentsByParentId(ctx context.Context, req EntityIdPaginatedReq) ([]Comment, error) {
+func (s *Application) GetCommentsByParentId(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Comment, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
@@ -163,14 +164,14 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req EntityIdPag
 	if err != nil {
 		return nil, err
 	}
-	comments := make([]Comment, 0, len(rows))
+	comments := make([]models.Comment, 0, len(rows))
 
 	for _, r := range rows {
-		comments = append(comments, Comment{
+		comments = append(comments, models.Comment{
 			CommentId: ct.Id(r.ID),
 			ParentId:  req.EntityId,
 			Body:      ct.CommentBody(r.CommentBody),
-			User: User{
+			User: models.User{
 				UserId: ct.Id(r.CommentCreatorID),
 			},
 			ReactionsCount: int(r.ReactionsCount),

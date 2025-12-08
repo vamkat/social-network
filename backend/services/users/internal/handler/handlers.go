@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"social-network/services/users/internal/application"
 	pb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -27,7 +27,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 
-	user, err := s.Application.RegisterUser(ctx, application.RegisterUserRequest{
+	user, err := s.Application.RegisterUser(ctx, models.RegisterUserRequest{
 		Username:    ct.Username(req.GetUsername()),
 		FirstName:   ct.Name(req.GetFirstName()),
 		LastName:    ct.Name(req.GetLastName()),
@@ -67,7 +67,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb
 		return nil, err
 	}
 
-	user, err := s.Application.LoginUser(ctx, application.LoginRequest{
+	user, err := s.Application.LoginUser(ctx, models.LoginRequest{
 		Identifier: ct.Identifier(Identifier),
 		Password:   ct.Password(Password),
 	})
@@ -98,7 +98,7 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 		return nil, err
 	}
 
-	err := s.Application.UpdateUserPassword(ctx, application.UpdatePasswordRequest{
+	err := s.Application.UpdateUserPassword(ctx, models.UpdatePasswordRequest{
 		UserId:      ct.Id(userId),
 		NewPassword: ct.Password(newPassword),
 	})
@@ -123,7 +123,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 		return nil, err
 	}
 
-	err := s.Application.UpdateUserEmail(ctx, application.UpdateEmailRequest{
+	err := s.Application.UpdateUserEmail(ctx, models.UpdateEmailRequest{
 		UserId: ct.Id(userId),
 		Email:  ct.Email(newEmail),
 	})
@@ -151,7 +151,7 @@ func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagina
 		return nil, err
 	}
 
-	pag := application.Pagination{
+	pag := models.Pagination{
 		UserId: ct.Id(userId),
 		Limit:  ct.Limit(limit),
 		Offset: ct.Offset(offset),
@@ -180,7 +180,7 @@ func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagina
 		return nil, err
 	}
 
-	pag := application.Pagination{
+	pag := models.Pagination{
 		UserId: ct.Id(userId),
 		Limit:  ct.Limit(limit),
 		Offset: ct.Offset(offset),
@@ -208,7 +208,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 		return nil, err
 	}
 
-	resp, err := s.Application.FollowUser(ctx, application.FollowUserReq{
+	resp, err := s.Application.FollowUser(ctx, models.FollowUserReq{
 		FollowerId:   ct.Id(followerId),
 		TargetUserId: ct.Id(targetUserId),
 	})
@@ -237,7 +237,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 		return nil, err
 	}
 
-	resp, err := s.Application.UnFollowUser(ctx, application.FollowUserReq{
+	resp, err := s.Application.UnFollowUser(ctx, models.FollowUserReq{
 		FollowerId:   ct.Id(followerId),
 		TargetUserId: ct.Id(targetUserId),
 	})
@@ -265,7 +265,7 @@ func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFo
 
 	acc := req.GetAccept()
 
-	err := s.Application.HandleFollowRequest(ctx, application.HandleFollowRequestReq{
+	err := s.Application.HandleFollowRequest(ctx, models.HandleFollowRequestReq{
 		UserId:      ct.Id(userID),
 		RequesterId: ct.Id(RequesterId),
 		Accept:      acc,
@@ -327,7 +327,7 @@ func (s *UsersHandler) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagina
 		return nil, err
 	}
 
-	pag := application.Pagination{
+	pag := models.Pagination{
 		UserId: ct.Id(userId),
 		Limit:  ct.Limit(limit),
 		Offset: ct.Offset(offset),
@@ -356,7 +356,7 @@ func (s *UsersHandler) GetUserGroupsPaginated(ctx context.Context, req *pb.Pagin
 		return nil, err
 	}
 
-	pag := application.Pagination{
+	pag := models.Pagination{
 		UserId: ct.Id(userId),
 		Limit:  ct.Limit(limit),
 		Offset: ct.Offset(offset),
@@ -384,7 +384,7 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 		return nil, err
 	}
 
-	resp, err := s.Application.GetGroupInfo(ctx, application.GeneralGroupReq{
+	resp, err := s.Application.GetGroupInfo(ctx, models.GeneralGroupReq{
 		UserId:  ct.Id(userId),
 		GroupId: ct.Id(groupId),
 	})
@@ -425,7 +425,7 @@ func (s *UsersHandler) GetGroupMembers(ctx context.Context, req *pb.GroupMembers
 		return nil, err
 	}
 
-	resp, err := s.Application.GetGroupMembers(ctx, application.GroupMembersReq{
+	resp, err := s.Application.GetGroupMembers(ctx, models.GroupMembersReq{
 		UserId:  ct.Id(userId),
 		GroupId: ct.Id(groupId),
 		Limit:   ct.Limit(limit),
@@ -457,7 +457,7 @@ func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequ
 		return nil, err
 	}
 
-	resp, err := s.Application.SearchGroups(ctx, application.GroupSearchReq{
+	resp, err := s.Application.SearchGroups(ctx, models.GroupSearchReq{
 		UserId:     ct.Id(userId),
 		SearchTerm: ct.SearchTerm(search),
 		Limit:      ct.Limit(limit),
@@ -490,7 +490,7 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 		return nil, err
 	}
 
-	err := s.Application.InviteToGroup(ctx, application.InviteToGroupReq{
+	err := s.Application.InviteToGroup(ctx, models.InviteToGroupReq{
 		InviterId: ct.Id(inviterId),
 		InvitedId: ct.Id(invitedId),
 		GroupId:   ct.Id(groupId),
@@ -517,7 +517,7 @@ func (s *UsersHandler) RequestJoinGroupOrCancel(ctx context.Context, req *pb.Gro
 		return nil, err
 	}
 
-	err := s.Application.RequestJoinGroupOrCancel(ctx, application.GroupJoinRequest{
+	err := s.Application.RequestJoinGroupOrCancel(ctx, models.GroupJoinRequest{
 		GroupId:     ct.Id(groupId),
 		RequesterId: ct.Id(requesterId),
 	})
@@ -544,7 +544,7 @@ func (s *UsersHandler) RespondToGroupInvite(ctx context.Context, req *pb.HandleG
 
 	acc := req.Accepted
 
-	err := s.Application.RespondToGroupInvite(ctx, application.HandleGroupInviteRequest{
+	err := s.Application.RespondToGroupInvite(ctx, models.HandleGroupInviteRequest{
 		GroupId:   ct.Id(groupId),
 		InvitedId: ct.Id(InvitedId),
 		Accepted:  acc,
@@ -578,7 +578,7 @@ func (s *UsersHandler) HandleGroupJoinRequest(ctx context.Context, req *pb.Handl
 
 	acc := req.Accepted
 
-	err := s.Application.HandleGroupJoinRequest(ctx, application.HandleJoinRequest{
+	err := s.Application.HandleGroupJoinRequest(ctx, models.HandleJoinRequest{
 		GroupId:     ct.Id(groupId),
 		RequesterId: ct.Id(RequesterId),
 		OwnerId:     ct.Id(ownerId),
@@ -605,7 +605,7 @@ func (s *UsersHandler) LeaveGroup(ctx context.Context, req *pb.GeneralGroupReque
 		return nil, err
 	}
 
-	err := s.Application.LeaveGroup(ctx, application.GeneralGroupReq{
+	err := s.Application.LeaveGroup(ctx, models.GeneralGroupReq{
 		UserId:  ct.Id(userId),
 		GroupId: ct.Id(groupId),
 	})
@@ -640,7 +640,7 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 		return nil, err
 	}
 
-	resp, err := s.Application.CreateGroup(ctx, application.CreateGroupRequest{
+	resp, err := s.Application.CreateGroup(ctx, models.CreateGroupRequest{
 		OwnerId:          ct.Id(OwnerId),
 		GroupTitle:       ct.Title(GroupTitle),
 		GroupDescription: ct.About(GroupDescription),
@@ -690,7 +690,7 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 		return nil, err
 	}
 
-	userProfileRequest := application.UserProfileRequest{
+	userProfileRequest := models.UserProfileRequest{
 		UserId:      ct.Id(req.GetUserId()),
 		RequesterId: ct.Id(req.GetRequesterId()),
 	}
@@ -738,7 +738,7 @@ func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchReques
 		return nil, err
 	}
 
-	resp, err := s.Application.SearchUsers(ctx, application.UserSearchReq{
+	resp, err := s.Application.SearchUsers(ctx, models.UserSearchReq{
 		SearchTerm: ct.SearchTerm(SearchTerm),
 		Limit:      ct.Limit(limit),
 	})
@@ -758,7 +758,7 @@ func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProf
 		return nil, err
 	}
 
-	resp, err := s.Application.UpdateUserProfile(ctx, application.UpdateProfileRequest{
+	resp, err := s.Application.UpdateUserProfile(ctx, models.UpdateProfileRequest{
 		UserId:      ct.Id(userId),
 		Username:    ct.Username(req.GetUsername()),
 		FirstName:   ct.Name(req.GetFirstName()),
@@ -800,7 +800,7 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 
 	public := req.Public
 
-	err := s.Application.UpdateProfilePrivacy(ctx, application.UpdateProfilePrivacyRequest{
+	err := s.Application.UpdateProfilePrivacy(ctx, models.UpdateProfilePrivacyRequest{
 		UserId: ct.Id(userId),
 		Public: public,
 	})
@@ -811,7 +811,7 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 }
 
 // CONVERTORS
-func usersToPB(dbUsers []application.User) *pb.ListUsers {
+func usersToPB(dbUsers []models.User) *pb.ListUsers {
 	pbUsers := make([]*pb.User, 0, len(dbUsers))
 
 	for _, u := range dbUsers {
@@ -825,7 +825,7 @@ func usersToPB(dbUsers []application.User) *pb.ListUsers {
 	return &pb.ListUsers{Users: pbUsers}
 }
 
-func groupsToPb(groups []application.Group) *pb.GroupArr {
+func groupsToPb(groups []models.Group) *pb.GroupArr {
 	pbGroups := make([]*pb.Group, 0, len(groups))
 	for _, g := range groups {
 		pbGroups = append(pbGroups, &pb.Group{
@@ -846,7 +846,7 @@ func groupsToPb(groups []application.Group) *pb.GroupArr {
 	}
 }
 
-func groupUsersToPB(users []application.GroupUser) *pb.GroupUserArr {
+func groupUsersToPB(users []models.GroupUser) *pb.GroupUserArr {
 	out := &pb.GroupUserArr{
 		GroupUserArr: make([]*pb.GroupUser, 0, len(users)),
 	}

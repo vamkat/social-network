@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 )
 
 // Returns five random ids that fit one of the following criteria:
@@ -13,7 +14,7 @@ import (
 // Users who liked the same posts as you
 // Users who commented on the same posts as you
 // Actual Basic User Info will be retrieved by HANDLER from users
-func (s *Application) SuggestUsersByPostActivity(ctx context.Context, req SimpleIdReq) (ct.Ids, error) {
+func (s *Application) SuggestUsersByPostActivity(ctx context.Context, req models.SimpleIdReq) (ct.Ids, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}

@@ -7,9 +7,9 @@ package handler
 import (
 	"context"
 	"fmt"
-	"social-network/services/posts/internal/application"
 	pb "social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -25,7 +25,7 @@ func (s *PostsHandler) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	err := s.Application.CreatePost(ctx, application.CreatePostReq{
+	err := s.Application.CreatePost(ctx, models.CreatePostReq{
 		CreatorId:   ct.Id(req.CreatorId),
 		Body:        ct.PostBody(req.Body),
 		GroupId:     ct.Id(req.GroupId),
@@ -45,7 +45,7 @@ func (s *PostsHandler) DeletePost(ctx context.Context, req *pb.GenericReq) (*emp
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	err := s.Application.DeletePost(ctx, application.GenericReq{
+	err := s.Application.DeletePost(ctx, models.GenericReq{
 		RequesterId: ct.Id(req.RequesterId),
 		EntityId:    ct.Id(req.EntityId),
 	})
@@ -61,7 +61,7 @@ func (s *PostsHandler) EditPost(ctx context.Context, req *pb.EditPostReq) (*empt
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	err := s.Application.EditPost(ctx, application.EditPostReq{
+	err := s.Application.EditPost(ctx, models.EditPostReq{
 		RequesterId: ct.Id(req.RequesterId),
 		PostId:      ct.Id(req.PostId),
 		NewBody:     ct.PostBody(req.Body),
@@ -82,7 +82,7 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 
-	post, err := s.Application.GetMostPopularPostInGroup(ctx, application.SimpleIdReq{
+	post, err := s.Application.GetMostPopularPostInGroup(ctx, models.SimpleIdReq{
 		Id: ct.Id(req.Id),
 	})
 	if err != nil {

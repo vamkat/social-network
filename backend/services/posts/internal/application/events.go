@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Application) CreateEvent(ctx context.Context, req CreateEventReq) error {
+func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -43,7 +44,7 @@ func (s *Application) CreateEvent(ctx context.Context, req CreateEventReq) error
 	return nil
 }
 
-func (s *Application) DeleteEvent(ctx context.Context, req GenericReq) error {
+func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -76,7 +77,7 @@ func (s *Application) DeleteEvent(ctx context.Context, req GenericReq) error {
 	return nil
 }
 
-func (s *Application) EditEvent(ctx context.Context, req EditEventReq) error {
+func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -136,7 +137,7 @@ func (s *Application) EditEvent(ctx context.Context, req EditEventReq) error {
 
 }
 
-func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPaginatedReq) ([]Event, error) {
+func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Event, error) {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
@@ -163,14 +164,14 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPagina
 	if err != nil {
 		return nil, nil
 	}
-	events := make([]Event, 0, len(rows))
+	events := make([]models.Event, 0, len(rows))
 	for _, r := range rows {
 
-		events = append(events, Event{
+		events = append(events, models.Event{
 			EventId: ct.Id(r.ID),
 			Title:   ct.Title(r.EventTitle),
 			Body:    ct.EventBody(r.EventBody),
-			User: User{
+			User: models.User{
 				UserId: ct.Id(r.EventCreatorID),
 			},
 			GroupId:       ct.Id(r.GroupID),
@@ -191,7 +192,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req EntityIdPagina
 	return events, nil
 }
 
-func (s *Application) RespondToEvent(ctx context.Context, req RespondToEventReq) error {
+func (s *Application) RespondToEvent(ctx context.Context, req models.RespondToEventReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -224,7 +225,7 @@ func (s *Application) RespondToEvent(ctx context.Context, req RespondToEventReq)
 	return nil
 }
 
-func (s *Application) RemoveEventResponse(ctx context.Context, req GenericReq) error {
+func (s *Application) RemoveEventResponse(ctx context.Context, req models.GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err

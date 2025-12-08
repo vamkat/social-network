@@ -7,6 +7,7 @@ import (
 
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -25,7 +26,7 @@ func TestUpdateUserPassword_Success(t *testing.T) {
 	newPassword := "newpassword"
 	storedPassword := "oldpassword"
 
-	req := UpdatePasswordRequest{
+	req := models.UpdatePasswordRequest{
 		UserId:      ct.Id(1),
 		OldPassword: ct.Password(oldPassword),
 		NewPassword: ct.Password(newPassword),
@@ -51,7 +52,7 @@ func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
 	correctPassword := "correctpassword"
 	hashedCorrect, _ := bcrypt.GenerateFromPassword([]byte(correctPassword), bcrypt.DefaultCost)
 
-	req := UpdatePasswordRequest{
+	req := models.UpdatePasswordRequest{
 		UserId:      ct.Id(1),
 		OldPassword: ct.Password("wrongpassword"),
 		NewPassword: ct.Password("newpassword"),
@@ -71,7 +72,7 @@ func TestUpdateUserEmail_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewApplication(mockDB, nil)
 
-	req := UpdateEmailRequest{
+	req := models.UpdateEmailRequest{
 		UserId: ct.Id(1),
 		Email:  ct.Email("newemail@example.com"),
 	}
@@ -93,7 +94,7 @@ func TestUpdateUserEmail_Error(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewApplication(mockDB, nil)
 
-	req := UpdateEmailRequest{
+	req := models.UpdateEmailRequest{
 		UserId: ct.Id(1),
 		Email:  ct.Email("duplicate@example.com"),
 	}

@@ -4,9 +4,10 @@ import (
 	"context"
 	"social-network/services/posts/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 )
 
-func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq) error {
+func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.GenericReq) error {
 
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
@@ -37,6 +38,6 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req GenericReq
 }
 
 // SKIP FOR NOW
-func (s *Application) GetWhoLikedEntityId(ctx context.Context, req GenericReq) ([]int64, error) {
+func (s *Application) GetWhoLikedEntityId(ctx context.Context, req models.GenericReq) ([]int64, error) {
 	return nil, nil
 }
