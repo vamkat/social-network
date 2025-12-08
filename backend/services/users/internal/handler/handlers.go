@@ -26,7 +26,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-
+	fmt.Println("password on Register handler", req.Password)
 	user, err := s.Application.RegisterUser(ctx, application.RegisterUserRequest{
 		Username:    ct.Username(req.GetUsername()),
 		FirstName:   ct.Name(req.GetFirstName()),
@@ -66,6 +66,8 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb
 	if err := invalidString("pass", Password); err != nil {
 		return nil, err
 	}
+
+	fmt.Println("password on login handler", Password)
 
 	user, err := s.Application.LoginUser(ctx, application.LoginRequest{
 		Identifier: ct.Identifier(Identifier),

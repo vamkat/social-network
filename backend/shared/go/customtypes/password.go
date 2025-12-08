@@ -29,17 +29,20 @@ func (p *Password) UnmarshalJSON(data []byte) error {
 		return errors.Join(ErrValidation, errors.New("password is required"))
 	}
 
+	*p = Password(raw)
+	return nil
+}
+
+func (p Password) Hash() (Password, error) {
 	secret := os.Getenv("PASSWORD_SECRET")
 	if secret == "" {
-		return errors.Join(ErrValidation, errors.New("missing env var PASSWORD_SECRET"))
+		return "", errors.Join(ErrValidation, errors.New("missing env var PASSWORD_SECRET"))
 	}
 
 	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte(raw))
-	hashed := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-
-	*p = Password(hashed)
-	return nil
+	mac.Write([]byte(p))
+	p = Password(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+	return p, nil
 }
 
 func (p Password) IsValid() bool {

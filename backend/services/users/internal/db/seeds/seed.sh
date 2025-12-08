@@ -9,6 +9,6 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-psql "$DATABASE_URL" -f /app/seeds/seed.sql
+# psql "$DATABASE_URL" -f /app/seeds/seed.sql
 
 echo "Seeding complete!"

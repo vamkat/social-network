@@ -33,12 +33,18 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			return
 		}
 
+		httpReq.Password, err = httpReq.Password.Hash()
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			return
+		}
+
 		//VALIDATE INPUT
 		if err := ct.ValidateStruct(httpReq); err != nil {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
+		fmt.Println("password", httpReq.Password.String())
 		//MAKE GRPC REQUEST
 		gRpcReq := users.LoginRequest{
 			Identifier: httpReq.Identifier.String(),
@@ -133,6 +139,14 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 		}
 
+		fmt.Println("Pass on register", ct.Password(r.FormValue("password")))
+
+		password, err := ct.Password(r.FormValue("password")).Hash()
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			return
+		}
+
 		// Extract form fields
 		httpReq := registerHttpRequest{
 			Username:    ct.Username(r.FormValue("username")),
@@ -142,7 +156,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			About:       ct.About(r.FormValue("about")),
 			Public:      r.FormValue("public") == "true",
 			Email:       ct.Email(r.FormValue("email")),
-			Password:    ct.Password(r.FormValue("password")),
+			Password:    password,
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {

@@ -10,9 +10,6 @@ type Validator interface {
 	Validate() error
 }
 
-// type alias:
-type CtxKey = string // context key type ALIAS in order to help enforcing a single source of truth for key namings
-
 // new types
 type About string          // Can be used for bio or descritpion. About is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
 type Audience string       // Can be used for post, comment, event body. Audience is a nullable field. If `validation:"nullable"` tag is present zero values don't return error.
