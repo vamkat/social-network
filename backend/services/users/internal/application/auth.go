@@ -83,7 +83,7 @@ func (s *Application) LoginUser(ctx context.Context, req LoginRequest) (User, er
 		}
 
 		if !checkPassword(row.PasswordHash, req.Password.String()) {
-			return err
+			return ErrWrongCredentials
 		}
 		return nil
 	})

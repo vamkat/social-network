@@ -45,6 +45,8 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			Password:   httpReq.Password.String(),
 		}
 
+		fmt.Println(httpReq.Password.String())
+
 		resp, err := h.Services.Users.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())

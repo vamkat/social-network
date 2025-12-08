@@ -8,29 +8,31 @@
 -------------------------------------------------------
 -- Users
 -------------------------------------------------------
-INSERT INTO users (id, username, first_name, last_name, date_of_birth, avatar_id, about_me, profile_public, current_status)
+INSERT INTO users (username, first_name, last_name, date_of_birth, avatar_id, about_me, profile_public, current_status)
 OVERRIDING SYSTEM VALUE
 VALUES
-(1, 'alice', 'Alice', 'Wonder', '1990-01-01', 1, 'Love nature and outdoor activities', TRUE, 'active'),
-(2, 'bob', 'Bob', 'Builder', '1992-02-02', 2, 'Professional builder and contractor', FALSE, 'active'),
-(3, 'charlie', 'Charlie', 'Day', '1991-03-03', 3, 'Gamer and tech enthusiast', TRUE, 'active'),
-(4, 'diana', 'Diana', 'Prince', '1988-04-04', 4, 'Entrepreneur and business owner', TRUE, 'active'),
-(5, 'eve', 'Eve', 'Hacker', '1995-05-05', 5, 'Security researcher', FALSE, 'active'),
-(6, 'frank', 'Frank', 'Ocean', '1994-06-06', 6, 'Music producer and artist', TRUE, 'active'),
-(7, 'grace', 'Grace', 'Hopper', '1985-07-07', 7, 'Software engineer and mentor', TRUE, 'active'),
-(8, 'henry', 'Henry', 'Ford', '1986-08-08', 8, 'Automotive engineer', FALSE, 'active'),
-(9, 'ivy', 'Ivy', 'Green', '1993-09-09', 9, 'Environmental activist', TRUE, 'active'),
-(10, 'jack', 'Jack', 'Black', '1990-10-10', 10, 'Actor and musician', TRUE, 'active')
+('alice', 'Alice', 'Wonder', '1990-01-01', 1, 'Love nature and outdoor activities', TRUE, 'active'),
+('bob', 'Bob', 'Builder', '1992-02-02', 2, 'Professional builder and contractor', FALSE, 'active'),
+('charlie', 'Charlie', 'Day', '1991-03-03', 3, 'Gamer and tech enthusiast', TRUE, 'active'),
+('diana', 'Diana', 'Prince', '1988-04-04', 4, 'Entrepreneur and business owner', TRUE, 'active'),
+('eve', 'Eve', 'Hacker', '1995-05-05', 5, 'Security researcher', FALSE, 'active'),
+('frank', 'Frank', 'Ocean', '1994-06-06', 6, 'Music producer and artist', TRUE, 'active'),
+('grace', 'Grace', 'Hopper', '1985-07-07', 7, 'Software engineer and mentor', TRUE, 'active'),
+('henry', 'Henry', 'Ford', '1986-08-08', 8, 'Automotive engineer', FALSE, 'active'),
+('ivy', 'Ivy', 'Green', '1993-09-09', 9, 'Environmental activist', TRUE, 'active'),
+('jack', 'Jack', 'Black', '1990-10-10', 10, 'Actor and musician', TRUE, 'active')
 ON CONFLICT (id) DO NOTHING;
 
 -------------------------------------------------------
 -- Auth Records (fake passwords)
 -------------------------------------------------------
 INSERT INTO auth_user (user_id, email, password_hash)
-SELECT id, LOWER(username) || '@example.com', 'hash'
-FROM users
-WHERE id IN (1,2,3,4,5,6,7,8,9,10)
-ON CONFLICT (user_id) DO NOTHING;
+SELECT u.id,
+       LOWER(u.username) || '@example.com' AS email,
+       'hash' AS password_hash
+FROM users u
+LEFT JOIN auth_user a ON a.user_id = u.id
+WHERE a.user_id IS NULL;  
 
 -------------------------------------------------------
 -- Follow relationships (direct)
