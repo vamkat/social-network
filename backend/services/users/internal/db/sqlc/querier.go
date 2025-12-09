@@ -16,6 +16,7 @@ type Querier interface {
 	AcceptGroupJoinRequest(ctx context.Context, arg AcceptGroupJoinRequestParams) error
 	AddGroupOwnerAsMember(ctx context.Context, arg AddGroupOwnerAsMemberParams) error
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
+	AreFollowingEachOther(ctx context.Context, arg AreFollowingEachOtherParams) (AreFollowingEachOtherRow, error)
 	BanUser(ctx context.Context, arg BanUserParams) error
 	CancelGroupInvite(ctx context.Context, arg CancelGroupInviteParams) error
 	CancelGroupJoinRequest(ctx context.Context, arg CancelGroupJoinRequestParams) error
@@ -46,7 +47,6 @@ type Querier interface {
 	InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthParams) error
 	IsFollowRequestPending(ctx context.Context, arg IsFollowRequestPendingParams) (bool, error)
 	IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error)
-	IsFollowingEither(ctx context.Context, arg IsFollowingEitherParams) (bool, error)
 	IsGroupMembershipPending(ctx context.Context, arg IsGroupMembershipPendingParams) (pgtype.Bool, error)
 	IsUserGroupMember(ctx context.Context, arg IsUserGroupMemberParams) (bool, error)
 	IsUserGroupOwner(ctx context.Context, arg IsUserGroupOwnerParams) (bool, error)

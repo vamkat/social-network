@@ -72,19 +72,20 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 	if err != nil {
 		return models.FollowUserResp{}, err
 	}
-	if status == "requested" { //I don't love hardcoding this, we'll see
+	if status == "requested" { //Profile was private, request sent
 		resp.IsPending = true
 		resp.ViewerIsFollowing = false
+		//TODO CREATE NOTIFICATION EVENT
 	} else {
 		resp.IsPending = false
 		resp.ViewerIsFollowing = true
-	}
 
-	//try and create conversation in chat service if none exists
-	//condition that at least one user follows the other is checked before call is made
-	err = s.createPrivateConversation(ctx, req)
-	if err != nil {
-		fmt.Println("conversation couldn't be created", err)
+		//try and create conversation in chat service if none exists
+		//condition that exactly one user follows the other is checked before call is made
+		err = s.createPrivateConversation(ctx, req)
+		if err != nil {
+			fmt.Println("conversation couldn't be created", err)
+		}
 	}
 
 	return resp, nil
@@ -105,7 +106,6 @@ func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq
 	return true, nil
 }
 
-// CHAT SERVICE EVENT accepting a follow request should also trigger event to create conversation
 func (s *Application) HandleFollowRequest(ctx context.Context, req models.HandleFollowRequestReq) error {
 	var err error
 	if err := ct.ValidateStruct(req); err != nil {
@@ -121,7 +121,7 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 		}
 
 		//try and create conversation in chat service if none exists
-		//condition that at least one user follows the other is checked before call is made
+		//condition that exactly one user follows the other is checked before call is made
 		err = s.createPrivateConversation(ctx, models.FollowUserReq{
 			FollowerId:   req.RequesterId,
 			TargetUserId: req.UserId,
@@ -205,27 +205,42 @@ func (s *Application) IsFollowing(ctx context.Context, req models.FollowUserReq)
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) isFollowingEither(ctx context.Context, req models.FollowUserReq) (bool, error) {
+// returns a bool pointer. Nil: neither is following the other, false: one is following the other, true: both are following each other
+func (s *Application) areFollowingEachOther(ctx context.Context, req models.FollowUserReq) (*bool, error) {
+	var mutualFollow *bool // default: nil
 	if err := ct.ValidateStruct(req); err != nil {
-		return false, err
+		return nil, err
 	}
 
-	atLeastOneIsFollowing, err := s.db.IsFollowingEither(ctx, sqlc.IsFollowingEitherParams{
+	row, err := s.db.AreFollowingEachOther(ctx, sqlc.AreFollowingEachOtherParams{
 		FollowerID:  req.FollowerId.Int64(),
 		FollowingID: req.TargetUserId.Int64(),
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return atLeastOneIsFollowing, nil
+	if row.User1FollowsUser2 && row.User2FollowsUser1 { //both follow each other
+
+		v := true
+		mutualFollow = &v
+		return mutualFollow, nil
+	}
+
+	if row.User1FollowsUser2 || row.User2FollowsUser1 { //one follows the other
+
+		v := false
+		mutualFollow = &v
+		return mutualFollow, nil
+	}
+	return nil, nil //neither follows the other
 }
 
 func (s *Application) createPrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-	atLeastOneIsFollowing, err := s.isFollowingEither(ctx, req)
+	atLeastOneIsFollowing, err := s.areFollowingEachOther(ctx, req)
 	if err != nil {
 		return err
 	}
-	if atLeastOneIsFollowing {
+	if atLeastOneIsFollowing != nil && !*atLeastOneIsFollowing { //I need exactly one follower, so false
 		err := s.clients.CreatePrivateConversation(ctx, req.FollowerId.Int64(), req.TargetUserId.Int64())
 		if err != nil {
 			return err

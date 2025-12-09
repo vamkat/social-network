@@ -177,9 +177,12 @@ func (m *MockQuerier) GetMutualFollowers(ctx context.Context, arg sqlc.GetMutual
 	return args.Get(0).([]sqlc.GetMutualFollowersRow), args.Error(1)
 }
 
-func (m *MockQuerier) IsFollowingEither(ctx context.Context, arg sqlc.IsFollowingEitherParams) (bool, error) {
+func (m *MockQuerier) AreFollowingEachOther(ctx context.Context, arg sqlc.AreFollowingEachOtherParams) (sqlc.AreFollowingEachOtherRow, error) {
 	args := m.Called(ctx, arg)
-	return args.Bool(0), args.Error(1)
+	if args.Get(0) == nil {
+		return sqlc.AreFollowingEachOtherRow{}, args.Error(1)
+	}
+	return args.Get(0).(sqlc.AreFollowingEachOtherRow), args.Error(1)
 }
 
 func (m *MockQuerier) GetFollowSuggestions(ctx context.Context, followerID int64) ([]sqlc.GetFollowSuggestionsRow, error) {

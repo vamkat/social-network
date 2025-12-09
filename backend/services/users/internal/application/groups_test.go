@@ -324,7 +324,8 @@ func TestSearchGroups_Success(t *testing.T) {
 
 func TestCreateGroup_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewApplication(mockDB, nil, nil)
+	mockClients := new(MockClients)
+	service := NewApplicationWithMocks(mockDB, mockClients)
 
 	ctx := context.Background()
 	req := models.CreateGroupRequest{
@@ -339,6 +340,9 @@ func TestCreateGroup_Success(t *testing.T) {
 		GroupDescription: "New Description",
 	}).Return(int64(5), nil)
 
+	// expect CreateGroupConversation to be called but return nil
+	mockClients.On("CreateGroupConversation", ctx, int64(5), int64(1)).Return(nil)
+
 	groupID, err := service.CreateGroup(ctx, req)
 
 	assert.NoError(t, err)
@@ -348,7 +352,8 @@ func TestCreateGroup_Success(t *testing.T) {
 
 func TestCreateGroup_Error(t *testing.T) {
 	mockDB := new(MockQuerier)
-	service := NewApplication(mockDB, nil, nil)
+	mockClients := new(MockClients)
+	service := NewApplicationWithMocks(mockDB, mockClients)
 
 	ctx := context.Background()
 	req := models.CreateGroupRequest{
@@ -362,6 +367,9 @@ func TestCreateGroup_Error(t *testing.T) {
 		GroupTitle:       "New Group",
 		GroupDescription: "New Description",
 	}).Return(int64(0), errors.New("database error"))
+
+	// client shouldn't be called on DB error, but set expectation to be safe
+	mockClients.On("CreateGroupConversation", ctx, int64(0), int64(1)).Return(nil)
 
 	_, err := service.CreateGroup(ctx, req)
 

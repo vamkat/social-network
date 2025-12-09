@@ -157,6 +157,12 @@ func TestFollowUser_Immediate(t *testing.T) {
 		PTarget:   2,
 	}).Return("accepted", nil)
 
+	// ensure AreFollowingEachOther is mocked so createPrivateConversation doesn't trigger an unexpected call
+	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
+		FollowerID:  1,
+		FollowingID: 2,
+	}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: false, User2FollowsUser1: false}, nil)
+
 	resp, err := service.FollowUser(ctx, req)
 
 	assert.NoError(t, err)
@@ -268,6 +274,12 @@ func TestHandleFollowRequest_Accept(t *testing.T) {
 		RequesterID: 2,
 		TargetID:    1,
 	}).Return(nil)
+
+	// when accepting, the service may try to create a private conversation; mock AreFollowingEachOther
+	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
+		FollowerID:  2,
+		FollowingID: 1,
+	}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: false, User2FollowsUser1: false}, nil)
 
 	err := service.HandleFollowRequest(ctx, req)
 

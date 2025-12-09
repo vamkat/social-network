@@ -36,6 +36,44 @@ func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowReque
 	return err
 }
 
+const areFollowingEachOther = `-- name: AreFollowingEachOther :one
+WITH u1 AS (
+  SELECT EXISTS (
+    SELECT 1
+    FROM follows f
+    WHERE f.follower_id = $1 AND f.following_id = $2
+  ) AS user1_follows_user2
+),
+u2 AS (
+  SELECT EXISTS (
+    SELECT 1
+    FROM follows f
+    WHERE f.follower_id = $2 AND f.following_id = $1
+  ) AS user2_follows_user1
+)
+SELECT
+  u1.user1_follows_user2,
+  u2.user2_follows_user1
+FROM u1, u2
+`
+
+type AreFollowingEachOtherParams struct {
+	FollowerID  int64
+	FollowingID int64
+}
+
+type AreFollowingEachOtherRow struct {
+	User1FollowsUser2 bool
+	User2FollowsUser1 bool
+}
+
+func (q *Queries) AreFollowingEachOther(ctx context.Context, arg AreFollowingEachOtherParams) (AreFollowingEachOtherRow, error) {
+	row := q.db.QueryRow(ctx, areFollowingEachOther, arg.FollowerID, arg.FollowingID)
+	var i AreFollowingEachOtherRow
+	err := row.Scan(&i.User1FollowsUser2, &i.User2FollowsUser1)
+	return i, err
+}
+
 const followUser = `-- name: FollowUser :one
 SELECT follow_user($1, $2)
 `
@@ -363,27 +401,6 @@ func (q *Queries) IsFollowing(ctx context.Context, arg IsFollowingParams) (bool,
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
-}
-
-const isFollowingEither = `-- name: IsFollowingEither :one
-SELECT EXISTS (
-    SELECT 1
-    FROM follows
-    WHERE (follower_id = $1 AND following_id = $2)
-       OR (follower_id = $2 AND following_id = $1)
-) AS is_following_either
-`
-
-type IsFollowingEitherParams struct {
-	FollowerID  int64
-	FollowingID int64
-}
-
-func (q *Queries) IsFollowingEither(ctx context.Context, arg IsFollowingEitherParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isFollowingEither, arg.FollowerID, arg.FollowingID)
-	var is_following_either bool
-	err := row.Scan(&is_following_either)
-	return is_following_either, err
 }
 
 const rejectFollowRequest = `-- name: RejectFollowRequest :exec

@@ -52,13 +52,25 @@ SELECT EXISTS (
 );
 
 
--- name: IsFollowingEither :one
-SELECT EXISTS (
+-- name: AreFollowingEachOther :one
+WITH u1 AS (
+  SELECT EXISTS (
     SELECT 1
-    FROM follows
-    WHERE (follower_id = $1 AND following_id = $2)
-       OR (follower_id = $2 AND following_id = $1)
-) AS is_following_either;
+    FROM follows f
+    WHERE f.follower_id = $1 AND f.following_id = $2
+  ) AS user1_follows_user2
+),
+u2 AS (
+  SELECT EXISTS (
+    SELECT 1
+    FROM follows f
+    WHERE f.follower_id = $2 AND f.following_id = $1
+  ) AS user2_follows_user1
+)
+SELECT
+  u1.user1_follows_user2,
+  u2.user2_follows_user1
+FROM u1, u2;
 
 
 
