@@ -5,7 +5,7 @@
 // const PUBLIC_ROUTES = ['/', '/about', '/terms', '/privacy'];
 // const PROTECTED_ROUTES = ['/feed', '/profile', '/groups', '/messages', '/notifications', '/settings'];
 
-// export function middleware(request) {
+// export function proxy(request) {
 //     const { pathname } = request.nextUrl;
 
 //     // Get JWT cookie
