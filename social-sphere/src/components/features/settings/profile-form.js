@@ -92,7 +92,7 @@ export default function ProfileForm({ user }) {
                 <label className="form-label">About Me</label>
                 <textarea
                     name="about"
-                    defaultValue={user?.AboutMe}
+                    defaultValue={user?.about}
                     rows={4}
                     className="form-input resize-none"
                     placeholder="Tell us about yourself..."

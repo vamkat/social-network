@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Link as LinkIcon, Lock, Globe, UserPlus, UserCheck, UserMinus, MoreHorizontal } from "lucide-react";
+import { Calendar, Link as Lock, Globe, UserPlus, UserCheck, UserMinus, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import ProfileStats from "./profile-stats";
 import { toggleFollowUser, togglePrivacy } from "@/services/profile/profile-actions";
@@ -7,7 +7,7 @@ import Modal from "@/components/ui/modal";
 
 export default function ProfileHeader({ user, isOwnProfile }) {
     const [isFollowing, setIsFollowing] = useState(user.isFollower);
-    const [isPublic, setIsPublic] = useState(user.publicProf);
+    const [isPublic, setIsPublic] = useState(user.public);
     const [isHovering, setIsHovering] = useState(false);
     const [isPrivacyHovering, setIsPrivacyHovering] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function ProfileHeader({ user, isOwnProfile }) {
         try {
             // Optimistic update
             setIsFollowing(!isFollowing);
-            await toggleFollowUser(user.Username);
+            await toggleFollowUser(user.username);
         } catch (error) {
             // Revert on error
             setIsFollowing(!isFollowing);
@@ -40,7 +40,7 @@ export default function ProfileHeader({ user, isOwnProfile }) {
         try {
             // Optimistic update
             setIsPublic(!isPublic);
-            await togglePrivacy(user.Username);
+            await togglePrivacy(user.username);
         } catch (error) {
             // Revert on error
             setIsPublic(!isPublic);
@@ -60,16 +60,16 @@ export default function ProfileHeader({ user, isOwnProfile }) {
                         {/* Avatar */}
                         <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-(--background) shadow-sm shrink-0">
                             <div className="w-full h-full rounded-full overflow-hidden bg-(--muted)/10 relative">
-                                {user.Avatar ? (
+                                {user.avatar ? (
                                     <Image
-                                        src={user.Avatar}
-                                        alt={user.Username}
+                                        src={user.avatar}
+                                        alt={user.username}
                                         fill
                                         className="object-cover"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 text-5xl font-bold text-(--muted)">
-                                        {user.firstName?.[0]}
+                                        {user.first_name?.[0]}
                                     </div>
                                 )}
                             </div>
@@ -81,24 +81,24 @@ export default function ProfileHeader({ user, isOwnProfile }) {
                             <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
                                 <div>
                                     <h1 className="text-3xl font-bold text-(--foreground) tracking-tight mb-1">
-                                        {user.firstName} {user.lastName}
+                                        {user.first_name} {user.last_name}
                                     </h1>
-                                    <p className="text-(--muted) font-medium text-lg">@{user.Username}</p>
+                                    <p className="text-(--muted) font-medium text-lg">@{user.username}</p>
                                 </div>
                                 {showStats && (
                                     <ProfileStats stats={{
-                                        followers: user.FollowersNum,
-                                        following: user.FollowingNum,
-                                        groups: user.GroupsNum
+                                        followers: user.followers_count,
+                                        following: user.following_count,
+                                        groups: user.groups_count
                                     }} />
                                 )}
                             </div>
 
                             {/* Middle: Bio */}
-                            {user.AboutMe && (
+                            {user.about && (
                                 <div className="mb-8 max-w-2xl">
                                     <p className="text-(--foreground)/80 leading-relaxed whitespace-pre-wrap text-[15px]">
-                                        {user.AboutMe}
+                                        {user.about}
                                     </p>
                                 </div>
                             )}
@@ -109,7 +109,7 @@ export default function ProfileHeader({ user, isOwnProfile }) {
                                 <div className="flex flex-wrap items-center gap-6 text-sm text-(--muted)">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4" />
-                                        <span>Joined {new Date(user.CreatedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+                                        <span>Joined {new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
                                     </div>
                                 </div>
 
@@ -120,7 +120,7 @@ export default function ProfileHeader({ user, isOwnProfile }) {
                                             onClick={handlePrivacyToggle}
                                             onMouseEnter={() => setIsPrivacyHovering(true)}
                                             onMouseLeave={() => setIsPrivacyHovering(false)}
-                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 overflow-hidden cursor-pointer border ${isPublic
+                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 overflow-hidden cursor-pointer border ${isPublic
                                                 ? "bg-green-500/5 text-green-600 border-green-500/20 hover:bg-green-500/10"
                                                 : "bg-(--muted)/5 text-(--muted) border-(--border) hover:bg-(--muted)/10"
                                                 }`}
