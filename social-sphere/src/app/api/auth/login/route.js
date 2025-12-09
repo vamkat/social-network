@@ -1,49 +1,58 @@
 import { NextResponse } from 'next/server';
-import { validateLoginForm } from '@/lib/validation';
 
 export async function POST(request) {
     try {
-        const payload = await request.json();
-
-        // Validate payload
-        const formData = new FormData();
-        if (payload.identifier) formData.append("identifier", payload.identifier);
-        if (payload.password) formData.append("password", payload.password);
-
-        const validation = validateLoginForm(formData);
-        if (!validation.valid) {
-            return NextResponse.json(
-                { error: validation.error },
-                { status: 400 }
-            );
-        }
-
+        const body = await request.json();
+        
         const apiBase = process.env.API_BASE || "http://localhost:8081";
         const loginEndpoint = process.env.LOGIN || "/login";
 
+        // Call Golang backend
         const backendResponse = await fetch(`${apiBase}${loginEndpoint}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(body),
         });
 
         const responseData = await backendResponse.json().catch(() => null);
         const setCookieHeader = backendResponse.headers.get('set-cookie');
 
-        console.log(responseData);
+        console.log("Login response data:", responseData);
+        console.log("Set-Cookie header:", setCookieHeader);
 
+        // Create response
         const response = NextResponse.json(
             responseData || { error: "Login failed" },
             { status: backendResponse.status }
         );
 
+        // Forward the backend cookie to the browser (same as registration)
         if (setCookieHeader) {
-            const modifiedCookie = setCookieHeader.includes('Domain=')
-                ? setCookieHeader
-                : setCookieHeader + '; Domain=localhost';
-            response.headers.set('Set-Cookie', modifiedCookie);
+            const cookieParts = setCookieHeader.split(';').map(part => part.trim());
+            const [nameValue] = cookieParts;
+            const [name, value] = nameValue.split('=');
+
+            const attributes = {};
+            cookieParts.slice(1).forEach(part => {
+                const [key, val] = part.split('=');
+                attributes[key.toLowerCase()] = val || true;
+            });
+
+            const cookieOptions = {
+                path: attributes.path || '/',
+                httpOnly: attributes.httponly === true,
+                secure: attributes.secure === true,
+                domain: 'localhost',
+            };
+
+            if (attributes.expires) {
+                cookieOptions.expires = new Date(attributes.expires);
+            }
+
+            response.cookies.set(name, value, cookieOptions);
+            console.log("Cookie set:", name);
         }
 
         return response;

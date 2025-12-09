@@ -9,13 +9,16 @@ export async function POST(request) {
 
         const avatarFile = formData.get('avatar');
         const validation = validateRegistrationForm(formData, avatarFile);
-        
+
         if (!validation.valid) {
             return NextResponse.json(
                 { error: validation.error },
                 { status: 400 }
             );
         }
+
+        // register with a public profile
+        formData.append('public', 'true');
 
         const apiBase = process.env.API_BASE || "http://localhost:8081";
         const registerEndpoint = process.env.REGISTER || "/register";

@@ -20,6 +20,7 @@ export async function POST(request) {
         const responseData = await backendResponse.json().catch(() => null);
         const setCookieHeader = backendResponse.headers.get('set-cookie');
 
+        console.log("responseData:",responseData);
         const response = NextResponse.json(
             responseData || { error: "Logout failed" },
             { status: backendResponse.status }
