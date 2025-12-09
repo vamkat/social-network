@@ -229,7 +229,7 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 	if err != nil {
 		return err
 	}
-
+	//TODO CREATE NOTIFICATION EVENT
 	return nil
 }
 
@@ -246,6 +246,7 @@ func (s *Application) CancelInviteToGroup(ctx context.Context, req models.Invite
 	if err != nil {
 		return err
 	}
+	//TODO REMOVE NOTIFICATION EVENT
 	return nil
 }
 
@@ -261,7 +262,7 @@ func (s *Application) RequestJoinGroupOrCancel(ctx context.Context, req models.G
 	if err != nil {
 		return err
 	}
-
+	//TODO CREATE NOTIFICATION EVENT
 	return nil
 }
 
@@ -277,6 +278,7 @@ func (s *Application) CancelJoinGroupRequest(ctx context.Context, req models.Gro
 	if err != nil {
 		return err
 	}
+	//TODO REMOVE NOTIFICATION EVENT
 	return nil
 }
 

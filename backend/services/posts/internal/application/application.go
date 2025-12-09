@@ -4,6 +4,8 @@ import (
 	"context"
 	"social-network/services/posts/internal/client"
 	"social-network/services/posts/internal/db/sqlc"
+	redis_connector "social-network/shared/go/redis"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -17,7 +19,8 @@ type Application struct {
 
 type UserHydrator struct {
 	clients *client.Clients
-	//cache   RedisCache
+	cache   *redis_connector.RedisClient
+	ttl     time.Duration
 }
 
 // ClientsInterface defines the methods that Application needs from clients.
@@ -27,9 +30,11 @@ type ClientsInterface interface {
 	GetFollowingIds(ctx context.Context, userId int64) ([]int64, error)
 }
 
-func NewUserHydrator(clients *client.Clients) *UserHydrator {
+func NewUserHydrator(clients *client.Clients, cache *redis_connector.RedisClient, ttl time.Duration) *UserHydrator {
 	return &UserHydrator{
 		clients: clients,
+		cache:   cache,
+		ttl:     ttl,
 	}
 }
 
@@ -44,11 +49,13 @@ func NewApplication(db sqlc.Querier, pool *pgxpool.Pool, clients *client.Clients
 		txRunner = NewPgxTxRunner(pool, queries)
 	}
 
+	cache := redis_connector.NewRedisClient("localhost:6379", "", 0)
+
 	return &Application{
 		db:       db,
 		txRunner: txRunner,
 		clients:  clients,
-		hydrator: NewUserHydrator(clients),
+		hydrator: NewUserHydrator(clients, cache, 3*time.Minute),
 	}
 }
 
@@ -63,6 +70,6 @@ func NewApplicationWithMocksTx(db sqlc.Querier, clients ClientsInterface, txRunn
 		db:       db,
 		clients:  clients,
 		txRunner: txRunner,
-		hydrator: NewUserHydrator(clients.(*client.Clients)), // <- pass real type
+		//hydrator: NewUserHydrator(clients.(*client.Clients)), // <- pass real type
 	}
 }

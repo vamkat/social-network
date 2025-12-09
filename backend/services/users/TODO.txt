@@ -1,8 +1,4 @@
 
-use redis in hydrate (make client, set and get)
-basic_user_info:1
-
-
-calls to chat and notifications from users
+calls to chat (partly done) and notifications from users
 
 posts grpc handlers

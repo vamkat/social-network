@@ -9,6 +9,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// key for basic user info: "basic_user_info:<id>" Returns models.User
+
 var (
 	ErrNoConnection = errors.New("can't find redis")
 	ErrFailedTest1  = errors.New("failed special connection test 1")
