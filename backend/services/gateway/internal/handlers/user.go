@@ -46,22 +46,22 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 		fmt.Println("retrieved user profile: ", grpcResp)
 
 		type userProfile struct {
-			UserId            ct.EncryptedId `json:"user_id,omitempty"`
-			Username          ct.Username    `json:"username,omitempty"`
-			FirstName         ct.Name        `json:"first_name,omitempty"`
-			LastName          ct.Name        `json:"last_name,omitempty"`
-			DateOfBirth       ct.DateOfBirth `json:"date_of_birth,omitempty"`
+			UserId            ct.EncryptedId `json:"user_id"`
+			Username          ct.Username    `json:"username"`
+			FirstName         ct.Name        `json:"first_name"`
+			LastName          ct.Name        `json:"last_name"`
+			DateOfBirth       ct.DateOfBirth `json:"date_of_birth"`
 			Avatar            ct.EncryptedId `json:"avatar,omitempty"`
 			About             ct.About       `json:"about,omitempty"`
-			Public            bool           `json:"public,omitempty"`
-			CreatedAt         time.Time      `json:"created_at,omitempty"`
-			FollowersCount    int64          `json:"followers_count,omitempty"`
-			FollowingCount    int64          `json:"following_count,omitempty"`
-			GroupsCount       int64          `json:"groups_count,omitempty"`
-			OwnedGroupsCount  int64          `json:"owned_groups_count,omitempty"`
-			ViewerIsFollowing bool           `json:"viewer_is_following,omitempty"`
-			OwnProfile        bool           `json:"own_profile,omitempty"`
-			IsPending         bool           `json:"is_pending,omitempty"`
+			Public            bool           `json:"public"`
+			CreatedAt         time.Time      `json:"created_at"`
+			FollowersCount    int64          `json:"followers_count"`
+			FollowingCount    int64          `json:"following_count"`
+			GroupsCount       int64          `json:"groups_count"`
+			OwnedGroupsCount  int64          `json:"owned_groups_count"`
+			ViewerIsFollowing bool           `json:"viewer_is_following"`
+			OwnProfile        bool           `json:"own_profile"`
+			IsPending         bool           `json:"is_pending"`
 		}
 
 		userProfileResponse := userProfile{
