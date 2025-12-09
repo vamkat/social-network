@@ -130,7 +130,7 @@ export function validateRegistrationForm(formData, avatarFile = null) {
     }
 
     // About me validation (optional)
-    const aboutMe = formData.get("aboutMe")?.trim() || "";
+    const aboutMe = formData.get("about")?.trim() || "";
     if (aboutMe && aboutMe.length > 400) {
         return { valid: false, error: "About me must be at most 400 characters." };
     }

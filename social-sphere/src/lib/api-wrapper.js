@@ -6,6 +6,7 @@
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 export async function safeApiCall(url, options = {}) {
+    console.log(url)
     try {
         const response = await fetch(url, {
             credentials: "include", // Default to include cookies

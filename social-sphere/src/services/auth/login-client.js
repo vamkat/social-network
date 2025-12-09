@@ -4,30 +4,20 @@ import { safeApiCall } from "@/lib/api-wrapper";
 
 /**
  * Client-side login function that calls the API route directly.
- * Must be called from client components so browser cookies are included.
+ * This ensures the backend cookie is properly set in the browser.
  */
-export async function loginClient(formData) {
-    // Extract fields for backend request
-    const identifier = formData.get("identifier")?.trim();
-    const password = formData.get("password");
-
-    // Prepare JSON payload
-    const payload = {
-        identifier,
-        password,
-    };
-
+export async function loginClient(credentials) {
     const result = await safeApiCall("/api/auth/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(credentials),
     });
 
     if (result.success) {
         return { success: true, user: result.data };
     }
 
-    return result;
+    return { success: false, error: result.error || "Login failed" };
 }

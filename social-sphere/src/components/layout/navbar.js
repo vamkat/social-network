@@ -1,30 +1,28 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Activity, Users, Send, Bell, User, LogOut, Settings, Menu, X, HeartPulse, Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/tooltip";
-import { getUserByID } from "@/mock-data/users";
+import Link from "next/link";
 import { logoutClient } from "@/services/auth/logout-client";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user: authUser, clearUser } = useAuth();
+  const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Use auth context user if available, otherwise fall back to mock data
-  const user = authUser || getUserByID("1");
+  const user = session?.user;
   console.log(user);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
+        setIsDropdownOpen((prev) => prev ? false : prev);
       }
     }
 
@@ -128,70 +126,71 @@ export default function Navbar() {
           </Tooltip>
 
           {/* User Menu (Desktop) */}
-          <div className="hidden md:block relative ml-1.5 pl-3 border-l border-(--border)" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-            >
-              <div className="w-8 h-8 rounded-full bg-(--muted)/10 border border-(--border) flex items-center justify-center overflow-hidden transition-all hover:border-(--accent)">
-                {user.Avatar ? (
-                  <img src={user.Avatar} alt={user.Username} className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-4 h-4 text-(--muted)" />
-                )}
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`text-(--muted) transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+          {user && (
+            <div className="hidden md:block relative ml-1.5 pl-3 border-l border-(--border)" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 hover:opacity-70 transition-opacity"
               >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu */}
-            {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-3 w-52 rounded-2xl border border-(--border) bg-(--background) shadow-xl shadow-black/5 animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-1.5">
-                  <Link
-                    href={`/profile/${user.ID}`}
-                    className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl hover:bg-(--muted)/10 transition-colors text-(--foreground)"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
+                <div className="w-8 h-8 rounded-full bg-(--muted)/10 border border-(--border) flex items-center justify-center overflow-hidden transition-all hover:border-(--accent)">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
+                  ) : (
                     <User className="w-4 h-4 text-(--muted)" />
-                    Profile
-                  </Link>
-                  <Link
-                    href={`/profile/${user.ID}/settings`}
-                    className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl hover:bg-(--muted)/10 transition-colors text-(--foreground)"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <Settings className="w-4 h-4 text-(--muted)" />
-                    Settings
-                  </Link>
-                  <div className="h-px bg-(--border) my-1.5" />
-                  <button
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-left"
-                    onClick={() => {
-                      logoutClient(clearUser);
-                      setIsDropdownOpen(false);
-                    }}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`text-(--muted) transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
 
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 top-full mt-3 w-52 rounded-2xl border border-(--border) bg-(--background) shadow-xl shadow-black/5 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-1.5">
+                    <Link
+                      href={`/profile/${user.user_id}`}
+                      className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl hover:bg-(--muted)/10 transition-colors text-(--foreground)"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <User className="w-4 h-4 text-(--muted)" />
+                      Profile
+                    </Link>
+                    <Link
+                      href={`/profile/${user.user_id}/settings`}
+                      className="flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl hover:bg-(--muted)/10 transition-colors text-(--foreground)"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <Settings className="w-4 h-4 text-(--muted)" />
+                      Settings
+                    </Link>
+                    <div className="h-px bg-(--border) my-1.5" />
+                    <button
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                      onClick={() => {
+                        logoutClient();
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* Mobile Menu Toggle */}
           <button
             className="md:hidden p-2 text-(--foreground) hover:bg-(--muted)/10 rounded-full transition-colors"
@@ -224,30 +223,35 @@ export default function Navbar() {
                 </Link>
               );
             })}
-            <div className="h-px bg-(--border) my-2" />
-            <Link
-              href={`/profile/${user.ID}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-(--muted) hover:bg-(--muted)/10 hover:text-(--foreground) transition-colors"
-            >
-              <User className="w-5 h-5" />
-              Profile
-            </Link>
-            <Link
-              href={`/profile/${user.ID}/settings`}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-(--muted) hover:bg-(--muted)/10 hover:text-(--foreground) transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-              Settings
-            </Link>
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-left"
-              onClick={() => logoutClient(clearUser)}
-            >
-              <LogOut className="w-5 h-5" />
-              Sign Out
-            </button>
+
+            {user && (
+              <>
+                <div className="h-px bg-(--border) my-2" />
+                <Link
+                  href={`/profile/${user.user_id}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-(--muted) hover:bg-(--muted)/10 hover:text-(--foreground) transition-colors"
+                >
+                  <User className="w-5 h-5" />
+                  Profile
+                </Link>
+                <Link
+                  href={`/profile/${user.user_id}/settings`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-(--muted) hover:bg-(--muted)/10 hover:text-(--foreground) transition-colors"
+                >
+                  <Settings className="w-5 h-5" />
+                  Settings
+                </Link>
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                  onClick={() => logoutClient()}
+                >
+                  <LogOut className="w-5 h-5" />
+                  Sign Out
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

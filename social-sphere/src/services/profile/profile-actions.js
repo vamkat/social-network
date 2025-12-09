@@ -1,27 +1,27 @@
-"use server";
+"use client";
 
-import { getUserByID } from "@/mock-data/users";
+import { safeApiCall } from "@/lib/api-wrapper";
 
-export async function fetchUserProfile(id) {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+export async function getUserData(id) {
 
-    return getUserByID(id);
+    const url = `/api/auth/profile/${id}`;
+
+    // revalidate cache for 2-3 min in api/ endpoint
+    const user = await safeApiCall(url, {
+        method: "GET",
+    })
+
+    if (user.success) {
+        return { success: true, userData: user.data };
+    }
+
+    return user;
 }
 
 export async function toggleFollowUser(id) {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // In a real app, this would call the backend API
-    // For now, we just return success
     return { success: true };
 }
 
 export async function togglePrivacy(id) {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // In a real app, this would call the backend API
     return { success: true };
 }

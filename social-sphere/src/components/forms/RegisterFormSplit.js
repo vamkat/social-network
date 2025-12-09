@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { registerClient } from "@/services/auth/register-client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useFormValidation } from "@/hooks/useFormValidation";
 
 
 export default function RegisterFormSplit() {
     const router = useRouter();
-    const { fetchUserProfile } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +20,7 @@ export default function RegisterFormSplit() {
 
     // Real-time validation state
     const { errors: fieldErrors, validateField } = useFormValidation();
-    const [aboutMeCount, setAboutMeCount] = useState(0);
+    const [aboutCount, setAboutCount] = useState(0);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -41,18 +40,30 @@ export default function RegisterFormSplit() {
             if (result.success) {
                 console.log("Registration successful", result.user);
 
-                // Fetch user profile using the UserId from response
-                if (result.user && result.user.UserId) {
-                    await fetchUserProfile(result.user.UserId);
-                }
+                // Automatically log in the user
+                // Pass userId so authorize callback knows we are already "logged in" via registration cookie
+                const signInResult = await signIn("credentials", {
+                    redirect: false,
+                    userId: result.user.UserId,
+                    callbackUrl: "/feed/public"
+                });
 
-                // Navigate to feed
-                router.push("/feed/public");
+                if (signInResult?.error) {
+                    setError("Registration successful, but auto-login failed. Please log in manually.");
+                    router.push("/login"); // Fallback
+                } else {
+                    router.push("/feed/public");
+                }
             } else {
-                setError(result.error || "Registration failed");
+                if (result.error.includes("auth_user_email_key")) {
+                    setError("Email already exists");
+                } else {
+                    setError(result.error || "Registration failed");
+                }
                 setIsLoading(false);
             }
         } catch (err) {
+            console.error(err);
             setError("An unexpected error occurred");
             setIsLoading(false);
         }
@@ -147,9 +158,9 @@ export default function RegisterFormSplit() {
                 });
                 break;
 
-            case "aboutMe":
-                setAboutMeCount(value.length);
-                validateField("aboutMe", value, (val) => {
+            case "about":
+                setAboutCount(value.length);
+                validateField("about", value, (val) => {
                     if (val.length > 400) return "About me must be at most 400 characters.";
                     return null;
                 });
@@ -234,7 +245,7 @@ export default function RegisterFormSplit() {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="form-toggle-btn p-2"
                             >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                {showPassword ? <EyeOff size={20} className="rounded-full" /> : <Eye size={20} className="rounded-full" />}
                             </button>
                         </div>
                         {fieldErrors.password && (
@@ -281,7 +292,7 @@ export default function RegisterFormSplit() {
                             onChange={(e) => handleFieldValidation("date_of_birth", e.target.value)}
                         />
                         {fieldErrors.date_of_birth && (
-                            <div className="form-error">{fieldErrors.datedate_of_birthOfBirth}</div>
+                            <div className="form-error">{fieldErrors.date_of_birth}</div>
                         )}
                     </div>
                 </div>
@@ -337,29 +348,29 @@ export default function RegisterFormSplit() {
                             onChange={(e) => handleFieldValidation("username", e.target.value)}
                         />
                         {fieldErrors.username && (
-                            <div className="form-error">{fieldErrors.us}</div>
+                            <div className="form-error">{fieldErrors.username}</div>
                         )}
                     </div>
 
                     {/* About Me */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label htmlFor="aboutMe" className="form-label pl-4 mb-0">About Me (Optional)</label>
+                            <label htmlFor="about" className="form-label pl-4 mb-0">About Me (Optional)</label>
                             <span className="text-xs text-muted">
-                                {aboutMeCount}/400
+                                {aboutCount}/400
                             </span>
                         </div>
                         <textarea
-                            id="aboutMe"
-                            name="aboutMe"
+                            id="about"
+                            name="about"
                             rows={5}
                             maxLength={400}
                             className="form-input resize-none"
                             placeholder="Tell us a bit about yourself..."
-                            onChange={(e) => handleFieldValidation("aboutMe", e.target.value)}
+                            onChange={(e) => handleFieldValidation("about", e.target.value)}
                         />
-                        {fieldErrors.aboutMe && (
-                            <div className="form-error">{fieldErrors.aboutMe}</div>
+                        {fieldErrors.about && (
+                            <div className="form-error">{fieldErrors.about}</div>
                         )}
                     </div>
                 </div>
@@ -367,7 +378,7 @@ export default function RegisterFormSplit() {
 
             {/* Error Message */}
             {error && (
-                <div className="form-error-box animate-fade-in mt-6">
+                <div className="form-error animate-fade-in mt-6 text-center pt-5">
                     {error}
                 </div>
             )}
@@ -376,7 +387,7 @@ export default function RegisterFormSplit() {
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-8"
+                className="w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-3"
             >
                 {isLoading ? "Creating Account..." : "Create Account"}
             </button>

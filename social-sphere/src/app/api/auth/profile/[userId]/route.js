@@ -1,10 +1,12 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../[...nextauth]/route";
 import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
     try {
         const { userId } = await params;
-        const cookieHeader = request.headers.get('cookie');
-        console.log(cookieHeader);
+        const session = await getServerSession(authOptions);
+        const cookieHeader = session?.backendCookie;
 
         const apiBase = process.env.API_BASE || "http://localhost:8081";
 
@@ -16,6 +18,7 @@ export async function GET(request, { params }) {
         const backendResponse = await fetch(`${apiBase}/profile/${userId}`, {
             method: "GET",
             headers: headers,
+            next: { revalidate: 180}
         });
 
         if (!backendResponse.ok) {

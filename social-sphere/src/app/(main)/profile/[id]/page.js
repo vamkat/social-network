@@ -1,65 +1,84 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect } from "react";
 import ProfileHeader from "@/components/features/profile/profile-header";
 import { Lock } from "lucide-react";
-import { fetchUserProfile } from "@/services/profile/profile-actions";
-import { fetchUserPosts } from "@/services/posts/posts";
-import { getUserByID } from "@/mock-data/users";
-import FeedList from "@/components/feed/feed-list";
-import CreatePost from "@/components/ui/create-post";
-
+import { getUserData } from "@/services/profile/profile-actions";
+// import { fetchUserPosts } from "@/services/posts/posts";
+// import FeedList from "@/components/feed/feed-list";
+// import CreatePost from "@/components/ui/create-post";
+import { useSession } from "next-auth/react";
 
 export default function ProfilePage({ params }) {
     const { id } = use(params);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [initialPosts, setInitialPosts] = useState([]);
-    const [postsLoaded, setPostsLoaded] = useState(false);
+    // const [initialPosts, setInitialPosts] = useState([]);
+    // const [postsLoaded, setPostsLoaded] = useState(false);
 
-    // mock data
-    const currentUser = getUserByID("1");
+    // current user
+    const { data: session } = useSession();
+    const currentUser = session?.user;
 
-    // Data Fetching
+    // Single useEffect for data fetching
     useEffect(() => {
+        let cancelled = false;
+
         const loadUser = async () => {
             try {
-                const data = await fetchUserProfile(id);
-                setUser(data);
+                const data = await getUserData(id);
+                
+                // Prevent state update if component unmounted
+                if (!cancelled) {
+                    console.log('API Response:', data);
+                    setUser(data.userData);
+                }
             } catch (error) {
-                console.error("Failed to fetch user:", error);
+                if (!cancelled) {
+                    console.error("Failed to fetch user:", error);
+                }
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
         loadUser();
+
+        // Cleanup function to prevent state updates after unmount
+        return () => {
+            cancelled = true;
+        };
     }, [id]);
 
-    useEffect(() => {
-        if (user) {
-            const loadPosts = async () => {
-                try {
-                    const posts = await fetchUserPosts(user.ID, 0, 5);
-                    setInitialPosts(posts);
-                } catch (error) {
-                    console.error("Failed to fetch posts:", error);
-                } finally {
-                    setPostsLoaded(true);
-                }
-            };
-            loadPosts();
-        }
-    }, [user]);
+    // useEffect(() => {
+    //     if (user) {
+    //         const loadPosts = async () => {
+    //             try {
+    //                 const posts = await fetchUserPosts(user.ID, 0, 5);
+    //                 setInitialPosts(posts);
+    //             } catch (error) {
+    //                 console.error("Failed to fetch posts:", error);
+    //             } finally {
+    //                 setPostsLoaded(true);
+    //             }
+    //         };
+    //         loadPosts();
+    //     }
+    // }, [user]);
 
-    const fetchPosts = useCallback(async (offset, limit) => {
-        if (!user) return [];
-        return await fetchUserPosts(user.ID, offset, limit);
-    }, [user]);
+    // const fetchPosts = useCallback(async (offset, limit) => {
+    //     if (!user) return [];
+    //     return await fetchUserPosts(user.ID, offset, limit);
+    // }, [user]);
+    if (user) {
+        console.log("User:", user);
+    }
 
-    console.log("user", user);
-    console.log("initialPosts", initialPosts);
-    console.log("postsLoaded", postsLoaded);
+    if (currentUser) {
+        console.log("Current User:", currentUser)
+    }
 
     if (loading) {
         return (
@@ -78,13 +97,14 @@ export default function ProfilePage({ params }) {
     }
 
     // Check if profile is private and viewer is not following (and not owner)
-    const isOwnProfile = user.ID === currentUser.ID; // Mock check
-    const isPrivateView = !user.publicProf && !user.isFollower && !isOwnProfile;
+    const isOwnProfile = user.own_profile
+
+    const isPrivateView = !user.public && !user.viewer_is_following && !isOwnProfile;
 
 
     return (
         <div className="w-full py-8 animate-in fade-in duration-500">
-            <div className="max-w-7xl mx-auto px-6">
+            <div className="max-w-5xl mx-auto px-6 pr-34">
                 <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
 
                 <div className="flex gap-6 mt-6">
@@ -105,16 +125,17 @@ export default function ProfilePage({ params }) {
                             </div>
                         ) : (
                             <div className="mt-8">
-                                {postsLoaded ? (
-                                    <div>
-                                        <CreatePost onPostCreated={CreatePost} />
-                                        <FeedList initialPosts={initialPosts} fetchPosts={fetchPosts} />
-                                    </div>
+                                {/* {postsLoaded ? (
+                                    <h1>Hello World!! ALL GOOOOOOOOD!!!</h1>
+                                    // <div>
+                                    //     <CreatePost onPostCreated={CreatePost} />
+                                    //     <FeedList initialPosts={initialPosts} fetchPosts={fetchPosts} />
+                                    // </div>
                                 ) : (
                                     <div className="flex justify-center p-4">
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                                     </div>
-                                )}
+                                )} */}
                             </div>
                         )}
                     </main>

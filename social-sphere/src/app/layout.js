@@ -1,5 +1,5 @@
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import NextAuthProvider from "@/components/providers/NextAuthProvider";
 
 export const metadata = {
   title: "Social Sphere - Home",
@@ -9,9 +9,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
+        <NextAuthProvider>
           {children}
-        </AuthProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );
