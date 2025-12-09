@@ -1,5 +1,5 @@
 -- name: CreatePrivateConv :one
--- Creates a Conversation if and only if a DM between the same 2 users does not exist.
+-- Creates a Conversation if and only if a conversation between the same 2 users does not exist.
 -- Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
 WITH existing AS (
     SELECT c.id
@@ -20,6 +20,7 @@ VALUES ($1)
 RETURNING id;
 
 -- name: GetUserConversations :many
+-- Get all conversations paginated by user id excluding group conversations.
 SELECT 
     c.id AS conversation_id,
     c.group_id,
@@ -42,4 +43,33 @@ AND (
 )
 ORDER BY c.updated_at DESC
 LIMIT $3 OFFSET $4;
+
+-- name: DeleteConversationByExactMembers :one
+-- Delete a conversation only if its members exactly match the provided list.
+-- Returns 0 rows if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
+WITH target_members AS (
+    SELECT unnest(@member_ids::bigint[]) AS user_id
+),
+matched_conversation AS (
+    SELECT cm.conversation_id
+    FROM conversation_members cm
+    JOIN target_members tm ON tm.user_id = cm.user_id
+    GROUP BY cm.conversation_id
+    HAVING 
+        -- same count of overlapping members
+        COUNT(*) = (SELECT COUNT(*) FROM target_members)
+        -- and the conversation has no extra members
+        AND COUNT(*) = (
+            SELECT COUNT(*) 
+            FROM conversation_members cm2 
+            WHERE cm2.conversation_id = cm.conversation_id
+              AND cm2.deleted_at IS NULL
+        )
+)
+UPDATE conversations c
+SET deleted_at = NOW(),
+    updated_at = NOW()
+WHERE c.id = (SELECT conversation_id FROM matched_conversation)
+RETURNING *;
+
 

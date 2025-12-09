@@ -4,9 +4,17 @@ package chat;
 
 option go_package = "social-network/shared/gen/chat;chat";
 
+import "google/protobuf/timestamp.proto";
+
 service ChatService {
+    // Creates a Conversation if and only if a DM between the same 2 users does not exist.
+    // Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
     rpc CreatePrivateConversation (CreatePrivateConvParams) returns (ConvId);
     rpc CreateGroupConversation (CreateGroupConvParams) returns (ConvId);
+    // Find a conversation by group_id and insert the given user_ids into conversation_members.
+    // Existing members are ignored, new members are added.
+    rpc AddMembersToGroupConversation (AddMembersToGroupConversationParams) returns (ConvId);
+    rpc DeleteConversationByExactMembers (UserIds) returns (Conversation);
 }
 message UserId {
     int64 id = 1;
@@ -23,4 +31,22 @@ message ConvId {
 message CreateGroupConvParams {
     int64 group_id = 1;
     repeated int64 user_ids = 2;
+}
+
+message AddMembersToGroupConversationParams {
+    int64 group_id = 1;
+    repeated int64 user_ids = 2;
+}
+
+message UserIds {
+    repeated int64 user_ids = 1;
+}
+
+message Conversation {
+  int64 id = 1;            // ct.Id
+  int64 group_id = 2;      // ct.Id
+
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  google.protobuf.Timestamp deleted_at = 5;
 }

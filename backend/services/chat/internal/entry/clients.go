@@ -3,6 +3,7 @@ package entry
 import (
 	"fmt"
 	"social-network/services/chat/internal/client"
+	interceptor "social-network/shared/go/grpc-interceptors"
 	"social-network/shared/ports"
 	"time"
 
@@ -15,6 +16,14 @@ import (
 
 func InitClients() *client.Clients {
 	c := &client.Clients{}
+	customUnaryInterceptor, err := interceptor.UnaryClientInterceptorWithContextKeys("")
+	if err != nil {
+		fmt.Println(err)
+	}
+	customStreamInterceptor, err := interceptor.StreamClientInterceptorWithContextKeys("")
+	if err != nil {
+		fmt.Println(err)
+	}
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(`{
@@ -29,6 +38,8 @@ func InitClients() *client.Clients {
 				MaxDelay:   5 * time.Second,
 			},
 		}),
+		grpc.WithUnaryInterceptor(customUnaryInterceptor),
+		grpc.WithStreamInterceptor(customStreamInterceptor),
 	}
 
 	// List of initializer functions
@@ -46,6 +57,7 @@ func InitClients() *client.Clients {
 }
 
 func InitUserClient(opts []grpc.DialOption, c *client.Clients) (err error) {
+
 	conn, err := grpc.NewClient(ports.Users, opts...)
 	if err != nil {
 		err = fmt.Errorf("failed to dial user service: %v", err)

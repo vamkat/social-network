@@ -12,13 +12,22 @@ import (
 
 type Querier interface {
 	AddConversationMembers(ctx context.Context, arg AddConversationMembersParams) error
+	// Find a conversation by group_id and insert the given user_ids into conversation_members.
+	// existing members are ignored, new members are added.
+	// Returns:
+	//   BIGINT          -- the conversation id
+	AddMembersToGroupConversation(ctx context.Context, arg AddMembersToGroupConversationParams) (int64, error)
 	CreateGroupConv(ctx context.Context, groupID pgtype.Int8) (int64, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
-	// Creates a Conversation if and only if a DM between the same 2 users does not exist.
+	// Creates a Conversation if and only if a conversation between the same 2 users does not exist.
 	// Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
 	CreatePrivateConv(ctx context.Context, arg CreatePrivateConvParams) (int64, error)
+	// Delete a conversation only if its members exactly match the provided list.
+	// Returns 0 rows if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
+	DeleteConversationByExactMembers(ctx context.Context, memberIds []int64) (Conversation, error)
 	GetConversationMembers(ctx context.Context, arg GetConversationMembersParams) ([]int64, error)
 	GetMessages(ctx context.Context, arg GetMessagesParams) ([]Message, error)
+	// Get all conversations paginated by user id excluding group conversations.
 	GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error)
 	SoftDeleteConversationMember(ctx context.Context, arg SoftDeleteConversationMemberParams) (ConversationMember, error)
 	UpdateLastReadMessage(ctx context.Context, arg UpdateLastReadMessageParams) (ConversationMember, error)

@@ -43,13 +43,55 @@ type CreatePrivateConvParams struct {
 	UserID_2 int64
 }
 
-// Creates a Conversation if and only if a DM between the same 2 users does not exist.
+// Creates a Conversation if and only if a conversation between the same 2 users does not exist.
 // Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
 func (q *Queries) CreatePrivateConv(ctx context.Context, arg CreatePrivateConvParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createPrivateConv, arg.UserID, arg.UserID_2)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteConversationByExactMembers = `-- name: DeleteConversationByExactMembers :one
+WITH target_members AS (
+    SELECT unnest($1::bigint[]) AS user_id
+),
+matched_conversation AS (
+    SELECT cm.conversation_id
+    FROM conversation_members cm
+    JOIN target_members tm ON tm.user_id = cm.user_id
+    GROUP BY cm.conversation_id
+    HAVING 
+        -- same count of overlapping members
+        COUNT(*) = (SELECT COUNT(*) FROM target_members)
+        -- and the conversation has no extra members
+        AND COUNT(*) = (
+            SELECT COUNT(*) 
+            FROM conversation_members cm2 
+            WHERE cm2.conversation_id = cm.conversation_id
+              AND cm2.deleted_at IS NULL
+        )
+)
+UPDATE conversations c
+SET deleted_at = NOW(),
+    updated_at = NOW()
+WHERE c.id = (SELECT conversation_id FROM matched_conversation)
+RETURNING id, group_id, created_at, updated_at, deleted_at
+`
+
+// Delete a conversation only if its members exactly match the provided list.
+// Returns 0 rows if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
+func (q *Queries) DeleteConversationByExactMembers(ctx context.Context, memberIds []int64) (Conversation, error) {
+	row := q.db.QueryRow(ctx, deleteConversationByExactMembers, memberIds)
+	var i Conversation
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const getUserConversations = `-- name: GetUserConversations :many
@@ -92,6 +134,7 @@ type GetUserConversationsRow struct {
 	MemberID       int64
 }
 
+// Get all conversations paginated by user id excluding group conversations.
 func (q *Queries) GetUserConversations(ctx context.Context, arg GetUserConversationsParams) ([]GetUserConversationsRow, error) {
 	rows, err := q.db.Query(ctx, getUserConversations,
 		arg.UserID,

@@ -11,6 +11,8 @@ import (
 	"social-network/services/chat/internal/db/sqlc"
 	"social-network/services/chat/internal/handler"
 	"social-network/shared/gen-go/chat"
+	ct "social-network/shared/go/customtypes"
+	interceptor "social-network/shared/go/grpc-interceptors"
 	"syscall"
 	"time"
 
@@ -40,7 +42,10 @@ func Run() error {
 
 	log.Println("Running gRpc service...")
 
-	grpc := RunGRPCServer(service)
+	grpc, err := RunGRPCServer(service)
+	if err != nil {
+		return err
+	}
 
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -68,13 +73,24 @@ func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
 }
 
 // RunGRPCServer starts the gRPC server and blocks
-func RunGRPCServer(s *handler.ChatHandler) *grpc.Server {
+func RunGRPCServer(s *handler.ChatHandler) (*grpc.Server, error) {
 	lis, err := net.Listen("tcp", s.Port)
 	if err != nil {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
 	}
 
-	grpcServer := grpc.NewServer()
+	customUnaryInterceptor, err := interceptor.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	if err != nil {
+		return nil, err
+	}
+	customStreamInterceptor, err := interceptor.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	if err != nil {
+		return nil, err
+	}
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(customUnaryInterceptor),
+		grpc.StreamInterceptor(customStreamInterceptor),
+	)
 
 	chat.RegisterChatServiceServer(grpcServer, s)
 
@@ -84,5 +100,5 @@ func RunGRPCServer(s *handler.ChatHandler) *grpc.Server {
 			log.Fatalf("Failed to serve gRPC: %v", err)
 		}
 	}()
-	return grpcServer
+	return grpcServer, nil
 }
