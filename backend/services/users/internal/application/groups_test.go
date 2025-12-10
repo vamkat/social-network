@@ -343,7 +343,7 @@ func TestCreateGroup_Success(t *testing.T) {
 	// expect CreateGroupConversation to be called but return nil
 	mockClients.On("CreateGroupConversation", ctx, int64(5), int64(1)).Return(nil)
 
-	groupID, err := service.CreateGroup(ctx, req)
+	groupID, err := service.CreateGroup(ctx, &req)
 
 	assert.NoError(t, err)
 	assert.Equal(t, models.GroupId(5), groupID)
@@ -371,7 +371,7 @@ func TestCreateGroup_Error(t *testing.T) {
 	// client shouldn't be called on DB error, but set expectation to be safe
 	mockClients.On("CreateGroupConversation", ctx, int64(0), int64(1)).Return(nil)
 
-	_, err := service.CreateGroup(ctx, req)
+	_, err := service.CreateGroup(ctx, &req)
 
 	assert.Error(t, err)
 	mockDB.AssertExpectations(t)

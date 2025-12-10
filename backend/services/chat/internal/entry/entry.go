@@ -12,7 +12,8 @@ import (
 	"social-network/services/chat/internal/handler"
 	"social-network/shared/gen-go/chat"
 	ct "social-network/shared/go/customtypes"
-	interceptor "social-network/shared/go/grpc-interceptors"
+	"social-network/shared/go/gorpc"
+
 	"syscall"
 	"time"
 
@@ -20,7 +21,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+type configs struct {
+	address string
+	port    string
+	timeout int
+}
+
 func Run() error {
+
 	pool, err := connectToDb(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
@@ -79,11 +87,11 @@ func RunGRPCServer(s *handler.ChatHandler) (*grpc.Server, error) {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
 	}
 
-	customUnaryInterceptor, err := interceptor.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customUnaryInterceptor, err := gorpc.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}
-	customStreamInterceptor, err := interceptor.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customStreamInterceptor, err := gorpc.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}

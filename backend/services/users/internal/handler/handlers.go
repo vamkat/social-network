@@ -640,7 +640,7 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 		return nil, err
 	}
 
-	resp, err := s.Application.CreateGroup(ctx, models.CreateGroupRequest{
+	resp, err := s.Application.CreateGroup(ctx, &models.CreateGroupRequest{
 		OwnerId:          ct.Id(OwnerId),
 		GroupTitle:       ct.Title(GroupTitle),
 		GroupDescription: ct.About(GroupDescription),

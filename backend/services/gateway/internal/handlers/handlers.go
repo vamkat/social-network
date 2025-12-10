@@ -3,40 +3,28 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"social-network/services/gateway/internal/application"
 	"social-network/services/gateway/internal/middleware"
-	remoteservices "social-network/services/gateway/internal/remote_services"
 	"social-network/shared/go/ratelimit"
-	redis_connector "social-network/shared/go/redis"
-
-	"github.com/minio/minio-go/v7"
 )
 
 var ErrMinIO = errors.New("minIO failed to be created")
 
 type Handlers struct {
-	Services    *remoteservices.GRpcServices
-	MinIOClient *minio.Client
-	redisClient *redis_connector.RedisClient
+	App application.GatewayApp
 }
 
-func NewHandlers(redisClient *redis_connector.RedisClient, gRpcServices *remoteservices.GRpcServices) (*Handlers, error) {
-	miniIOClient, err := remoteservices.NewMinIOConn()
-	if err != nil {
-		return nil, errors.Join(ErrMinIO, err)
-	}
+func NewHandlers(app application.GatewayApp) (*Handlers, error) {
 	handlers := &Handlers{
-		redisClient: redisClient,
-		Services:    gRpcServices,
-		MinIOClient: miniIOClient,
+		App: app,
 	}
-
 	return handlers, nil
 }
 
 // BuildMux builds and returns the HTTP request multiplexer with all routes and middleware applied
-func (h *Handlers) BuildMux() *http.ServeMux {
+func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 	mux := http.NewServeMux()
-	ratelimiter := ratelimit.NewRateLimiter("api:", h.redisClient)
+	ratelimiter := ratelimit.NewRateLimiter(serviceName+":", h.App.Redis)
 	middleware := middleware.NewMiddleware(ratelimiter)
 	Chain := middleware.Chain
 

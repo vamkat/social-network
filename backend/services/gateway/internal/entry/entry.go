@@ -9,67 +9,64 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"social-network/services/gateway/internal/application"
 	"social-network/services/gateway/internal/handlers"
-	remoteservices "social-network/services/gateway/internal/remote_services"
+	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/gorpc"
+
 	redis_connector "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
-
 	"syscall"
 	"time"
+
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 )
+
+var logger = otelslog.NewLogger("api-gateway")
 
 // server starting sequence
 func Start() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	/*
+	gatewayApplication := application.GatewayApp{}
 
-		==============================
-		         OPEN TELEMETRY
-		==============================
-	*/
-	otelShutdown, err := tele.SetupOTelSDK(ctx)
-	if err != nil {
-		log.Fatal("open telemetry sdk failed, ERROR:", err.Error())
-	}
-	fmt.Println("open telemetry ready")
+	defer setupOpenTelemetry(ctx)
 
-	defer func() {
-		err := otelShutdown(context.Background())
-		if err != nil {
-			log.Println("otel shutdown ungracefully! ERROR: " + err.Error())
-		} else {
-			log.Println("otel shutdown gracefully")
-		}
-	}()
-
-	/*
-
-		==============================
-		          REDIS SETUP
-		==============================
-	*/
-	redisClient := redis_connector.NewRedisClient("redis:6379", "", 0)
-	err = redisClient.TestRedisConnection()
+	/* ==============================
+	          REDIS SETUP
+	==============================*/
+	gatewayApplication.Redis = redis_connector.NewRedisClient("redis:6379", "", 0)
+	err := gatewayApplication.Redis.TestRedisConnection()
 	if err != nil {
 		log.Fatalf("connection test failed, ERROR: %v", err)
 	}
 	fmt.Println("redis connection started correctly")
 
+	/*==============================
+	      REMOTE gRPC SERVICES
+	==============================*/
+	gatewayApplication.Users, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	if err != nil {
+		log.Fatalf("failed to connect to users service: %v", err)
+	}
+	gatewayApplication.Chat, err = gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	if err != nil {
+		log.Fatalf("failed to connect to chat service: %v", err)
+	}
+
 	/*
 
 		==============================
-		      REMOTE gRPC SERVICES
+		         PROMETHEUS EXPORTER SERVER
 		==============================
 	*/
-	gRpcServices := remoteservices.NewServices([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
-	deferMe, err := gRpcServices.StartConnections()
-	if err != nil {
-		log.Fatalf("failed to start gRPC services connections: %v", err)
-	}
-	defer deferMe()
-	fmt.Println("gRPC services connections started")
+	// TODO finish setting up promethius exporting endpoint
+	// metricsServer := &http.Server{
+	// 	Addr:    ":2222",
+	// 	Handler: nil, // Will be set below
+	// }
 
 	/*
 
@@ -77,16 +74,16 @@ func Start() {
 		        HANDLER + ROUTER
 		==============================
 	*/
-	apiHandlers, err := handlers.NewHandlers(redisClient, gRpcServices)
+	fmt.Println(gatewayApplication)
+	apiHandlers, err := handlers.NewHandlers(gatewayApplication)
 	if err != nil {
 		log.Fatal("Can't create handlers, ERROR:", err)
 	}
-	apiMux := apiHandlers.BuildMux()
+	apiMux := apiHandlers.BuildMux("gateway")
 
 	/*
-
 		==============================
-		         HTTP SERVER
+		         API GATEWAY HTTP SERVER
 		==============================
 	*/
 	var server = &http.Server{
@@ -125,4 +122,21 @@ func Start() {
 	}
 
 	log.Println("Server stopped")
+}
+
+func setupOpenTelemetry(ctx context.Context) func() {
+	otelShutdown, err := tele.SetupOTelSDK(ctx)
+	if err != nil {
+		log.Fatal("open telemetry sdk failed, ERROR:", err.Error())
+	}
+	fmt.Println("open telemetry ready")
+
+	return func() {
+		err := otelShutdown(context.Background())
+		if err != nil {
+			log.Println("otel shutdown ungracefully! ERROR: " + err.Error())
+		} else {
+			log.Println("otel shutdown gracefully")
+		}
+	}
 }

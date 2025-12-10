@@ -14,7 +14,8 @@ import (
 	"social-network/services/media/internal/handler"
 	pb "social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
-	interceptor "social-network/shared/go/grpc-interceptors"
+	"social-network/shared/go/gorpc"
+
 	"syscall"
 	"time"
 
@@ -81,11 +82,11 @@ func RunGRPCServer(s *handler.MediaHandler) (*grpc.Server, error) {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
 	}
 
-	customUnaryInterceptor, err := interceptor.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customUnaryInterceptor, err := gorpc.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}
-	customStreamInterceptor, err := interceptor.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customStreamInterceptor, err := gorpc.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}

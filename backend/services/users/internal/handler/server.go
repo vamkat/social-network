@@ -7,14 +7,12 @@ import (
 
 // Holds Client conns, services and handler funcs
 type UsersHandler struct {
-	pb.UnimplementedUserServiceServer
-	Port        string
+	pb.UserServiceServer
 	Application *application.Application
 }
 
 func NewUsersHanlder(service *application.Application) *UsersHandler {
 	return &UsersHandler{
-		Port:        ":50051",
 		Application: service,
 	}
 }

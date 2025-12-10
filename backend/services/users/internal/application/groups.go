@@ -401,7 +401,7 @@ func (s *Application) RemoveFromGroup(ctx context.Context, req models.RemoveFrom
 	return nil
 }
 
-func (s *Application) CreateGroup(ctx context.Context, req models.CreateGroupRequest) (models.GroupId, error) {
+func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRequest) (models.GroupId, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return 0, err
 	}

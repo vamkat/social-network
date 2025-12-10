@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	remoteservices "social-network/services/gateway/internal/remote_services"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/users"
@@ -53,7 +52,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 		fmt.Println(httpReq.Password.String())
 
-		resp, err := h.Services.Users.LoginUser(r.Context(), &gRpcReq)
+		resp, err := h.App.Users.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return
@@ -171,17 +170,18 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			return
 		} else {
 			defer file.Close()
-			fileType, err := utils.CheckImage(file, header)
+			_, err := utils.CheckImage(file, header)
 			if err != nil {
 				utils.ErrorJSON(w, http.StatusBadRequest, "avatar upload error: "+err.Error())
 				return
 			}
 
-			uploadInfo, err = remoteservices.UploadToMinIO(r.Context(), h.MinIOClient, file, header, "images", fileType)
-			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, "failed to upload avatar: "+err.Error())
-				return
-			}
+			//deprecated
+			// uploadInfo, err = remoteservices.UploadToMinIO(r.Context(), h.MinIOClient, file, header, "images", fileType)
+			// if err != nil {
+			// 	utils.ErrorJSON(w, http.StatusInternalServerError, "failed to upload avatar: "+err.Error())
+			// 	return
+			// }
 		}
 
 		_ = uploadInfo
@@ -199,7 +199,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			// Avatar:      httpReq.Avatar,
 		}
 
-		resp, err := h.Services.Users.RegisterUser(r.Context(), &gRpcReq)
+		resp, err := h.App.Users.RegisterUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return

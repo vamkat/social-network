@@ -6,7 +6,7 @@ import (
 	"social-network/services/posts/internal/application"
 	pb "social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/customtypes"
-	interceptor "social-network/shared/go/grpc-interceptors"
+	"social-network/shared/go/gorpc"
 
 	"google.golang.org/grpc"
 )
@@ -32,11 +32,11 @@ func RunGRPCServer(s *PostsHandler) (*grpc.Server, error) {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
 	}
 
-	customUnaryInterceptor, err := interceptor.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customUnaryInterceptor, err := gorpc.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}
-	customStreamInterceptor, err := interceptor.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customStreamInterceptor, err := gorpc.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}
