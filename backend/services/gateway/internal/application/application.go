@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	"time"
 )
@@ -22,5 +23,6 @@ type GatewayApp struct {
 	//telemetry
 	Redis CacheService
 	Users users.UserServiceClient
+	Posts posts.PostsServiceClient
 	Chat  chat.ChatServiceClient
 }

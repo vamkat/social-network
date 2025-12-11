@@ -40,7 +40,7 @@ service UserService {
   rpc IsGroupMember (GeneralGroupRequest) returns (google.protobuf.BoolValue);
   // Profile
   rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (User);
-  rpc GetBatchUserInfo (Int64Arr) returns (ListUsers);
+  rpc GetBatchBasicUserInfo (Int64Arr) returns (ListUsers);
   rpc GetUserProfile (GetUserProfileRequest) returns (UserProfileResponse);
   rpc SearchUsers (UserSearchRequest) returns (ListUsers);
   rpc UpdateUserProfile (UpdateProfileRequest) returns (UserProfileResponse);

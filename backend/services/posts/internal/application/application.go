@@ -51,11 +51,7 @@ type ClientsInterface interface {
 }
 
 func NewUserHydrator(clients *client.Clients, cache *redis_connector.RedisClient, ttl time.Duration) *UserHydrator {
-	return &UserHydrator{
-		clients: clients,
-		cache:   cache,
-		ttl:     ttl,
-	}
+	return &UserHydrator{clients: clients, cache: cache, ttl: ttl}
 }
 
 // NewApplication constructs a new Application with transaction support

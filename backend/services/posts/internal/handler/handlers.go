@@ -148,14 +148,13 @@ func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPerso
 	return &pb.ListPosts{Posts: pbPosts}, nil
 }
 
-func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.EntityIdPaginatedReq) (*pb.ListPosts, error) {
+func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginatedReq) (*pb.ListPosts, error) {
 	fmt.Println("GetPublicFeed gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	posts, err := s.Application.GetPublicFeed(ctx, models.EntityIdPaginatedReq{
+	posts, err := s.Application.GetPublicFeed(ctx, models.GenericPaginatedReq{
 		RequesterId: ct.Id(req.RequesterId),
-		EntityId:    ct.Id(req.EntityId),
 		Limit:       ct.Limit(req.Limit),
 		Offset:      ct.Offset(req.Offset),
 	})

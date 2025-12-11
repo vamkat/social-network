@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS post_audience (
     PRIMARY KEY (post_id, allowed_user_id)
 );
 CREATE INDEX idx_post_audience_post_id  ON post_audience(post_id);
-CREATE INDEX idx_post_audience_user_id  ON post_audience(allowerd_user_id);
-CREATE UNIQUE INDEX uniq_post_user_audience ON post_audience(post_id, allowerd_user_id);
+CREATE INDEX idx_post_audience_user_id  ON post_audience(allowed_user_id);
+CREATE UNIQUE INDEX uniq_post_user_audience ON post_audience(post_id, allowed_user_id);
 
 ------------------------------------------
 -- Comments
@@ -158,9 +158,18 @@ CREATE OR REPLACE FUNCTION add_to_master_index()
 RETURNS TRIGGER AS $$
 DECLARE
     new_id BIGINT;
+    ctype content_type;
 BEGIN
+    -- Safely convert text argument to enum
+    CASE TG_ARGV[0]
+        WHEN 'post' THEN ctype := 'post'::content_type;
+        WHEN 'comment' THEN ctype := 'comment'::content_type;
+        WHEN 'event' THEN ctype := 'event'::content_type;
+        ELSE RAISE EXCEPTION 'Unknown content_type: %', TG_ARGV[0];
+    END CASE;
+    
     INSERT INTO master_index (content_type)
-    VALUES (TG_ARGV[0])
+    VALUES (ctype)
     RETURNING id INTO new_id;
     NEW.id := new_id;
     RETURN NEW;

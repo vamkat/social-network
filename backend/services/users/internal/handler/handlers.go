@@ -675,6 +675,34 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 	}, nil
 }
 
+func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *pb.Int64Arr) (*pb.ListUsers, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+
+	userIds := req.GetValues()
+	if len(userIds) == 0 {
+		return &pb.ListUsers{Users: []*pb.User{}}, nil
+	}
+
+	ids := ct.FromInt64s(userIds)
+	users, err := s.Application.GetBatchBasicUserInfo(ctx, ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "GetBatchBasicUserInfo: %v", err)
+	}
+
+	pbUsers := make([]*pb.User, 0, len(users))
+	for _, u := range users {
+		pbUsers = append(pbUsers, &pb.User{
+			UserId:   u.UserId.Int64(),
+			Username: u.Username.String(),
+			Avatar:   u.AvatarId.Int64(),
+		})
+	}
+
+	return &pb.ListUsers{Users: pbUsers}, nil
+}
+
 func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.UserProfileResponse, error) {
 	fmt.Println("GetUserProfile gRPC method called")
 	if req == nil {

@@ -15,7 +15,7 @@ service PostsService {
     rpc EditPost (EditPostReq) returns (google.protobuf.Empty);
     rpc GetMostPopularPostInGroup (SimpleIdReq) returns (Post);
     rpc GetPersonalizedFeed (GetPersonalizedFeedReq) returns (ListPosts);
-    rpc GetPublicFeed (EntityIdPaginatedReq) returns (ListPosts);
+    rpc GetPublicFeed (GenericPaginatedReq) returns (ListPosts);
     rpc GetUserPostsPaginated (GetUserPostsReq) returns (ListPosts);
     rpc GetGroupPostsPaginated (GetGroupPostsReq) returns (ListPosts);
     rpc CreateComment (CreateCommentReq) returns (google.protobuf.Empty);

@@ -2,7 +2,6 @@ package userhydrate
 
 import (
 	"context"
-	"fmt"
 
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
@@ -12,7 +11,7 @@ import (
 
 type UserHydrator struct {
 	clients UsersBatchClient
-	cache   *redis_connector.RedisClient
+	cache   RedisCache
 	ttl     time.Duration
 }
 
@@ -38,19 +37,22 @@ func (h *UserHydrator) HydrateUsers(ctx context.Context, items []models.HasUser)
 	cachedUsers := make(map[int64]models.User)
 	var missingIDs []int64
 
-	for _, id := range ids {
-		var u models.User
-		err := h.cache.GetObj(ctx, fmt.Sprintf("basic_user_info:%d", id), &u)
-		if err != nil {
-			if err == redis_connector.ErrNotFound {
-				missingIDs = append(missingIDs, id)
-			} else {
-				return err
-			}
-		} else {
-			cachedUsers[id] = u
-		}
-	}
+	// for _, id := range ids {
+	// 	var u models.User
+	// 	err := h.cache.GetObj(ctx, fmt.Sprintf("basic_user_info:%d", id), &u)
+	// 	if err != nil {
+	// 		if err == redis_connector.ErrNotFound {
+	// 			missingIDs = append(missingIDs, id)
+	// 		} else {
+	// 			return err
+	// 		}
+	// 	} else {
+	// 		cachedUsers[id] = u
+	// 	}
+	// }
+
+	// TODO: When Redis is disabled for testing, fetch all users from service
+	missingIDs = ids
 
 	// fetch missing users from Users service
 	if len(missingIDs) > 0 {
@@ -68,9 +70,9 @@ func (h *UserHydrator) HydrateUsers(ctx context.Context, items []models.HasUser)
 			cachedUsers[u.UserId] = user
 
 			// cache it
-			if err := h.cache.SetObj(ctx, fmt.Sprintf("basic_user_info:%d", u.UserId), user, h.ttl); err != nil {
-				fmt.Printf("failed to cache user %d: %v\n", u.UserId, err)
-			}
+			// if err := h.cache.SetObj(ctx, fmt.Sprintf("basic_user_info:%d", u.UserId), user, h.ttl); err != nil {
+			// 	fmt.Printf("failed to cache user %d: %v\n", u.UserId, err)
+			// }
 		}
 	}
 
