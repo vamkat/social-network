@@ -294,7 +294,7 @@ func TestFeeds_Empty_NoHydrationError(t *testing.T) {
 	_, err := app.GetPersonalizedFeed(ctx, models.GetPersonalizedFeedReq{RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
 	assert.NoError(t, err)
 
-	_, err = app.GetPublicFeed(ctx, models.EntityIdPaginatedReq{RequesterId: ct.Id(21), EntityId: ct.Id(1), Limit: ct.Limit(10), Offset: ct.Offset(0)})
+	_, err = app.GetPublicFeed(ctx, models.GenericPaginatedReq{RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
 	assert.NoError(t, err)
 
 	_, err = app.GetUserPostsPaginated(ctx, models.GetUserPostsReq{CreatorId: ct.Id(21), RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})

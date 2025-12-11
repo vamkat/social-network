@@ -38,7 +38,7 @@ func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*
 	req := &userpb.Int64Arr{
 		Values: userIds,
 	}
-	resp, err := c.UserClient.GetBatchUserInfo(ctx, req)
+	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
 	if err != nil {
 		return nil, err
 	}

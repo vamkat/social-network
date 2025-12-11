@@ -16,13 +16,14 @@ WORKDIR /app
 
 COPY --from=build /app/posts_service .
 COPY --from=build /app/migrate .
-COPY --from=build /app/services/users/internal/db/migrations ./migrations
-COPY --from=build /app/services/users/internal/db/seeds ./seeds
+COPY --from=build /app/services/posts/internal/db/migrations ./migrations
+COPY --from=build /app/services/posts/internal/db/seeds ./seeds
 
 COPY services/posts/entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/seeds/seed.sh
 RUN chmod +x /app/entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["./posts_service"]
+# ENTRYPOINT ["/app/entrypoint.sh"]
+# CMD ["./posts_service"]
+CMD ["sh", "-c", "set -e; echo 'Running migrations...' && ./migrate; echo 'Running seeds...' && ./seeds/seed.sh || true; echo 'Starting service...' && exec ./posts_service"]

@@ -12,6 +12,7 @@ import (
 	"social-network/services/gateway/internal/application"
 	"social-network/services/gateway/internal/handlers"
 	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/gorpc"
@@ -43,6 +44,10 @@ func Start() {
 	gatewayApplication.Users, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
 	if err != nil {
 		log.Fatalf("failed to connect to users service: %v", err)
+	}
+	gatewayApplication.Posts, err = gorpc.GetGRpcClient(posts.NewPostsServiceClient, "posts:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	if err != nil {
+		log.Fatalf("failed to connect to posts service: %v", err)
 	}
 	gatewayApplication.Chat, err = gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
 	if err != nil {

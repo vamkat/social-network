@@ -53,7 +53,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 	return posts, nil
 }
 
-func (s *Application) GetPublicFeed(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Post, error) {
+func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPaginatedReq) ([]models.Post, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}

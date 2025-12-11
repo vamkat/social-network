@@ -234,12 +234,14 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
+COALESCE(
     (SELECT i.id
      FROM images i
      WHERE i.parent_id = p.id AND i.deleted_at IS NULL
      ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS image
+    ), 0
+)::bigint AS image
 
    
 FROM posts p

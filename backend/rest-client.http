@@ -55,3 +55,9 @@ superSecret123
 
 # use user id from register or login
 GET {{baseUrl}}/profile/GWpmbk5ezJn4 
+
+### 5) PUBLICFEED
+
+# use user id from register or login
+GET {{baseUrl}}/public-feed 
+

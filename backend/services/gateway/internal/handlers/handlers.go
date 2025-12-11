@@ -78,5 +78,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			Finalize(h.authStatus()))
 
+	mux.HandleFunc("/public-feed",
+		Chain().
+			AllowedMethod("GET").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.getPublicFeed()))
+
 	return mux
 }

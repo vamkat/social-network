@@ -8,4 +8,4 @@ echo "Running seeds..."
 /app/seeds/seed.sh || true
 
 echo "Starting service..."
-exec ./posts_services
+exec ./posts_service
