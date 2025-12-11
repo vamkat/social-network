@@ -59,6 +59,7 @@ func init() {
 	Cfgs.RedisPort = os.Getenv("REDIS_PORT")
 	Cfgs.RedisPassword = os.Getenv("REDIS_PASSWORD")
 
+	// PORTS
 	Cfgs.UsersPort = os.Getenv("USERS_PORT")
 	Cfgs.PostsPort = os.Getenv("POSTS_PORT")
 	Cfgs.ChatPort = os.Getenv("CHAT_PORT")
