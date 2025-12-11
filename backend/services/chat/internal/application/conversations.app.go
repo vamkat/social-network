@@ -9,7 +9,8 @@ import (
 	md "social-network/shared/go/models"
 )
 
-func (c *ChatService) CreatePrivateConversation(ctx context.Context, params md.CreatePrivateConvParams) (convId ct.Id, err error) {
+func (c *ChatService) CreatePrivateConversation(ctx context.Context,
+	params md.CreatePrivateConvParams) (convId ct.Id, err error) {
 	if err := ct.ValidateStruct(params); err != nil {
 		return 0, err
 	}
@@ -21,19 +22,20 @@ func (c *ChatService) CreatePrivateConversation(ctx context.Context, params md.C
 	return convId, err
 }
 
-func (c *ChatService) CreateGroupConversation(ctx context.Context, params md.CreateGroupConvParams) (convId ct.Id, err error) {
+func (c *ChatService) CreateGroupConversation(ctx context.Context,
+	params md.CreateGroupConvParams) (convId ct.Id, err error) {
 	if err := ct.ValidateStruct(params); err != nil {
 		return 0, err
 	}
 
 	err = c.txRunner.RunTx(ctx,
 		func(q dbservice.Querier) error {
-			convId, err = c.Queries.CreateGroupConv(ctx, params.GroupId)
+			convId, err = q.CreateGroupConv(ctx, params.GroupId)
 			if err != nil {
 				return err
 			}
 
-			return c.Queries.AddConversationMembers(ctx,
+			return q.AddConversationMembers(ctx,
 				md.AddConversationMembersParams{
 					ConversationId: ct.Id(convId),
 					UserIds:        params.UserIds,
@@ -44,7 +46,8 @@ func (c *ChatService) CreateGroupConversation(ctx context.Context, params md.Cre
 
 // Delete a conversation only if its members exactly match the provided list.
 // Returns 0 rows if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
-func (c *ChatService) DeleteConversationByExactMembers(ctx context.Context, ids ct.Ids) (conv md.ConversationDeleteResp, err error) {
+func (c *ChatService) DeleteConversationByExactMembers(ctx context.Context,
+	ids ct.Ids) (conv md.ConversationDeleteResp, err error) {
 	if err := ids.Validate(); err != nil {
 		return conv, err
 	}
@@ -61,14 +64,16 @@ func (c *ChatService) DeleteConversationByExactMembers(ctx context.Context, ids 
 
 // Find a conversation by group_id and insert the given user_ids into conversation_members.
 // existing members are ignored, new members are added.
-func (c *ChatService) AddMembersToGroupConversation(ctx context.Context, params md.AddMembersToGroupConversationParams) (convId ct.Id, err error) {
+func (c *ChatService) AddMembersToGroupConversation(ctx context.Context,
+	params md.AddMembersToGroupConversationParams) (convId ct.Id, err error) {
 	if err := ct.ValidateStruct(params); err != nil {
 		return 0, err
 	}
 	return c.Queries.AddMembersToGroupConversation(ctx, params)
 }
 
-func (c *ChatService) GetUserConversations(ctx context.Context, arg md.GetUserConversationsParams) ([]md.GetUserConversationsRow, error) {
+func (c *ChatService) GetUserConversations(ctx context.Context,
+	arg md.GetUserConversationsParams) ([]md.GetUserConversationsRow, error) {
 	if err := ct.ValidateStruct(arg); err != nil {
 		return nil, err
 	}

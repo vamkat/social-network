@@ -9,7 +9,6 @@ import (
 	ct "social-network/shared/go/customtypes"
 	md "social-network/shared/go/models"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,13 +163,13 @@ func TestUpdateLastReadMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a message as userA
-	msg, err := q.CreateMessage(ctx, CreateMessageParams{ConversationID: convId.Int64(), SenderID: pgtype.Int8{Int64: userA.Int64(), Valid: true}, MessageText: "hello"})
+	msg, err := q.CreateMessage(ctx, md.CreateMessageParams{ConversationId: convId, SenderId: userA, MessageText: "hello"})
 	require.NoError(t, err)
 
 	// Update last read for userB
-	convMember, err := q.UpdateLastReadMessage(ctx, UpdateLastReadMessageParams{ConversationID: convId.Int64(), UserID: userB.Int64(), LastReadMessageID: pgtype.Int8{Int64: msg.ID, Valid: true}})
+	convMember, err := q.UpdateLastReadMessage(ctx, md.UpdateLastReadMessageParams{ConversationId: convId, UserID: userB, LastReadMessageId: msg.Id})
 	require.NoError(t, err)
-	assert.Equal(t, msg.ID, convMember.LastReadMessageID.Int64)
+	assert.Equal(t, msg.Id, convMember.LastReadMessageID.Int64)
 
 	cleanupConversation(t, ctx, int64(convId))
 }

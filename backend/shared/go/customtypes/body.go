@@ -1,6 +1,7 @@
 package customtypes
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,12 +34,7 @@ func (b PostBody) IsValid() bool {
 	if len(b) < postBodyCharsMin || len(b) > postBodyCharsMax {
 		return false
 	}
-	for _, r := range b {
-		if r < 32 { // control characters
-			return false
-		}
-	}
-	return true
+	return controlCharsFree(b.String())
 }
 
 func (b PostBody) Validate() error {
@@ -145,4 +141,72 @@ func (eb EventBody) Validate() error {
 
 func (eb EventBody) String() string {
 	return string(eb)
+}
+
+type MsgBody string
+
+func (m MsgBody) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(m))
+}
+
+func (m *MsgBody) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*m = MsgBody(s)
+	return nil
+}
+
+func (m MsgBody) IsValid() bool {
+	if len(m) == 0 {
+		return false
+	}
+	if len(m) < commentBodyCharsMin || len(m) > commentBodyCharsMax {
+		return false
+	}
+
+	return controlCharsFree(m.String())
+}
+
+func (m MsgBody) Validate() error {
+	if !m.IsValid() {
+		return errors.Join(ErrValidation,
+			fmt.Errorf("comment body must be %d–%d chars and contain no control characters",
+				commentBodyCharsMin,
+				commentBodyCharsMax,
+			))
+	}
+	return nil
+}
+
+func (i *MsgBody) Scan(src any) error {
+	if src == nil {
+		// SQL NULL reached
+		*i = "" // or whatever "invalid" means in your domain
+		return nil
+	}
+
+	switch v := src.(type) {
+	case string:
+		*i = MsgBody(v)
+		return nil
+
+	case []byte:
+		*i = MsgBody(string(v))
+		return nil
+	}
+
+	return fmt.Errorf("cannot scan type %T into MsgBody", src)
+}
+
+func (i MsgBody) Value() (driver.Value, error) {
+	if !i.IsValid() {
+		return nil, nil
+	}
+	return i.String(), nil
+}
+
+func (m MsgBody) String() string {
+	return string(m)
 }

@@ -2,8 +2,7 @@ package dbservice
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	md "social-network/shared/go/models"
 )
 
 const createMessage = `-- name: CreateMessage :one
@@ -16,17 +15,11 @@ WHERE conversation_id = $1
 RETURNING id, conversation_id, sender_id, message_text, created_at, updated_at, deleted_at
 `
 
-type CreateMessageParams struct {
-	ConversationID int64
-	SenderID       pgtype.Int8
-	MessageText    string
-}
-
-func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
-	row := q.db.QueryRow(ctx, createMessage, arg.ConversationID, arg.SenderID, arg.MessageText)
-	var i Message
+func (q *Queries) CreateMessage(ctx context.Context, arg md.CreateMessageParams) (md.MessageResp, error) {
+	row := q.db.QueryRow(ctx, createMessage, arg.ConversationId, arg.SenderId, arg.MessageText)
+	var i md.MessageResp
 	err := row.Scan(
-		&i.ID,
+		&i.Id,
 		&i.ConversationID,
 		&i.SenderID,
 		&i.MessageText,
@@ -49,17 +42,10 @@ ORDER BY m.created_at ASC
 LIMIT $3 OFFSET $4
 `
 
-type GetMessagesParams struct {
-	ConversationID int64
-	UserID         int64
-	Limit          int32
-	Offset         int32
-}
-
-func (q *Queries) GetMessages(ctx context.Context, arg GetMessagesParams) ([]Message, error) {
+func (q *Queries) GetMessages(ctx context.Context, arg md.GetMessagesParams) (messages []md.MessageResp, err error) {
 	rows, err := q.db.Query(ctx, getMessages,
-		arg.ConversationID,
-		arg.UserID,
+		arg.ConversationId,
+		arg.UserId,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -67,11 +53,11 @@ func (q *Queries) GetMessages(ctx context.Context, arg GetMessagesParams) ([]Mes
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Message{}
+	messages = []md.MessageResp{}
 	for rows.Next() {
-		var i Message
+		var i md.MessageResp
 		if err := rows.Scan(
-			&i.ID,
+			&i.Id,
 			&i.ConversationID,
 			&i.SenderID,
 			&i.MessageText,
@@ -81,12 +67,12 @@ func (q *Queries) GetMessages(ctx context.Context, arg GetMessagesParams) ([]Mes
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		messages = append(messages, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return items, nil
+	return messages, nil
 }
 
 const updateLastReadMessage = `-- name: UpdateLastReadMessage :one
@@ -98,15 +84,11 @@ WHERE cm.conversation_id = $1
 RETURNING conversation_id, user_id, last_read_message_id, joined_at, deleted_at
 `
 
-type UpdateLastReadMessageParams struct {
-	ConversationID    int64
-	UserID            int64
-	LastReadMessageID pgtype.Int8
-}
-
-func (q *Queries) UpdateLastReadMessage(ctx context.Context, arg UpdateLastReadMessageParams) (ConversationMember, error) {
-	row := q.db.QueryRow(ctx, updateLastReadMessage, arg.ConversationID, arg.UserID, arg.LastReadMessageID)
-	var i ConversationMember
+func (q *Queries) UpdateLastReadMessage(ctx context.Context,
+	arg md.UpdateLastReadMessageParams,
+) (md.ConversationMember, error) {
+	row := q.db.QueryRow(ctx, updateLastReadMessage, arg.ConversationId, arg.UserID, arg.LastReadMessageId)
+	var i md.ConversationMember
 	err := row.Scan(
 		&i.ConversationID,
 		&i.UserID,

@@ -9,6 +9,11 @@ type AddConversationMembersParams struct {
 	UserIds        ct.Ids
 }
 
+type AddMembersToGroupConversationParams struct {
+	GroupId ct.Id
+	UserIds ct.Ids
+}
+
 type CreatePrivateConvParams struct {
 	UserA ct.Id `json:"user_a"`
 	UserB ct.Id `json:"user_b"`
@@ -17,6 +22,19 @@ type CreatePrivateConvParams struct {
 type CreateGroupConvParams struct {
 	GroupId ct.Id  `json:"group_id"`
 	UserIds ct.Ids `json:"users_id"`
+}
+
+type CreateMessageParams struct {
+	ConversationId ct.Id
+	SenderId       ct.Id
+	MessageText    ct.MsgBody
+}
+
+type GetMessagesParams struct {
+	ConversationId ct.Id
+	UserId         ct.Id
+	Limit          ct.Limit
+	Offset         ct.Offset
 }
 
 type ConversationDeleteResp struct {
@@ -33,6 +51,14 @@ type ConversationResponse struct {
 	CreatedAt ct.GenDateTime
 	UpdatedAt ct.GenDateTime `validation:"nullable"`
 	DeletedAt ct.GenDateTime `validation:"nullable"`
+}
+
+type ConversationMember struct {
+	ConversationID    ct.Id
+	UserID            ct.Id
+	LastReadMessageID ct.Id
+	JoinedAt          ct.GenDateTime
+	DeletedAt         ct.GenDateTime `validation:"nullable"`
 }
 
 type GetConversationMembersParams struct {
@@ -56,7 +82,24 @@ type GetUserConversationsRow struct {
 	FirstUnreadMessageId *int64
 }
 
-type AddMembersToGroupConversationParams struct {
-	GroupId ct.Id
-	UserIds ct.Ids
+type MessageResp struct {
+	Id             ct.Id
+	ConversationID ct.Id
+	SenderID       ct.Id
+	MessageText    ct.MsgBody
+	CreatedAt      ct.GenDateTime
+	UpdatedAt      ct.GenDateTime
+	DeletedAt      ct.GenDateTime `validation:"nullable"`
+}
+
+type SoftDeleteConversationMemberParams struct {
+	ConversationID ct.Id
+	UserId         ct.Id
+	UserId_2       ct.Id
+}
+
+type UpdateLastReadMessageParams struct {
+	ConversationId    ct.Id
+	UserID            ct.Id
+	LastReadMessageId ct.Id `validation:"nullable"`
 }

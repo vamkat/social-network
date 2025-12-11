@@ -26,24 +26,19 @@ func NewPgxTxRunner(pool *pgxpool.Pool, db *dbservice.Queries) *PgxTxRunner {
 	}
 }
 
-// RunTx runs a function inside a database transaction
-// The function receives a dbservice.Querier interface, not *dbservice.Queries
+// RunTx wraps a function that contains two or more queries inside a database transaction
 func (r *PgxTxRunner) RunTx(ctx context.Context, fn func(dbservice.Querier) error) error {
-	// start tx
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	// create queries with transaction - returns *dbservice.Queries
 	qtx := r.db.WithTx(tx)
 
-	// run the function, passing qtx as dbservice.Querier interface
 	if err := fn(qtx); err != nil {
 		return err
 	}
 
-	// commit transaction
 	return tx.Commit(ctx)
 }

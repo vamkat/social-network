@@ -2,24 +2,30 @@ package dbservice
 
 import (
 	"context"
+	"fmt"
 	ct "social-network/shared/go/customtypes"
 	md "social-network/shared/go/models"
 )
 
-const createGroupConv = `-- name: CreateGroupConv :one
+const createGroupConv = `
 INSERT INTO conversations (group_id)
 VALUES ($1)
 RETURNING id
 `
 
+// Initiates the conversation by groupId. Group Id should be a not null value
+// Use as a preparation for adding members
 func (q *Queries) CreateGroupConv(ctx context.Context,
-	groupID ct.Id) (convId ct.Id, err error) {
-	row := q.db.QueryRow(ctx, createGroupConv, groupID)
+	groupId ct.Id) (convId ct.Id, err error) {
+	if !groupId.IsValid() {
+		return convId, fmt.Errorf("null group Id")
+	}
+	row := q.db.QueryRow(ctx, createGroupConv, groupId)
 	err = row.Scan(&convId)
 	return convId, err
 }
 
-const createPrivateConv = `-- name: CreatePrivateConv :one
+const createPrivateConv = `
 WITH existing AS (
     SELECT c.id
     FROM conversations c
@@ -32,11 +38,6 @@ SELECT NULL
 WHERE NOT EXISTS (SELECT 1 FROM existing)
 RETURNING id
 `
-
-// type CreatePrivateConvParams struct {
-// 	UserID   int64
-// 	UserID_2 int64
-// }
 
 // Creates a Conversation if and only if a conversation between the same 2 users does not exist.
 // Returns NULL if a duplicate DM exists (sql will error if RETURNING finds no rows).
@@ -77,6 +78,7 @@ RETURNING id, group_id, created_at, updated_at, deleted_at
 
 // Delete a conversation only if its members exactly match the provided list.
 // Returns 0 rows if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
+// OK!
 func (q *Queries) DeleteConversationByExactMembers(ctx context.Context, memberIds ct.Ids) (md.ConversationDeleteResp, error) {
 	row := q.db.QueryRow(ctx, deleteConversationByExactMembers, memberIds)
 	var i md.ConversationDeleteResp
@@ -141,24 +143,9 @@ LEFT JOIN unread u ON u.conversation_id = uc.conversation_id
 ORDER BY uc.last_message_id DESC;
 `
 
-// type GetUserConversationsParams struct {
-// 	UserId  int64
-// 	GroupId sql.NullInt64
-// 	Limit   int32
-// 	Offset  int32
-// }
-
-// type GetUserConversationsRow struct {
-// 	ConversationId       int64
-// 	CreatedAt            time.Time
-// 	UpdatedAt            time.Time
-// 	MemberIds            []int64
-// 	UnreadCount          int64
-// 	FirstUnreadMessageId sql.NullInt64
-// }
-
 // Fetches paginated conversation details, conversation members Ids and unread messages count for a user and a group
-// To get DMS group Id parameter must be zero (converted to null by Value implementation).
+// To get DMS group Id parameter must be zero.
+// OK !
 func (q *Queries) GetUserConversations(
 	ctx context.Context,
 	arg md.GetUserConversationsParams,

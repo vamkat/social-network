@@ -48,7 +48,7 @@ func (q *Queries) GetConversationMembers(ctx context.Context, arg md.GetConversa
 	return members, nil
 }
 
-const softDeleteConversationMember = `-- name: SoftDeleteConversationMember :one
+const softDeleteConversationMember = `
 UPDATE conversation_members cm_target
 SET deleted_at = NOW()
 FROM conversation_members cm_actor
@@ -61,15 +61,11 @@ WHERE cm_target.conversation_id = $1
 RETURNING cm_target.conversation_id, cm_target.user_id, cm_target.last_read_message_id, cm_target.joined_at, cm_target.deleted_at
 `
 
-type SoftDeleteConversationMemberParams struct {
-	ConversationID int64
-	UserID         int64
-	UserID_2       int64
-}
-
-func (q *Queries) SoftDeleteConversationMember(ctx context.Context, arg SoftDeleteConversationMemberParams) (ConversationMember, error) {
-	row := q.db.QueryRow(ctx, softDeleteConversationMember, arg.ConversationID, arg.UserID, arg.UserID_2)
-	var i ConversationMember
+func (q *Queries) SoftDeleteConversationMember(ctx context.Context,
+	arg md.SoftDeleteConversationMemberParams,
+) (md.ConversationMember, error) {
+	row := q.db.QueryRow(ctx, softDeleteConversationMember, arg.ConversationID, arg.UserId, arg.UserId_2)
+	var i md.ConversationMember
 	err := row.Scan(
 		&i.ConversationID,
 		&i.UserID,
