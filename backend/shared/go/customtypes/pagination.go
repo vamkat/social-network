@@ -1,9 +1,11 @@
 package customtypes
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 // ------------------------------------------------------------
@@ -35,6 +37,48 @@ func (l Limit) Validate() error {
 		return errors.Join(ErrValidation, fmt.Errorf("limit must be between 1 and %d", maxLimit))
 	}
 	return nil
+}
+
+func (l *Limit) Scan(src any) error {
+	if src == nil {
+		*l = 0
+		return nil
+	}
+
+	var v int64
+	switch t := src.(type) {
+	case int64:
+		v = t
+	case int32:
+		v = int64(t)
+	case []byte:
+		n, err := strconv.ParseInt(string(t), 10, 32)
+		if err != nil {
+			return err
+		}
+		v = n
+	case string:
+		n, err := strconv.ParseInt(t, 10, 32)
+		if err != nil {
+			return err
+		}
+		v = n
+	default:
+		return fmt.Errorf("cannot scan %T into Limit", src)
+	}
+
+	*l = Limit(v)
+	if !l.IsValid() {
+		return fmt.Errorf("invalid Limit value %d", v)
+	}
+	return nil
+}
+
+func (l Limit) Value() (driver.Value, error) {
+	if !l.IsValid() {
+		return nil, fmt.Errorf("invalid Limit value %d", l)
+	}
+	return int64(l), nil
 }
 
 func (l Limit) Int32() int32 {
@@ -70,6 +114,48 @@ func (o Offset) Validate() error {
 		return errors.Join(ErrValidation, errors.New("offset must be >= 0"))
 	}
 	return nil
+}
+
+func (o *Offset) Scan(src any) error {
+	if src == nil {
+		*o = 0
+		return nil
+	}
+
+	var v int64
+	switch t := src.(type) {
+	case int64:
+		v = t
+	case int32:
+		v = int64(t)
+	case []byte:
+		n, err := strconv.ParseInt(string(t), 10, 32)
+		if err != nil {
+			return err
+		}
+		v = n
+	case string:
+		n, err := strconv.ParseInt(t, 10, 32)
+		if err != nil {
+			return err
+		}
+		v = n
+	default:
+		return fmt.Errorf("cannot scan %T into Offset", src)
+	}
+
+	*o = Offset(v)
+	if !o.IsValid() {
+		return fmt.Errorf("invalid Offset value %d", v)
+	}
+	return nil
+}
+
+func (o Offset) Value() (driver.Value, error) {
+	if !o.IsValid() {
+		return nil, fmt.Errorf("invalid Offset value %d", o)
+	}
+	return int64(o), nil
 }
 
 func (o Offset) Int32() int32 {
