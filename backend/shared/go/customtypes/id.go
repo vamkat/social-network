@@ -4,7 +4,9 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/lib/pq"
 	"github.com/speps/go-hashids/v2"
@@ -106,6 +108,37 @@ func (i Id) Validate() error {
 	return nil
 }
 
+func (i *Id) Scan(src any) error {
+	if src == nil {
+		// SQL NULL reached
+		*i = 0 // or whatever "invalid" means in your domain
+		return nil
+	}
+
+	switch v := src.(type) {
+	case int64:
+		*i = Id(v)
+		return nil
+
+	case []byte:
+		n, err := strconv.ParseInt(string(v), 10, 64)
+		if err != nil {
+			return err
+		}
+		*i = Id(n)
+		return nil
+	}
+
+	return fmt.Errorf("cannot scan type %T into Id", src)
+}
+
+func (i Id) Value() (driver.Value, error) {
+	if !i.IsValid() {
+		return nil, nil
+	}
+	return i.Int64, nil
+}
+
 func (i Id) Int64() int64 {
 	return int64(i)
 }
@@ -174,7 +207,7 @@ func (ids Ids) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner
-func (ids *Ids) Scan(src interface{}) error {
+func (ids *Ids) Scan(src any) error {
 	var int64Array pq.Int64Array
 	if err := int64Array.Scan(src); err != nil {
 		return err

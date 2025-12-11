@@ -1,6 +1,7 @@
 package customtypes
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -240,6 +241,44 @@ func (g GenDateTime) Validate() error {
 		return errors.Join(ErrValidation, errors.New("invalid event date"))
 	}
 	return nil
+}
+
+// Scan implements the sql.Scanner interface
+func (g *GenDateTime) Scan(src any) error {
+	if src == nil {
+		*g = GenDateTime(time.Time{})
+		return nil
+	}
+
+	switch t := src.(type) {
+	case time.Time:
+		*g = GenDateTime(t) // store exactly as DB returns it
+		return nil
+	case []byte:
+		parsed, err := time.Parse(time.RFC3339Nano, string(t))
+		if err != nil {
+			return err
+		}
+		*g = GenDateTime(parsed)
+		return nil
+	case string:
+		parsed, err := time.Parse(time.RFC3339Nano, t)
+		if err != nil {
+			return err
+		}
+		*g = GenDateTime(parsed)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan %T into GenDateTime", src)
+	}
+}
+
+// Value implements the driver.Valuer interface
+func (g GenDateTime) Value() (driver.Value, error) {
+	if !g.IsValid() {
+		return nil, nil // SQL NULL for invalid timestamps
+	}
+	return time.Time(g), nil // store exactly as is
 }
 
 // Helper to get time.Time if needed
