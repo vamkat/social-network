@@ -9,6 +9,8 @@ import (
 	ct "social-network/shared/go/customtypes"
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func (h *Handlers) getUserProfile() http.HandlerFunc {
@@ -18,6 +20,7 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 		pathParts := strings.Split(r.URL.Path, "/")
 		if pathParts[len(pathParts)-1] == "" {
 			utils.ErrorJSON(w, http.StatusBadRequest, "missing user_id in URL path")
+			return
 		}
 
 		userId, err := ct.DecryptId(pathParts[len(pathParts)-1])
@@ -91,5 +94,65 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			return
 		}
 
+	}
+}
+
+func (s *Handlers) GetBasicUserInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		// if !ok {
+		// 	panic(1)
+		// }
+
+		type reqBody struct {
+			UserId int64 `json:"user_id"`
+		}
+
+		body, err := utils.JSON2Struct(&reqBody{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		req := wrapperspb.Int64Value{Value: body.UserId}
+
+		out, err := s.App.Users.GetBasicUserInfo(ctx, &req)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch user: "+err.Error())
+			return
+		}
+
+		utils.WriteJSON(w, http.StatusOK, out)
+	}
+}
+
+func (s *Handlers) GetBatchBasicUserInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		// if !ok {
+		// 	panic(1)
+		// }
+
+		type reqBody struct {
+			Values []int64 `json:"values"`
+		}
+
+		body, err := utils.JSON2Struct(&reqBody{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		req := users.Int64Arr{Values: body.Values}
+
+		out, err := s.App.Users.GetBatchBasicUserInfo(ctx, &req)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch users: "+err.Error())
+			return
+		}
+
+		utils.WriteJSON(w, http.StatusOK, out)
 	}
 }

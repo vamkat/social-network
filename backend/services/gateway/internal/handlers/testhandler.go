@@ -18,6 +18,7 @@ func (h *Handlers) testHandler() http.HandlerFunc {
 		if err != nil {
 			fmt.Println("failed to send test ACK: ", err.Error())
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send logout ACK")
+			return
 		}
 	}
 }

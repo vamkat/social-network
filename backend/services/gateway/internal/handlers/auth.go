@@ -134,6 +134,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		dob, err := ct.ParseDateOfBirth(r.FormValue("date_of_birth"))
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		fmt.Println("Pass on register", ct.Password(r.FormValue("password")))

@@ -1,14 +1,11 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"social-network/services/gateway/internal/application"
 	"social-network/services/gateway/internal/middleware"
 	"social-network/shared/go/ratelimit"
 )
-
-var ErrMinIO = errors.New("minIO failed to be created")
 
 type Handlers struct {
 	App application.GatewayApp
@@ -31,7 +28,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 	mux.HandleFunc("/test",
 		Chain().
 			AllowedMethod("GET").
-			RateLimitIP(1, 4).
+			RateLimitIP(5, 5).
 			EnrichContext().
 			Finalize(h.testHandler()))
 
@@ -47,25 +44,25 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 	mux.HandleFunc("/login",
 		Chain().
 			AllowedMethod("POST").
-			RateLimitIP(1, 4).
-			RateLimitUser(1, 4).
+			RateLimitIP(5, 5).
+			RateLimitUser(5, 5).
 			EnrichContext().
 			Finalize(h.loginHandler()))
 
 	mux.HandleFunc("/register",
 		Chain().
 			AllowedMethod("POST").
-			RateLimitIP(1, 4).
-			RateLimitUser(1, 4).
+			RateLimitIP(5, 5).
+			RateLimitUser(5, 5).
 			EnrichContext().
 			Finalize(h.registerHandler()))
 
 	mux.HandleFunc("/logout",
 		Chain().
 			AllowedMethod("POST").
-			RateLimitIP(1, 4).
+			RateLimitIP(5, 5).
 			Auth().
-			RateLimitUser(1, 4).
+			RateLimitUser(5, 5).
 			EnrichContext().
 			Finalize(h.logoutHandler()))
 
@@ -86,6 +83,236 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimitUser(5, 5).
 			EnrichContext().
 			Finalize(h.getPublicFeed()))
+
+	//NEW ENDPOINTS BELOW:
+
+	// Groups
+	mux.HandleFunc("/groups/create",
+		Chain().
+			AllowedMethod("POST").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.CreateGroup()))
+
+	mux.HandleFunc("/groups/paginated",
+		Chain().
+			AllowedMethod("GET").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.GetAllGroupsPaginated()))
+
+	// Follow actions
+	mux.HandleFunc("/users/follow",
+		Chain().
+			AllowedMethod("POST").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.FollowUser()))
+
+	mux.HandleFunc("/users/followers/paginated",
+		Chain().
+			AllowedMethod("GET").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.GetFollowersPaginated()))
+
+	mux.HandleFunc("/users/follow-suggestions",
+		Chain().
+			AllowedMethod("GET").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.GetFollowSuggestions()))
+
+	// Basic user info
+	mux.HandleFunc("/users/basic-info",
+		Chain().
+			AllowedMethod("GET").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.GetBasicUserInfo()))
+
+	mux.HandleFunc("/users/basic-info/batch",
+		Chain().
+			AllowedMethod("GET").
+			RateLimitIP(5, 5).
+			Auth().
+			RateLimitUser(5, 5).
+			EnrichContext().
+			Finalize(h.GetBatchBasicUserInfo()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.GetFollowingIds()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.GetFollowingPaginated()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.GetGroupInfo()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.GetGroupMembers()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.GetUserGroupsPaginated()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.HandleFollowRequest()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.HandleGroupJoinRequest()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.InviteToGroup()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.LeaveGroup()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.RequestJoinGroupOrCancel()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.RespondToGroupInvite()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.SearchGroups()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.SearchUsers()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.UnFollowUser()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.UpdateProfilePrivacy()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.UpdateUserEmail()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.UpdateUserPassword()))
+
+	// mux.HandleFunc("/public-feed",
+	// 	Chain().
+	// 		AllowedMethod("GET").
+	// 		RateLimitIP(5, 5).
+	// 		Auth().
+	// 		RateLimitUser(5, 5).
+	// 		EnrichContext().
+	// 		Finalize(h.UpdateUserProfile()))
 
 	return mux
 }

@@ -35,6 +35,18 @@ func GetValue[T any](r *http.Request, key string) (T, bool) {
 	return c, ok
 }
 
+var ErrUnmarshalFailed = errors.New("unmashal failed")
+
+func JSON2Struct[T any](dataStruct *T, request *http.Request) (*T, error) {
+	decoder := json.NewDecoder(request.Body)
+	defer request.Body.Close()
+	err := decoder.Decode(&dataStruct)
+	if err != nil {
+		return dataStruct, ErrUnmarshalFailed
+	}
+	return dataStruct, nil
+}
+
 func WriteJSON(w http.ResponseWriter, code int, v any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
