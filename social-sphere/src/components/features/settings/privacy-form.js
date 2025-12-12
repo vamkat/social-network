@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { togglePrivacy } from "@/actions/profile/profile-actions";
+import { togglePrivacy } from "@/services/profile/profile-actions";
 import { Lock, Globe } from "lucide-react";
 
 export default function PrivacyForm({ user }) {

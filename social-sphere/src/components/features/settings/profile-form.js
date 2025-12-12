@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateUserProfile } from "@/actions/user/user-actions";
+import { updateUserProfile } from "@/services/user/user-actions";
 import { Camera } from "lucide-react";
 
 export default function ProfileForm({ user }) {
@@ -92,7 +92,7 @@ export default function ProfileForm({ user }) {
                 <label className="form-label">About Me</label>
                 <textarea
                     name="about"
-                    defaultValue={user?.AboutMe}
+                    defaultValue={user?.about}
                     rows={4}
                     className="form-input resize-none"
                     placeholder="Tell us about yourself..."

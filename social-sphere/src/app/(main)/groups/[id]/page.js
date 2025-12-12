@@ -1,6 +1,5 @@
-import { getGroupById, getGroupPosts, getGroupMembers, getGroupEvents } from "@/actions/groups/group-actions";
+import { getGroupById, getGroupPosts, getGroupMembers, getGroupEvents } from "@/services/groups/group-actions";
 import PostCard from "@/components/ui/post-card";
-import FeedActions from "@/components/ui/feed-actions";
 
 export default async function GroupDetailPage({ params }) {
     const { id } = await params;
@@ -109,22 +108,6 @@ export default async function GroupDetailPage({ params }) {
 
                     {/* Posts Feed */}
                     <div className="space-y-6">
-                        <FeedActions
-                            ctaProps={{
-                                title: "New Group post",
-                                subtitle: "Share your thoughts and ideas in this group.",
-                                actionLabel: "+ Post",
-                            }}
-                            postFormProps={{
-                                defaultVisibility: "group",
-                                visibilityOptions: [
-                                    { value: "group", label: "Group", helper: "Only members of this group will see it." },
-                                ],
-                                groupId: id,
-                                showVisibilityPicker: false,
-                                audienceMarker: "Posting to this group",
-                            }}
-                        />
                         {posts.map((post) => (
                             <PostCard key={post.ID} post={post} />
                         ))}

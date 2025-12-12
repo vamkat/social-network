@@ -1,108 +1,187 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fbfbf9; /* Warmer off-white */
-  --foreground: #1c1917; /* Warm black */
-  --muted: #78716c; /* Warm gray */
-  --accent: #000000;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0a09; /* Warm dark background */
-    --foreground: #e7e5e4; /* Warm light gray */
-    --muted: #a8a29e;
-    --accent: #ffffff;
-  }
+  --accent: #a855f7;
+  /* Electric purple */
+  --accent-hover: #9333ea;
+  /* Deeper purple */
+  --foreground: #0a0a0a;
+  --muted: #6b7280;
+  --background: #ffffff;
+  --border: #e5e5e5;
 }
 
 body {
-  color: var(--foreground);
   background: var(--background);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Layout Utilities */
-.page-container {
-  @apply min-h-screen flex flex-col;
+/* ======================
+   FORM ELEMENTS
+   ====================== */
+
+.form-input {
+  @apply px-4 rounded-3xl border border-(--border) hover:border-(--foreground) focus:border-(--accent) py-3 w-full bg-(--muted)/7 text-(--foreground) placeholder:text-(--muted)/50 focus:outline-none transition-colors;
 }
 
-.main-content {
-  @apply flex-1 flex flex-col;
+.form-input:focus {
+  @apply outline-none;
 }
 
-.container-width {
-  @apply max-w-[1000px] mx-auto px-6 w-full;
+.form-label {
+  @apply block text-sm font-medium text-(--foreground) mb-2;
 }
 
-/* Navigation */
-.nav {
-  @apply sticky top-0 z-50 backdrop-blur-md bg-(--background)/80 py-4 transition-all duration-300;
+.form-error {
+  @apply text-red-600 text-sm mt-2;
 }
 
-.nav-content {
-  @apply flex items-center justify-between max-w-[1000px] mx-auto px-6 w-full;
+.form-error-box {
+  @apply text-red-600 text-sm;
 }
 
-.nav-logo {
-  @apply font-semibold text-lg tracking-tight hover:opacity-70 transition-opacity;
+.form-toggle-btn {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 transition-colors hover:text-(--accent) focus:text-(--accent) focus:outline-none;
+  color: var(--muted);
 }
 
-.nav-links {
-  @apply flex items-center gap-6 text-sm font-medium text-(--muted);
+.form-toggle-btn:hover {
+  color: var(--foreground);
 }
 
-.nav-link {
-  @apply hover:text-(--foreground) transition-colors;
+/* Avatar Upload */
+.avatar-container {
+  @apply relative w-24 h-24 rounded-full border-2 cursor-pointer overflow-hidden flex items-center justify-center transition-colors;
+  border-color: var(--border);
+  background-color: var(--background);
 }
 
-/* Hero Section */
-.hero {
-  @apply pt-32 pb-24 flex flex-col items-center text-center max-w-[1000px] mx-auto px-6 w-full;
+.avatar-container:hover {
+  border-color: var(--accent);
 }
 
-.hero-title {
-  @apply text-5xl md:text-7xl font-bold tracking-tighter leading-[1.1] mb-6 text-(--foreground);
+.avatar-image {
+  @apply w-full h-full object-cover;
 }
 
-.hero-subtitle {
-  @apply text-xl md:text-2xl text-(--muted) max-w-2xl font-light leading-relaxed mb-10;
+.avatar-input {
+  @apply absolute inset-0 w-full h-full opacity-0 cursor-pointer;
 }
 
-/* Buttons */
+.avatar-remove-btn {
+  @apply absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors z-10;
+}
+
+.avatar-label {
+  @apply text-sm mt-2;
+  color: var(--muted);
+}
+
+/* ======================
+   BUTTONS
+   ====================== */
+
 .btn {
-  @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-all duration-200;
+  @apply px-6 py-3 text-base font-medium transition-colors cursor-pointer border-0;
 }
 
 .btn-primary {
-  @apply bg-(--foreground) text-(--background) hover:opacity-90 hover:scale-105 active:scale-95;
+  @apply bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full;
 }
 
 .btn-secondary {
-  @apply text-(--muted) hover:text-(--foreground);
+  @apply bg-white text-(--foreground) border-2 border-(--foreground) hover:bg-(--foreground) hover:text-white;
 }
 
-/* Feature Sections */
-.section {
-  @apply py-24 md:py-32 flex flex-col md:flex-row items-center gap-12 md:gap-24 max-w-[1000px] mx-auto px-6 w-full;
+/* ======================
+   LINKS
+   ====================== */
+
+.link-primary {
+  @apply font-medium text-(--accent) hover:text-(--accent-hover) transition-colors;
 }
 
-.section-content {
-  @apply flex-1 space-y-4;
+.link-muted {
+  @apply text-(--muted) hover:text-(--foreground) transition-colors;
 }
 
-.section-visual {
-  @apply flex-1 flex items-center justify-center;
+/* ======================
+   TYPOGRAPHY
+   ====================== */
+
+.heading-xl {
+  @apply text-7xl md:text-9xl font-bold tracking-tighter leading-[0.9] text-(--foreground);
 }
 
-.feature-label {
-  @apply text-xs font-bold uppercase tracking-widest text-(--muted) mb-2 block;
+.heading-lg {
+  @apply text-5xl md:text-6xl font-bold tracking-tight text-(--foreground);
 }
 
-.feature-title {
-  @apply text-3xl md:text-4xl font-semibold tracking-tight mb-4;
+.heading-md {
+  @apply text-4xl font-bold tracking-tight text-(--foreground);
+}
+
+.heading-sm {
+  @apply text-3xl font-bold text-(--foreground);
+}
+
+.text-accent {
+  @apply text-(--accent);
+}
+
+.text-label {
+  @apply text-xs font-medium uppercase tracking-widest text-(--accent);
+}
+
+.text-muted {
+  @apply text-(--muted);
+}
+
+.link-accent {
+  @apply font-medium text-(--accent) hover:text-(--accent-hover) transition-colors;
+}
+
+.text-image-fill {
+  @apply inline-block;
+  background-image: url(/fill.png);
+  background-size: 140% 140%;
+  background-position: center center;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+
+  animation: wander 50s linear infinite;
+}
+
+@keyframes wander {
+  0%   { background-position: 50% 50%; }
+  10%  { background-position: 70% 20%; }
+  20%  { background-position: 30% 80%; }
+  30%  { background-position: 90% 40%; }
+  40%  { background-position: 10% 60%; }
+  50%  { background-position: 80% 90%; }
+  60%  { background-position: 20% 30%; }
+  70%  { background-position: 60% 10%; }
+  80%  { background-position: 40% 70%; }
+  90%  { background-position: 95% 50%; }
+  100% { background-position: 50% 50%; }
+}
+
+
+
+/* ======================
+   LAYOUT
+   ====================== */
+
+.page-container {
+  @apply bg-(--background);
+}
+
+.section-border {
+  @apply border-b border-(--border);
 }
 
 .feature-desc {
@@ -161,9 +240,6 @@ body {
   @apply text-sm font-medium text-(--muted);
 }
 
-.form-input {
-  @apply w-full bg-transparent border-b border-(--muted) py-2 text-(--foreground) placeholder:text-(--muted)/50 focus:outline-none focus:border-(--foreground) transition-colors;
-}
 
 .form-link {
   @apply text-xs text-(--muted) hover:text-(--foreground) transition-colors;
@@ -234,7 +310,7 @@ body {
 }
 
 .post-card {
-  @apply flex gap-4 px-4 py-6 border-b border-(--muted)/10 hover:bg-(--muted)/5 transition-colors cursor-pointer ;
+  @apply flex gap-4 px-4 py-6 border-b border-(--muted)/10 hover:bg-(--muted)/5 transition-colors cursor-pointer;
 }
 
 .post-avatar-container {

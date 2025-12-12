@@ -3,29 +3,28 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import PostCard from "@/components/ui/post-card";
 
-export default function FeedList({ initialPosts, fetchPosts }) {
+export default function FeedList({ initialPosts, fetchPosts, onPostCreated }) {
     const [posts, setPosts] = useState(initialPosts);
-    const [offset, setOffset] = useState(initialPosts.length);
     const [hasMore, setHasMore] = useState(initialPosts.length >= 5);
     const [loading, setLoading] = useState(false);
     const observer = useRef();
+    const offsetRef = useRef(initialPosts.length);
+    const loadingRef = useRef(false);
 
-    const lastPostElementRef = useCallback(node => {
-        if (loading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                loadMorePosts();
-            }
-        });
-        if (node) observer.current.observe(node);
-    }, [loading, hasMore]);
+    // Handle new post creation
+    const handlePostCreated = (newPost) => {
+        setPosts(prevPosts => [newPost, ...prevPosts]);
+        offsetRef.current += 1;
+    };
 
-    const loadMorePosts = async () => {
+    const loadMorePosts = useCallback(async () => {
+        if (loadingRef.current) return; // Prevent multiple simultaneous requests
+
+        loadingRef.current = true;
         setLoading(true);
         try {
             const limit = 5;
-            const newPosts = await fetchPosts(offset, limit);
+            const newPosts = await fetchPosts(offsetRef.current, limit);
 
             if (newPosts.length < limit) {
                 setHasMore(false);
@@ -33,16 +32,33 @@ export default function FeedList({ initialPosts, fetchPosts }) {
 
             if (newPosts.length > 0) {
                 setPosts(prevPosts => [...prevPosts, ...newPosts]);
-                setOffset(prevOffset => prevOffset + newPosts.length);
+                offsetRef.current += newPosts.length;
             } else {
                 setHasMore(false);
             }
         } catch (error) {
             console.error("Failed to fetch posts:", error);
         } finally {
+            loadingRef.current = false;
             setLoading(false);
         }
-    };
+    }, [fetchPosts]);
+
+    const lastPostElementRef = useCallback(node => {
+        if (loadingRef.current) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                loadMorePosts();
+            }
+        });
+        if (node) observer.current.observe(node);
+    }, [hasMore, loadMorePosts]);
+
+    // Expose handlePostCreated to parent
+    if (onPostCreated && typeof onPostCreated === 'function') {
+        onPostCreated(handlePostCreated);
+    }
 
     return (
         <div className="flex flex-col gap-4">

@@ -16,7 +16,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
-            Visibility: "public",
             LastComment: {
                 CommentId: "101",
                 Body: "Love this vibe.",
@@ -44,7 +43,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
-            Visibility: "friends",
             LastComment: {
                 CommentId: "102",
                 Body: "Good morning!",
@@ -72,8 +70,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
-            Visibility: "group",
-            GroupID: "2",
             LastComment: {
                 CommentId: "103",
                 Body: "Spicy take.",
@@ -101,7 +97,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 3,
             NumOfHearts: 1345,
             IsHearted: false,
-            Visibility: "public",
             LastComment: {
                 CommentId: "104",
                 Body: "Craving brunch now.",
@@ -129,7 +124,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
-            Visibility: "friends",
             LastComment: {
                 CommentId: "105",
                 Body: "Need to see pics!",
@@ -157,8 +151,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
-            Visibility: "group",
-            GroupID: "7",
             LastComment: {
                 CommentId: "106",
                 Body: "Legend indeed.",
@@ -186,7 +178,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
-            Visibility: "public",
             LastComment: {
                 CommentId: "107",
                 Body: "Whoa, harsh.",
@@ -214,7 +205,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 15,
             NumOfHearts: 6,
             IsHearted: false,
-            Visibility: "friends",
             LastComment: {
                 CommentId: "108",
                 Body: "This escalated fast.",
@@ -242,7 +232,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 42,
             NumOfHearts: 145,
             IsHearted: false,
-            Visibility: "public",
             LastComment: {
                 CommentId: "109",
                 Body: "Same here!",
@@ -270,7 +259,6 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 7,
             NumOfHearts: 12,
             IsHearted: false,
-            Visibility: "friends",
             LastComment: {
                 CommentId: "110",
                 Body: "Donut well deserved.",
@@ -298,20 +286,11 @@ export const getMockPosts = (offset = 0, limit = 10, visibilityFilter = null, gr
             NumOfComments: 7,
             NumOfHearts: 12,
             IsHearted: false,
-            Visibility: "public",
-            LastComment: {
-                CommentId: "111",
-                Body: "No clue, following.",
-                Creator: {
-                    UserID: "3",
-                    Username: "earlybird",
-                    Avatar: "/elon.jpeg"
-                },
-                ReactionsCount: 1,
-                LikedByUser: false,
-                Image: null,
-                CreatedAt: "20h ago"
-            }
+            LastComment: null,
+            ReactionsCount: 1,
+            LikedByUser: false,
+            Image: null,
+            CreatedAt: "20h ago"
         }
     ];
 

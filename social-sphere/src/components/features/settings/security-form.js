@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateUserEmail, updateUserPassword } from "@/actions/user/user-actions";
+import { updateUserEmail, updateUserPassword } from "@/services/user/user-actions";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function SecurityForm({ user }) {

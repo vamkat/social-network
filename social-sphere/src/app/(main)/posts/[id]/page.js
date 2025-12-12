@@ -1,5 +1,5 @@
 import PostCard from "@/components/ui/post-card";
-import { fetchPostById } from "@/actions/posts/posts";
+import { fetchPostById } from "@/services/posts/posts";
 import { notFound } from "next/navigation";
 
 export default async function SinglePostPage({ params }) {
@@ -11,13 +11,23 @@ export default async function SinglePostPage({ params }) {
     }
 
     return (
-        <div className="feed-container">
-            <div className="feed-header">
-                <h1 className="feed-title">Single Post Page</h1>
-                <p className="feed-subtitle">View post conversation and activity</p>
-            </div>
+        <div className="w-full py-8">
+            <div className="max-w-7xl mx-auto px-6">
+                <div className="flex gap-6">
+                    <aside className="hidden xl:block w-48 shrink-0" />
 
-            <PostCard post={post} />
+                    <main className="flex-1 max-w-2xl mx-auto min-w-0">
+                        {/* <div className="feed-header text-center">
+                            <h1 className="feed-title">Post</h1>
+                            <p className="feed-subtitle">Full conversation and activity</p>
+                        </div> */}
+
+                        <PostCard post={post} />
+                    </main>
+
+                    <aside className="hidden lg:block w-80 shrink-0" />
+                </div>
+            </div>
         </div>
     );
 }

@@ -1,34 +1,8 @@
-import { fetchPublicPosts } from "@/actions/posts/posts";
-import FeedActions from "@/components/ui/feed-actions";
-import FeedList from "@/components/feed/feed-list";
+import { fetchPublicPosts } from "@/services/posts/posts";
+import PublicFeedClient from "./client";
 
 export default async function PublicFeedPage() {
     const initialPosts = await fetchPublicPosts(0, 5);
 
-    return (
-        <div className="feed-container">
-            <div className="feed-header">
-                <h1 className="feed-title">Public Feed</h1>
-                <p className="feed-subtitle">What&apos;s happening around the world</p>
-            </div>
-
-            <FeedActions
-                ctaProps={{
-                    title: "Post something new",
-                    subtitle: "Share what is happening around you with the world.",
-                    actionLabel: "+ Post",
-                }}
-                postFormProps={{
-                    defaultVisibility: "public",
-                    visibilityOptions: [
-                        { value: "public", label: "Public", helper: "Shown in both Public and Friends feeds." },
-                        { value: "friends", label: "Friends", helper: "Only visible in Friends feed." },
-                        { value: "custom", label: "Select members", helper: "Choose specific members who can view this post." },
-                    ],
-                }}
-            />
-
-            <FeedList initialPosts={initialPosts} fetchPosts={fetchPublicPosts} />
-        </div >
-    );
+    return <PublicFeedClient initialPosts={initialPosts} />;
 }
