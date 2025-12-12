@@ -8,7 +8,7 @@ build-base:
 	docker build -t social-network/go-base -f backend/docker/go/base.Dockerfile .
 
 build-services:
-	docker build -t social-network/users:dev -f services/users/Dockerfile .
+	docker build -t social-network/users:dev -f backend/services/users/Dockerfile .
 # 	docker build -t social-network/api-gateway:dev -f gateway/Dockerfile .
 
 docker-up:
