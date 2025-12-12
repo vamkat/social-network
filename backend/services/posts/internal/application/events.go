@@ -181,8 +181,8 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 			GoingCount:    int(r.GoingCount),
 			NotGoingCount: int(r.NotGoingCount),
 			Image:         ct.Id(r.Image),
-			CreatedAt:     r.CreatedAt.Time,
-			UpdatedAt:     r.UpdatedAt.Time,
+			CreatedAt:     ct.GenDateTime(r.CreatedAt.Time),
+			UpdatedAt:     ct.GenDateTime(r.UpdatedAt.Time),
 			UserResponse:  &r.UserResponse.Bool,
 		})
 	}

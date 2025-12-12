@@ -209,9 +209,8 @@ func (s *Application) IsFollowing(ctx context.Context, req models.FollowUserReq)
 	return isfollowing, nil
 }
 
-// SKIP GRPC FOR NOW
 // returns a bool pointer. Nil: neither is following the other, false: one is following the other, true: both are following each other
-func (s *Application) areFollowingEachOther(ctx context.Context, req models.FollowUserReq) (*bool, error) {
+func (s *Application) AreFollowingEachOther(ctx context.Context, req models.FollowUserReq) (*bool, error) {
 	var mutualFollow *bool // default: nil
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
@@ -241,7 +240,7 @@ func (s *Application) areFollowingEachOther(ctx context.Context, req models.Foll
 }
 
 func (s *Application) createPrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-	atLeastOneIsFollowing, err := s.areFollowingEachOther(ctx, req)
+	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -255,7 +254,7 @@ func (s *Application) createPrivateConversation(ctx context.Context, req models.
 }
 
 func (s *Application) deletePrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-	atLeastOneIsFollowing, err := s.areFollowingEachOther(ctx, req)
+	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
 	if err != nil {
 		return err
 	}

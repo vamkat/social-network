@@ -11,7 +11,6 @@ import (
 	pb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -310,6 +309,57 @@ func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb
 	return usersToPB(resp), nil
 }
 
+func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.FollowUserRequest) (*wrapperspb.BoolValue, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "IsFollowing: request is nil")
+	}
+
+	followerId := req.GetFollowerId()
+	if err := invalidId("followerId", followerId); err != nil {
+		return nil, err
+	}
+
+	targetUserId := req.GetTargetUserId()
+	if err := invalidId("targetUserId", targetUserId); err != nil {
+		return nil, err
+	}
+
+	resp, err := s.Application.IsFollowing(ctx, models.FollowUserReq{
+		FollowerId:   ct.Id(followerId),
+		TargetUserId: ct.Id(targetUserId),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "IsFollowing: %v", err)
+	}
+
+	return wrapperspb.Bool(resp), nil
+}
+
+func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.FollowUserRequest) (*wrapperspb.BoolValue, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "AreFollowingEachOther: request is nil")
+	}
+
+	userAId := req.GetFollowerId()
+	if err := invalidId("userAId", userAId); err != nil {
+		return nil, err
+	}
+
+	userBId := req.GetTargetUserId()
+	if err := invalidId("userBId", userBId); err != nil {
+		return nil, err
+	}
+
+	resp, err := s.Application.AreFollowingEachOther(ctx, models.FollowUserReq{
+		FollowerId:   ct.Id(userAId),
+		TargetUserId: ct.Id(userBId),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AreFollowingEachOther: %v", err)
+	}
+	return &wrapperspb.BoolValue{Value: *resp}, nil
+}
+
 // GROUPS
 func (s *UsersHandler) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagination) (*pb.GroupArr, error) {
 	if req == nil {
@@ -500,6 +550,28 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (s *UsersHandler) IsGroupMember(ctx context.Context, req *pb.GeneralGroupRequest) (*wrapperspb.BoolValue, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "IsGroupMember: request is nil")
+	}
+	userId := req.GetUserId()
+	if err := invalidId("userId", userId); err != nil {
+		return nil, err
+	}
+	groupId := req.GetGroupId()
+	if err := invalidId("groupId", groupId); err != nil {
+		return nil, err
+	}
+	resp, err := s.Application.IsGroupMember(ctx, models.GeneralGroupReq{
+		UserId:  ct.Id(userId),
+		GroupId: ct.Id(groupId),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "IsGroupMember: %v", err)
+	}
+	return wrapperspb.Bool(resp), nil
 }
 
 func (s *UsersHandler) RequestJoinGroupOrCancel(ctx context.Context, req *pb.GroupJoinRequest) (*emptypb.Empty, error) {
@@ -740,7 +812,7 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 		// Avatar: ,
 		About:             profile.About.String(),
 		Public:            profile.Public,
-		CreatedAt:         dateToProto(profile.CreatedAt),
+		CreatedAt:         profile.CreatedAt.ToProto(),
 		FollowersCount:    profile.FollowersCount,
 		FollowingCount:    profile.FollowingCount,
 		GroupsCount:       profile.GroupsCount,
@@ -955,11 +1027,4 @@ func checkLimOff(limit, offset int32) error {
 		)
 	}
 	return nil
-}
-
-func dateToProto(d time.Time) *timestamppb.Timestamp {
-	if d.IsZero() {
-		return nil
-	}
-	return timestamppb.New(time.Time(d))
 }

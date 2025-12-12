@@ -2,7 +2,6 @@ package models
 
 import (
 	ct "social-network/shared/go/customtypes"
-	"time"
 )
 
 //-------------------------------------------
@@ -84,7 +83,7 @@ type UserProfileResponse struct {
 	AvatarId          ct.Id `validate:"nullable"`
 	About             ct.About
 	Public            bool
-	CreatedAt         time.Time
+	CreatedAt         ct.GenDateTime
 	FollowersCount    int64
 	FollowingCount    int64
 	GroupsCount       int64

@@ -150,7 +150,7 @@ func TestAreFollowingEachOther_VariousCases(t *testing.T) {
 
 	// Case: neither follows => expect nil pointer
 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{}, nil)
-	res, err := service.areFollowingEachOther(ctx, req)
+	res, err := service.AreFollowingEachOther(ctx, req)
 	assert.NoError(t, err)
 	assert.Nil(t, res)
 	mockDB.AssertExpectations(t)
@@ -159,7 +159,7 @@ func TestAreFollowingEachOther_VariousCases(t *testing.T) {
 	mockDB = new(MockQuerier)
 	service = NewApplicationWithMocks(mockDB, mockClients)
 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: false}, nil)
-	res2, err := service.areFollowingEachOther(ctx, req)
+	res2, err := service.AreFollowingEachOther(ctx, req)
 	assert.NoError(t, err)
 	if assert.NotNil(t, res2) {
 		assert.False(t, *res2)
@@ -170,7 +170,7 @@ func TestAreFollowingEachOther_VariousCases(t *testing.T) {
 	mockDB = new(MockQuerier)
 	service = NewApplicationWithMocks(mockDB, mockClients)
 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: true}, nil)
-	res3, err := service.areFollowingEachOther(ctx, req)
+	res3, err := service.AreFollowingEachOther(ctx, req)
 	assert.NoError(t, err)
 	if assert.NotNil(t, res3) {
 		assert.True(t, *res3)

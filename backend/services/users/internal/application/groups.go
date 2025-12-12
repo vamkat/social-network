@@ -126,7 +126,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 		return []models.GroupUser{}, err
 	}
 	//check request comes from member
-	isMember, err := s.isGroupMember(ctx, models.GeneralGroupReq{
+	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.UserId,
 	})
@@ -210,7 +210,7 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 		return err
 	}
 	//check request comes from member
-	isMember, err := s.isGroupMember(ctx, models.GeneralGroupReq{
+	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.InviterId,
 	})
@@ -434,7 +434,7 @@ func (s *Application) userInRelationToGroup(ctx context.Context, req models.Gene
 	if err != nil {
 		return userInRelationToGroup{}, err
 	}
-	resp.isMember, err = s.isGroupMember(ctx, req)
+	resp.isMember, err = s.IsGroupMember(ctx, req)
 	if err != nil {
 		return userInRelationToGroup{}, err
 	}
@@ -463,7 +463,7 @@ func (s *Application) isGroupOwner(ctx context.Context, req models.GeneralGroupR
 	return true, nil
 }
 
-func (s *Application) isGroupMember(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
+func (s *Application) IsGroupMember(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}

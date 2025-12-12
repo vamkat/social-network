@@ -175,8 +175,8 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 				UserId: ct.Id(r.CommentCreatorID),
 			},
 			ReactionsCount: int(r.ReactionsCount),
-			CreatedAt:      r.CreatedAt.Time,
-			UpdatedAt:      r.UpdatedAt.Time,
+			CreatedAt:      ct.GenDateTime(r.CreatedAt.Time),
+			UpdatedAt:      ct.GenDateTime(r.UpdatedAt.Time),
 			LikedByUser:    r.LikedByUser,
 			Image:          ct.Id(r.Image),
 		})

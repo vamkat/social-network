@@ -13,7 +13,7 @@ type Clients struct {
 }
 
 func (c *Clients) IsFollowing(ctx context.Context, userId, targetUserId int64) (bool, error) {
-	resp, err := c.UserClient.IsFollowing(ctx, &userpb.IsFollowingRequest{
+	resp, err := c.UserClient.IsFollowing(ctx, &userpb.FollowUserRequest{
 		FollowerId:   userId,
 		TargetUserId: targetUserId,
 	})

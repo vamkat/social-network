@@ -231,9 +231,9 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 		Audience:        ct.Audience(p.Audience),
 		CommentsCount:   int(p.CommentsCount),
 		ReactionsCount:  int(p.ReactionsCount),
-		LastCommentedAt: p.LastCommentedAt.Time,
-		CreatedAt:       p.CreatedAt.Time,
-		UpdatedAt:       p.UpdatedAt.Time,
+		LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.Time),
+		CreatedAt:       ct.GenDateTime(p.CreatedAt.Time),
+		UpdatedAt:       ct.GenDateTime(p.UpdatedAt.Time),
 		Image:           ct.Id(p.Image),
 		//no latest comment or liked by user needed here
 	}

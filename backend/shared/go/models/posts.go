@@ -2,7 +2,6 @@ package models
 
 import (
 	ct "social-network/shared/go/customtypes"
-	"time"
 )
 
 type SimpleIdReq struct {
@@ -38,9 +37,9 @@ type Post struct {
 	Audience        ct.Audience
 	CommentsCount   int
 	ReactionsCount  int
-	LastCommentedAt time.Time
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	LastCommentedAt ct.GenDateTime
+	CreatedAt       ct.GenDateTime
+	UpdatedAt       ct.GenDateTime
 	LikedByUser     bool
 	Image           ct.Id `validate:"nullable"`
 }
@@ -96,8 +95,8 @@ type Comment struct {
 	Body           ct.CommentBody
 	User           User
 	ReactionsCount int
-	CreatedAt      time.Time
-	UpdatedAt      time.Time //can be nil
+	CreatedAt      ct.GenDateTime
+	UpdatedAt      ct.GenDateTime //can be nil
 	LikedByUser    bool
 	Image          ct.Id `validate:"nullable"`
 }
@@ -133,8 +132,8 @@ type Event struct {
 	GoingCount    int
 	NotGoingCount int
 	Image         ct.Id `validate:"nullable"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	CreatedAt     ct.GenDateTime
+	UpdatedAt     ct.GenDateTime
 	UserResponse  *bool
 }
 

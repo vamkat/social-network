@@ -10,12 +10,10 @@ import (
 	pb "social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -102,9 +100,9 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 		Audience:        post.Audience.String(),
 		CommentsCount:   int32(post.CommentsCount),
 		ReactionsCount:  int32(post.ReactionsCount),
-		LastCommentedAt: dateToProto(post.LastCommentedAt),
-		CreatedAt:       dateToProto(post.CreatedAt),
-		UpdatedAt:       dateToProto(post.UpdatedAt),
+		LastCommentedAt: post.LastCommentedAt.ToProto(),
+		CreatedAt:       post.CreatedAt.ToProto(),
+		UpdatedAt:       post.UpdatedAt.ToProto(),
 		LikedByUser:     post.LikedByUser,
 		Image:           int64(post.Image),
 	}, nil
@@ -138,9 +136,9 @@ func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPerso
 			Audience:        p.Audience.String(),
 			CommentsCount:   int32(p.CommentsCount),
 			ReactionsCount:  int32(p.ReactionsCount),
-			LastCommentedAt: timestamppb.New(p.LastCommentedAt),
-			CreatedAt:       timestamppb.New(p.CreatedAt),
-			UpdatedAt:       timestamppb.New(p.UpdatedAt),
+			LastCommentedAt: p.LastCommentedAt.ToProto(),
+			CreatedAt:       p.CreatedAt.ToProto(),
+			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
 			Image:           int64(p.Image),
 		})
@@ -176,9 +174,9 @@ func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginat
 			Audience:        p.Audience.String(),
 			CommentsCount:   int32(p.CommentsCount),
 			ReactionsCount:  int32(p.ReactionsCount),
-			LastCommentedAt: timestamppb.New(p.LastCommentedAt),
-			CreatedAt:       timestamppb.New(p.CreatedAt),
-			UpdatedAt:       timestamppb.New(p.UpdatedAt),
+			LastCommentedAt: p.LastCommentedAt.ToProto(),
+			CreatedAt:       p.CreatedAt.ToProto(),
+			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
 			Image:           int64(p.Image),
 		})
@@ -215,9 +213,9 @@ func (s *PostsHandler) GetUserPostsPaginated(ctx context.Context, req *pb.GetUse
 			Audience:        p.Audience.String(),
 			CommentsCount:   int32(p.CommentsCount),
 			ReactionsCount:  int32(p.ReactionsCount),
-			LastCommentedAt: timestamppb.New(p.LastCommentedAt),
-			CreatedAt:       timestamppb.New(p.CreatedAt),
-			UpdatedAt:       timestamppb.New(p.UpdatedAt),
+			LastCommentedAt: p.LastCommentedAt.ToProto(),
+			CreatedAt:       p.CreatedAt.ToProto(),
+			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
 			Image:           int64(p.Image),
 		})
@@ -254,9 +252,9 @@ func (s *PostsHandler) GetGroupPostsPaginated(ctx context.Context, req *pb.GetGr
 			Audience:        p.Audience.String(),
 			CommentsCount:   int32(p.CommentsCount),
 			ReactionsCount:  int32(p.ReactionsCount),
-			LastCommentedAt: timestamppb.New(p.LastCommentedAt),
-			CreatedAt:       timestamppb.New(p.CreatedAt),
-			UpdatedAt:       timestamppb.New(p.UpdatedAt),
+			LastCommentedAt: p.LastCommentedAt.ToProto(),
+			CreatedAt:       p.CreatedAt.ToProto(),
+			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
 			Image:           int64(p.Image),
 		})
@@ -343,8 +341,8 @@ func (s *PostsHandler) GetCommentsByParentId(ctx context.Context, req *pb.Entity
 				Avatar:   c.User.AvatarId.Int64(),
 			},
 			ReactionsCount: int32(c.ReactionsCount),
-			CreatedAt:      timestamppb.New(c.CreatedAt),
-			UpdatedAt:      timestamppb.New(c.UpdatedAt),
+			CreatedAt:      c.CreatedAt.ToProto(),
+			UpdatedAt:      c.UpdatedAt.ToProto(),
 			LikedByUser:    c.LikedByUser,
 			Image:          int64(c.Image),
 		})
@@ -444,8 +442,8 @@ func (s *PostsHandler) GetEventsByGroupId(ctx context.Context, req *pb.EntityIdP
 			GoingCount:    int32(e.GoingCount),
 			NotGoingCount: int32(e.NotGoingCount),
 			Image:         int64(e.Image),
-			CreatedAt:     dateToProto(e.CreatedAt),
-			UpdatedAt:     dateToProto(e.UpdatedAt),
+			CreatedAt:     e.CreatedAt.ToProto(),
+			UpdatedAt:     e.UpdatedAt.ToProto(),
 			UserResponse:  ur,
 		})
 	}
@@ -524,11 +522,4 @@ func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.Gener
 		return nil, status.Errorf(codes.Internal, "failed to react to post: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-func dateToProto(d time.Time) *timestamppb.Timestamp {
-	if d.IsZero() {
-		return nil
-	}
-	return timestamppb.New(time.Time(d))
 }

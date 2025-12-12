@@ -22,7 +22,8 @@ service UserService {
   rpc HandleFollowRequest (HandleFollowRequestRequest) returns (google.protobuf.Empty);
   rpc GetFollowingIds (google.protobuf.Int64Value) returns (Int64Arr);
   rpc GetFollowSuggestions (google.protobuf.Int64Value) returns (ListUsers);
-  rpc IsFollowing (isFollowingRequest) returns (google.protobuf.BoolValue);
+  rpc IsFollowing (FollowUserRequest) returns (google.protobuf.BoolValue);
+  rpc AreFollowingEachOther (FollowUserRequest) returns (google.protobuf.BoolValue);
   // GROUPS
   rpc GetAllGroupsPaginated (Pagination) returns (GroupArr);
   rpc GetUserGroupsPaginated (Pagination) returns (GroupArr);
@@ -30,6 +31,7 @@ service UserService {
   rpc GetGroupMembers (GroupMembersRequest) returns (GroupUserArr);
   rpc SearchGroups (GroupSearchRequest) returns (GroupArr);
   rpc InviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+  rpc IsGroupMember (GeneralGroupRequest) returns (google.protobuf.BoolValue);
   // rpc CancelInviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
   rpc RequestJoinGroupOrCancel (GroupJoinRequest) returns (google.protobuf.Empty);
   rpc RespondToGroupInvite (HandleGroupInviteRequest) returns (google.protobuf.Empty);
@@ -37,7 +39,6 @@ service UserService {
   rpc LeaveGroup (GeneralGroupRequest) returns (google.protobuf.Empty);
   // rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
   rpc CreateGroup (CreateGroupRequest) returns (google.protobuf.Int64Value);
-  rpc IsGroupMember (GeneralGroupRequest) returns (google.protobuf.BoolValue);
   // Profile
   rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (User);
   rpc GetBatchBasicUserInfo (Int64Arr) returns (ListUsers);

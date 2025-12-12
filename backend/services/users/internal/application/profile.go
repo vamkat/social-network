@@ -77,7 +77,7 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 		AvatarId:    ct.Id(row.AvatarID),
 		About:       ct.About(row.AboutMe),
 		Public:      row.ProfilePublic,
-		CreatedAt:   row.CreatedAt.Time,
+		CreatedAt:   ct.GenDateTime(row.CreatedAt.Time),
 	}
 
 	followingParams := models.FollowUserReq{
