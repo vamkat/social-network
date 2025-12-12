@@ -27,7 +27,8 @@ type Querier interface {
 	CreatePrivateConv(ctx context.Context, arg md.CreatePrivateConvParams) (convId ct.Id, err error)
 
 	// Delete a conversation only if its members exactly match the provided list.
-	// Returns "conversation not found" if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
+	// Returns "conversation not found" if conversation doesn't exist,
+	// members don’t match exactly, conversation has extra or missing members.
 	DeleteConversationByExactMembers(ctx context.Context, memberIds ct.Ids) (md.ConversationDeleteResp, error)
 
 	// Returns memebers of a conversation that user is a member.

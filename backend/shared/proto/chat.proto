@@ -6,47 +6,87 @@ option go_package = "social-network/shared/gen/chat;chat";
 
 import "google/protobuf/timestamp.proto";
 
+// Responsible for chat service.
 service ChatService {
-    // Creates a Conversation if and only if a DM between the same 2 users does not exist.
+    // Creates a direct message (DM) conversation between two users.
+    // A conversation is created only if no existing DM between the same users exists.
     // Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
     rpc CreatePrivateConversation (CreatePrivateConvParams) returns (ConvId);
+
+    // Creates a group conversation associated with the given group_id.
+    // This initializes the conversation but does not require adding all members yet.
     rpc CreateGroupConversation (CreateGroupConvParams) returns (ConvId);
-    // Find a conversation by group_id and insert the given user_ids into conversation_members.
-    // Existing members are ignored, new members are added.
+
+    // Adds users to an existing group conversation identified by group_id.
+    // New members are added; existing members are ignored.
     rpc AddMembersToGroupConversation (AddMembersToGroupConversationParams) returns (ConvId);
+
+    // Deletes a conversation only if the set of members exactly matches the provided list.
+    // Returns "conversation not found" if:
+    //   - the conversation does not exist, or
+    //   - the members differ (extra or missing members).
     rpc DeleteConversationByExactMembers (UserIds) returns (Conversation);
 }
+
+// Represents a single user identifier.
 message UserId {
+    // Unique ID of the user.
     int64 id = 1;
 }
+
+// Parameters required to create a private DM between two users.
 message CreatePrivateConvParams {
+    // ID of the first participant.
     int64 user_a = 1;
+
+    // ID of the second participant.
     int64 user_b = 2;
 }
 
+// Identifier of a conversation.
 message ConvId {
+    // Unique conversation ID.
     int64 conv_id = 1;
 }
 
+// Parameters for creating a new group conversation.
 message CreateGroupConvParams {
+    // Identifier of the group this conversation belongs to.
     int64 group_id = 1;
+
+    // Initial set of user IDs to associate with the group conversation.
     repeated int64 user_ids = 2;
 }
 
+// Parameters for adding new members to an existing group conversation.
 message AddMembersToGroupConversationParams {
+    // Identifier of the target group conversation.
     int64 group_id = 1;
+
+    // User IDs to be added to the conversation.
     repeated int64 user_ids = 2;
 }
 
+// Represents a list of user IDs.
 message UserIds {
+    // The user IDs included in the request.
     repeated int64 user_ids = 1;
 }
 
+// A conversation entity, including metadata timestamps.
 message Conversation {
-  int64 id = 1;            // ct.Id
-  int64 group_id = 2;      // ct.Id
+    // Unique identifier of the conversation.
+    int64 id = 1;
 
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp updated_at = 4;
-  google.protobuf.Timestamp deleted_at = 5;
+    // Associated group ID if this is a group conversation, otherwise 0 for private conversations.
+    int64 group_id = 2;
+
+    // Timestamp when the conversation was created.
+    google.protobuf.Timestamp created_at = 3;
+
+    // Timestamp of the last update to the conversation.
+    google.protobuf.Timestamp updated_at = 4;
+
+    // Timestamp when the conversation was deleted, or null if active.
+    google.protobuf.Timestamp deleted_at = 5;
 }
