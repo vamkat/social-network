@@ -4,7 +4,7 @@ export async function POST(request) {
     try {
         const cookieHeader = request.headers.get('cookie');
 
-        const apiBase = process.env.API_BASE || "http://localhost:8081";
+        const apiBase = process.env.API_BASE || "http://api-gateway:8081";
         const logoutEndpoint = process.env.LOGOUT || "/logout";
 
         const headers = {};

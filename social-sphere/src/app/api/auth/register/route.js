@@ -20,7 +20,7 @@ export async function POST(request) {
         // register with a public profile
         formData.append('public', 'true');
 
-        const apiBase = process.env.API_BASE || "http://localhost:8081";
+        const apiBase = process.env.API_BASE || "http://api-gateway:8081";
         const registerEndpoint = process.env.REGISTER || "/register";
 
         const backendResponse = await fetch(`${apiBase}${registerEndpoint}`, {

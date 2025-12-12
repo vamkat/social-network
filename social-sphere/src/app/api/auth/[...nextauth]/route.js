@@ -11,7 +11,7 @@ export const authOptions = {
             },
             async authorize(credentials, req) {
                 try {
-                    const apiBase = process.env.API_BASE || "http://localhost:8081";
+                    const apiBase = process.env.API_BASE || "http://api-gateway:8081";
 
                     // Both login and registration flows provide userId
                     // At this point, the cookie is ALREADY set in the browser

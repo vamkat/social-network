@@ -8,7 +8,7 @@ export async function GET(request, { params }) {
         const session = await getServerSession(authOptions);
         const cookieHeader = session?.backendCookie;
 
-        const apiBase = process.env.API_BASE || "http://localhost:8081";
+        const apiBase = process.env.API_BASE || "http://api-gateway:8081";
 
         const headers = {};
         if (cookieHeader) {
