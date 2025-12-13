@@ -14,6 +14,10 @@ option go_package = "social-network/shared/gen-go/posts;posts";
 // Current behavior: handlers return INVALID_ARGUMENT for nil/validation issues and INTERNAL for all other errors.
 // Desired (not yet implemented): map domain errors to NOT_FOUND, PERMISSION_DENIED, FAILED_PRECONDITION, ALREADY_EXISTS, etc., per RPC.
 service PostsService {
+    // Returns a post by id
+    // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if creator/group missing; PERMISSION_DENIED if requester has no right to view.
+       rpc GetPostById (GenericReq) returns (Post);
+
     // Creates a post in a user feed or group.
     // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if creator/group missing; PERMISSION_DENIED if posting not allowed.
     rpc CreatePost (CreatePostReq) returns (google.protobuf.Empty);

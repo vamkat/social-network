@@ -1,3 +1,37 @@
+-- name: GetPostByID :one
+SELECT
+    p.id,
+    p.post_body,
+    p.creator_id,
+    p.group_id,
+    p.audience,
+    p.comments_count,
+    p.reactions_count,
+    p.last_commented_at,
+    p.created_at,
+    p.updated_at,
+
+    EXISTS (
+        SELECT 1 FROM reactions r
+        WHERE r.content_id = p.id
+          AND r.user_id = $1
+          AND r.deleted_at IS NULL
+    ) AS liked_by_user,
+
+COALESCE(
+    (SELECT i.id
+     FROM images i
+     WHERE i.parent_id = p.id AND i.deleted_at IS NULL
+     ORDER BY i.sort_order ASC
+     LIMIT 1
+    ), 0
+)::bigint AS image
+
+
+FROM posts p
+WHERE p.id=$2
+  AND p.deleted_at IS NULL;
+
 -- name: GetMostPopularPostInGroup :one
 SELECT
     p.id,

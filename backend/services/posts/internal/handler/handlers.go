@@ -20,6 +20,39 @@ import (
 
 // POSTS
 
+func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb.Post, error) {
+	fmt.Println("GetPostById gRPC method called")
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	post, err := s.Application.GetPostById(ctx, models.GenericReq{
+		RequesterId: ct.Id(req.RequesterId),
+		EntityId:    ct.Id(req.EntityId),
+	})
+	if err != nil {
+		fmt.Println("Error in GetPostById:", err)
+		return nil, status.Errorf(codes.Internal, "failed to get post: %v", err)
+	}
+	return &pb.Post{
+		PostId:   int64(post.PostId),
+		PostBody: string(post.Body),
+		User: &cm.User{
+			UserId:   post.User.UserId.Int64(),
+			Username: post.User.Username.String(),
+			Avatar:   post.User.AvatarId.Int64(),
+		},
+		GroupId:         int64(post.GroupId),
+		Audience:        post.Audience.String(),
+		CommentsCount:   int32(post.CommentsCount),
+		ReactionsCount:  int32(post.ReactionsCount),
+		LastCommentedAt: post.LastCommentedAt.ToProto(),
+		CreatedAt:       post.CreatedAt.ToProto(),
+		UpdatedAt:       post.UpdatedAt.ToProto(),
+		LikedByUser:     post.LikedByUser,
+		Image:           int64(post.Image),
+	}, nil
+}
+
 func (s *PostsHandler) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*emptypb.Empty, error) {
 	fmt.Println("CreatePost gRPC method called")
 	if req == nil {

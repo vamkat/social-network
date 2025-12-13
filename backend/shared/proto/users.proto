@@ -113,8 +113,7 @@ service UserService {
   rpc UpdateProfilePrivacy (UpdateProfilePrivacyRequest) returns (google.protobuf.Empty);
 }
 
-// COMMON & GENERIC
-
+// PROFILE
 
 message UserProfileResponse {
   int64 user_id = 1;

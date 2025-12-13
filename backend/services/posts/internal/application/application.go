@@ -50,10 +50,6 @@ type ClientsInterface interface {
 	GetFollowingIds(ctx context.Context, userId int64) ([]int64, error)
 }
 
-func NewUserHydrator(clients *client.Clients, cache *redis_connector.RedisClient, ttl time.Duration) *UserHydrator {
-	return &UserHydrator{clients: clients, cache: cache, ttl: ttl}
-}
-
 // NewApplication constructs a new Application with transaction support
 func NewApplication(db sqlc.Querier, pool *pgxpool.Pool, clients *client.Clients) *Application {
 	var txRunner TxRunner

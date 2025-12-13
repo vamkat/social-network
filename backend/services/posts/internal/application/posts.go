@@ -245,12 +245,51 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 	return post, nil
 }
 
-// NOT CURRENTLY NEEDED
 func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (models.Post, error) {
-	//check requester is allowed to view post, dependes on post audience:
-	//everyone: any requester can see
-	//followers: API GATEWAY(?) needs to get FOLLOWERS LIST for creatorId from users
-	//selected: check can happen in posts service
-	//group: API GATEWAY(?) needs to check requester is member of group
-	return models.Post{}, nil
+	if err := ct.ValidateStruct(req); err != nil {
+		return models.Post{}, err
+	}
+	userCanView, err := s.hasRightToView(ctx, accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
+	})
+	if err != nil {
+		return models.Post{}, err
+	}
+	if !userCanView {
+		return models.Post{}, ErrNotAllowed
+	}
+
+	p, err := s.db.GetPostByID(ctx, sqlc.GetPostByIDParams{})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.Post{}, ErrNotFound
+		}
+		return models.Post{}, err
+	}
+
+	var groupId pgtype.Int8
+	groupId.Int64 = p.GroupID.Int64
+	groupId.Valid = true
+	post := models.Post{
+		PostId: ct.Id(p.ID),
+		Body:   ct.PostBody(p.PostBody),
+		User: models.User{
+			UserId: ct.Id(p.CreatorID),
+		},
+		GroupId:         ct.Id(groupId.Int64),
+		Audience:        ct.Audience(p.Audience),
+		CommentsCount:   int(p.CommentsCount),
+		ReactionsCount:  int(p.ReactionsCount),
+		LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.Time),
+		CreatedAt:       ct.GenDateTime(p.CreatedAt.Time),
+		UpdatedAt:       ct.GenDateTime(p.UpdatedAt.Time),
+		Image:           ct.Id(p.Image),
+	}
+
+	if err := s.hydratePost(ctx, &post); err != nil {
+		return models.Post{}, err
+	}
+
+	return post, nil
 }
