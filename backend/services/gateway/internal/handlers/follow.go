@@ -45,6 +45,9 @@ func (s *Handlers) GetFollowSuggestions() http.HandlerFunc {
 			return
 		}
 
+		//TODO deduplicate suggestions from part1 and part2
+		// As it is no id hashing happpens, FIX
+
 		out := &common.ListUsers{
 			Users: append(part1.Users, part2.Users...),
 		}
