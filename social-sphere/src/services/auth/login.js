@@ -7,9 +7,6 @@ export async function login(credentials) {
         // request
         const apiResp = await apiRequest("/login", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
             body: JSON.stringify(credentials),
         });
 
