@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "social-network/shared/gen-go/common;common";
+
+
+message User {
+  int64 user_id = 1;
+  string username = 2;
+  int64 avatar = 3;
+}
+
+message ListUsers {
+  repeated User users = 1;
+}
+
+message Int64Arr {
+  repeated int64 values = 1; 
+}

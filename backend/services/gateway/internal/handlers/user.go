@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
+	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	"strings"
@@ -145,7 +146,7 @@ func (s *Handlers) GetBatchBasicUserInfo() http.HandlerFunc {
 			return
 		}
 
-		req := users.Int64Arr{Values: body.Values}
+		req := cm.Int64Arr{Values: body.Values}
 
 		out, err := s.App.Users.GetBatchBasicUserInfo(ctx, &req)
 		if err != nil {

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package media;
 
-option go_package = "social-network/shared/gen/media;media";
+option go_package = "social-network/shared/gen-go/media;media";
 
 // Upload request
 message UploadImageRequest {

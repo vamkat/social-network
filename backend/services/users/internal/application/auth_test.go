@@ -22,9 +22,9 @@ func TestUpdateUserPassword_Success(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewApplication(mockDB, nil, nil)
 
-	oldPassword := "oldpassword"
-	newPassword := "newpassword"
-	storedPassword := "oldpassword"
+	oldPassword := "OldPass123!"
+	newPassword := "NewPass456!"
+	storedPassword := "OldPass123!"
 
 	req := models.UpdatePasswordRequest{
 		UserId:      ct.Id(1),
@@ -49,13 +49,13 @@ func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
 	mockDB := new(MockQuerier)
 	service := NewApplication(mockDB, nil, nil)
 
-	correctPassword := "correctpassword"
+	correctPassword := "CorrectPass123!"
 	hashedCorrect, _ := bcrypt.GenerateFromPassword([]byte(correctPassword), bcrypt.DefaultCost)
 
 	req := models.UpdatePasswordRequest{
 		UserId:      ct.Id(1),
-		OldPassword: ct.Password("wrongpassword"),
-		NewPassword: ct.Password("newpassword"),
+		OldPassword: ct.Password("WrongPass456!"),
+		NewPassword: ct.Password("NewPass789!"),
 	}
 
 	ctx := context.Background()

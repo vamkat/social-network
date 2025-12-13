@@ -165,8 +165,12 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		return nil, err
 	}
 	comments := make([]models.Comment, 0, len(rows))
+	userIDs := make([]int64, 0, len(rows))
 
 	for _, r := range rows {
+		uid := r.CommentCreatorID
+		userIDs = append(userIDs, uid)
+
 		comments = append(comments, models.Comment{
 			CommentId: ct.Id(r.ID),
 			ParentId:  req.EntityId,
@@ -182,9 +186,24 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		})
 	}
 
-	if err := s.hydrateComments(ctx, comments); err != nil {
+	if len(comments) == 0 {
+		return comments, nil
+	}
+
+	userMap, err := s.hydrator.GetUsers(ctx, userIDs)
+	if err != nil {
 		return nil, err
 	}
+
+	for i := range comments {
+		uid := comments[i].User.UserId.Int64()
+		if u, ok := userMap[uid]; ok {
+			comments[i].User = u
+		}
+	}
+	// if err := s.hydrateComments(ctx, comments); err != nil {
+	// 	return nil, err
+	// }
 
 	return comments, nil
 }

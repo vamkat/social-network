@@ -179,6 +179,81 @@ func (q *Queries) GetPostAudience(ctx context.Context, postID int64) ([]int64, e
 	return items, nil
 }
 
+const getPostByID = `-- name: GetPostByID :one
+SELECT
+    p.id,
+    p.post_body,
+    p.creator_id,
+    p.group_id,
+    p.audience,
+    p.comments_count,
+    p.reactions_count,
+    p.last_commented_at,
+    p.created_at,
+    p.updated_at,
+
+    EXISTS (
+        SELECT 1 FROM reactions r
+        WHERE r.content_id = p.id
+          AND r.user_id = $1
+          AND r.deleted_at IS NULL
+    ) AS liked_by_user,
+
+COALESCE(
+    (SELECT i.id
+     FROM images i
+     WHERE i.parent_id = p.id AND i.deleted_at IS NULL
+     ORDER BY i.sort_order ASC
+     LIMIT 1
+    ), 0
+)::bigint AS image
+
+
+FROM posts p
+WHERE p.id=$2
+  AND p.deleted_at IS NULL
+`
+
+type GetPostByIDParams struct {
+	UserID int64
+	ID     int64
+}
+
+type GetPostByIDRow struct {
+	ID              int64
+	PostBody        string
+	CreatorID       int64
+	GroupID         pgtype.Int8
+	Audience        IntendedAudience
+	CommentsCount   int32
+	ReactionsCount  int32
+	LastCommentedAt pgtype.Timestamptz
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+	LikedByUser     bool
+	Image           int64
+}
+
+func (q *Queries) GetPostByID(ctx context.Context, arg GetPostByIDParams) (GetPostByIDRow, error) {
+	row := q.db.QueryRow(ctx, getPostByID, arg.UserID, arg.ID)
+	var i GetPostByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.PostBody,
+		&i.CreatorID,
+		&i.GroupID,
+		&i.Audience,
+		&i.CommentsCount,
+		&i.ReactionsCount,
+		&i.LastCommentedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.LikedByUser,
+		&i.Image,
+	)
+	return i, err
+}
+
 const insertPostAudience = `-- name: InsertPostAudience :execrows
 INSERT INTO post_audience (post_id, allowed_user_id)
 SELECT $1::bigint,

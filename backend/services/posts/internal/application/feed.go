@@ -30,12 +30,18 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 		return nil, err
 	}
 	posts := make([]models.Post, 0, len(rows))
+	userIDs := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
+		uid := r.CreatorID
+		userIDs = append(userIDs, uid)
+
 		posts = append(posts, models.Post{
+
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
 			User: models.User{
-				UserId: ct.Id(r.CreatorID),
+				UserId: ct.Id(uid),
 			},
 			CommentsCount:   int(r.CommentsCount),
 			ReactionsCount:  int(r.ReactionsCount),
@@ -46,9 +52,25 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 			Image:           ct.Id(r.Image),
 		})
 	}
-	if err := s.hydratePosts(ctx, posts); err != nil {
+
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	userMap, err := s.hydrator.GetUsers(ctx, userIDs)
+	if err != nil {
 		return nil, err
 	}
+
+	for i := range posts {
+		uid := posts[i].User.UserId.Int64()
+		if u, ok := userMap[uid]; ok {
+			posts[i].User = u
+		}
+	}
+	// if err := s.hydratePosts(ctx, posts); err != nil {
+	// 	return nil, err
+	// }
 
 	return posts, nil
 }
@@ -66,12 +88,17 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 		return nil, err
 	}
 	posts := make([]models.Post, 0, len(rows))
+	userIDs := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
+		uid := r.CreatorID
+		userIDs = append(userIDs, uid)
+
 		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
 			User: models.User{
-				UserId: ct.Id(r.CreatorID),
+				UserId: ct.Id(uid),
 			},
 			CommentsCount:   int(r.CommentsCount),
 			ReactionsCount:  int(r.ReactionsCount),
@@ -82,10 +109,24 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 			Image:           ct.Id(r.Image),
 		})
 	}
+	if len(posts) == 0 {
+		return posts, nil
+	}
 
-	if err := s.hydratePosts(ctx, posts); err != nil {
+	userMap, err := s.hydrator.GetUsers(ctx, userIDs)
+	if err != nil {
 		return nil, err
 	}
+
+	for i := range posts {
+		uid := posts[i].User.UserId.Int64()
+		if u, ok := userMap[uid]; ok {
+			posts[i].User = u
+		}
+	}
+	// if err := s.hydratePosts(ctx, posts); err != nil {
+	// 	return nil, err
+	// }
 
 	return posts, nil
 }
@@ -115,12 +156,17 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 		return nil, ErrNotFound
 	}
 	posts := make([]models.Post, 0, len(rows))
+	userIDs := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
+		uid := r.CreatorID
+		userIDs = append(userIDs, uid)
+
 		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
 			User: models.User{
-				UserId: ct.Id(r.CreatorID),
+				UserId: ct.Id(uid),
 			},
 			CommentsCount:   int(r.CommentsCount),
 			ReactionsCount:  int(r.ReactionsCount),
@@ -132,8 +178,23 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 		})
 
 	}
-	if err := s.hydratePosts(ctx, posts); err != nil {
+	// if err := s.hydratePosts(ctx, posts); err != nil {
+	// 	return nil, err
+	// }
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	userMap, err := s.hydrator.GetUsers(ctx, userIDs)
+	if err != nil {
 		return nil, err
+	}
+
+	for i := range posts {
+		uid := posts[i].User.UserId.Int64()
+		if u, ok := userMap[uid]; ok {
+			posts[i].User = u
+		}
 	}
 
 	return posts, nil
@@ -170,12 +231,17 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 		return nil, ErrNotFound
 	}
 	posts := make([]models.Post, 0, len(rows))
+	userIDs := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
+		uid := r.CreatorID
+		userIDs = append(userIDs, uid)
+
 		posts = append(posts, models.Post{
 			PostId: ct.Id(r.ID),
 			Body:   ct.PostBody(r.PostBody),
 			User: models.User{
-				UserId: ct.Id(r.CreatorID),
+				UserId: ct.Id(uid),
 			},
 			GroupId:         req.GroupId,
 			Audience:        ct.Audience(r.Audience),
@@ -188,10 +254,24 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 			Image:           ct.Id(r.Image),
 		})
 	}
+	if len(posts) == 0 {
+		return posts, nil
+	}
 
-	if err := s.hydratePosts(ctx, posts); err != nil {
+	userMap, err := s.hydrator.GetUsers(ctx, userIDs)
+	if err != nil {
 		return nil, err
 	}
+
+	for i := range posts {
+		uid := posts[i].User.UserId.Int64()
+		if u, ok := userMap[uid]; ok {
+			posts[i].User = u
+		}
+	}
+	// if err := s.hydratePosts(ctx, posts); err != nil {
+	// 	return nil, err
+	// }
 
 	return posts, nil
 }

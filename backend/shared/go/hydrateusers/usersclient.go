@@ -2,13 +2,13 @@ package userhydrate
 
 import (
 	"context"
-	userpb "social-network/shared/gen-go/users"
+	cm "social-network/shared/gen-go/common"
 	"time"
 )
 
 // UsersBatchClient is the subset the hydrator needs.
 type UsersBatchClient interface {
-	GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*userpb.ListUsers, error)
+	GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*cm.ListUsers, error)
 }
 
 // RedisCache defines the minimal Redis operations used by the hydrator.

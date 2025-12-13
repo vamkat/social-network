@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package chat;
 
-option go_package = "social-network/shared/gen/chat;chat";
+option go_package = "social-network/shared/gen-go/chat;chat";
 
 import "google/protobuf/timestamp.proto";
 

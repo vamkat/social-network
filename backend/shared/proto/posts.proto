@@ -2,17 +2,22 @@ syntax = "proto3";
 
 package posts;
 
+import "common.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
 
-option go_package = "social-network/shared/gen/posts;posts";
+option go_package = "social-network/shared/gen-go/posts;posts";
 
 // PostsService handles post, comment, event, and reaction workflows.
 // Current behavior: handlers return INVALID_ARGUMENT for nil/validation issues and INTERNAL for all other errors.
 // Desired (not yet implemented): map domain errors to NOT_FOUND, PERMISSION_DENIED, FAILED_PRECONDITION, ALREADY_EXISTS, etc., per RPC.
 service PostsService {
+    // Returns a post by id
+    // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if creator/group missing; PERMISSION_DENIED if requester has no right to view.
+       rpc GetPostById (GenericReq) returns (Post);
+
     // Creates a post in a user feed or group.
     // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if creator/group missing; PERMISSION_DENIED if posting not allowed.
     rpc CreatePost (CreatePostReq) returns (google.protobuf.Empty);
@@ -87,7 +92,7 @@ service PostsService {
 
     // Suggests users who interacted with the given post.
     // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing post; PERMISSION_DENIED if not visible.
-    rpc SuggestUsersByPostActivity (SimpleIdReq) returns (ListUsers);
+    rpc SuggestUsersByPostActivity (SimpleIdReq) returns (common.ListUsers);
 
     // Toggles or inserts a reaction for the requester on a post/comment.
     // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing entity; PERMISSION_DENIED if reactions blocked.
@@ -95,9 +100,6 @@ service PostsService {
 }
 
 // COMMON & GENERIC
-message Int64Arr {
-  repeated int64 values = 1; 
-}
 
 message SimpleIdReq {
     int64 id = 1;
@@ -120,22 +122,14 @@ message GenericPaginatedReq {
     int32 offset = 3;
 }
 
-message User {
-  int64 user_id = 1;
-  string username = 2;
-  int64 avatar = 3;
-}
 
-message ListUsers {
-  repeated User users = 1;
-}
 
 // POSTS
 
 message Post {
     int64 post_id = 1;
     string post_body = 2;
-    User user = 3;
+    common.User user = 3;
     int64 group_id = 4;
     string audience = 5;
     int32 comments_count = 6;
@@ -156,7 +150,7 @@ message CreatePostReq {
     string body = 2;
     int64 group_id = 3;
     string audience = 4;
-    Int64Arr audience_ids = 5;
+    common.Int64Arr audience_ids = 5;
     int64 image = 6;
 }
 
@@ -166,7 +160,7 @@ message EditPostReq {
     string body = 3;
     int64 image = 4;
     string audience = 5;
-    Int64Arr audience_ids = 6;
+    common.Int64Arr audience_ids = 6;
 }
 
 message GetUserPostsReq {
@@ -195,7 +189,7 @@ message Comment {
     int64 comment_id = 1;
     int64 parent_id = 2;
     string body = 3;
-    User user = 4;
+    common.User user = 4;
     int32 reactions_count = 5;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
@@ -227,7 +221,7 @@ message Event {
     int64 event_id = 1;
     string title = 2;
     string body = 3;
-    User user = 4;
+    common.User user = 4;
     int64 group_id = 5;
     google.protobuf.Timestamp event_date = 6;
     int32 going_count = 7;

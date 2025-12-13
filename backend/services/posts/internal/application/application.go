@@ -4,7 +4,7 @@ import (
 	"context"
 	"social-network/services/posts/internal/client"
 	"social-network/services/posts/internal/db/sqlc"
-	userpb "social-network/shared/gen-go/users"
+	cm "social-network/shared/gen-go/common"
 	userhydrate "social-network/shared/go/hydrateusers"
 	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
@@ -28,7 +28,7 @@ type UserHydrator struct {
 
 // UsersBatchClient abstracts the single RPC used by the hydrator to fetch basic user info.
 type UsersBatchClient interface {
-	GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*userpb.ListUsers, error)
+	GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*cm.ListUsers, error)
 }
 
 // RedisCache defines the minimal Redis operations used by the hydrator.
@@ -39,8 +39,9 @@ type RedisCache interface {
 
 // Hydrator defines the subset of behavior used by application for user hydration.
 type Hydrator interface {
-	HydrateUsers(ctx context.Context, items []models.HasUser) error
-	HydrateUserSlice(ctx context.Context, users []models.User) error
+	GetUsers(ctx context.Context, userIDs []int64) (map[int64]models.User, error)
+	// HydrateUsers(ctx context.Context, items []models.HasUser) error
+	// HydrateUserSlice(ctx context.Context, users []models.User) error
 }
 
 // ClientsInterface defines the methods that Application needs from clients.
@@ -48,10 +49,6 @@ type ClientsInterface interface {
 	IsFollowing(ctx context.Context, userId, targetUserId int64) (bool, error)
 	IsGroupMember(ctx context.Context, userId, groupId int64) (bool, error)
 	GetFollowingIds(ctx context.Context, userId int64) ([]int64, error)
-}
-
-func NewUserHydrator(clients *client.Clients, cache *redis_connector.RedisClient, ttl time.Duration) *UserHydrator {
-	return &UserHydrator{clients: clients, cache: cache, ttl: ttl}
 }
 
 // NewApplication constructs a new Application with transaction support
@@ -65,7 +62,7 @@ func NewApplication(db sqlc.Querier, pool *pgxpool.Pool, clients *client.Clients
 		txRunner = NewPgxTxRunner(pool, queries)
 	}
 
-	cache := redis_connector.NewRedisClient("localhost:6379", "", 0)
+	cache := redis_connector.NewRedisClient("redis:6379", "", 0)
 
 	return &Application{
 		db:       db,
