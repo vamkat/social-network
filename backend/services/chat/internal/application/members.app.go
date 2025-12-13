@@ -6,13 +6,18 @@ import (
 	md "social-network/shared/go/models"
 )
 
-// Returns memebers of a conversation that user is a member.
+// Returns models.User type for each conversation member of 'GetConversationMembersParams.ConversationId'
+// except 'GetConversationMembersParams.UserId' .
 func (c *ChatService) GetConversationMembers(ctx context.Context,
-	params md.GetConversationMembersParams) (members ct.Ids, err error) {
+	params md.GetConversationMembersParams) (members []md.User, err error) {
 	if err := ct.ValidateStruct(params); err != nil {
 		return members, err
 	}
-	return c.Queries.GetConversationMembers(ctx, params)
+	ids, err := c.Queries.GetConversationMembers(ctx, params)
+	if err != nil {
+		return members, err
+	}
+	return c.Clients.UserIdsToUsers(ctx, ids)
 }
 
 func (c *ChatService) DeleteConversationMember(ctx context.Context,

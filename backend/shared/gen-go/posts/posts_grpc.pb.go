@@ -12,6 +12,7 @@ import (
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	common "social-network/shared/gen-go/common"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -45,26 +46,70 @@ const (
 // PostsServiceClient is the client API for PostsService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// PostsService handles post, comment, event, and reaction workflows.
+// Current behavior: handlers return INVALID_ARGUMENT for nil/validation issues and INTERNAL for all other errors.
+// Desired (not yet implemented): map domain errors to NOT_FOUND, PERMISSION_DENIED, FAILED_PRECONDITION, ALREADY_EXISTS, etc., per RPC.
 type PostsServiceClient interface {
+	// Creates a post in a user feed or group.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if creator/group missing; PERMISSION_DENIED if posting not allowed.
 	CreatePost(ctx context.Context, in *CreatePostReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Deletes a post authored by requester or permitted moderator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if post missing; PERMISSION_DENIED if not owner/moderator.
 	DeletePost(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Updates post body/visibility for the requester-owned post.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if post missing; PERMISSION_DENIED/FAILED_PRECONDITION when locked.
 	EditPost(ctx context.Context, in *EditPostReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Returns the most popular post in the given group.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if none/hidden; PERMISSION_DENIED if group not visible.
 	GetMostPopularPostInGroup(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*Post, error)
+	// Returns a personalized feed for the requester.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: UNAUTHENTICATED for anonymous callers.
 	GetPersonalizedFeed(ctx context.Context, in *GetPersonalizedFeedReq, opts ...grpc.CallOption) (*ListPosts, error)
+	// Returns a public feed limited by pagination.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise.
 	GetPublicFeed(ctx context.Context, in *GenericPaginatedReq, opts ...grpc.CallOption) (*ListPosts, error)
+	// Returns a user's posts visible to the requester.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if user missing; PERMISSION_DENIED for private feeds.
 	GetUserPostsPaginated(ctx context.Context, in *GetUserPostsReq, opts ...grpc.CallOption) (*ListPosts, error)
+	// Returns posts within a group visible to the requester.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if group missing; PERMISSION_DENIED if access denied.
 	GetGroupPostsPaginated(ctx context.Context, in *GetGroupPostsReq, opts ...grpc.CallOption) (*ListPosts, error)
+	// Creates a comment on a post or another comment.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND parent; PERMISSION_DENIED when commenting not allowed.
 	CreateComment(ctx context.Context, in *CreateCommentReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Updates an existing comment by the creator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing comment; PERMISSION_DENIED/FAILED_PRECONDITION when locked.
 	EditComment(ctx context.Context, in *EditCommentReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Deletes a comment by the creator or moderator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing comment; PERMISSION_DENIED when not allowed.
 	DeleteComment(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Returns comments for a parent entity with pagination.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing parent; PERMISSION_DENIED if thread hidden.
 	GetCommentsByParentId(ctx context.Context, in *EntityIdPaginatedReq, opts ...grpc.CallOption) (*ListComments, error)
+	// Creates a group event.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if group missing; PERMISSION_DENIED for non-member.
 	CreateEvent(ctx context.Context, in *CreateEventReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Deletes an event by creator or moderator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing event; PERMISSION_DENIED when not owner/moderator.
 	DeleteEvent(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Updates an event's details.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing event; PERMISSION_DENIED/FAILED_PRECONDITION when locked/past.
 	EditEvent(ctx context.Context, in *EditEventReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Returns events for a group with pagination.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing group; PERMISSION_DENIED if access denied.
 	GetEventsByGroupId(ctx context.Context, in *EntityIdPaginatedReq, opts ...grpc.CallOption) (*ListEvents, error)
+	// Records a response (going/not going) to an event.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing event; PERMISSION_DENIED/FAILED_PRECONDITION if responses closed.
 	RespondToEvent(ctx context.Context, in *RespondToEventReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Removes the requester's response to an event.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: same as RespondToEvent.
 	RemoveEventResponse(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	SuggestUsersByPostActivity(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*ListUsers, error)
+	// Suggests users who interacted with the given post.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing post; PERMISSION_DENIED if not visible.
+	SuggestUsersByPostActivity(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*common.ListUsers, error)
+	// Toggles or inserts a reaction for the requester on a post/comment.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing entity; PERMISSION_DENIED if reactions blocked.
 	ToggleOrInsertReaction(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -256,9 +301,9 @@ func (c *postsServiceClient) RemoveEventResponse(ctx context.Context, in *Generi
 	return out, nil
 }
 
-func (c *postsServiceClient) SuggestUsersByPostActivity(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *postsServiceClient) SuggestUsersByPostActivity(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListUsers)
+	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, PostsService_SuggestUsersByPostActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -279,26 +324,70 @@ func (c *postsServiceClient) ToggleOrInsertReaction(ctx context.Context, in *Gen
 // PostsServiceServer is the server API for PostsService service.
 // All implementations must embed UnimplementedPostsServiceServer
 // for forward compatibility.
+//
+// PostsService handles post, comment, event, and reaction workflows.
+// Current behavior: handlers return INVALID_ARGUMENT for nil/validation issues and INTERNAL for all other errors.
+// Desired (not yet implemented): map domain errors to NOT_FOUND, PERMISSION_DENIED, FAILED_PRECONDITION, ALREADY_EXISTS, etc., per RPC.
 type PostsServiceServer interface {
+	// Creates a post in a user feed or group.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if creator/group missing; PERMISSION_DENIED if posting not allowed.
 	CreatePost(context.Context, *CreatePostReq) (*emptypb.Empty, error)
+	// Deletes a post authored by requester or permitted moderator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if post missing; PERMISSION_DENIED if not owner/moderator.
 	DeletePost(context.Context, *GenericReq) (*emptypb.Empty, error)
+	// Updates post body/visibility for the requester-owned post.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if post missing; PERMISSION_DENIED/FAILED_PRECONDITION when locked.
 	EditPost(context.Context, *EditPostReq) (*emptypb.Empty, error)
+	// Returns the most popular post in the given group.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if none/hidden; PERMISSION_DENIED if group not visible.
 	GetMostPopularPostInGroup(context.Context, *SimpleIdReq) (*Post, error)
+	// Returns a personalized feed for the requester.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: UNAUTHENTICATED for anonymous callers.
 	GetPersonalizedFeed(context.Context, *GetPersonalizedFeedReq) (*ListPosts, error)
+	// Returns a public feed limited by pagination.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise.
 	GetPublicFeed(context.Context, *GenericPaginatedReq) (*ListPosts, error)
+	// Returns a user's posts visible to the requester.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if user missing; PERMISSION_DENIED for private feeds.
 	GetUserPostsPaginated(context.Context, *GetUserPostsReq) (*ListPosts, error)
+	// Returns posts within a group visible to the requester.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if group missing; PERMISSION_DENIED if access denied.
 	GetGroupPostsPaginated(context.Context, *GetGroupPostsReq) (*ListPosts, error)
+	// Creates a comment on a post or another comment.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND parent; PERMISSION_DENIED when commenting not allowed.
 	CreateComment(context.Context, *CreateCommentReq) (*emptypb.Empty, error)
+	// Updates an existing comment by the creator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing comment; PERMISSION_DENIED/FAILED_PRECONDITION when locked.
 	EditComment(context.Context, *EditCommentReq) (*emptypb.Empty, error)
+	// Deletes a comment by the creator or moderator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing comment; PERMISSION_DENIED when not allowed.
 	DeleteComment(context.Context, *GenericReq) (*emptypb.Empty, error)
+	// Returns comments for a parent entity with pagination.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing parent; PERMISSION_DENIED if thread hidden.
 	GetCommentsByParentId(context.Context, *EntityIdPaginatedReq) (*ListComments, error)
+	// Creates a group event.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND if group missing; PERMISSION_DENIED for non-member.
 	CreateEvent(context.Context, *CreateEventReq) (*emptypb.Empty, error)
+	// Deletes an event by creator or moderator.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing event; PERMISSION_DENIED when not owner/moderator.
 	DeleteEvent(context.Context, *GenericReq) (*emptypb.Empty, error)
+	// Updates an event's details.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing event; PERMISSION_DENIED/FAILED_PRECONDITION when locked/past.
 	EditEvent(context.Context, *EditEventReq) (*emptypb.Empty, error)
+	// Returns events for a group with pagination.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing group; PERMISSION_DENIED if access denied.
 	GetEventsByGroupId(context.Context, *EntityIdPaginatedReq) (*ListEvents, error)
+	// Records a response (going/not going) to an event.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing event; PERMISSION_DENIED/FAILED_PRECONDITION if responses closed.
 	RespondToEvent(context.Context, *RespondToEventReq) (*emptypb.Empty, error)
+	// Removes the requester's response to an event.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: same as RespondToEvent.
 	RemoveEventResponse(context.Context, *GenericReq) (*emptypb.Empty, error)
-	SuggestUsersByPostActivity(context.Context, *SimpleIdReq) (*ListUsers, error)
+	// Suggests users who interacted with the given post.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing post; PERMISSION_DENIED if not visible.
+	SuggestUsersByPostActivity(context.Context, *SimpleIdReq) (*common.ListUsers, error)
+	// Toggles or inserts a reaction for the requester on a post/comment.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: NOT_FOUND missing entity; PERMISSION_DENIED if reactions blocked.
 	ToggleOrInsertReaction(context.Context, *GenericReq) (*emptypb.Empty, error)
 	mustEmbedUnimplementedPostsServiceServer()
 }
@@ -364,7 +453,7 @@ func (UnimplementedPostsServiceServer) RespondToEvent(context.Context, *RespondT
 func (UnimplementedPostsServiceServer) RemoveEventResponse(context.Context, *GenericReq) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveEventResponse not implemented")
 }
-func (UnimplementedPostsServiceServer) SuggestUsersByPostActivity(context.Context, *SimpleIdReq) (*ListUsers, error) {
+func (UnimplementedPostsServiceServer) SuggestUsersByPostActivity(context.Context, *SimpleIdReq) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method SuggestUsersByPostActivity not implemented")
 }
 func (UnimplementedPostsServiceServer) ToggleOrInsertReaction(context.Context, *GenericReq) (*emptypb.Empty, error) {

@@ -8,22 +8,48 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
+// NotificationService manages creation, retrieval, and updates of notifications.
+// Current behavior: INVALID_ARGUMENT for zero ids; INTERNAL for all other failures.
+// Desired (not yet implemented): PERMISSION_DENIED for ownership issues; NOT_FOUND for missing notifications/users; UNAUTHENTICATED where auth is required.
 service NotificationService {
   // Create notifications
+  // Creates a single notification for a user.
+  // Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND for missing user.
   rpc CreateNotification (CreateNotificationRequest) returns (Notification);
+
+  // Creates multiple notifications in bulk.
+  // Returns Error: INTERNAL for failures. Desired: INVALID_ARGUMENT per entry, NOT_FOUND for missing users.
   rpc CreateNotifications (CreateNotificationsRequest) returns (CreateNotificationsResponse);
   
   // Get user notifications
+  // Retrieves a user's notifications with optional filtering.
+  // Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: PERMISSION_DENIED/NOT_FOUND as applicable.
   rpc GetUserNotifications (GetUserNotificationsRequest) returns (GetUserNotificationsResponse);
+
+  // Returns the unread notifications count for a user.
+  // Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND for missing user.
   rpc GetUnreadNotificationsCount (google.protobuf.Int64Value) returns (google.protobuf.Int64Value);
   
   // Update notifications
+  // Marks a single notification as read for the owner.
+  // Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND and PERMISSION_DENIED as applicable.
   rpc MarkNotificationAsRead (MarkNotificationAsReadRequest) returns (google.protobuf.Empty);
+
+  // Marks all notifications as read for the user.
+  // Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
   rpc MarkAllAsRead (google.protobuf.Int64Value) returns (google.protobuf.Empty);
+
+  // Deletes a single notification for the owner.
+  // Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
   rpc DeleteNotification (DeleteNotificationRequest) returns (google.protobuf.Empty);
   
   // Notification preferences
+  // Retrieves notification preferences for a user.
+  // Returns Error: always returns defaults. Desired: NOT_FOUND/PERMISSION_DENIED when implemented.
   rpc GetNotificationPreferences (google.protobuf.Int64Value) returns (NotificationPreferences);
+
+  // Updates notification preferences.
+  // Returns Error: always succeeds. Desired: INVALID_ARGUMENT/NOT_FOUND/PERMISSION_DENIED when implemented.
   rpc UpdateNotificationPreferences (UpdateNotificationPreferencesRequest) returns (google.protobuf.Empty);
 }
 

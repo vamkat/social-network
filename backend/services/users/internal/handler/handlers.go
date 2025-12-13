@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	cm "social-network/shared/gen-go/common"
 	pb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
@@ -20,7 +21,7 @@ import (
 )
 
 // AUTH
-func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.User, error) {
+func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*cm.User, error) {
 	fmt.Println("RegisterUser gRPC method called with request_id:", ctx.Value(ct.ReqID))
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
@@ -42,14 +43,14 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
 	}
 
-	return &pb.User{
+	return &cm.User{
 		UserId:   user.UserId.Int64(),
 		Username: user.Username.String(),
 		Avatar:   user.AvatarId.Int64(),
 	}, nil
 }
 
-func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.User, error) {
+func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm.User, error) {
 	fmt.Println("LoginUser gRPC method called with request_id:", ctx.Value(ct.ReqID))
 
 	if req == nil {
@@ -75,7 +76,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "LoginUser: failed to login user: %v", err)
 	}
 
-	return &pb.User{
+	return &cm.User{
 		UserId:   user.UserId.Int64(),
 		Username: user.Username.String(),
 		Avatar:   user.AvatarId.Int64(),
@@ -134,7 +135,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 }
 
 // FOLLOW
-func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagination) (*pb.ListUsers, error) {
+func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagination) (*cm.ListUsers, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowersPaginated: request is nil")
 	}
@@ -163,7 +164,7 @@ func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagina
 	return usersToPB(resp), nil
 }
 
-func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagination) (*pb.ListUsers, error) {
+func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagination) (*cm.ListUsers, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowingPaginated: request is nil")
 	}
@@ -275,7 +276,7 @@ func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFo
 	return &emptypb.Empty{}, nil
 }
 
-func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int64Value) (*pb.Int64Arr, error) {
+func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int64Value) (*cm.Int64Arr, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowingIds: request is nil")
 	}
@@ -288,10 +289,10 @@ func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int6
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetFollowingIds: %v", err)
 	}
-	return &pb.Int64Arr{Values: resp}, nil
+	return &cm.Int64Arr{Values: resp}, nil
 }
 
-func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb.Int64Value) (*pb.ListUsers, error) {
+func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb.Int64Value) (*cm.ListUsers, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowSuggestions: request is nil")
 	}
@@ -725,7 +726,7 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 }
 
 // PROFILE
-func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*pb.User, error) {
+func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*cm.User, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -740,21 +741,21 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 		return nil, status.Errorf(codes.Internal, "GetBasicUserInfo: %v", err)
 	}
 
-	return &pb.User{
+	return &cm.User{
 		UserId:   u.UserId.Int64(),
 		Username: u.Username.String(),
 		Avatar:   u.AvatarId.Int64(),
 	}, nil
 }
 
-func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *pb.Int64Arr) (*pb.ListUsers, error) {
+func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.Int64Arr) (*cm.ListUsers, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 
 	userIds := req.GetValues()
 	if len(userIds) == 0 {
-		return &pb.ListUsers{Users: []*pb.User{}}, nil
+		return &cm.ListUsers{Users: []*cm.User{}}, nil
 	}
 
 	ids := ct.FromInt64s(userIds)
@@ -763,16 +764,16 @@ func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *pb.Int64A
 		return nil, status.Errorf(codes.Internal, "GetBatchBasicUserInfo: %v", err)
 	}
 
-	pbUsers := make([]*pb.User, 0, len(users))
+	pbUsers := make([]*cm.User, 0, len(users))
 	for _, u := range users {
-		pbUsers = append(pbUsers, &pb.User{
+		pbUsers = append(pbUsers, &cm.User{
 			UserId:   u.UserId.Int64(),
 			Username: u.Username.String(),
 			Avatar:   u.AvatarId.Int64(),
 		})
 	}
 
-	return &pb.ListUsers{Users: pbUsers}, nil
+	return &cm.ListUsers{Users: pbUsers}, nil
 }
 
 func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.UserProfileResponse, error) {
@@ -823,7 +824,7 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 	}, nil
 }
 
-func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchRequest) (*pb.ListUsers, error) {
+func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchRequest) (*cm.ListUsers, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "SearchUsers: request is nil")
 	}
@@ -911,18 +912,18 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 }
 
 // CONVERTORS
-func usersToPB(dbUsers []models.User) *pb.ListUsers {
-	pbUsers := make([]*pb.User, 0, len(dbUsers))
+func usersToPB(dbUsers []models.User) *cm.ListUsers {
+	pbUsers := make([]*cm.User, 0, len(dbUsers))
 
 	for _, u := range dbUsers {
-		pbUsers = append(pbUsers, &pb.User{
+		pbUsers = append(pbUsers, &cm.User{
 			UserId:   u.UserId.Int64(),
 			Username: u.Username.String(),
 			Avatar:   u.AvatarId.Int64(),
 		})
 	}
 
-	return &pb.ListUsers{Users: pbUsers}
+	return &cm.ListUsers{Users: pbUsers}
 }
 
 func groupsToPb(groups []models.Group) *pb.GroupArr {

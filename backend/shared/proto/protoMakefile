@@ -5,6 +5,10 @@
 
 generate:
 	protoc --proto_path=shared/proto \
+		--go_out=paths=source_relative:shared/gen-go/common \
+		--go-grpc_out=paths=source_relative:shared/gen-go/common \
+		shared/proto/common.proto
+	protoc --proto_path=shared/proto \
 		--go_out=paths=source_relative:shared/gen-go/users \
 		--go-grpc_out=paths=source_relative:shared/gen-go/users \
 		shared/proto/users.proto

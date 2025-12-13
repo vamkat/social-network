@@ -22,9 +22,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Represents a single user identifier.
 type UserId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unique ID of the user.
+	Id            int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,10 +68,13 @@ func (x *UserId) GetId() int64 {
 	return 0
 }
 
+// Parameters required to create a private DM between two users.
 type CreatePrivateConvParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserA         int64                  `protobuf:"varint,1,opt,name=user_a,json=userA,proto3" json:"user_a,omitempty"`
-	UserB         int64                  `protobuf:"varint,2,opt,name=user_b,json=userB,proto3" json:"user_b,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ID of the first participant.
+	UserA int64 `protobuf:"varint,1,opt,name=user_a,json=userA,proto3" json:"user_a,omitempty"`
+	// ID of the second participant.
+	UserB         int64 `protobuf:"varint,2,opt,name=user_b,json=userB,proto3" json:"user_b,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -118,9 +123,11 @@ func (x *CreatePrivateConvParams) GetUserB() int64 {
 	return 0
 }
 
+// Identifier of a conversation.
 type ConvId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ConvId        int64                  `protobuf:"varint,1,opt,name=conv_id,json=convId,proto3" json:"conv_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unique conversation ID.
+	ConvId        int64 `protobuf:"varint,1,opt,name=conv_id,json=convId,proto3" json:"conv_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -162,10 +169,13 @@ func (x *ConvId) GetConvId() int64 {
 	return 0
 }
 
+// Parameters for creating a new group conversation.
 type CreateGroupConvParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	UserIds       []int64                `protobuf:"varint,2,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Identifier of the group this conversation belongs to.
+	GroupId int64 `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// Initial set of user IDs to associate with the group conversation.
+	UserIds       []int64 `protobuf:"varint,2,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -214,10 +224,13 @@ func (x *CreateGroupConvParams) GetUserIds() []int64 {
 	return nil
 }
 
+// Parameters for adding new members to an existing group conversation.
 type AddMembersToGroupConversationParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	UserIds       []int64                `protobuf:"varint,2,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Identifier of the target group conversation.
+	GroupId int64 `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// User IDs to be added to the conversation.
+	UserIds       []int64 `protobuf:"varint,2,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -266,9 +279,11 @@ func (x *AddMembersToGroupConversationParams) GetUserIds() []int64 {
 	return nil
 }
 
+// Represents a list of user IDs.
 type UserIds struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserIds       []int64                `protobuf:"varint,1,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The user IDs included in the request.
+	UserIds       []int64 `protobuf:"varint,1,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -310,12 +325,18 @@ func (x *UserIds) GetUserIds() []int64 {
 	return nil
 }
 
+// A conversation entity, including metadata timestamps.
 type Conversation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                          // ct.Id
-	GroupId       int64                  `protobuf:"varint,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"` // ct.Id
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unique identifier of the conversation.
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Associated group ID if this is a group conversation, otherwise 0 for private conversations.
+	GroupId int64 `protobuf:"varint,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	// Timestamp when the conversation was created.
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// Timestamp of the last update to the conversation.
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// Timestamp when the conversation was deleted, or null if active.
 	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -420,7 +441,7 @@ const file_chat_proto_rawDesc = "" +
 	"\x19CreatePrivateConversation\x12\x1d.chat.CreatePrivateConvParams\x1a\f.chat.ConvId\x12D\n" +
 	"\x17CreateGroupConversation\x12\x1b.chat.CreateGroupConvParams\x1a\f.chat.ConvId\x12X\n" +
 	"\x1dAddMembersToGroupConversation\x12).chat.AddMembersToGroupConversationParams\x1a\f.chat.ConvId\x12E\n" +
-	" DeleteConversationByExactMembers\x12\r.chat.UserIds\x1a\x12.chat.ConversationB%Z#social-network/shared/gen/chat;chatb\x06proto3"
+	" DeleteConversationByExactMembers\x12\r.chat.UserIds\x1a\x12.chat.ConversationB(Z&social-network/shared/gen-go/chat;chatb\x06proto3"
 
 var (
 	file_chat_proto_rawDescOnce sync.Once

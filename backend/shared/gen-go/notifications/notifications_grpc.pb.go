@@ -35,19 +35,41 @@ const (
 // NotificationServiceClient is the client API for NotificationService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// NotificationService manages creation, retrieval, and updates of notifications.
+// Current behavior: INVALID_ARGUMENT for zero ids; INTERNAL for all other failures.
+// Desired (not yet implemented): PERMISSION_DENIED for ownership issues; NOT_FOUND for missing notifications/users; UNAUTHENTICATED where auth is required.
 type NotificationServiceClient interface {
 	// Create notifications
+	// Creates a single notification for a user.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND for missing user.
 	CreateNotification(ctx context.Context, in *CreateNotificationRequest, opts ...grpc.CallOption) (*Notification, error)
+	// Creates multiple notifications in bulk.
+	// Returns Error: INTERNAL for failures. Desired: INVALID_ARGUMENT per entry, NOT_FOUND for missing users.
 	CreateNotifications(ctx context.Context, in *CreateNotificationsRequest, opts ...grpc.CallOption) (*CreateNotificationsResponse, error)
 	// Get user notifications
+	// Retrieves a user's notifications with optional filtering.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: PERMISSION_DENIED/NOT_FOUND as applicable.
 	GetUserNotifications(ctx context.Context, in *GetUserNotificationsRequest, opts ...grpc.CallOption) (*GetUserNotificationsResponse, error)
+	// Returns the unread notifications count for a user.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND for missing user.
 	GetUnreadNotificationsCount(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
 	// Update notifications
+	// Marks a single notification as read for the owner.
+	// Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND and PERMISSION_DENIED as applicable.
 	MarkNotificationAsRead(ctx context.Context, in *MarkNotificationAsReadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Marks all notifications as read for the user.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
 	MarkAllAsRead(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Deletes a single notification for the owner.
+	// Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
 	DeleteNotification(ctx context.Context, in *DeleteNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Notification preferences
+	// Retrieves notification preferences for a user.
+	// Returns Error: always returns defaults. Desired: NOT_FOUND/PERMISSION_DENIED when implemented.
 	GetNotificationPreferences(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*NotificationPreferences, error)
+	// Updates notification preferences.
+	// Returns Error: always succeeds. Desired: INVALID_ARGUMENT/NOT_FOUND/PERMISSION_DENIED when implemented.
 	UpdateNotificationPreferences(ctx context.Context, in *UpdateNotificationPreferencesRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -152,19 +174,41 @@ func (c *notificationServiceClient) UpdateNotificationPreferences(ctx context.Co
 // NotificationServiceServer is the server API for NotificationService service.
 // All implementations must embed UnimplementedNotificationServiceServer
 // for forward compatibility.
+//
+// NotificationService manages creation, retrieval, and updates of notifications.
+// Current behavior: INVALID_ARGUMENT for zero ids; INTERNAL for all other failures.
+// Desired (not yet implemented): PERMISSION_DENIED for ownership issues; NOT_FOUND for missing notifications/users; UNAUTHENTICATED where auth is required.
 type NotificationServiceServer interface {
 	// Create notifications
+	// Creates a single notification for a user.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND for missing user.
 	CreateNotification(context.Context, *CreateNotificationRequest) (*Notification, error)
+	// Creates multiple notifications in bulk.
+	// Returns Error: INTERNAL for failures. Desired: INVALID_ARGUMENT per entry, NOT_FOUND for missing users.
 	CreateNotifications(context.Context, *CreateNotificationsRequest) (*CreateNotificationsResponse, error)
 	// Get user notifications
+	// Retrieves a user's notifications with optional filtering.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: PERMISSION_DENIED/NOT_FOUND as applicable.
 	GetUserNotifications(context.Context, *GetUserNotificationsRequest) (*GetUserNotificationsResponse, error)
+	// Returns the unread notifications count for a user.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND for missing user.
 	GetUnreadNotificationsCount(context.Context, *wrapperspb.Int64Value) (*wrapperspb.Int64Value, error)
 	// Update notifications
+	// Marks a single notification as read for the owner.
+	// Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND and PERMISSION_DENIED as applicable.
 	MarkNotificationAsRead(context.Context, *MarkNotificationAsReadRequest) (*emptypb.Empty, error)
+	// Marks all notifications as read for the user.
+	// Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
 	MarkAllAsRead(context.Context, *wrapperspb.Int64Value) (*emptypb.Empty, error)
+	// Deletes a single notification for the owner.
+	// Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
 	DeleteNotification(context.Context, *DeleteNotificationRequest) (*emptypb.Empty, error)
 	// Notification preferences
+	// Retrieves notification preferences for a user.
+	// Returns Error: always returns defaults. Desired: NOT_FOUND/PERMISSION_DENIED when implemented.
 	GetNotificationPreferences(context.Context, *wrapperspb.Int64Value) (*NotificationPreferences, error)
+	// Updates notification preferences.
+	// Returns Error: always succeeds. Desired: INVALID_ARGUMENT/NOT_FOUND/PERMISSION_DENIED when implemented.
 	UpdateNotificationPreferences(context.Context, *UpdateNotificationPreferencesRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedNotificationServiceServer()
 }

@@ -167,14 +167,18 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		return nil, nil
 	}
 	events := make([]models.Event, 0, len(rows))
+	userIDs := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
+		uid := r.EventCreatorID
+		userIDs = append(userIDs, uid)
 
 		events = append(events, models.Event{
 			EventId: ct.Id(r.ID),
 			Title:   ct.Title(r.EventTitle),
 			Body:    ct.EventBody(r.EventBody),
 			User: models.User{
-				UserId: ct.Id(r.EventCreatorID),
+				UserId: ct.Id(uid),
 			},
 			GroupId:       ct.Id(r.GroupID),
 			EventDate:     ct.EventDateTime(r.EventDate.Time),
@@ -187,9 +191,25 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		})
 	}
 
-	if err := s.hydrateEvents(ctx, events); err != nil {
+	if len(events) == 0 {
+		return events, nil
+	}
+
+	userMap, err := s.hydrator.GetUsers(ctx, userIDs)
+	if err != nil {
 		return nil, err
 	}
+
+	for i := range events {
+		uid := events[i].User.UserId.Int64()
+		if u, ok := userMap[uid]; ok {
+			events[i].User = u
+		}
+	}
+
+	// if err := s.hydrateEvents(ctx, events); err != nil {
+	// 	return nil, err
+	// }
 
 	return events, nil
 }

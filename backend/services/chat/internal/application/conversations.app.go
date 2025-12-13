@@ -68,9 +68,57 @@ func (c *ChatService) DeleteConversationByExactMembers(ctx context.Context,
 // To get DMS group Id parameter must be zero.
 func (c *ChatService) GetUserConversations(ctx context.Context,
 	arg md.GetUserConversationsParams,
-) (conversations []md.GetUserConversationsRow, err error) {
+) (conversations []md.GetUserConversationsResp, err error) {
 	if err := ct.ValidateStruct(arg); err != nil {
 		return nil, err
 	}
-	return c.Queries.GetUserConversations(ctx, arg)
+
+	resp, err := c.Queries.GetUserConversations(ctx, arg)
+	if err != nil {
+		return conversations, err
+	}
+
+	allMemberIDs := make(ct.Ids, 0)
+	for _, r := range resp {
+		allMemberIDs = append(allMemberIDs, r.MemberIds...)
+	}
+
+	usersMap, err := c.Clients.UserIdsToMap(ctx, allMemberIDs)
+	if err != nil {
+		return nil, err
+	}
+	return ConvertConversations(ctx, usersMap, resp)
+}
+
+// Helper to convert a slice of GetUserConversationsRow containing userIds
+// to a slice of GetUserConversationsResp containg User.
+func ConvertConversations(
+	ctx context.Context,
+	usersMap map[ct.Id]md.User,
+	rows []dbservice.GetUserConversationsRow,
+) ([]md.GetUserConversationsResp, error) {
+
+	// Build output
+	result := make([]md.GetUserConversationsResp, len(rows))
+	for i, r := range rows {
+
+		// Build members list for this conversation
+		members := make([]md.User, 0, len(r.MemberIds))
+		for _, mid := range r.MemberIds {
+			if u, ok := usersMap[mid]; ok {
+				members = append(members, u)
+			}
+		}
+
+		result[i] = md.GetUserConversationsResp{
+			ConversationId:    r.ConversationId,
+			CreatedAt:         r.CreatedAt,
+			UpdatedAt:         r.UpdatedAt,
+			Members:           members,
+			UnreadCount:       r.UnreadCount,
+			LastReadMessageId: r.LastReadMessageId,
+		}
+	}
+
+	return result, nil
 }

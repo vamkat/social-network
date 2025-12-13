@@ -26,17 +26,22 @@ func (s *Application) SuggestUsersByPostActivity(ctx context.Context, req models
 		return nil, err
 	}
 
-	users := make([]models.User, 0, len(ids))
-	for _, id := range ids {
-		users = append(users, models.User{
-			UserId: ct.Id(id),
-		})
-	}
-
-	err = s.hydrator.HydrateUserSlice(ctx, users)
+	userMap, err := s.hydrator.GetUsers(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
+
+	users := make([]models.User, 0, len(ids))
+	for _, id := range ids {
+		if u, ok := userMap[id]; ok {
+			users = append(users, u)
+		}
+	}
+
+	// err = s.hydrator.HydrateUserSlice(ctx, users)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return users, nil
 }

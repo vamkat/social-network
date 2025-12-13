@@ -13,6 +13,7 @@ import (
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
+	common "social-network/shared/gen-go/common"
 	sync "sync"
 	unsafe "unsafe"
 )
@@ -23,155 +24,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-// COMMON & GENERIC
-type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Avatar        int64                  `protobuf:"varint,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *User) Reset() {
-	*x = User{}
-	mi := &file_users_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *User) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*User) ProtoMessage() {}
-
-func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use User.ProtoReflect.Descriptor instead.
-func (*User) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *User) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-func (x *User) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *User) GetAvatar() int64 {
-	if x != nil {
-		return x.Avatar
-	}
-	return 0
-}
-
-type ListUsers struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListUsers) Reset() {
-	*x = ListUsers{}
-	mi := &file_users_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListUsers) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListUsers) ProtoMessage() {}
-
-func (x *ListUsers) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListUsers.ProtoReflect.Descriptor instead.
-func (*ListUsers) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *ListUsers) GetUsers() []*User {
-	if x != nil {
-		return x.Users
-	}
-	return nil
-}
-
-type Int64Arr struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Values        []int64                `protobuf:"varint,1,rep,packed,name=values,proto3" json:"values,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Int64Arr) Reset() {
-	*x = Int64Arr{}
-	mi := &file_users_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Int64Arr) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Int64Arr) ProtoMessage() {}
-
-func (x *Int64Arr) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Int64Arr.ProtoReflect.Descriptor instead.
-func (*Int64Arr) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *Int64Arr) GetValues() []int64 {
-	if x != nil {
-		return x.Values
-	}
-	return nil
-}
 
 type UserProfileResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
@@ -197,7 +49,7 @@ type UserProfileResponse struct {
 
 func (x *UserProfileResponse) Reset() {
 	*x = UserProfileResponse{}
-	mi := &file_users_proto_msgTypes[3]
+	mi := &file_users_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -209,7 +61,7 @@ func (x *UserProfileResponse) String() string {
 func (*UserProfileResponse) ProtoMessage() {}
 
 func (x *UserProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[3]
+	mi := &file_users_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -222,7 +74,7 @@ func (x *UserProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserProfileResponse.ProtoReflect.Descriptor instead.
 func (*UserProfileResponse) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{3}
+	return file_users_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *UserProfileResponse) GetUserId() int64 {
@@ -355,7 +207,7 @@ type RegisterUserRequest struct {
 
 func (x *RegisterUserRequest) Reset() {
 	*x = RegisterUserRequest{}
-	mi := &file_users_proto_msgTypes[4]
+	mi := &file_users_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +219,7 @@ func (x *RegisterUserRequest) String() string {
 func (*RegisterUserRequest) ProtoMessage() {}
 
 func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[4]
+	mi := &file_users_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +232,7 @@ func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterUserRequest.ProtoReflect.Descriptor instead.
 func (*RegisterUserRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{4}
+	return file_users_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RegisterUserRequest) GetUsername() string {
@@ -457,7 +309,7 @@ type LoginRequest struct {
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_users_proto_msgTypes[5]
+	mi := &file_users_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -469,7 +321,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[5]
+	mi := &file_users_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -482,7 +334,7 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{5}
+	return file_users_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LoginRequest) GetIdentifier() string {
@@ -511,7 +363,7 @@ type UpdatePasswordRequest struct {
 
 func (x *UpdatePasswordRequest) Reset() {
 	*x = UpdatePasswordRequest{}
-	mi := &file_users_proto_msgTypes[6]
+	mi := &file_users_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +375,7 @@ func (x *UpdatePasswordRequest) String() string {
 func (*UpdatePasswordRequest) ProtoMessage() {}
 
 func (x *UpdatePasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[6]
+	mi := &file_users_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +388,7 @@ func (x *UpdatePasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePasswordRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePasswordRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{6}
+	return file_users_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UpdatePasswordRequest) GetUserId() int64 {
@@ -571,7 +423,7 @@ type UpdateEmailRequest struct {
 
 func (x *UpdateEmailRequest) Reset() {
 	*x = UpdateEmailRequest{}
-	mi := &file_users_proto_msgTypes[7]
+	mi := &file_users_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -583,7 +435,7 @@ func (x *UpdateEmailRequest) String() string {
 func (*UpdateEmailRequest) ProtoMessage() {}
 
 func (x *UpdateEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[7]
+	mi := &file_users_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -596,7 +448,7 @@ func (x *UpdateEmailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateEmailRequest.ProtoReflect.Descriptor instead.
 func (*UpdateEmailRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{7}
+	return file_users_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateEmailRequest) GetUserId() int64 {
@@ -625,7 +477,7 @@ type Pagination struct {
 
 func (x *Pagination) Reset() {
 	*x = Pagination{}
-	mi := &file_users_proto_msgTypes[8]
+	mi := &file_users_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +489,7 @@ func (x *Pagination) String() string {
 func (*Pagination) ProtoMessage() {}
 
 func (x *Pagination) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[8]
+	mi := &file_users_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +502,7 @@ func (x *Pagination) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pagination.ProtoReflect.Descriptor instead.
 func (*Pagination) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{8}
+	return file_users_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Pagination) GetUserId() int64 {
@@ -685,7 +537,7 @@ type FollowUserRequest struct {
 
 func (x *FollowUserRequest) Reset() {
 	*x = FollowUserRequest{}
-	mi := &file_users_proto_msgTypes[9]
+	mi := &file_users_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -697,7 +549,7 @@ func (x *FollowUserRequest) String() string {
 func (*FollowUserRequest) ProtoMessage() {}
 
 func (x *FollowUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[9]
+	mi := &file_users_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -710,7 +562,7 @@ func (x *FollowUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowUserRequest.ProtoReflect.Descriptor instead.
 func (*FollowUserRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{9}
+	return file_users_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *FollowUserRequest) GetFollowerId() int64 {
@@ -737,7 +589,7 @@ type FollowUserResponse struct {
 
 func (x *FollowUserResponse) Reset() {
 	*x = FollowUserResponse{}
-	mi := &file_users_proto_msgTypes[10]
+	mi := &file_users_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -749,7 +601,7 @@ func (x *FollowUserResponse) String() string {
 func (*FollowUserResponse) ProtoMessage() {}
 
 func (x *FollowUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[10]
+	mi := &file_users_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +614,7 @@ func (x *FollowUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowUserResponse.ProtoReflect.Descriptor instead.
 func (*FollowUserResponse) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{10}
+	return file_users_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *FollowUserResponse) GetIsPending() bool {
@@ -790,7 +642,7 @@ type HandleFollowRequestRequest struct {
 
 func (x *HandleFollowRequestRequest) Reset() {
 	*x = HandleFollowRequestRequest{}
-	mi := &file_users_proto_msgTypes[11]
+	mi := &file_users_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -802,7 +654,7 @@ func (x *HandleFollowRequestRequest) String() string {
 func (*HandleFollowRequestRequest) ProtoMessage() {}
 
 func (x *HandleFollowRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[11]
+	mi := &file_users_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -815,7 +667,7 @@ func (x *HandleFollowRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandleFollowRequestRequest.ProtoReflect.Descriptor instead.
 func (*HandleFollowRequestRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{11}
+	return file_users_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *HandleFollowRequestRequest) GetUserId() int64 {
@@ -849,7 +701,7 @@ type IsFollowingRequest struct {
 
 func (x *IsFollowingRequest) Reset() {
 	*x = IsFollowingRequest{}
-	mi := &file_users_proto_msgTypes[12]
+	mi := &file_users_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -861,7 +713,7 @@ func (x *IsFollowingRequest) String() string {
 func (*IsFollowingRequest) ProtoMessage() {}
 
 func (x *IsFollowingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[12]
+	mi := &file_users_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -874,7 +726,7 @@ func (x *IsFollowingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IsFollowingRequest.ProtoReflect.Descriptor instead.
 func (*IsFollowingRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{12}
+	return file_users_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *IsFollowingRequest) GetFollowerId() int64 {
@@ -909,7 +761,7 @@ type Group struct {
 
 func (x *Group) Reset() {
 	*x = Group{}
-	mi := &file_users_proto_msgTypes[13]
+	mi := &file_users_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -921,7 +773,7 @@ func (x *Group) String() string {
 func (*Group) ProtoMessage() {}
 
 func (x *Group) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[13]
+	mi := &file_users_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -934,7 +786,7 @@ func (x *Group) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Group.ProtoReflect.Descriptor instead.
 func (*Group) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{13}
+	return file_users_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Group) GetGroupId() int64 {
@@ -1009,7 +861,7 @@ type GroupArr struct {
 
 func (x *GroupArr) Reset() {
 	*x = GroupArr{}
-	mi := &file_users_proto_msgTypes[14]
+	mi := &file_users_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1021,7 +873,7 @@ func (x *GroupArr) String() string {
 func (*GroupArr) ProtoMessage() {}
 
 func (x *GroupArr) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[14]
+	mi := &file_users_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1034,7 +886,7 @@ func (x *GroupArr) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupArr.ProtoReflect.Descriptor instead.
 func (*GroupArr) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{14}
+	return file_users_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GroupArr) GetGroupArr() []*Group {
@@ -1054,7 +906,7 @@ type GeneralGroupRequest struct {
 
 func (x *GeneralGroupRequest) Reset() {
 	*x = GeneralGroupRequest{}
-	mi := &file_users_proto_msgTypes[15]
+	mi := &file_users_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1066,7 +918,7 @@ func (x *GeneralGroupRequest) String() string {
 func (*GeneralGroupRequest) ProtoMessage() {}
 
 func (x *GeneralGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[15]
+	mi := &file_users_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1079,7 +931,7 @@ func (x *GeneralGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeneralGroupRequest.ProtoReflect.Descriptor instead.
 func (*GeneralGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{15}
+	return file_users_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GeneralGroupRequest) GetGroupId() int64 {
@@ -1108,7 +960,7 @@ type GroupMembersRequest struct {
 
 func (x *GroupMembersRequest) Reset() {
 	*x = GroupMembersRequest{}
-	mi := &file_users_proto_msgTypes[16]
+	mi := &file_users_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1120,7 +972,7 @@ func (x *GroupMembersRequest) String() string {
 func (*GroupMembersRequest) ProtoMessage() {}
 
 func (x *GroupMembersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[16]
+	mi := &file_users_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1133,7 +985,7 @@ func (x *GroupMembersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupMembersRequest.ProtoReflect.Descriptor instead.
 func (*GroupMembersRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{16}
+	return file_users_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GroupMembersRequest) GetUserId() int64 {
@@ -1176,7 +1028,7 @@ type GroupUser struct {
 
 func (x *GroupUser) Reset() {
 	*x = GroupUser{}
-	mi := &file_users_proto_msgTypes[17]
+	mi := &file_users_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1188,7 +1040,7 @@ func (x *GroupUser) String() string {
 func (*GroupUser) ProtoMessage() {}
 
 func (x *GroupUser) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[17]
+	mi := &file_users_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1201,7 +1053,7 @@ func (x *GroupUser) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupUser.ProtoReflect.Descriptor instead.
 func (*GroupUser) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{17}
+	return file_users_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GroupUser) GetUserId() int64 {
@@ -1241,7 +1093,7 @@ type GroupUserArr struct {
 
 func (x *GroupUserArr) Reset() {
 	*x = GroupUserArr{}
-	mi := &file_users_proto_msgTypes[18]
+	mi := &file_users_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1253,7 +1105,7 @@ func (x *GroupUserArr) String() string {
 func (*GroupUserArr) ProtoMessage() {}
 
 func (x *GroupUserArr) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[18]
+	mi := &file_users_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1266,7 +1118,7 @@ func (x *GroupUserArr) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupUserArr.ProtoReflect.Descriptor instead.
 func (*GroupUserArr) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{18}
+	return file_users_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GroupUserArr) GetGroupUserArr() []*GroupUser {
@@ -1278,7 +1130,7 @@ func (x *GroupUserArr) GetGroupUserArr() []*GroupUser {
 
 type GroupSearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SearchTerm    string                 `protobuf:"bytes,1,opt,name=SearchTerm,proto3" json:"SearchTerm,omitempty"`
+	SearchTerm    string                 `protobuf:"bytes,1,opt,name=search_term,json=searchTerm,proto3" json:"search_term,omitempty"`
 	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	Offset        int32                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
@@ -1288,7 +1140,7 @@ type GroupSearchRequest struct {
 
 func (x *GroupSearchRequest) Reset() {
 	*x = GroupSearchRequest{}
-	mi := &file_users_proto_msgTypes[19]
+	mi := &file_users_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1300,7 +1152,7 @@ func (x *GroupSearchRequest) String() string {
 func (*GroupSearchRequest) ProtoMessage() {}
 
 func (x *GroupSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[19]
+	mi := &file_users_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1313,7 +1165,7 @@ func (x *GroupSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupSearchRequest.ProtoReflect.Descriptor instead.
 func (*GroupSearchRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{19}
+	return file_users_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GroupSearchRequest) GetSearchTerm() string {
@@ -1355,7 +1207,7 @@ type InviteToGroupRequest struct {
 
 func (x *InviteToGroupRequest) Reset() {
 	*x = InviteToGroupRequest{}
-	mi := &file_users_proto_msgTypes[20]
+	mi := &file_users_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1367,7 +1219,7 @@ func (x *InviteToGroupRequest) String() string {
 func (*InviteToGroupRequest) ProtoMessage() {}
 
 func (x *InviteToGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[20]
+	mi := &file_users_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1380,7 +1232,7 @@ func (x *InviteToGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InviteToGroupRequest.ProtoReflect.Descriptor instead.
 func (*InviteToGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{20}
+	return file_users_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *InviteToGroupRequest) GetInviterId() int64 {
@@ -1414,7 +1266,7 @@ type GroupJoinRequest struct {
 
 func (x *GroupJoinRequest) Reset() {
 	*x = GroupJoinRequest{}
-	mi := &file_users_proto_msgTypes[21]
+	mi := &file_users_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1426,7 +1278,7 @@ func (x *GroupJoinRequest) String() string {
 func (*GroupJoinRequest) ProtoMessage() {}
 
 func (x *GroupJoinRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[21]
+	mi := &file_users_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,7 +1291,7 @@ func (x *GroupJoinRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupJoinRequest.ProtoReflect.Descriptor instead.
 func (*GroupJoinRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{21}
+	return file_users_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GroupJoinRequest) GetGroupId() int64 {
@@ -1467,7 +1319,7 @@ type HandleGroupInviteRequest struct {
 
 func (x *HandleGroupInviteRequest) Reset() {
 	*x = HandleGroupInviteRequest{}
-	mi := &file_users_proto_msgTypes[22]
+	mi := &file_users_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1479,7 +1331,7 @@ func (x *HandleGroupInviteRequest) String() string {
 func (*HandleGroupInviteRequest) ProtoMessage() {}
 
 func (x *HandleGroupInviteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[22]
+	mi := &file_users_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1492,7 +1344,7 @@ func (x *HandleGroupInviteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandleGroupInviteRequest.ProtoReflect.Descriptor instead.
 func (*HandleGroupInviteRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{22}
+	return file_users_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *HandleGroupInviteRequest) GetGroupId() int64 {
@@ -1528,7 +1380,7 @@ type HandleJoinRequest struct {
 
 func (x *HandleJoinRequest) Reset() {
 	*x = HandleJoinRequest{}
-	mi := &file_users_proto_msgTypes[23]
+	mi := &file_users_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1540,7 +1392,7 @@ func (x *HandleJoinRequest) String() string {
 func (*HandleJoinRequest) ProtoMessage() {}
 
 func (x *HandleJoinRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[23]
+	mi := &file_users_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1553,7 +1405,7 @@ func (x *HandleJoinRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandleJoinRequest.ProtoReflect.Descriptor instead.
 func (*HandleJoinRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{23}
+	return file_users_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *HandleJoinRequest) GetGroupId() int64 {
@@ -1595,7 +1447,7 @@ type RemoveFromGroupRequest struct {
 
 func (x *RemoveFromGroupRequest) Reset() {
 	*x = RemoveFromGroupRequest{}
-	mi := &file_users_proto_msgTypes[24]
+	mi := &file_users_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1607,7 +1459,7 @@ func (x *RemoveFromGroupRequest) String() string {
 func (*RemoveFromGroupRequest) ProtoMessage() {}
 
 func (x *RemoveFromGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[24]
+	mi := &file_users_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1620,7 +1472,7 @@ func (x *RemoveFromGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFromGroupRequest.ProtoReflect.Descriptor instead.
 func (*RemoveFromGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{24}
+	return file_users_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *RemoveFromGroupRequest) GetGroupId() int64 {
@@ -1656,7 +1508,7 @@ type CreateGroupRequest struct {
 
 func (x *CreateGroupRequest) Reset() {
 	*x = CreateGroupRequest{}
-	mi := &file_users_proto_msgTypes[25]
+	mi := &file_users_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1668,7 +1520,7 @@ func (x *CreateGroupRequest) String() string {
 func (*CreateGroupRequest) ProtoMessage() {}
 
 func (x *CreateGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[25]
+	mi := &file_users_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1681,7 +1533,7 @@ func (x *CreateGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{25}
+	return file_users_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *CreateGroupRequest) GetOwnerId() int64 {
@@ -1715,7 +1567,7 @@ func (x *CreateGroupRequest) GetGroupImage() string {
 // BASIC USER INFO
 type UserBasicInfoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	UserName      string                 `protobuf:"bytes,2,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
 	Avatar        int64                  `protobuf:"varint,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
 	PublicProfile bool                   `protobuf:"varint,4,opt,name=public_profile,json=publicProfile,proto3" json:"public_profile,omitempty"`
@@ -1725,7 +1577,7 @@ type UserBasicInfoResponse struct {
 
 func (x *UserBasicInfoResponse) Reset() {
 	*x = UserBasicInfoResponse{}
-	mi := &file_users_proto_msgTypes[26]
+	mi := &file_users_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1737,7 +1589,7 @@ func (x *UserBasicInfoResponse) String() string {
 func (*UserBasicInfoResponse) ProtoMessage() {}
 
 func (x *UserBasicInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[26]
+	mi := &file_users_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1750,7 +1602,7 @@ func (x *UserBasicInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserBasicInfoResponse.ProtoReflect.Descriptor instead.
 func (*UserBasicInfoResponse) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{26}
+	return file_users_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *UserBasicInfoResponse) GetUserId() int64 {
@@ -1792,7 +1644,7 @@ type GetUserProfileRequest struct {
 
 func (x *GetUserProfileRequest) Reset() {
 	*x = GetUserProfileRequest{}
-	mi := &file_users_proto_msgTypes[27]
+	mi := &file_users_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1804,7 +1656,7 @@ func (x *GetUserProfileRequest) String() string {
 func (*GetUserProfileRequest) ProtoMessage() {}
 
 func (x *GetUserProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[27]
+	mi := &file_users_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1817,7 +1669,7 @@ func (x *GetUserProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserProfileRequest.ProtoReflect.Descriptor instead.
 func (*GetUserProfileRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{27}
+	return file_users_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetUserProfileRequest) GetUserId() int64 {
@@ -1844,7 +1696,7 @@ type UserSearchRequest struct {
 
 func (x *UserSearchRequest) Reset() {
 	*x = UserSearchRequest{}
-	mi := &file_users_proto_msgTypes[28]
+	mi := &file_users_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1856,7 +1708,7 @@ func (x *UserSearchRequest) String() string {
 func (*UserSearchRequest) ProtoMessage() {}
 
 func (x *UserSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[28]
+	mi := &file_users_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1869,7 +1721,7 @@ func (x *UserSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserSearchRequest.ProtoReflect.Descriptor instead.
 func (*UserSearchRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{28}
+	return file_users_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UserSearchRequest) GetSearchTerm() string {
@@ -1901,7 +1753,7 @@ type UpdateProfileRequest struct {
 
 func (x *UpdateProfileRequest) Reset() {
 	*x = UpdateProfileRequest{}
-	mi := &file_users_proto_msgTypes[29]
+	mi := &file_users_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1913,7 +1765,7 @@ func (x *UpdateProfileRequest) String() string {
 func (*UpdateProfileRequest) ProtoMessage() {}
 
 func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[29]
+	mi := &file_users_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1926,7 +1778,7 @@ func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProfileRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProfileRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{29}
+	return file_users_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *UpdateProfileRequest) GetUserId() int64 {
@@ -1988,7 +1840,7 @@ type UpdateProfilePrivacyRequest struct {
 
 func (x *UpdateProfilePrivacyRequest) Reset() {
 	*x = UpdateProfilePrivacyRequest{}
-	mi := &file_users_proto_msgTypes[30]
+	mi := &file_users_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2000,7 +1852,7 @@ func (x *UpdateProfilePrivacyRequest) String() string {
 func (*UpdateProfilePrivacyRequest) ProtoMessage() {}
 
 func (x *UpdateProfilePrivacyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[30]
+	mi := &file_users_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2013,7 +1865,7 @@ func (x *UpdateProfilePrivacyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProfilePrivacyRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProfilePrivacyRequest) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{30}
+	return file_users_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *UpdateProfilePrivacyRequest) GetUserId() int64 {
@@ -2034,15 +1886,7 @@ var File_users_proto protoreflect.FileDescriptor
 
 const file_users_proto_rawDesc = "" +
 	"\n" +
-	"\vusers.proto\x12\x05users\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1egoogle/protobuf/wrappers.proto\"S\n" +
-	"\x04User\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x16\n" +
-	"\x06avatar\x18\x03 \x01(\x03R\x06avatar\".\n" +
-	"\tListUsers\x12!\n" +
-	"\x05users\x18\x01 \x03(\v2\v.users.UserR\x05users\"\"\n" +
-	"\bInt64Arr\x12\x16\n" +
-	"\x06values\x18\x01 \x03(\x03R\x06values\"\xda\x04\n" +
+	"\vusers.proto\x12\x05users\x1a\fcommon.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\xda\x04\n" +
 	"\x13UserProfileResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
@@ -2105,7 +1949,7 @@ const file_users_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12!\n" +
 	"\frequester_id\x18\x02 \x01(\x03R\vrequesterId\x12\x16\n" +
 	"\x06accept\x18\x03 \x01(\bR\x06accept\"[\n" +
-	"\x12isFollowingRequest\x12\x1f\n" +
+	"\x12IsFollowingRequest\x12\x1f\n" +
 	"\vfollower_id\x18\x01 \x01(\x03R\n" +
 	"followerId\x12$\n" +
 	"\x0etarget_user_id\x18\x02 \x01(\x03R\ftargetUserId\"\xb3\x02\n" +
@@ -2139,11 +1983,10 @@ const file_users_proto_rawDesc = "" +
 	"\n" +
 	"group_role\x18\x04 \x01(\tR\tgroupRole\"F\n" +
 	"\fGroupUserArr\x126\n" +
-	"\x0egroup_user_arr\x18\x01 \x03(\v2\x10.users.GroupUserR\fgroupUserArr\"{\n" +
-	"\x12GroupSearchRequest\x12\x1e\n" +
-	"\n" +
-	"SearchTerm\x18\x01 \x01(\tR\n" +
-	"SearchTerm\x12\x17\n" +
+	"\x0egroup_user_arr\x18\x01 \x03(\v2\x10.users.GroupUserR\fgroupUserArr\"|\n" +
+	"\x12GroupSearchRequest\x12\x1f\n" +
+	"\vsearch_term\x18\x01 \x01(\tR\n" +
+	"searchTerm\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x04 \x01(\x05R\x06offset\"o\n" +
@@ -2176,9 +2019,9 @@ const file_users_proto_rawDesc = "" +
 	"groupTitle\x12+\n" +
 	"\x11group_description\x18\x03 \x01(\tR\x10groupDescription\x12\x1f\n" +
 	"\vgroup_image\x18\x04 \x01(\tR\n" +
-	"groupImage\"\x8b\x01\n" +
-	"\x15UserBasicInfoResponse\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x1b\n" +
+	"groupImage\"\x8c\x01\n" +
+	"\x15UserBasicInfoResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1b\n" +
 	"\tuser_name\x18\x02 \x01(\tR\buserName\x12\x16\n" +
 	"\x06avatar\x18\x03 \x01(\x03R\x06avatar\x12%\n" +
 	"\x0epublic_profile\x18\x04 \x01(\bR\rpublicProfile\"S\n" +
@@ -2200,20 +2043,20 @@ const file_users_proto_rawDesc = "" +
 	"\x05about\x18\a \x01(\tR\x05about\"N\n" +
 	"\x1bUpdateProfilePrivacyRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x16\n" +
-	"\x06public\x18\x02 \x01(\bR\x06public2\xd4\x10\n" +
-	"\vUserService\x127\n" +
-	"\fRegisterUser\x12\x1a.users.RegisterUserRequest\x1a\v.users.User\x12-\n" +
-	"\tLoginUser\x12\x13.users.LoginRequest\x1a\v.users.User\x12J\n" +
+	"\x06public\x18\x02 \x01(\bR\x06public2\xde\x10\n" +
+	"\vUserService\x128\n" +
+	"\fRegisterUser\x12\x1a.users.RegisterUserRequest\x1a\f.common.User\x12.\n" +
+	"\tLoginUser\x12\x13.users.LoginRequest\x1a\f.common.User\x12J\n" +
 	"\x12UpdateUserPassword\x12\x1c.users.UpdatePasswordRequest\x1a\x16.google.protobuf.Empty\x12D\n" +
-	"\x0fUpdateUserEmail\x12\x19.users.UpdateEmailRequest\x1a\x16.google.protobuf.Empty\x12<\n" +
-	"\x15GetFollowersPaginated\x12\x11.users.Pagination\x1a\x10.users.ListUsers\x12<\n" +
-	"\x15GetFollowingPaginated\x12\x11.users.Pagination\x1a\x10.users.ListUsers\x12A\n" +
+	"\x0fUpdateUserEmail\x12\x19.users.UpdateEmailRequest\x1a\x16.google.protobuf.Empty\x12=\n" +
+	"\x15GetFollowersPaginated\x12\x11.users.Pagination\x1a\x11.common.ListUsers\x12=\n" +
+	"\x15GetFollowingPaginated\x12\x11.users.Pagination\x1a\x11.common.ListUsers\x12A\n" +
 	"\n" +
 	"FollowUser\x12\x18.users.FollowUserRequest\x1a\x19.users.FollowUserResponse\x12D\n" +
 	"\fUnFollowUser\x12\x18.users.FollowUserRequest\x1a\x1a.google.protobuf.BoolValue\x12P\n" +
-	"\x13HandleFollowRequest\x12!.users.HandleFollowRequestRequest\x1a\x16.google.protobuf.Empty\x12?\n" +
-	"\x0fGetFollowingIds\x12\x1b.google.protobuf.Int64Value\x1a\x0f.users.Int64Arr\x12E\n" +
-	"\x14GetFollowSuggestions\x12\x1b.google.protobuf.Int64Value\x1a\x10.users.ListUsers\x12C\n" +
+	"\x13HandleFollowRequest\x12!.users.HandleFollowRequestRequest\x1a\x16.google.protobuf.Empty\x12@\n" +
+	"\x0fGetFollowingIds\x12\x1b.google.protobuf.Int64Value\x1a\x10.common.Int64Arr\x12F\n" +
+	"\x14GetFollowSuggestions\x12\x1b.google.protobuf.Int64Value\x1a\x11.common.ListUsers\x12C\n" +
 	"\vIsFollowing\x12\x18.users.FollowUserRequest\x1a\x1a.google.protobuf.BoolValue\x12M\n" +
 	"\x15AreFollowingEachOther\x12\x18.users.FollowUserRequest\x1a\x1a.google.protobuf.BoolValue\x12;\n" +
 	"\x15GetAllGroupsPaginated\x12\x11.users.Pagination\x1a\x0f.users.GroupArr\x12<\n" +
@@ -2228,13 +2071,13 @@ const file_users_proto_rawDesc = "" +
 	"\x16HandleGroupJoinRequest\x12\x18.users.HandleJoinRequest\x1a\x16.google.protobuf.Empty\x12@\n" +
 	"\n" +
 	"LeaveGroup\x12\x1a.users.GeneralGroupRequest\x1a\x16.google.protobuf.Empty\x12E\n" +
-	"\vCreateGroup\x12\x19.users.CreateGroupRequest\x1a\x1b.google.protobuf.Int64Value\x12<\n" +
-	"\x10GetBasicUserInfo\x12\x1b.google.protobuf.Int64Value\x1a\v.users.User\x12:\n" +
-	"\x15GetBatchBasicUserInfo\x12\x0f.users.Int64Arr\x1a\x10.users.ListUsers\x12J\n" +
-	"\x0eGetUserProfile\x12\x1c.users.GetUserProfileRequest\x1a\x1a.users.UserProfileResponse\x129\n" +
-	"\vSearchUsers\x12\x18.users.UserSearchRequest\x1a\x10.users.ListUsers\x12L\n" +
+	"\vCreateGroup\x12\x19.users.CreateGroupRequest\x1a\x1b.google.protobuf.Int64Value\x12=\n" +
+	"\x10GetBasicUserInfo\x12\x1b.google.protobuf.Int64Value\x1a\f.common.User\x12<\n" +
+	"\x15GetBatchBasicUserInfo\x12\x10.common.Int64Arr\x1a\x11.common.ListUsers\x12J\n" +
+	"\x0eGetUserProfile\x12\x1c.users.GetUserProfileRequest\x1a\x1a.users.UserProfileResponse\x12:\n" +
+	"\vSearchUsers\x12\x18.users.UserSearchRequest\x1a\x11.common.ListUsers\x12L\n" +
 	"\x11UpdateUserProfile\x12\x1b.users.UpdateProfileRequest\x1a\x1a.users.UserProfileResponse\x12R\n" +
-	"\x14UpdateProfilePrivacy\x12\".users.UpdateProfilePrivacyRequest\x1a\x16.google.protobuf.EmptyB'Z%social-network/shared/gen/users;usersb\x06proto3"
+	"\x14UpdateProfilePrivacy\x12\".users.UpdateProfilePrivacyRequest\x1a\x16.google.protobuf.EmptyB*Z(social-network/shared/gen-go/users;usersb\x06proto3"
 
 var (
 	file_users_proto_rawDescOnce sync.Once
@@ -2248,119 +2091,118 @@ func file_users_proto_rawDescGZIP() []byte {
 	return file_users_proto_rawDescData
 }
 
-var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_users_proto_goTypes = []any{
-	(*User)(nil),                        // 0: users.User
-	(*ListUsers)(nil),                   // 1: users.ListUsers
-	(*Int64Arr)(nil),                    // 2: users.Int64Arr
-	(*UserProfileResponse)(nil),         // 3: users.UserProfileResponse
-	(*RegisterUserRequest)(nil),         // 4: users.RegisterUserRequest
-	(*LoginRequest)(nil),                // 5: users.LoginRequest
-	(*UpdatePasswordRequest)(nil),       // 6: users.UpdatePasswordRequest
-	(*UpdateEmailRequest)(nil),          // 7: users.UpdateEmailRequest
-	(*Pagination)(nil),                  // 8: users.Pagination
-	(*FollowUserRequest)(nil),           // 9: users.FollowUserRequest
-	(*FollowUserResponse)(nil),          // 10: users.FollowUserResponse
-	(*HandleFollowRequestRequest)(nil),  // 11: users.HandleFollowRequestRequest
-	(*IsFollowingRequest)(nil),          // 12: users.isFollowingRequest
-	(*Group)(nil),                       // 13: users.Group
-	(*GroupArr)(nil),                    // 14: users.GroupArr
-	(*GeneralGroupRequest)(nil),         // 15: users.GeneralGroupRequest
-	(*GroupMembersRequest)(nil),         // 16: users.GroupMembersRequest
-	(*GroupUser)(nil),                   // 17: users.GroupUser
-	(*GroupUserArr)(nil),                // 18: users.GroupUserArr
-	(*GroupSearchRequest)(nil),          // 19: users.GroupSearchRequest
-	(*InviteToGroupRequest)(nil),        // 20: users.InviteToGroupRequest
-	(*GroupJoinRequest)(nil),            // 21: users.GroupJoinRequest
-	(*HandleGroupInviteRequest)(nil),    // 22: users.HandleGroupInviteRequest
-	(*HandleJoinRequest)(nil),           // 23: users.HandleJoinRequest
-	(*RemoveFromGroupRequest)(nil),      // 24: users.RemoveFromGroupRequest
-	(*CreateGroupRequest)(nil),          // 25: users.CreateGroupRequest
-	(*UserBasicInfoResponse)(nil),       // 26: users.UserBasicInfoResponse
-	(*GetUserProfileRequest)(nil),       // 27: users.GetUserProfileRequest
-	(*UserSearchRequest)(nil),           // 28: users.UserSearchRequest
-	(*UpdateProfileRequest)(nil),        // 29: users.UpdateProfileRequest
-	(*UpdateProfilePrivacyRequest)(nil), // 30: users.UpdateProfilePrivacyRequest
-	(*timestamppb.Timestamp)(nil),       // 31: google.protobuf.Timestamp
-	(*wrapperspb.Int64Value)(nil),       // 32: google.protobuf.Int64Value
-	(*emptypb.Empty)(nil),               // 33: google.protobuf.Empty
+	(*UserProfileResponse)(nil),         // 0: users.UserProfileResponse
+	(*RegisterUserRequest)(nil),         // 1: users.RegisterUserRequest
+	(*LoginRequest)(nil),                // 2: users.LoginRequest
+	(*UpdatePasswordRequest)(nil),       // 3: users.UpdatePasswordRequest
+	(*UpdateEmailRequest)(nil),          // 4: users.UpdateEmailRequest
+	(*Pagination)(nil),                  // 5: users.Pagination
+	(*FollowUserRequest)(nil),           // 6: users.FollowUserRequest
+	(*FollowUserResponse)(nil),          // 7: users.FollowUserResponse
+	(*HandleFollowRequestRequest)(nil),  // 8: users.HandleFollowRequestRequest
+	(*IsFollowingRequest)(nil),          // 9: users.IsFollowingRequest
+	(*Group)(nil),                       // 10: users.Group
+	(*GroupArr)(nil),                    // 11: users.GroupArr
+	(*GeneralGroupRequest)(nil),         // 12: users.GeneralGroupRequest
+	(*GroupMembersRequest)(nil),         // 13: users.GroupMembersRequest
+	(*GroupUser)(nil),                   // 14: users.GroupUser
+	(*GroupUserArr)(nil),                // 15: users.GroupUserArr
+	(*GroupSearchRequest)(nil),          // 16: users.GroupSearchRequest
+	(*InviteToGroupRequest)(nil),        // 17: users.InviteToGroupRequest
+	(*GroupJoinRequest)(nil),            // 18: users.GroupJoinRequest
+	(*HandleGroupInviteRequest)(nil),    // 19: users.HandleGroupInviteRequest
+	(*HandleJoinRequest)(nil),           // 20: users.HandleJoinRequest
+	(*RemoveFromGroupRequest)(nil),      // 21: users.RemoveFromGroupRequest
+	(*CreateGroupRequest)(nil),          // 22: users.CreateGroupRequest
+	(*UserBasicInfoResponse)(nil),       // 23: users.UserBasicInfoResponse
+	(*GetUserProfileRequest)(nil),       // 24: users.GetUserProfileRequest
+	(*UserSearchRequest)(nil),           // 25: users.UserSearchRequest
+	(*UpdateProfileRequest)(nil),        // 26: users.UpdateProfileRequest
+	(*UpdateProfilePrivacyRequest)(nil), // 27: users.UpdateProfilePrivacyRequest
+	(*timestamppb.Timestamp)(nil),       // 28: google.protobuf.Timestamp
+	(*wrapperspb.Int64Value)(nil),       // 29: google.protobuf.Int64Value
+	(*common.Int64Arr)(nil),             // 30: common.Int64Arr
+	(*common.User)(nil),                 // 31: common.User
+	(*emptypb.Empty)(nil),               // 32: google.protobuf.Empty
+	(*common.ListUsers)(nil),            // 33: common.ListUsers
 	(*wrapperspb.BoolValue)(nil),        // 34: google.protobuf.BoolValue
 }
 var file_users_proto_depIdxs = []int32{
-	0,  // 0: users.ListUsers.users:type_name -> users.User
-	31, // 1: users.UserProfileResponse.date_of_birth:type_name -> google.protobuf.Timestamp
-	31, // 2: users.UserProfileResponse.created_at:type_name -> google.protobuf.Timestamp
-	31, // 3: users.RegisterUserRequest.date_of_birth:type_name -> google.protobuf.Timestamp
-	13, // 4: users.GroupArr.group_arr:type_name -> users.Group
-	17, // 5: users.GroupUserArr.group_user_arr:type_name -> users.GroupUser
-	31, // 6: users.UpdateProfileRequest.date_of_birth:type_name -> google.protobuf.Timestamp
-	4,  // 7: users.UserService.RegisterUser:input_type -> users.RegisterUserRequest
-	5,  // 8: users.UserService.LoginUser:input_type -> users.LoginRequest
-	6,  // 9: users.UserService.UpdateUserPassword:input_type -> users.UpdatePasswordRequest
-	7,  // 10: users.UserService.UpdateUserEmail:input_type -> users.UpdateEmailRequest
-	8,  // 11: users.UserService.GetFollowersPaginated:input_type -> users.Pagination
-	8,  // 12: users.UserService.GetFollowingPaginated:input_type -> users.Pagination
-	9,  // 13: users.UserService.FollowUser:input_type -> users.FollowUserRequest
-	9,  // 14: users.UserService.UnFollowUser:input_type -> users.FollowUserRequest
-	11, // 15: users.UserService.HandleFollowRequest:input_type -> users.HandleFollowRequestRequest
-	32, // 16: users.UserService.GetFollowingIds:input_type -> google.protobuf.Int64Value
-	32, // 17: users.UserService.GetFollowSuggestions:input_type -> google.protobuf.Int64Value
-	9,  // 18: users.UserService.IsFollowing:input_type -> users.FollowUserRequest
-	9,  // 19: users.UserService.AreFollowingEachOther:input_type -> users.FollowUserRequest
-	8,  // 20: users.UserService.GetAllGroupsPaginated:input_type -> users.Pagination
-	8,  // 21: users.UserService.GetUserGroupsPaginated:input_type -> users.Pagination
-	15, // 22: users.UserService.GetGroupInfo:input_type -> users.GeneralGroupRequest
-	16, // 23: users.UserService.GetGroupMembers:input_type -> users.GroupMembersRequest
-	19, // 24: users.UserService.SearchGroups:input_type -> users.GroupSearchRequest
-	20, // 25: users.UserService.InviteToGroup:input_type -> users.InviteToGroupRequest
-	15, // 26: users.UserService.IsGroupMember:input_type -> users.GeneralGroupRequest
-	21, // 27: users.UserService.RequestJoinGroupOrCancel:input_type -> users.GroupJoinRequest
-	22, // 28: users.UserService.RespondToGroupInvite:input_type -> users.HandleGroupInviteRequest
-	23, // 29: users.UserService.HandleGroupJoinRequest:input_type -> users.HandleJoinRequest
-	15, // 30: users.UserService.LeaveGroup:input_type -> users.GeneralGroupRequest
-	25, // 31: users.UserService.CreateGroup:input_type -> users.CreateGroupRequest
-	32, // 32: users.UserService.GetBasicUserInfo:input_type -> google.protobuf.Int64Value
-	2,  // 33: users.UserService.GetBatchBasicUserInfo:input_type -> users.Int64Arr
-	27, // 34: users.UserService.GetUserProfile:input_type -> users.GetUserProfileRequest
-	28, // 35: users.UserService.SearchUsers:input_type -> users.UserSearchRequest
-	29, // 36: users.UserService.UpdateUserProfile:input_type -> users.UpdateProfileRequest
-	30, // 37: users.UserService.UpdateProfilePrivacy:input_type -> users.UpdateProfilePrivacyRequest
-	0,  // 38: users.UserService.RegisterUser:output_type -> users.User
-	0,  // 39: users.UserService.LoginUser:output_type -> users.User
-	33, // 40: users.UserService.UpdateUserPassword:output_type -> google.protobuf.Empty
-	33, // 41: users.UserService.UpdateUserEmail:output_type -> google.protobuf.Empty
-	1,  // 42: users.UserService.GetFollowersPaginated:output_type -> users.ListUsers
-	1,  // 43: users.UserService.GetFollowingPaginated:output_type -> users.ListUsers
-	10, // 44: users.UserService.FollowUser:output_type -> users.FollowUserResponse
-	34, // 45: users.UserService.UnFollowUser:output_type -> google.protobuf.BoolValue
-	33, // 46: users.UserService.HandleFollowRequest:output_type -> google.protobuf.Empty
-	2,  // 47: users.UserService.GetFollowingIds:output_type -> users.Int64Arr
-	1,  // 48: users.UserService.GetFollowSuggestions:output_type -> users.ListUsers
-	34, // 49: users.UserService.IsFollowing:output_type -> google.protobuf.BoolValue
-	34, // 50: users.UserService.AreFollowingEachOther:output_type -> google.protobuf.BoolValue
-	14, // 51: users.UserService.GetAllGroupsPaginated:output_type -> users.GroupArr
-	14, // 52: users.UserService.GetUserGroupsPaginated:output_type -> users.GroupArr
-	13, // 53: users.UserService.GetGroupInfo:output_type -> users.Group
-	18, // 54: users.UserService.GetGroupMembers:output_type -> users.GroupUserArr
-	14, // 55: users.UserService.SearchGroups:output_type -> users.GroupArr
-	33, // 56: users.UserService.InviteToGroup:output_type -> google.protobuf.Empty
-	34, // 57: users.UserService.IsGroupMember:output_type -> google.protobuf.BoolValue
-	33, // 58: users.UserService.RequestJoinGroupOrCancel:output_type -> google.protobuf.Empty
-	33, // 59: users.UserService.RespondToGroupInvite:output_type -> google.protobuf.Empty
-	33, // 60: users.UserService.HandleGroupJoinRequest:output_type -> google.protobuf.Empty
-	33, // 61: users.UserService.LeaveGroup:output_type -> google.protobuf.Empty
-	32, // 62: users.UserService.CreateGroup:output_type -> google.protobuf.Int64Value
-	0,  // 63: users.UserService.GetBasicUserInfo:output_type -> users.User
-	1,  // 64: users.UserService.GetBatchBasicUserInfo:output_type -> users.ListUsers
-	3,  // 65: users.UserService.GetUserProfile:output_type -> users.UserProfileResponse
-	1,  // 66: users.UserService.SearchUsers:output_type -> users.ListUsers
-	3,  // 67: users.UserService.UpdateUserProfile:output_type -> users.UserProfileResponse
-	33, // 68: users.UserService.UpdateProfilePrivacy:output_type -> google.protobuf.Empty
-	38, // [38:69] is the sub-list for method output_type
-	7,  // [7:38] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	28, // 0: users.UserProfileResponse.date_of_birth:type_name -> google.protobuf.Timestamp
+	28, // 1: users.UserProfileResponse.created_at:type_name -> google.protobuf.Timestamp
+	28, // 2: users.RegisterUserRequest.date_of_birth:type_name -> google.protobuf.Timestamp
+	10, // 3: users.GroupArr.group_arr:type_name -> users.Group
+	14, // 4: users.GroupUserArr.group_user_arr:type_name -> users.GroupUser
+	28, // 5: users.UpdateProfileRequest.date_of_birth:type_name -> google.protobuf.Timestamp
+	1,  // 6: users.UserService.RegisterUser:input_type -> users.RegisterUserRequest
+	2,  // 7: users.UserService.LoginUser:input_type -> users.LoginRequest
+	3,  // 8: users.UserService.UpdateUserPassword:input_type -> users.UpdatePasswordRequest
+	4,  // 9: users.UserService.UpdateUserEmail:input_type -> users.UpdateEmailRequest
+	5,  // 10: users.UserService.GetFollowersPaginated:input_type -> users.Pagination
+	5,  // 11: users.UserService.GetFollowingPaginated:input_type -> users.Pagination
+	6,  // 12: users.UserService.FollowUser:input_type -> users.FollowUserRequest
+	6,  // 13: users.UserService.UnFollowUser:input_type -> users.FollowUserRequest
+	8,  // 14: users.UserService.HandleFollowRequest:input_type -> users.HandleFollowRequestRequest
+	29, // 15: users.UserService.GetFollowingIds:input_type -> google.protobuf.Int64Value
+	29, // 16: users.UserService.GetFollowSuggestions:input_type -> google.protobuf.Int64Value
+	6,  // 17: users.UserService.IsFollowing:input_type -> users.FollowUserRequest
+	6,  // 18: users.UserService.AreFollowingEachOther:input_type -> users.FollowUserRequest
+	5,  // 19: users.UserService.GetAllGroupsPaginated:input_type -> users.Pagination
+	5,  // 20: users.UserService.GetUserGroupsPaginated:input_type -> users.Pagination
+	12, // 21: users.UserService.GetGroupInfo:input_type -> users.GeneralGroupRequest
+	13, // 22: users.UserService.GetGroupMembers:input_type -> users.GroupMembersRequest
+	16, // 23: users.UserService.SearchGroups:input_type -> users.GroupSearchRequest
+	17, // 24: users.UserService.InviteToGroup:input_type -> users.InviteToGroupRequest
+	12, // 25: users.UserService.IsGroupMember:input_type -> users.GeneralGroupRequest
+	18, // 26: users.UserService.RequestJoinGroupOrCancel:input_type -> users.GroupJoinRequest
+	19, // 27: users.UserService.RespondToGroupInvite:input_type -> users.HandleGroupInviteRequest
+	20, // 28: users.UserService.HandleGroupJoinRequest:input_type -> users.HandleJoinRequest
+	12, // 29: users.UserService.LeaveGroup:input_type -> users.GeneralGroupRequest
+	22, // 30: users.UserService.CreateGroup:input_type -> users.CreateGroupRequest
+	29, // 31: users.UserService.GetBasicUserInfo:input_type -> google.protobuf.Int64Value
+	30, // 32: users.UserService.GetBatchBasicUserInfo:input_type -> common.Int64Arr
+	24, // 33: users.UserService.GetUserProfile:input_type -> users.GetUserProfileRequest
+	25, // 34: users.UserService.SearchUsers:input_type -> users.UserSearchRequest
+	26, // 35: users.UserService.UpdateUserProfile:input_type -> users.UpdateProfileRequest
+	27, // 36: users.UserService.UpdateProfilePrivacy:input_type -> users.UpdateProfilePrivacyRequest
+	31, // 37: users.UserService.RegisterUser:output_type -> common.User
+	31, // 38: users.UserService.LoginUser:output_type -> common.User
+	32, // 39: users.UserService.UpdateUserPassword:output_type -> google.protobuf.Empty
+	32, // 40: users.UserService.UpdateUserEmail:output_type -> google.protobuf.Empty
+	33, // 41: users.UserService.GetFollowersPaginated:output_type -> common.ListUsers
+	33, // 42: users.UserService.GetFollowingPaginated:output_type -> common.ListUsers
+	7,  // 43: users.UserService.FollowUser:output_type -> users.FollowUserResponse
+	34, // 44: users.UserService.UnFollowUser:output_type -> google.protobuf.BoolValue
+	32, // 45: users.UserService.HandleFollowRequest:output_type -> google.protobuf.Empty
+	30, // 46: users.UserService.GetFollowingIds:output_type -> common.Int64Arr
+	33, // 47: users.UserService.GetFollowSuggestions:output_type -> common.ListUsers
+	34, // 48: users.UserService.IsFollowing:output_type -> google.protobuf.BoolValue
+	34, // 49: users.UserService.AreFollowingEachOther:output_type -> google.protobuf.BoolValue
+	11, // 50: users.UserService.GetAllGroupsPaginated:output_type -> users.GroupArr
+	11, // 51: users.UserService.GetUserGroupsPaginated:output_type -> users.GroupArr
+	10, // 52: users.UserService.GetGroupInfo:output_type -> users.Group
+	15, // 53: users.UserService.GetGroupMembers:output_type -> users.GroupUserArr
+	11, // 54: users.UserService.SearchGroups:output_type -> users.GroupArr
+	32, // 55: users.UserService.InviteToGroup:output_type -> google.protobuf.Empty
+	34, // 56: users.UserService.IsGroupMember:output_type -> google.protobuf.BoolValue
+	32, // 57: users.UserService.RequestJoinGroupOrCancel:output_type -> google.protobuf.Empty
+	32, // 58: users.UserService.RespondToGroupInvite:output_type -> google.protobuf.Empty
+	32, // 59: users.UserService.HandleGroupJoinRequest:output_type -> google.protobuf.Empty
+	32, // 60: users.UserService.LeaveGroup:output_type -> google.protobuf.Empty
+	29, // 61: users.UserService.CreateGroup:output_type -> google.protobuf.Int64Value
+	31, // 62: users.UserService.GetBasicUserInfo:output_type -> common.User
+	33, // 63: users.UserService.GetBatchBasicUserInfo:output_type -> common.ListUsers
+	0,  // 64: users.UserService.GetUserProfile:output_type -> users.UserProfileResponse
+	33, // 65: users.UserService.SearchUsers:output_type -> common.ListUsers
+	0,  // 66: users.UserService.UpdateUserProfile:output_type -> users.UserProfileResponse
+	32, // 67: users.UserService.UpdateProfilePrivacy:output_type -> google.protobuf.Empty
+	37, // [37:68] is the sub-list for method output_type
+	6,  // [6:37] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_users_proto_init() }
@@ -2374,7 +2216,7 @@ func file_users_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_proto_rawDesc), len(file_users_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

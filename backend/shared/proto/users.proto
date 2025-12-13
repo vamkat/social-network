@@ -2,67 +2,118 @@ syntax = "proto3";
 
 package users;
 
-option go_package = "social-network/shared/gen/users;users";
+option go_package = "social-network/shared/gen-go/users;users";
 
+import "common.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
+// UserService covers auth, follow, group, and profile operations.
+// Current behavior: handlers return INVALID_ARGUMENT for nil/failed validation and INTERNAL for all other errors.
+// Desired (not yet implemented): surface UNAUTHENTICATED, PERMISSION_DENIED, NOT_FOUND, ALREADY_EXISTS, FAILED_PRECONDITION where appropriate.
 service UserService {
-  // Auth
-  rpc RegisterUser (RegisterUserRequest) returns (User);
-  rpc LoginUser (LoginRequest) returns (User);
+  // Registers a new account and returns the created user profile.
+  // Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
+  rpc RegisterUser (RegisterUserRequest) returns (common.User);
+
+  // Authenticates by username/email identifier and password.
+  // Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
+  rpc LoginUser (LoginRequest) returns (common.User);
+
+  // Updates a user's password after verifying the current password.
+  // Current: INVALID_ARGUMENT on bad ids/password; INTERNAL otherwise. Desired: UNAUTHENTICATED/PERMISSION_DENIED on mismatch.
   rpc UpdateUserPassword (UpdatePasswordRequest) returns (google.protobuf.Empty);
+
+  // Updates the account email address.
+  // Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: ALREADY_EXISTS for duplicate email.
   rpc UpdateUserEmail (UpdateEmailRequest) returns (google.protobuf.Empty);
-  // Followers
-  rpc GetFollowersPaginated (Pagination) returns (ListUsers);
-  rpc GetFollowingPaginated (Pagination) returns (ListUsers);
+
+  // Returns followers of a user with pagination.
+  // Current: INVALID_ARGUMENT on bad pagination; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED for hidden users.
+  rpc GetFollowersPaginated (Pagination) returns (common.ListUsers);
+
+  // Returns accounts the user is following with pagination.
+  rpc GetFollowingPaginated (Pagination) returns (common.ListUsers);
+
+  // Follows a target user; may create a pending request for private profiles.
+  // Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
   rpc FollowUser (FollowUserRequest) returns (FollowUserResponse);
+
+  // Unfollows a target user or cancels a pending follow request.
   rpc UnFollowUser (FollowUserRequest) returns (google.protobuf.BoolValue);
+
+  // Accepts or rejects a pending follow request.
   rpc HandleFollowRequest (HandleFollowRequestRequest) returns (google.protobuf.Empty);
-  rpc GetFollowingIds (google.protobuf.Int64Value) returns (Int64Arr);
-  rpc GetFollowSuggestions (google.protobuf.Int64Value) returns (ListUsers);
+
+  // Returns ids that the user is following.
+  rpc GetFollowingIds (google.protobuf.Int64Value) returns (common.Int64Arr);
+
+  // Suggests users to follow based on the caller's network.
+  rpc GetFollowSuggestions (google.protobuf.Int64Value) returns (common.ListUsers);
+
+  // Returns whether follower_id currently follows target_user_id.
   rpc IsFollowing (FollowUserRequest) returns (google.protobuf.BoolValue);
+
+  // Returns whether both users follow each other.
   rpc AreFollowingEachOther (FollowUserRequest) returns (google.protobuf.BoolValue);
-  // GROUPS
+
+  // Lists all groups with pagination (visibility filtered for requester).
   rpc GetAllGroupsPaginated (Pagination) returns (GroupArr);
+
+  // Lists groups the user belongs to with pagination.
   rpc GetUserGroupsPaginated (Pagination) returns (GroupArr);
+
+  // Returns details for a single group visible to the requester.
   rpc GetGroupInfo (GeneralGroupRequest) returns (Group);
+
+  // Returns members of a group with pagination.
   rpc GetGroupMembers (GroupMembersRequest) returns (GroupUserArr);
+
+  // Searches for groups matching the search term for the requester.
   rpc SearchGroups (GroupSearchRequest) returns (GroupArr);
+
+  // Invites a user to join a group.
   rpc InviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+
+  // Checks if the requester is a member of the given group.
   rpc IsGroupMember (GeneralGroupRequest) returns (google.protobuf.BoolValue);
-  // rpc CancelInviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+
+  // Creates or cancels a join request for the group.
   rpc RequestJoinGroupOrCancel (GroupJoinRequest) returns (google.protobuf.Empty);
+
+  // Accepts or declines a received group invite.
   rpc RespondToGroupInvite (HandleGroupInviteRequest) returns (google.protobuf.Empty);
+
+  // Approves or rejects a user's join request.
   rpc HandleGroupJoinRequest (HandleJoinRequest) returns (google.protobuf.Empty);
+
+  // Leaves the specified group.
   rpc LeaveGroup (GeneralGroupRequest) returns (google.protobuf.Empty);
-  // rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
+
+  // Creates a new group and returns its id.
   rpc CreateGroup (CreateGroupRequest) returns (google.protobuf.Int64Value);
-  // Profile
-  rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (User);
-  rpc GetBatchBasicUserInfo (Int64Arr) returns (ListUsers);
+
+  // Retrieves basic public info for a user.
+  rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (common.User);
+
+  // Retrieves basic info for multiple users.
+  rpc GetBatchBasicUserInfo (common.Int64Arr) returns (common.ListUsers);
+
+  // Returns the full profile visible to the requester.
   rpc GetUserProfile (GetUserProfileRequest) returns (UserProfileResponse);
-  rpc SearchUsers (UserSearchRequest) returns (ListUsers);
+
+  // Searches users by term for the requester.
+  rpc SearchUsers (UserSearchRequest) returns (common.ListUsers);
+
+  // Updates profile fields for the given user.
   rpc UpdateUserProfile (UpdateProfileRequest) returns (UserProfileResponse);
+
+  // Toggles public/private profile visibility.
   rpc UpdateProfilePrivacy (UpdateProfilePrivacyRequest) returns (google.protobuf.Empty);
-
 }
 
-// COMMON & GENERIC
-message User {
-  int64 user_id = 1;
-  string username = 2;
-  int64 avatar = 3;
-}
-
-message ListUsers {
-  repeated User users = 1;
-}
-
-message Int64Arr {
-  repeated int64 values = 1; 
-}
+// PROFILE
 
 message UserProfileResponse {
   int64 user_id = 1;
@@ -139,7 +190,7 @@ message HandleFollowRequestRequest {
     bool accept = 3;
 }
 
-message isFollowingRequest {
+message IsFollowingRequest {
     int64 follower_id = 1;
     int64 target_user_id = 2;
 }
@@ -185,7 +236,7 @@ message GroupUserArr {
 }
 
 message GroupSearchRequest {
-  string SearchTerm = 1;
+  string search_term = 1;
   int64 user_id = 2;
   int32 limit = 3;
   int32 offset = 4; 
@@ -231,7 +282,7 @@ message CreateGroupRequest {
 
 // BASIC USER INFO
 message UserBasicInfoResponse {
-  int64 userId = 1;
+  int64 user_id = 1;
   string user_name = 2;
   int64 avatar = 3;
   bool public_profile = 4;

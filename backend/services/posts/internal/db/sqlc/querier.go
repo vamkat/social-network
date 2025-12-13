@@ -33,6 +33,7 @@ type Querier interface {
 	GetMostPopularPostInGroup(ctx context.Context, groupID pgtype.Int8) (GetMostPopularPostInGroupRow, error)
 	GetPersonalizedFeed(ctx context.Context, arg GetPersonalizedFeedParams) ([]GetPersonalizedFeedRow, error)
 	GetPostAudience(ctx context.Context, postID int64) ([]int64, error)
+	GetPostByID(ctx context.Context, arg GetPostByIDParams) (GetPostByIDRow, error)
 	GetPublicFeed(ctx context.Context, arg GetPublicFeedParams) ([]GetPublicFeedRow, error)
 	// pagination
 	GetUserPostsPaginated(ctx context.Context, arg GetUserPostsPaginatedParams) ([]GetUserPostsPaginatedRow, error)

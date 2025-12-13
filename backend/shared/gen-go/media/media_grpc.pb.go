@@ -28,8 +28,19 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // Service definition
+// Current behavior:
+// - UploadImage: returns UNKNOWN on storage errors (fmt.Errorf), no explicit validation errors.
+// - RetrieveImage: NOT_FOUND when image lookup fails; INTERNAL for stream/meta errors.
+// Desired (not yet implemented):
+// - INVALID_ARGUMENT for missing bytes/filename or unsupported mime type.
+// - UNAUTHENTICATED/PERMISSION_DENIED when authz is enforced.
+// - RESOURCE_EXHAUSTED for oversized files.
 type MediaServiceClient interface {
+	// Uploads an image and returns stored metadata.
+	// Returns Error: UNKNOWN on storage errors. Desired: INVALID_ARGUMENT/RESOURCE_EXHAUSTED and authz codes as applicable.
 	UploadImage(ctx context.Context, in *UploadImageRequest, opts ...grpc.CallOption) (*UploadImageResponse, error)
+	// Streams image metadata first, followed by file chunks.
+	// Returns Error: NOT_FOUND if image_id is unknown; INTERNAL for streaming failures. Desired: PERMISSION_DENIED when access is restricted.
 	RetrieveImage(ctx context.Context, in *RetrieveImageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RetrieveImageResponse], error)
 }
 
@@ -75,8 +86,19 @@ type MediaService_RetrieveImageClient = grpc.ServerStreamingClient[RetrieveImage
 // for forward compatibility.
 //
 // Service definition
+// Current behavior:
+// - UploadImage: returns UNKNOWN on storage errors (fmt.Errorf), no explicit validation errors.
+// - RetrieveImage: NOT_FOUND when image lookup fails; INTERNAL for stream/meta errors.
+// Desired (not yet implemented):
+// - INVALID_ARGUMENT for missing bytes/filename or unsupported mime type.
+// - UNAUTHENTICATED/PERMISSION_DENIED when authz is enforced.
+// - RESOURCE_EXHAUSTED for oversized files.
 type MediaServiceServer interface {
+	// Uploads an image and returns stored metadata.
+	// Returns Error: UNKNOWN on storage errors. Desired: INVALID_ARGUMENT/RESOURCE_EXHAUSTED and authz codes as applicable.
 	UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error)
+	// Streams image metadata first, followed by file chunks.
+	// Returns Error: NOT_FOUND if image_id is unknown; INTERNAL for streaming failures. Desired: PERMISSION_DENIED when access is restricted.
 	RetrieveImage(*RetrieveImageRequest, grpc.ServerStreamingServer[RetrieveImageResponse]) error
 	mustEmbedUnimplementedMediaServiceServer()
 }

@@ -86,7 +86,7 @@ func TestCreatePrivateConv_AddMembers_GetConversationMembers(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get conversation members from perspective of userA (should return userB)
-	members, err := q.GetConversationMembers(ctx, md.GetConversationMembersParams{ConversationID: convId, UserID: userA})
+	members, err := q.GetConversationMembers(ctx, md.GetConversationMembersParams{ConversationId: convId, UserID: userA})
 	require.NoError(t, err)
 	require.Len(t, members, 1)
 	assert.Equal(t, ct.Id(userB), members[0])
@@ -111,7 +111,7 @@ func TestCreateGroupConv_AddMembersToGroupConversation_GetConversationMembers(t 
 	require.True(t, convFromAdd > 0)
 
 	// Use one member to fetch the other members
-	members, err := q.GetConversationMembers(ctx, md.GetConversationMembersParams{ConversationID: convFromAdd, UserID: users[0]})
+	members, err := q.GetConversationMembers(ctx, md.GetConversationMembersParams{ConversationId: convFromAdd, UserID: users[0]})
 	require.NoError(t, err)
 	// members should include the other two users
 	// length may be 2 since GetConversationMembers excludes the caller
@@ -169,7 +169,7 @@ func TestUpdateLastReadMessage(t *testing.T) {
 	// Update last read for userB
 	convMember, err := q.UpdateLastReadMessage(ctx, md.UpdateLastReadMessageParams{ConversationId: convId, UserID: userB, LastReadMessageId: msg.Id})
 	require.NoError(t, err)
-	assert.Equal(t, msg.Id, convMember.LastReadMessageID.Int64)
+	assert.Equal(t, msg.Id, convMember.LastReadMessageId.Int64)
 
 	cleanupConversation(t, ctx, int64(convId))
 }

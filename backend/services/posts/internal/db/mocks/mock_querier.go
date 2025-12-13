@@ -37,6 +37,11 @@ func (m *MockQuerier) CreatePost(ctx context.Context, arg sqlc.CreatePostParams)
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockQuerier) GetPostByID(ctx context.Context, arg sqlc.GetPostByIDParams) (sqlc.GetPostByIDRow, error) {
+	args := m.Called(ctx, arg)
+	return args.Get(0).(sqlc.GetPostByIDRow), args.Error(1)
+}
+
 func (m *MockQuerier) DeleteComment(ctx context.Context, arg sqlc.DeleteCommentParams) (int64, error) {
 	args := m.Called(ctx, arg)
 	return args.Get(0).(int64), args.Error(1)

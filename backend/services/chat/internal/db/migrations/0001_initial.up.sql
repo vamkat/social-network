@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     group_id BIGINT, -- In users service; NULL => DM
     last_message_id BIGINT,
+    first_message_id BIGINT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
@@ -45,6 +46,12 @@ ADD CONSTRAINT conversations_last_message_id_fkey
     FOREIGN KEY (last_message_id)
     REFERENCES messages(id)
     ON DELETE SET NULL;
+
+ALTER TABLE conversations
+    ADD CONSTRAINT conversations_first_message_id_fkey
+        FOREIGN KEY (first_message_id)
+        REFERENCES messages(id)
+        ON DELETE SET NULL;
 
 
 
@@ -90,7 +97,25 @@ CREATE TRIGGER trg_update_conversation_members_modtime
 BEFORE UPDATE ON conversation_members
 FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
--- UPDATE CONVERSATION LAST MESSAGE
+
+-- UPDATE CONVERSATION FIRST AND LAST MESSAGE
+
+CREATE OR REPLACE FUNCTION update_conversation_first_message()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE conversations
+    SET first_message_id = NEW.id
+    WHERE id = NEW.conversation_id
+      AND first_message_id IS NULL;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_first_message
+AFTER INSERT ON messages
+FOR EACH ROW
+EXECUTE FUNCTION update_conversation_first_message();
 
 CREATE OR REPLACE FUNCTION update_conversation_last_message()
 RETURNS trigger AS $$
@@ -102,6 +127,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 
 CREATE TRIGGER trg_update_conversation_last_message
 AFTER INSERT ON messages

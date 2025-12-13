@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	cm "social-network/shared/gen-go/common"
 	userpb "social-network/shared/gen-go/users"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -34,8 +35,8 @@ func (c *Clients) IsGroupMember(ctx context.Context, userId, groupId int64) (boo
 	return resp.Value, nil
 }
 
-func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*userpb.ListUsers, error) {
-	req := &userpb.Int64Arr{
+func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*cm.ListUsers, error) {
+	req := &cm.Int64Arr{
 		Values: userIds,
 	}
 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
@@ -45,7 +46,7 @@ func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*
 	return resp, nil
 }
 
-func (c *Clients) GetBasicUserInfo(ctx context.Context, userId int64) (*userpb.User, error) {
+func (c *Clients) GetBasicUserInfo(ctx context.Context, userId int64) (*cm.User, error) {
 	req := &wrapperspb.Int64Value{Value: userId}
 
 	resp, err := c.UserClient.GetBasicUserInfo(ctx, req)

@@ -13,6 +13,7 @@ import (
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+	common "social-network/shared/gen-go/common"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -57,43 +58,78 @@ const (
 // UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// UserService covers auth, follow, group, and profile operations.
+// Current behavior: handlers return INVALID_ARGUMENT for nil/failed validation and INTERNAL for all other errors.
+// Desired (not yet implemented): surface UNAUTHENTICATED, PERMISSION_DENIED, NOT_FOUND, ALREADY_EXISTS, FAILED_PRECONDITION where appropriate.
 type UserServiceClient interface {
-	// Auth
-	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*User, error)
-	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*User, error)
+	// Registers a new account and returns the created user profile.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
+	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*common.User, error)
+	// Authenticates by username/email identifier and password.
+	// Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
+	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*common.User, error)
+	// Updates a user's password after verifying the current password.
+	// Current: INVALID_ARGUMENT on bad ids/password; INTERNAL otherwise. Desired: UNAUTHENTICATED/PERMISSION_DENIED on mismatch.
 	UpdateUserPassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Updates the account email address.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: ALREADY_EXISTS for duplicate email.
 	UpdateUserEmail(ctx context.Context, in *UpdateEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Followers
-	GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error)
-	GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error)
+	// Returns followers of a user with pagination.
+	// Current: INVALID_ARGUMENT on bad pagination; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED for hidden users.
+	GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*common.ListUsers, error)
+	// Returns accounts the user is following with pagination.
+	GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*common.ListUsers, error)
+	// Follows a target user; may create a pending request for private profiles.
+	// Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
 	FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*FollowUserResponse, error)
+	// Unfollows a target user or cancels a pending follow request.
 	UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
+	// Accepts or rejects a pending follow request.
 	HandleFollowRequest(ctx context.Context, in *HandleFollowRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*Int64Arr, error)
-	GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*ListUsers, error)
+	// Returns ids that the user is following.
+	GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.Int64Arr, error)
+	// Suggests users to follow based on the caller's network.
+	GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.ListUsers, error)
+	// Returns whether follower_id currently follows target_user_id.
 	IsFollowing(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
+	// Returns whether both users follow each other.
 	AreFollowingEachOther(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
-	// GROUPS
+	// Lists all groups with pagination (visibility filtered for requester).
 	GetAllGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
+	// Lists groups the user belongs to with pagination.
 	GetUserGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
+	// Returns details for a single group visible to the requester.
 	GetGroupInfo(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*Group, error)
+	// Returns members of a group with pagination.
 	GetGroupMembers(ctx context.Context, in *GroupMembersRequest, opts ...grpc.CallOption) (*GroupUserArr, error)
+	// Searches for groups matching the search term for the requester.
 	SearchGroups(ctx context.Context, in *GroupSearchRequest, opts ...grpc.CallOption) (*GroupArr, error)
+	// Invites a user to join a group.
 	InviteToGroup(ctx context.Context, in *InviteToGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Checks if the requester is a member of the given group.
 	IsGroupMember(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
-	// rpc CancelInviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+	// Creates or cancels a join request for the group.
 	RequestJoinGroupOrCancel(ctx context.Context, in *GroupJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Accepts or declines a received group invite.
 	RespondToGroupInvite(ctx context.Context, in *HandleGroupInviteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Approves or rejects a user's join request.
 	HandleGroupJoinRequest(ctx context.Context, in *HandleJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Leaves the specified group.
 	LeaveGroup(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
+	// Creates a new group and returns its id.
 	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
-	// Profile
-	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error)
-	GetBatchBasicUserInfo(ctx context.Context, in *Int64Arr, opts ...grpc.CallOption) (*ListUsers, error)
+	// Retrieves basic public info for a user.
+	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.User, error)
+	// Retrieves basic info for multiple users.
+	GetBatchBasicUserInfo(ctx context.Context, in *common.Int64Arr, opts ...grpc.CallOption) (*common.ListUsers, error)
+	// Returns the full profile visible to the requester.
 	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
-	SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*ListUsers, error)
+	// Searches users by term for the requester.
+	SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*common.ListUsers, error)
+	// Updates profile fields for the given user.
 	UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
+	// Toggles public/private profile visibility.
 	UpdateProfilePrivacy(ctx context.Context, in *UpdateProfilePrivacyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -105,9 +141,9 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*User, error) {
+func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*common.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(User)
+	out := new(common.User)
 	err := c.cc.Invoke(ctx, UserService_RegisterUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -115,9 +151,9 @@ func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRe
 	return out, nil
 }
 
-func (c *userServiceClient) LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*User, error) {
+func (c *userServiceClient) LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*common.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(User)
+	out := new(common.User)
 	err := c.cc.Invoke(ctx, UserService_LoginUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -145,9 +181,9 @@ func (c *userServiceClient) UpdateUserEmail(ctx context.Context, in *UpdateEmail
 	return out, nil
 }
 
-func (c *userServiceClient) GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *userServiceClient) GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListUsers)
+	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, UserService_GetFollowersPaginated_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -155,9 +191,9 @@ func (c *userServiceClient) GetFollowersPaginated(ctx context.Context, in *Pagin
 	return out, nil
 }
 
-func (c *userServiceClient) GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *userServiceClient) GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListUsers)
+	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, UserService_GetFollowingPaginated_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -195,9 +231,9 @@ func (c *userServiceClient) HandleFollowRequest(ctx context.Context, in *HandleF
 	return out, nil
 }
 
-func (c *userServiceClient) GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*Int64Arr, error) {
+func (c *userServiceClient) GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.Int64Arr, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Int64Arr)
+	out := new(common.Int64Arr)
 	err := c.cc.Invoke(ctx, UserService_GetFollowingIds_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -205,9 +241,9 @@ func (c *userServiceClient) GetFollowingIds(ctx context.Context, in *wrapperspb.
 	return out, nil
 }
 
-func (c *userServiceClient) GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *userServiceClient) GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListUsers)
+	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, UserService_GetFollowSuggestions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -355,9 +391,9 @@ func (c *userServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequ
 	return out, nil
 }
 
-func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*User, error) {
+func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(User)
+	out := new(common.User)
 	err := c.cc.Invoke(ctx, UserService_GetBasicUserInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -365,9 +401,9 @@ func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *wrapperspb
 	return out, nil
 }
 
-func (c *userServiceClient) GetBatchBasicUserInfo(ctx context.Context, in *Int64Arr, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *userServiceClient) GetBatchBasicUserInfo(ctx context.Context, in *common.Int64Arr, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListUsers)
+	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, UserService_GetBatchBasicUserInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -385,9 +421,9 @@ func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfi
 	return out, nil
 }
 
-func (c *userServiceClient) SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*ListUsers, error) {
+func (c *userServiceClient) SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListUsers)
+	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, UserService_SearchUsers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -418,43 +454,78 @@ func (c *userServiceClient) UpdateProfilePrivacy(ctx context.Context, in *Update
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
+//
+// UserService covers auth, follow, group, and profile operations.
+// Current behavior: handlers return INVALID_ARGUMENT for nil/failed validation and INTERNAL for all other errors.
+// Desired (not yet implemented): surface UNAUTHENTICATED, PERMISSION_DENIED, NOT_FOUND, ALREADY_EXISTS, FAILED_PRECONDITION where appropriate.
 type UserServiceServer interface {
-	// Auth
-	RegisterUser(context.Context, *RegisterUserRequest) (*User, error)
-	LoginUser(context.Context, *LoginRequest) (*User, error)
+	// Registers a new account and returns the created user profile.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
+	RegisterUser(context.Context, *RegisterUserRequest) (*common.User, error)
+	// Authenticates by username/email identifier and password.
+	// Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
+	LoginUser(context.Context, *LoginRequest) (*common.User, error)
+	// Updates a user's password after verifying the current password.
+	// Current: INVALID_ARGUMENT on bad ids/password; INTERNAL otherwise. Desired: UNAUTHENTICATED/PERMISSION_DENIED on mismatch.
 	UpdateUserPassword(context.Context, *UpdatePasswordRequest) (*emptypb.Empty, error)
+	// Updates the account email address.
+	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: ALREADY_EXISTS for duplicate email.
 	UpdateUserEmail(context.Context, *UpdateEmailRequest) (*emptypb.Empty, error)
-	// Followers
-	GetFollowersPaginated(context.Context, *Pagination) (*ListUsers, error)
-	GetFollowingPaginated(context.Context, *Pagination) (*ListUsers, error)
+	// Returns followers of a user with pagination.
+	// Current: INVALID_ARGUMENT on bad pagination; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED for hidden users.
+	GetFollowersPaginated(context.Context, *Pagination) (*common.ListUsers, error)
+	// Returns accounts the user is following with pagination.
+	GetFollowingPaginated(context.Context, *Pagination) (*common.ListUsers, error)
+	// Follows a target user; may create a pending request for private profiles.
+	// Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
 	FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error)
+	// Unfollows a target user or cancels a pending follow request.
 	UnFollowUser(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error)
+	// Accepts or rejects a pending follow request.
 	HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error)
-	GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*Int64Arr, error)
-	GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*ListUsers, error)
+	// Returns ids that the user is following.
+	GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*common.Int64Arr, error)
+	// Suggests users to follow based on the caller's network.
+	GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*common.ListUsers, error)
+	// Returns whether follower_id currently follows target_user_id.
 	IsFollowing(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error)
+	// Returns whether both users follow each other.
 	AreFollowingEachOther(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error)
-	// GROUPS
+	// Lists all groups with pagination (visibility filtered for requester).
 	GetAllGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
+	// Lists groups the user belongs to with pagination.
 	GetUserGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
+	// Returns details for a single group visible to the requester.
 	GetGroupInfo(context.Context, *GeneralGroupRequest) (*Group, error)
+	// Returns members of a group with pagination.
 	GetGroupMembers(context.Context, *GroupMembersRequest) (*GroupUserArr, error)
+	// Searches for groups matching the search term for the requester.
 	SearchGroups(context.Context, *GroupSearchRequest) (*GroupArr, error)
+	// Invites a user to join a group.
 	InviteToGroup(context.Context, *InviteToGroupRequest) (*emptypb.Empty, error)
+	// Checks if the requester is a member of the given group.
 	IsGroupMember(context.Context, *GeneralGroupRequest) (*wrapperspb.BoolValue, error)
-	// rpc CancelInviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
+	// Creates or cancels a join request for the group.
 	RequestJoinGroupOrCancel(context.Context, *GroupJoinRequest) (*emptypb.Empty, error)
+	// Accepts or declines a received group invite.
 	RespondToGroupInvite(context.Context, *HandleGroupInviteRequest) (*emptypb.Empty, error)
+	// Approves or rejects a user's join request.
 	HandleGroupJoinRequest(context.Context, *HandleJoinRequest) (*emptypb.Empty, error)
+	// Leaves the specified group.
 	LeaveGroup(context.Context, *GeneralGroupRequest) (*emptypb.Empty, error)
-	// rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
+	// Creates a new group and returns its id.
 	CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error)
-	// Profile
-	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error)
-	GetBatchBasicUserInfo(context.Context, *Int64Arr) (*ListUsers, error)
+	// Retrieves basic public info for a user.
+	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*common.User, error)
+	// Retrieves basic info for multiple users.
+	GetBatchBasicUserInfo(context.Context, *common.Int64Arr) (*common.ListUsers, error)
+	// Returns the full profile visible to the requester.
 	GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error)
-	SearchUsers(context.Context, *UserSearchRequest) (*ListUsers, error)
+	// Searches users by term for the requester.
+	SearchUsers(context.Context, *UserSearchRequest) (*common.ListUsers, error)
+	// Updates profile fields for the given user.
 	UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error)
+	// Toggles public/private profile visibility.
 	UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
@@ -466,10 +537,10 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
-func (UnimplementedUserServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*User, error) {
+func (UnimplementedUserServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*common.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterUser not implemented")
 }
-func (UnimplementedUserServiceServer) LoginUser(context.Context, *LoginRequest) (*User, error) {
+func (UnimplementedUserServiceServer) LoginUser(context.Context, *LoginRequest) (*common.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method LoginUser not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateUserPassword(context.Context, *UpdatePasswordRequest) (*emptypb.Empty, error) {
@@ -478,10 +549,10 @@ func (UnimplementedUserServiceServer) UpdateUserPassword(context.Context, *Updat
 func (UnimplementedUserServiceServer) UpdateUserEmail(context.Context, *UpdateEmailRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUserEmail not implemented")
 }
-func (UnimplementedUserServiceServer) GetFollowersPaginated(context.Context, *Pagination) (*ListUsers, error) {
+func (UnimplementedUserServiceServer) GetFollowersPaginated(context.Context, *Pagination) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFollowersPaginated not implemented")
 }
-func (UnimplementedUserServiceServer) GetFollowingPaginated(context.Context, *Pagination) (*ListUsers, error) {
+func (UnimplementedUserServiceServer) GetFollowingPaginated(context.Context, *Pagination) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFollowingPaginated not implemented")
 }
 func (UnimplementedUserServiceServer) FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error) {
@@ -493,10 +564,10 @@ func (UnimplementedUserServiceServer) UnFollowUser(context.Context, *FollowUserR
 func (UnimplementedUserServiceServer) HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleFollowRequest not implemented")
 }
-func (UnimplementedUserServiceServer) GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*Int64Arr, error) {
+func (UnimplementedUserServiceServer) GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*common.Int64Arr, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFollowingIds not implemented")
 }
-func (UnimplementedUserServiceServer) GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*ListUsers, error) {
+func (UnimplementedUserServiceServer) GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFollowSuggestions not implemented")
 }
 func (UnimplementedUserServiceServer) IsFollowing(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error) {
@@ -541,16 +612,16 @@ func (UnimplementedUserServiceServer) LeaveGroup(context.Context, *GeneralGroupR
 func (UnimplementedUserServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroup not implemented")
 }
-func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*User, error) {
+func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*common.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBasicUserInfo not implemented")
 }
-func (UnimplementedUserServiceServer) GetBatchBasicUserInfo(context.Context, *Int64Arr) (*ListUsers, error) {
+func (UnimplementedUserServiceServer) GetBatchBasicUserInfo(context.Context, *common.Int64Arr) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBatchBasicUserInfo not implemented")
 }
 func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserProfile not implemented")
 }
-func (UnimplementedUserServiceServer) SearchUsers(context.Context, *UserSearchRequest) (*ListUsers, error) {
+func (UnimplementedUserServiceServer) SearchUsers(context.Context, *UserSearchRequest) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchUsers not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error) {
@@ -1049,7 +1120,7 @@ func _UserService_GetBasicUserInfo_Handler(srv interface{}, ctx context.Context,
 }
 
 func _UserService_GetBatchBasicUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Int64Arr)
+	in := new(common.Int64Arr)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1061,7 +1132,7 @@ func _UserService_GetBatchBasicUserInfo_Handler(srv interface{}, ctx context.Con
 		FullMethod: UserService_GetBatchBasicUserInfo_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetBatchBasicUserInfo(ctx, req.(*Int64Arr))
+		return srv.(UserServiceServer).GetBatchBasicUserInfo(ctx, req.(*common.Int64Arr))
 	}
 	return interceptor(ctx, in, info, handler)
 }

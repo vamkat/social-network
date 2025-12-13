@@ -78,6 +78,10 @@ func (f *fakeHydrator) HydrateUserSlice(ctx context.Context, users []models.User
 	return nil
 }
 
+func (f *fakeHydrator) GetUsers(ctx context.Context, userIDs []int64) (map[int64]models.User, error) {
+	return nil, nil
+}
+
 func TestDeletePost_Success(t *testing.T) {
 	ctx := context.Background()
 

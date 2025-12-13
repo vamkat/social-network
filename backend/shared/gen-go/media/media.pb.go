@@ -23,9 +23,11 @@ const (
 
 // Upload request
 type UploadImageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FileContent   []byte                 `protobuf:"bytes,1,opt,name=file_content,json=fileContent,proto3" json:"file_content,omitempty"` // Raw file bytes
-	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`                          // Original file name
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Raw file bytes
+	FileContent []byte `protobuf:"bytes,1,opt,name=file_content,json=fileContent,proto3" json:"file_content,omitempty"`
+	// Original file name
+	Filename      string `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -76,12 +78,16 @@ func (x *UploadImageRequest) GetFilename() string {
 
 // Upload response
 type UploadImageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	MimeType      string                 `protobuf:"bytes,2,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`     // Detected MIME type
-	SizeBytes     int64                  `protobuf:"varint,3,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"` // File size
-	Bucket        string                 `protobuf:"bytes,4,opt,name=bucket,proto3" json:"bucket,omitempty"`                         // MinIO bucket
-	ObjectKey     string                 `protobuf:"bytes,5,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`  // MinIO object key
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Detected MIME type
+	MimeType string `protobuf:"bytes,2,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+	// File size
+	SizeBytes int64 `protobuf:"varint,3,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	// MinIO bucket
+	Bucket string `protobuf:"bytes,4,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	// MinIO object key
+	ObjectKey     string `protobuf:"bytes,5,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -283,8 +289,9 @@ func (x *ImageMeta) GetObjectKey() string {
 
 // File chunk
 type ImageChunk struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // raw bytes
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// raw bytes
+	Data          []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -445,7 +452,7 @@ const file_media_proto_rawDesc = "" +
 	"\apayload2\xa2\x01\n" +
 	"\fMediaService\x12D\n" +
 	"\vUploadImage\x12\x19.media.UploadImageRequest\x1a\x1a.media.UploadImageResponse\x12L\n" +
-	"\rRetrieveImage\x12\x1b.media.RetrieveImageRequest\x1a\x1c.media.RetrieveImageResponse0\x01B'Z%social-network/shared/gen/media;mediab\x06proto3"
+	"\rRetrieveImage\x12\x1b.media.RetrieveImageRequest\x1a\x1c.media.RetrieveImageResponse0\x01B*Z(social-network/shared/gen-go/media;mediab\x06proto3"
 
 var (
 	file_media_proto_rawDescOnce sync.Once

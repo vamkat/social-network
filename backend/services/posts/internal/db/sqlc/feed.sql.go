@@ -32,13 +32,14 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
    
-    (SELECT i.id    
+COALESCE(
+    (SELECT i.id
      FROM images i
-     WHERE i.parent_id = p.id
-       AND i.deleted_at IS NULL
-     ORDER BY i.sort_order
+     WHERE i.parent_id = p.id AND i.deleted_at IS NULL
+     ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS image
+    ), 0
+)::bigint AS image  
 
   
 FROM posts p
@@ -132,14 +133,14 @@ SELECT
     ) AS liked_by_user,
 
     -- image
-    (
-      SELECT i.id
-      FROM images i
-      WHERE i.parent_id = p.id
-        AND i.deleted_at IS NULL
-      ORDER BY i.sort_order
-      LIMIT 1
-    ) AS image
+COALESCE(
+    (SELECT i.id
+     FROM images i
+     WHERE i.parent_id = p.id AND i.deleted_at IS NULL
+     ORDER BY i.sort_order ASC
+     LIMIT 1
+    ), 0
+)::bigint AS image   
 
    FROM posts p
 
@@ -322,13 +323,14 @@ SELECT
           AND r.deleted_at IS NULL
     ) AS liked_by_user,
 
-    (SELECT i.id     
+COALESCE(
+    (SELECT i.id
      FROM images i
-     WHERE i.parent_id = p.id
-       AND i.deleted_at IS NULL
-     ORDER BY i.sort_order
+     WHERE i.parent_id = p.id AND i.deleted_at IS NULL
+     ORDER BY i.sort_order ASC
      LIMIT 1
-    ) AS image
+    ), 0
+)::bigint AS image   
 
   
 FROM posts p

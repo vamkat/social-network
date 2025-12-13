@@ -2,29 +2,35 @@ syntax = "proto3";
 
 package chat;
 
-option go_package = "social-network/shared/gen/chat;chat";
+option go_package = "social-network/shared/gen-go/chat;chat";
 
 import "google/protobuf/timestamp.proto";
 
 // Responsible for chat service.
+// Current behavior: handlers return INTERNAL for any application error; no request validation codes are emitted.
+// Desired (not yet implemented): INVALID_ARGUMENT for bad member lists, ALREADY_EXISTS for duplicate DMs, NOT_FOUND for missing conversations/groups, PERMISSION_DENIED for unauthorized changes.
 service ChatService {
     // Creates a direct message (DM) conversation between two users.
     // A conversation is created only if no existing DM between the same users exists.
     // Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
+    // Returns Error: INTERNAL on failure. Desired: INVALID_ARGUMENT for same user ids; ALREADY_EXISTS if DM already exists.
     rpc CreatePrivateConversation (CreatePrivateConvParams) returns (ConvId);
 
     // Creates a group conversation associated with the given group_id.
     // This initializes the conversation but does not require adding all members yet.
+    // Returns Error: INTERNAL on failure. Desired: NOT_FOUND if group missing; PERMISSION_DENIED if caller lacks rights.
     rpc CreateGroupConversation (CreateGroupConvParams) returns (ConvId);
 
     // Adds users to an existing group conversation identified by group_id.
     // New members are added; existing members are ignored.
+    // Returns Error: INTERNAL on failure. Desired: NOT_FOUND if conversation missing; PERMISSION_DENIED if caller cannot modify membership.
     rpc AddMembersToGroupConversation (AddMembersToGroupConversationParams) returns (ConvId);
 
     // Deletes a conversation only if the set of members exactly matches the provided list.
     // Returns "conversation not found" if:
     //   - the conversation does not exist, or
     //   - the members differ (extra or missing members).
+    // Returns Error: INTERNAL on failure. Desired: INVALID_ARGUMENT for empty member list; NOT_FOUND when no match; PERMISSION_DENIED if caller cannot delete it.
     rpc DeleteConversationByExactMembers (UserIds) returns (Conversation);
 }
 

@@ -2,18 +2,9 @@ package dbservice
 
 import (
 	"context"
+	ct "social-network/shared/go/customtypes"
 	md "social-network/shared/go/models"
 )
-
-const createMessage = `
-INSERT INTO messages (conversation_id, sender_id, message_text)
-SELECT $1, $2, $3
-FROM conversation_members
-WHERE conversation_id = $1
-  AND user_id = $2
-  AND deleted_at IS NULL
-RETURNING id, conversation_id, sender_id, message_text, created_at, updated_at, deleted_at
-`
 
 // Creates a message row with conversation id if user is a memeber.
 // If user match of conversation id and user id fails no rows are returned.
@@ -23,7 +14,7 @@ func (q *Queries) CreateMessage(ctx context.Context,
 	err = row.Scan(
 		&msg.Id,
 		&msg.ConversationID,
-		&msg.SenderID,
+		&msg.Sender.UserId,
 		&msg.MessageText,
 		&msg.CreatedAt,
 		&msg.UpdatedAt,
@@ -32,70 +23,128 @@ func (q *Queries) CreateMessage(ctx context.Context,
 	return msg, err
 }
 
-// Check this for efficiency
-const getMessages = `
-SELECT m.id, m.conversation_id, m.sender_id, m.message_text, m.created_at, m.updated_at, m.deleted_at
-FROM messages m
-JOIN conversation_members cm 
-  ON cm.conversation_id = m.conversation_id
-WHERE m.conversation_id = $1
-  AND cm.user_id = $2
-  AND m.deleted_at IS NULL
-ORDER BY m.created_at ASC
-LIMIT $3 OFFSET $4
-`
-
-func (q *Queries) GetMessages(ctx context.Context,
-	arg md.GetMessagesParams) (messages []md.MessageResp, err error) {
-	rows, err := q.db.Query(ctx, getMessages,
-		arg.ConversationId,
-		arg.UserId,
-		arg.Limit,
-		arg.Offset,
+// Returns a descending-ordered page of messages that appear chronologically
+// BEFORE a given message in a conversation. This query is used for backwards
+// pagination in chat history.
+//
+// Behavior:
+//
+//   - If the supplied BoundaryMessageId is NULL, the query automatically
+//     substitutes the conversation's last_message_id as the boundary (inclusive).
+//
+//   - The caller must be a member of the conversation. Membership is enforced
+//     through the conversation_members table.
+//
+//   - Results are ordered by m.id DESC so that the most recent messages in the
+//     requested page appear last. LIMIT/OFFSET is applied after ordering.
+//
+// Returned fields:
+//   - All message fields (id, conversation_id, sender_id, message_text, timestamps)
+//   - Conversation's first_message_id
+//
+// Use case:
+//
+//	Scroll-up pagination in chat history.
+func (q *Queries) GetPreviousMessages(ctx context.Context,
+	args md.GetPrevMessagesParams) (resp md.GetPrevMessagesResp, err error) {
+	rows, err := q.db.Query(ctx, getPrevMessages,
+		args.BoundaryMessageId,
+		args.ConversationId,
+		args.UserId,
+		args.Limit,
 	)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
-	defer rows.Close()
-	messages = []md.MessageResp{}
 	for rows.Next() {
-		var i md.MessageResp
-		if err := rows.Scan(
-			&i.Id,
-			&i.ConversationID,
-			&i.SenderID,
-			&i.MessageText,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		messages = append(messages, i)
+		var msg md.MessageResp
+		var firstMessageId ct.Id
+
+		rows.Scan(
+			&msg.Id,
+			&msg.ConversationID,
+			&msg.Sender.UserId,
+			&msg.MessageText,
+			&msg.CreatedAt,
+			&msg.UpdatedAt,
+			&msg.DeletedAt,
+			&firstMessageId,
+		)
+
+		resp.FirstMessageId = firstMessageId
+		resp.Messages = append(resp.Messages, msg)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return messages, nil
+	return resp, nil
 }
 
-const updateLastReadMessage = `-- name: UpdateLastReadMessage :one
-UPDATE conversation_members cm
-SET last_read_message_id = $3
-WHERE cm.conversation_id = $1
-  AND cm.user_id = $2
-  AND cm.deleted_at IS NULL
-RETURNING conversation_id, user_id, last_read_message_id, joined_at, deleted_at
-`
+// Returns an ascending-ordered page of messages that appear chronologically
+// AFTER a given message in a conversation. This query is used for forward
+// pagination when loading newer messages.
+//
+// Behavior:
+//
+//   - If the supplied BoundaryMessageId ($1) is NULL, the query automatically
+//     substitutes the conversation's first_message_id as the boundary.
+//
+//   - Only messages with id > boundary_id are returned.
+//
+//   - Only non-deleted messages are returned (deleted_at IS NULL).
+//
+//   - The caller must be a member of the conversation. Membership is enforced
+//     through the conversation_members table.
+//
+//   - Results are ordered by m.id ASC so that the oldest messages in the
+//     requested page appear first. LIMIT/OFFSET is applied after ordering.
+//
+// Returned fields:
+//   - All message fields (id, conversation_id, sender_id, message_text, timestamps)
+//   - Conversation's last_message_id (constant for all rows)
+//
+// Use case:
+//
+//	Scroll-down pagination or loading new messages after a known point.
+func (q *Queries) GetNextMessages(ctx context.Context,
+	args md.GetNextMessageParams,
+) (resp md.GetNextMessagesResp, err error) {
+	rows, err := q.db.Query(ctx, getNextMessages,
+		args.BoundaryMessageId,
+		args.ConversationId,
+		args.UserId,
+		args.Limit,
+	)
+	if err != nil {
+		return resp, err
+	}
+	for rows.Next() {
+		var msg md.MessageResp
+		var lastMessageId ct.Id
 
+		rows.Scan(
+			&msg.Id,
+			&msg.ConversationID,
+			&msg.Sender.UserId,
+			&msg.MessageText,
+			&msg.CreatedAt,
+			&msg.UpdatedAt,
+			&msg.DeletedAt,
+			&lastMessageId,
+		)
+
+		resp.LastMessageId = lastMessageId
+		resp.Messages = append(resp.Messages, msg)
+	}
+	return resp, nil
+}
+
+// Updates the given users last read message in given conversation to given message id.
 func (q *Queries) UpdateLastReadMessage(ctx context.Context,
 	arg md.UpdateLastReadMessageParams,
 ) (member md.ConversationMember, err error) {
 	row := q.db.QueryRow(ctx, updateLastReadMessage, arg.ConversationId, arg.UserID, arg.LastReadMessageId)
 	err = row.Scan(
-		&member.ConversationID,
-		&member.UserID,
-		&member.LastReadMessageID,
+		&member.ConversationId,
+		&member.UserId,
+		&member.LastReadMessageId,
 		&member.JoinedAt,
 		&member.DeletedAt,
 	)

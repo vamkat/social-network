@@ -61,3 +61,5 @@ GET {{baseUrl}}/profile/GWpmbk5ezJn4
 # use user id from register or login
 GET {{baseUrl}}/public-feed 
 
+### 5) FOLLOW SUGGESTIONS
+GET {{baseUrl}}/users/follow-suggestions

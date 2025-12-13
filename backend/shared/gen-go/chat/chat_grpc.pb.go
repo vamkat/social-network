@@ -28,14 +28,30 @@ const (
 // ChatServiceClient is the client API for ChatService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Responsible for chat service.
+// Current behavior: handlers return INTERNAL for any application error; no request validation codes are emitted.
+// Desired (not yet implemented): INVALID_ARGUMENT for bad member lists, ALREADY_EXISTS for duplicate DMs, NOT_FOUND for missing conversations/groups, PERMISSION_DENIED for unauthorized changes.
 type ChatServiceClient interface {
-	// Creates a Conversation if and only if a DM between the same 2 users does not exist.
+	// Creates a direct message (DM) conversation between two users.
+	// A conversation is created only if no existing DM between the same users exists.
 	// Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
+	// Returns Error: INTERNAL on failure. Desired: INVALID_ARGUMENT for same user ids; ALREADY_EXISTS if DM already exists.
 	CreatePrivateConversation(ctx context.Context, in *CreatePrivateConvParams, opts ...grpc.CallOption) (*ConvId, error)
+	// Creates a group conversation associated with the given group_id.
+	// This initializes the conversation but does not require adding all members yet.
+	// Returns Error: INTERNAL on failure. Desired: NOT_FOUND if group missing; PERMISSION_DENIED if caller lacks rights.
 	CreateGroupConversation(ctx context.Context, in *CreateGroupConvParams, opts ...grpc.CallOption) (*ConvId, error)
-	// Find a conversation by group_id and insert the given user_ids into conversation_members.
-	// Existing members are ignored, new members are added.
+	// Adds users to an existing group conversation identified by group_id.
+	// New members are added; existing members are ignored.
+	// Returns Error: INTERNAL on failure. Desired: NOT_FOUND if conversation missing; PERMISSION_DENIED if caller cannot modify membership.
 	AddMembersToGroupConversation(ctx context.Context, in *AddMembersToGroupConversationParams, opts ...grpc.CallOption) (*ConvId, error)
+	// Deletes a conversation only if the set of members exactly matches the provided list.
+	// Returns "conversation not found" if:
+	//   - the conversation does not exist, or
+	//   - the members differ (extra or missing members).
+	//
+	// Returns Error: INTERNAL on failure. Desired: INVALID_ARGUMENT for empty member list; NOT_FOUND when no match; PERMISSION_DENIED if caller cannot delete it.
 	DeleteConversationByExactMembers(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*Conversation, error)
 }
 
@@ -90,14 +106,30 @@ func (c *chatServiceClient) DeleteConversationByExactMembers(ctx context.Context
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
+//
+// Responsible for chat service.
+// Current behavior: handlers return INTERNAL for any application error; no request validation codes are emitted.
+// Desired (not yet implemented): INVALID_ARGUMENT for bad member lists, ALREADY_EXISTS for duplicate DMs, NOT_FOUND for missing conversations/groups, PERMISSION_DENIED for unauthorized changes.
 type ChatServiceServer interface {
-	// Creates a Conversation if and only if a DM between the same 2 users does not exist.
+	// Creates a direct message (DM) conversation between two users.
+	// A conversation is created only if no existing DM between the same users exists.
 	// Returns NULL if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
+	// Returns Error: INTERNAL on failure. Desired: INVALID_ARGUMENT for same user ids; ALREADY_EXISTS if DM already exists.
 	CreatePrivateConversation(context.Context, *CreatePrivateConvParams) (*ConvId, error)
+	// Creates a group conversation associated with the given group_id.
+	// This initializes the conversation but does not require adding all members yet.
+	// Returns Error: INTERNAL on failure. Desired: NOT_FOUND if group missing; PERMISSION_DENIED if caller lacks rights.
 	CreateGroupConversation(context.Context, *CreateGroupConvParams) (*ConvId, error)
-	// Find a conversation by group_id and insert the given user_ids into conversation_members.
-	// Existing members are ignored, new members are added.
+	// Adds users to an existing group conversation identified by group_id.
+	// New members are added; existing members are ignored.
+	// Returns Error: INTERNAL on failure. Desired: NOT_FOUND if conversation missing; PERMISSION_DENIED if caller cannot modify membership.
 	AddMembersToGroupConversation(context.Context, *AddMembersToGroupConversationParams) (*ConvId, error)
+	// Deletes a conversation only if the set of members exactly matches the provided list.
+	// Returns "conversation not found" if:
+	//   - the conversation does not exist, or
+	//   - the members differ (extra or missing members).
+	//
+	// Returns Error: INTERNAL on failure. Desired: INVALID_ARGUMENT for empty member list; NOT_FOUND when no match; PERMISSION_DENIED if caller cannot delete it.
 	DeleteConversationByExactMembers(context.Context, *UserIds) (*Conversation, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
