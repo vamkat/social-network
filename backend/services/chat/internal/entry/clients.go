@@ -51,7 +51,7 @@ func InitClients() *client.Clients {
 
 	for _, initFn := range initializers {
 		if err := initFn(dialOpts, c); err != nil {
-			fmt.Println(err)
+			fmt.Println(err) // Dont return error. It will retry automatically
 		}
 	}
 	return c

@@ -104,12 +104,12 @@ type GetUserConversationsParams struct {
 }
 
 type GetUserConversationsResp struct {
-	ConversationId       ct.Id
-	CreatedAt            ct.GenDateTime
-	UpdatedAt            ct.GenDateTime
-	Members              []User
-	UnreadCount          int64
-	FirstUnreadMessageId ct.Id `validation:"nullable"`
+	ConversationId    ct.Id
+	CreatedAt         ct.GenDateTime
+	UpdatedAt         ct.GenDateTime
+	Members           []User
+	UnreadCount       int64
+	LastReadMessageId ct.Id `validation:"nullable"`
 }
 
 // All fields are required except deleted at which in most cases is null.

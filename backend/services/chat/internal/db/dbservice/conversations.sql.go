@@ -52,6 +52,15 @@ func (q *Queries) DeleteConversationByExactMembers(ctx context.Context,
 	return i, err
 }
 
+type GetUserConversationsRow struct {
+	ConversationId    ct.Id
+	CreatedAt         ct.GenDateTime
+	UpdatedAt         ct.GenDateTime
+	MemberIds         ct.Ids
+	UnreadCount       int64
+	LastReadMessageId ct.Id `validation:"nullable"`
+}
+
 // Fetches paginated conversation details, conversation members Ids
 // and unread messages count for a user and a group.
 // To get DMS group Id parameter must be zero.
@@ -81,7 +90,7 @@ func (q *Queries) GetUserConversations(
 			&i.UpdatedAt,
 			&i.MemberIds,
 			&i.UnreadCount,
-			&i.FirstUnreadMessageId,
+			&i.LastReadMessageId,
 		)
 		if err != nil {
 			return nil, err

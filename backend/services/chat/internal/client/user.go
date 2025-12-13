@@ -2,12 +2,14 @@ package client
 
 import (
 	"context"
-	"social-network/shared/gen-go/users"
+
+	userpb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	md "social-network/shared/go/models"
 )
 
-// Converts a slice of ct.Ids representing users to a map[ct.Id]models.User.
+// Calls user client to convert a slice of ct.Ids representing users to a
+// map[ct.Id]models.User.
 func (c *Clients) UserIdsToMap(ctx context.Context,
 	ids ct.Ids) (map[ct.Id]md.User, error) {
 	// Deduplicate IDs
@@ -23,9 +25,10 @@ func (c *Clients) UserIdsToMap(ctx context.Context,
 	if len(cleaned) == 0 {
 		return map[ct.Id]md.User{}, nil
 	}
+	// Call redis first
 
 	// gRPC request
-	req := &users.Int64Arr{Values: cleaned}
+	req := &userpb.Int64Arr{Values: cleaned}
 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
 	if err != nil {
 		return nil, err
@@ -48,7 +51,7 @@ func (c *Clients) UserIdsToMap(ctx context.Context,
 // Converts a slice of ct.Ids representing users to models.User slice.
 func (c *Clients) UserIdsToUsers(ctx context.Context,
 	ids ct.Ids) (userInfo []md.User, err error) {
-	req := &users.Int64Arr{Values: ids.Int64()}
+	req := &userpb.Int64Arr{Values: ids.Int64()}
 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
 	if err != nil {
 		return nil, err
@@ -62,4 +65,16 @@ func (c *Clients) UserIdsToUsers(ctx context.Context,
 		})
 	}
 	return userInfo, nil
+}
+
+// Function to implemeted by Hydrator
+func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*userpb.ListUsers, error) {
+	req := &userpb.Int64Arr{
+		Values: userIds,
+	}
+	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

@@ -90,7 +90,8 @@ func (c *ChatService) GetUserConversations(ctx context.Context,
 	return ConvertConversations(ctx, usersMap, resp)
 }
 
-// Takes a map[userId]
+// Helper to convert a slice of GetUserConversationsRow containing userIds
+// to a slice of GetUserConversationsResp containg User.
 func ConvertConversations(
 	ctx context.Context,
 	usersMap map[ct.Id]md.User,
@@ -110,12 +111,12 @@ func ConvertConversations(
 		}
 
 		result[i] = md.GetUserConversationsResp{
-			ConversationId:       r.ConversationId,
-			CreatedAt:            r.CreatedAt,
-			UpdatedAt:            r.UpdatedAt,
-			Members:              members,
-			UnreadCount:          r.UnreadCount,
-			FirstUnreadMessageId: r.FirstUnreadMessageId,
+			ConversationId:    r.ConversationId,
+			CreatedAt:         r.CreatedAt,
+			UpdatedAt:         r.UpdatedAt,
+			Members:           members,
+			UnreadCount:       r.UnreadCount,
+			LastReadMessageId: r.LastReadMessageId,
 		}
 	}
 
