@@ -14,7 +14,7 @@ import (
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
-	ct "social-network/shared/go/customtypes"
+	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
 
 	redis_connector "social-network/shared/go/redis"
@@ -41,15 +41,15 @@ func Start() {
 	fmt.Println("redis connection started correctly")
 
 	// GRPC CLIENTS
-	gatewayApplication.Users, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	gatewayApplication.Users, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatalf("failed to connect to users service: %v", err)
 	}
-	gatewayApplication.Posts, err = gorpc.GetGRpcClient(posts.NewPostsServiceClient, "posts:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	gatewayApplication.Posts, err = gorpc.GetGRpcClient(posts.NewPostsServiceClient, "posts:50051", contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatalf("failed to connect to posts service: %v", err)
 	}
-	gatewayApplication.Chat, err = gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	gatewayApplication.Chat, err = gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatalf("failed to connect to chat service: %v", err)
 	}

@@ -10,18 +10,19 @@ import (
 	"mime/multipart"
 	"net/http"
 	"slices"
+	"social-network/shared/go/customtypes"
 
 	"github.com/google/uuid"
 )
 
 // Adds value val to r context with key 'key'
-func RequestWithValue[T any](r *http.Request, key string, val T) *http.Request {
+func RequestWithValue(r *http.Request, key customtypes.CtxKey, val any) *http.Request {
 	ctx := context.WithValue(r.Context(), key, val)
 	return r.WithContext(ctx)
 }
 
 // Get value T from request context with key 'key'
-func GetValue[T any](r *http.Request, key string) (T, bool) {
+func GetValue[T any](r *http.Request, key customtypes.CtxKey) (T, bool) {
 	v := r.Context().Value(key)
 	if v == nil {
 		fmt.Println("v is nil")

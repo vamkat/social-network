@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	ct "social-network/shared/go/customtypes"
 	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
+
+// this interface exists to enforce usage of typed context keys instead of just strings
+type StringableKey interface {
+	String() string
+}
 
 var ErrBadContextValues = errors.New("bad context keys passed to interceptor creator, at least a key doesn't follow the validation requirements")
 
@@ -33,7 +37,8 @@ var ErrBadContextValues = errors.New("bad context keys passed to interceptor cre
 // UnaryServerInterceptorWithContextKeys returns a server interceptor that adds specified metadata values to context.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func UnaryServerInterceptorWithContextKeys(keys ...ct.CtxKey) (grpc.UnaryServerInterceptor, error) {
+func UnaryServerInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.UnaryServerInterceptor, error) {
+	keys := stringableKey2String(stringableKeys...)
 	if !validateContextKeys(keys...) {
 		return nil, ErrBadContextValues
 	}
@@ -75,7 +80,8 @@ func (w *wrappedServerStream) SendMsg(m any) error {
 // StreamServerInterceptorWithContextKeys returns a server interceptor that adds specified metadata values to context.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func StreamServerInterceptorWithContextKeys(keys ...ct.CtxKey) (grpc.StreamServerInterceptor, error) {
+func StreamServerInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.StreamServerInterceptor, error) {
+	keys := stringableKey2String(stringableKeys...)
 	if !validateContextKeys(keys...) {
 		return nil, ErrBadContextValues
 	}
@@ -103,7 +109,8 @@ func StreamServerInterceptorWithContextKeys(keys ...ct.CtxKey) (grpc.StreamServe
 // UnaryClientInterceptorWithContextKeys returns a client interceptor that adds specified context values to outgoing metadata.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func UnaryClientInterceptorWithContextKeys(keys ...ct.CtxKey) (grpc.UnaryClientInterceptor, error) {
+func UnaryClientInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.UnaryClientInterceptor, error) {
+	keys := stringableKey2String(stringableKeys...)
 	if !validateContextKeys(keys...) {
 		return nil, ErrBadContextValues
 	}
@@ -136,7 +143,8 @@ func (w *wrappedClientStream) SendMsg(m any) error {
 // StreamClientInterceptorWithContextKeys returns a client interceptor that adds specified context values to outgoing metadata.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func StreamClientInterceptorWithContextKeys(keys ...ct.CtxKey) (grpc.StreamClientInterceptor, error) {
+func StreamClientInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.StreamClientInterceptor, error) {
+	keys := stringableKey2String(stringableKeys...)
 	if !validateContextKeys(keys...) {
 		return nil, ErrBadContextValues
 	}
@@ -177,7 +185,7 @@ result in errors if set in metadata.
 */
 
 // validateContextKeys validates the keys so that nothing bad happens during context value propagation due to the above limitations
-func validateContextKeys(keys ...ct.CtxKey) bool {
+func validateContextKeys(keys ...string) bool {
 	for _, key := range keys {
 		for _, r := range []rune(key) {
 			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' && r != '_' && r != '.' {
@@ -196,7 +204,7 @@ func validateContextKeys(keys ...ct.CtxKey) bool {
 // addMetadataToContext adds metadata to a context
 //
 // this is needed because while the metadata exists in the ctx that appears on the server side, the values are inside the metadata and not the ctx in the same form that they were in the client side
-func addMetadataToContext(ctx context.Context, md metadata.MD, keys ...ct.CtxKey) context.Context {
+func addMetadataToContext(ctx context.Context, md metadata.MD, keys ...string) context.Context {
 	for _, key := range keys {
 		vals := md.Get(key)
 		for _, val := range vals {
@@ -206,8 +214,8 @@ func addMetadataToContext(ctx context.Context, md metadata.MD, keys ...ct.CtxKey
 	return ctx
 }
 
-// createPairs creates pairs values alternating between ct.CtxKey and string, meant to be used to append metadata to existing context
-func createPairs(ctx context.Context, keys ...ct.CtxKey) []string {
+// createPairs creates pairs values alternating between stringableKey and string, meant to be used to append metadata to existing context
+func createPairs(ctx context.Context, keys ...string) []string {
 	pairs := make([]string, 0, len(keys)*2)
 	for _, key := range keys {
 		val, ok := ctx.Value(key).(string)
@@ -218,4 +226,12 @@ func createPairs(ctx context.Context, keys ...ct.CtxKey) []string {
 		pairs = append(pairs, val)
 	}
 	return pairs
+}
+
+func stringableKey2String(stringableKeys ...StringableKey) []string {
+	keys := make([]string, 0, len(stringableKeys))
+	for _, stringableKey := range stringableKeys {
+		keys = append(keys, stringableKey.String())
+	}
+	return keys
 }

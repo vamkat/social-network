@@ -2,7 +2,6 @@ package gorpc
 
 import (
 	"fmt"
-	ct "social-network/shared/go/customtypes"
 	"time"
 
 	"google.golang.org/grpc"
@@ -20,7 +19,7 @@ import (
 //   - constructor: gRPC-generated constructor function for the client service.
 //   - fullAddress: Full address of the service (host:port).
 //   - contextKeys: Keys to propagate from outgoing context into the gRPC metadata.
-func GetGRpcClient[T any](constructor func(grpc.ClientConnInterface) T, fullAddress string, contextKeys []ct.CtxKey) (T, error) {
+func GetGRpcClient[T any](constructor func(grpc.ClientConnInterface) T, fullAddress string, contextKeys []StringableKey) (T, error) {
 	customUnaryInterceptor, err := UnaryClientInterceptorWithContextKeys(contextKeys...)
 	if err != nil {
 		return *new(T), err

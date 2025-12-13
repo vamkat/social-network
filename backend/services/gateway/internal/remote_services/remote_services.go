@@ -4,6 +4,7 @@ import (
 	"log"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/users"
+	contextkeys "social-network/shared/go/context-keys"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/gorpc"
 
@@ -28,11 +29,11 @@ func NewServices(contextKeys []ct.CtxKey) *GRpcServices {
 
 func (g *GRpcServices) StartConnections() (func(), error) {
 
-	customUnaryInterceptor, err := gorpc.UnaryClientInterceptorWithContextKeys(g.contextKeys...)
+	customUnaryInterceptor, err := gorpc.UnaryClientInterceptorWithContextKeys(contextkeys.CommonKeys()...)
 	if err != nil {
 		return nil, err
 	}
-	customStreamInterceptor, err := gorpc.StreamClientInterceptorWithContextKeys(g.contextKeys...)
+	customStreamInterceptor, err := gorpc.StreamClientInterceptorWithContextKeys(contextkeys.CommonKeys()...)
 	if err != nil {
 		return nil, err
 	}

@@ -32,11 +32,11 @@ func RunGRPCServer(s *PostsHandler) (*grpc.Server, error) {
 		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
 	}
 
-	customUnaryInterceptor, err := gorpc.UnaryServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customUnaryInterceptor, err := gorpc.UnaryServerInterceptorWithContextKeys([]gorpc.StringableKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}
-	customStreamInterceptor, err := gorpc.StreamServerInterceptorWithContextKeys([]ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId}...)
+	customStreamInterceptor, err := gorpc.StreamServerInterceptorWithContextKeys([]gorpc.StringableKey{ct.UserId, ct.ReqID, ct.TraceId}...)
 	if err != nil {
 		return nil, err
 	}

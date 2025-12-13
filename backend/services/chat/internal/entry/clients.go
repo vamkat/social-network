@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"social-network/services/chat/internal/client"
 
+	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
 	"social-network/shared/ports"
 	"time"
@@ -17,11 +18,11 @@ import (
 
 func InitClients() *client.Clients {
 	c := &client.Clients{}
-	customUnaryInterceptor, err := gorpc.UnaryClientInterceptorWithContextKeys("")
+	customUnaryInterceptor, err := gorpc.UnaryClientInterceptorWithContextKeys(contextkeys.CommonKeys()...)
 	if err != nil {
 		fmt.Println(err)
 	}
-	customStreamInterceptor, err := gorpc.StreamClientInterceptorWithContextKeys("")
+	customStreamInterceptor, err := gorpc.StreamClientInterceptorWithContextKeys(contextkeys.CommonKeys()...)
 	if err != nil {
 		fmt.Println(err)
 	}

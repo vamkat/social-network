@@ -3,7 +3,6 @@ package gorpc
 import (
 	"log"
 	"net"
-	ct "social-network/shared/go/customtypes"
 
 	"google.golang.org/grpc"
 )
@@ -21,7 +20,7 @@ import (
 //   - register: gRPC-generated registration function for the service.
 //   - handler: Implementation of the service interface.
 //   - contextKeys: The keys of context values that will propagate from the client to this server, they will be selected from metadata and put into the incoming context.
-func CreateGRpcServer[T any](register func(grpc.ServiceRegistrar, T), handler T, port string, contextKeys []ct.CtxKey) (func() error, func(), error) {
+func CreateGRpcServer[T any](register func(grpc.ServiceRegistrar, T), handler T, port string, contextKeys []StringableKey) (func() error, func(), error) {
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("Failed to listen on %s: %v", port, err)

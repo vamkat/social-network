@@ -19,11 +19,13 @@ type ratelimiter interface {
 
 type middleware struct {
 	ratelimiter ratelimiter
+	serviceName string
 }
 
-func NewMiddleware(ratelimiter ratelimiter) *middleware {
+func NewMiddleware(ratelimiter ratelimiter, serviceName string) *middleware {
 	return &middleware{
 		ratelimiter: ratelimiter,
+		serviceName: serviceName,
 	}
 }
 
@@ -31,12 +33,14 @@ func NewMiddleware(ratelimiter ratelimiter) *middleware {
 type MiddleSystem struct {
 	middlewareChain []func(http.ResponseWriter, *http.Request) (bool, *http.Request)
 	ratelimiter     ratelimiter
+	serviceName     string
 }
 
 // Chain initializes a new middleware chain
 func (m *middleware) Chain() *MiddleSystem {
 	return &MiddleSystem{
 		ratelimiter: m.ratelimiter,
+		serviceName: m.serviceName,
 	}
 }
 
@@ -53,7 +57,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", ")+", OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Timestamp, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		//TODO fix this, return cors to be
+		// TODO fix this, return cors to be
 		// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
 		// w.Header().Set("Access-Control-Allow-Origin", "*")
 		// w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", ")+", OPTIONS")
@@ -63,7 +67,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		if r.Method == http.MethodOptions {
 			fmt.Println("Method in options")
 			w.WriteHeader(http.StatusNoContent) // 204
-			return false, r
+			return false, nil
 		}
 
 		if slices.Contains(methods, r.Method) {
@@ -73,7 +77,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		// method not allowed
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		fmt.Println("method not allowed")
-		return false, r
+		return false, nil
 	})
 	return m
 }
@@ -97,14 +101,14 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 		if err != nil {
 			fmt.Println("no cookie")
 			utils.ErrorJSON(w, http.StatusUnauthorized, "missing auth cookie")
-			return false, r
+			return false, nil
 		}
 		// fmt.Println("JWT cookie value:", cookie.Value)
 		claims, err := security.ParseAndValidate(cookie.Value)
 		if err != nil {
 			fmt.Println("unauthorized")
 			utils.ErrorJSON(w, http.StatusUnauthorized, err.Error())
-			return false, r
+			return false, nil
 		}
 		// enrich request with claims
 		fmt.Println("auth ok")
@@ -125,20 +129,49 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 // 	return m
 // }
 
-func (m *MiddleSystem) RateLimitUser(limit int, durationSeconds int64) *MiddleSystem {
+type rateLimitType int
+
+const (
+	UserLimit   rateLimitType = 1
+	GlobalLimit rateLimitType = 2
+)
+
+func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, durationSeconds int64) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		ctx := r.Context()
-		//rate limit based on userId
-		userId := ctx.Value(ct.UserId)
-		ok, err := m.ratelimiter.Allow(ctx, fmt.Sprintf("user-id:%v", userId), limit, durationSeconds)
-		if err != nil {
+
+		rateLimitKey := ""
+		switch rateLimitType {
+		case GlobalLimit:
+			remoteIp, err := getRemoteIpKey(r)
+			if err != nil {
+				fmt.Println("[DEBUG] rate limited remoteIp:", remoteIp)
+				utils.ErrorJSON(w, http.StatusNotAcceptable, "your IP is absolutely WACK")
+				return false, nil
+			}
+			rateLimitKey = fmt.Sprintf("ip:%s:%s", m.serviceName, remoteIp)
+		case UserLimit:
+			userId, ok := ctx.Value(ct.UserId).(string)
+			if !ok || userId == "" {
+				fmt.Println("[WARNING], err or no userId: ", userId)
+				utils.ErrorJSON(w, http.StatusNotAcceptable, "how the hell did you end up here without a user id?")
+				return false, nil
+			}
 			fmt.Println("[DEBUG] rate limited userId:", userId)
+			rateLimitKey = fmt.Sprintf("ip:%s:%s", m.serviceName, userId)
+		default:
+			panic("bad rate limit type argument!")
+		}
+
+		ok, err := m.ratelimiter.Allow(ctx, rateLimitKey, limit, durationSeconds)
+		if err != nil {
+			fmt.Println("[DEBUG] rate limited userId:", rateLimitKey)
 			utils.ErrorJSON(w, http.StatusInternalServerError, "you broke the rate limiter")
 			return false, nil
 		}
 		if !ok {
-			fmt.Println("[DEBUG] rate limited userId:", userId)
-			utils.ErrorJSON(w, http.StatusTooManyRequests, "stop it, get some help")
+			fmt.Printf("[DEBUG] rate limited for key: %s, reached max: %d per %d sec \n", rateLimitKey, limit, durationSeconds)
+			utils.ErrorJSON(w, http.StatusTooManyRequests, "429: stop it, get some help")
 			return false, nil
 		}
 		return true, r
@@ -146,33 +179,16 @@ func (m *MiddleSystem) RateLimitUser(limit int, durationSeconds int64) *MiddleSy
 	return m
 }
 
-func (m *MiddleSystem) RateLimitIP(limit int, durationSeconds int64) *MiddleSystem {
-	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		//rate limit based on ip
-		remoteIp, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			remoteIp = r.RemoteAddr
-		}
-		if remoteIp == "" {
-			//ip is broken somehow
-			fmt.Println("[DEBUG] rate limited remoteIp:", remoteIp)
-			utils.ErrorJSON(w, http.StatusNotAcceptable, "your IP is absolutely WACK")
-			return false, nil
-		}
-		ok, err := m.ratelimiter.Allow(r.Context(), fmt.Sprintf("ip:%v", remoteIp), limit, durationSeconds)
-		if err != nil {
-			fmt.Println("[DEBUG] rate limited remoteIp:", remoteIp)
-			utils.ErrorJSON(w, http.StatusInternalServerError, "you broke the rate limiter")
-			return false, nil
-		}
-		if !ok {
-			utils.ErrorJSON(w, http.StatusTooManyRequests, "stop it, get some help")
-			return false, nil
-		}
-
-		return true, r
-	})
-	return m
+func getRemoteIpKey(r *http.Request) (string, error) {
+	remoteIp, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		remoteIp = r.RemoteAddr
+	}
+	if remoteIp == "" {
+		//ip is broken somehow
+		return "", nil
+	}
+	return remoteIp, nil
 }
 
 // Finalize constructs the final http.HandlerFunc with all middleware applied

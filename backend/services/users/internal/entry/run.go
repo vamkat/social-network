@@ -13,7 +13,7 @@ import (
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/users"
-	ct "social-network/shared/go/customtypes"
+	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
 	"syscall"
 	"time"
@@ -34,11 +34,11 @@ func Run() error {
 	log.Println("Connected to users-db database")
 
 	// CLIENT SERVICES
-	chatClient, err := gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	chatClient, err := gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
-	notificationsClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, "notifications:50051", []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	notificationsClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, "notifications:50051", contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
@@ -51,7 +51,7 @@ func Run() error {
 
 	port := ":50051"
 
-	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[users.UserServiceServer](users.RegisterUserServiceServer, &service, port, []ct.CtxKey{ct.UserId, ct.ReqID, ct.TraceId})
+	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[users.UserServiceServer](users.RegisterUserServiceServer, &service, port, contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatalf("couldn't create gRpc Server: %s", err.Error())
 	}

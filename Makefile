@@ -5,7 +5,7 @@ NAMESPACE=social-network
 # ==== Docker ====
 
 build-base:
-	docker build -t social-network/go-base -f backend/docker/go/base.Dockerfile .
+	docker build -t social-network/go-base -f backend/docker/go/base2.Dockerfile .
 
 build-services:
 	docker build -t social-network/users:dev -f backend/services/users/Dockerfile .
