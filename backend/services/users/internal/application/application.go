@@ -1,7 +1,6 @@
 package application
 
 import (
-	"context"
 	"social-network/services/users/internal/client"
 	"social-network/services/users/internal/db/sqlc"
 
@@ -34,10 +33,10 @@ func NewApplication(db sqlc.Querier, pool *pgxpool.Pool, clients *client.Clients
 
 // ClientsInterface defines the methods that Application needs from clients.
 type ClientsInterface interface {
-	CreateGroupConversation(ctx context.Context, groupId int64, ownerId int64) error
-	CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error
-	AddMembersToGroupConversation(ctx context.Context, groupId int64, userIds []int64) error
-	DeleteConversationByExactMembers(ctx context.Context, userIds []int64) error
+	// CreateGroupConversation(ctx context.Context, groupId int64, ownerId int64) error
+	// CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error
+	// AddMembersToGroupConversation(ctx context.Context, groupId int64, userIds []int64) error
+	// DeleteConversationByExactMembers(ctx context.Context, userIds []int64) error
 }
 
 func NewApplicationWithMocks(db sqlc.Querier, clients ClientsInterface) *Application {
