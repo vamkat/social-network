@@ -14,8 +14,10 @@ export const useStore = create(
         set({ loading: true })
         try {
           console.log("calling backend for user data")
-          const userData = await apiRequest(`/profile/${userId}`)
-          set({ user: {id: userData.user_id, avatar: userData.avatar}, loading: false })
+          const userData = await apiRequest(`/profile/${userId}`, {
+            method: "POST",
+          })
+          set({ user: { id: userData.user_id, avatar: userData.avatar }, loading: false })
           return { success: true }
         } catch (error) {
           console.error('Failed to load user profile:', error)
@@ -31,8 +33,8 @@ export const useStore = create(
     }),
     {
       name: 'user',
-      partialize: (state) => ({ 
-        user: state.user 
+      partialize: (state) => ({
+        user: state.user
       }),
     }
   )

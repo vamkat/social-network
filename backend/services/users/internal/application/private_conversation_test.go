@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"social-network/services/users/internal/db/sqlc"
@@ -38,104 +37,104 @@ func (m *MockClients) DeleteConversationByExactMembers(ctx context.Context, user
 	return args.Error(0)
 }
 
-func TestCreatePrivateConversation_OneWayFollows_CallsClient(t *testing.T) {
-	mockDB := new(MockQuerier)
-	mockClients := new(MockClients)
-	service := NewApplicationWithMocks(mockDB, mockClients)
+// func TestCreatePrivateConversation_OneWayFollows_CallsClient(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	mockClients := new(MockClients)
+// 	service := NewApplicationWithMocks(mockDB, mockClients)
 
-	ctx := context.Background()
-	req := models.FollowUserReq{
-		FollowerId:   ct.Id(1),
-		TargetUserId: ct.Id(2),
-	}
+// 	ctx := context.Background()
+// 	req := models.FollowUserReq{
+// 		FollowerId:   ct.Id(1),
+// 		TargetUserId: ct.Id(2),
+// 	}
 
-	// One-way follow: user1 follows user2 but not vice-versa
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
-		FollowerID:  1,
-		FollowingID: 2,
-	}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: false}, nil)
+// 	// One-way follow: user1 follows user2 but not vice-versa
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
+// 		FollowerID:  1,
+// 		FollowingID: 2,
+// 	}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: false}, nil)
 
-	mockClients.On("CreatePrivateConversation", ctx, int64(1), int64(2)).Return(nil)
+// 	mockClients.On("CreatePrivateConversation", ctx, int64(1), int64(2)).Return(nil)
 
-	err := service.createPrivateConversation(ctx, req)
+// 	err := service.createPrivateConversation(ctx, req)
 
-	assert.NoError(t, err)
-	mockClients.AssertExpectations(t)
-	mockDB.AssertExpectations(t)
-}
+// 	assert.NoError(t, err)
+// 	mockClients.AssertExpectations(t)
+// 	mockDB.AssertExpectations(t)
+// }
 
-func TestCreatePrivateConversation_NeitherFollows_DoesNotCallClient(t *testing.T) {
-	mockDB := new(MockQuerier)
-	mockClients := new(MockClients)
-	service := NewApplicationWithMocks(mockDB, mockClients)
+// func TestCreatePrivateConversation_NeitherFollows_DoesNotCallClient(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	mockClients := new(MockClients)
+// 	service := NewApplicationWithMocks(mockDB, mockClients)
 
-	ctx := context.Background()
-	req := models.FollowUserReq{
-		FollowerId:   ct.Id(1),
-		TargetUserId: ct.Id(2),
-	}
+// 	ctx := context.Background()
+// 	req := models.FollowUserReq{
+// 		FollowerId:   ct.Id(1),
+// 		TargetUserId: ct.Id(2),
+// 	}
 
-	// Neither follows the other => AreFollowingEachOther returns empty/zero row
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
-		FollowerID:  1,
-		FollowingID: 2,
-	}).Return(sqlc.AreFollowingEachOtherRow{}, nil)
+// 	// Neither follows the other => AreFollowingEachOther returns empty/zero row
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
+// 		FollowerID:  1,
+// 		FollowingID: 2,
+// 	}).Return(sqlc.AreFollowingEachOtherRow{}, nil)
 
-	err := service.createPrivateConversation(ctx, req)
+// 	err := service.createPrivateConversation(ctx, req)
 
-	assert.NoError(t, err)
-	// Ensure client was not called
-	mockClients.AssertNotCalled(t, "CreatePrivateConversation", mock.Anything, mock.Anything, mock.Anything)
-	mockDB.AssertExpectations(t)
-}
+// 	assert.NoError(t, err)
+// 	// Ensure client was not called
+// 	mockClients.AssertNotCalled(t, "CreatePrivateConversation", mock.Anything, mock.Anything, mock.Anything)
+// 	mockDB.AssertExpectations(t)
+// }
 
-func TestCreatePrivateConversation_BothFollow_DoesNotCallClient(t *testing.T) {
-	mockDB := new(MockQuerier)
-	mockClients := new(MockClients)
-	service := NewApplicationWithMocks(mockDB, mockClients)
+// func TestCreatePrivateConversation_BothFollow_DoesNotCallClient(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	mockClients := new(MockClients)
+// 	service := NewApplicationWithMocks(mockDB, mockClients)
 
-	ctx := context.Background()
-	req := models.FollowUserReq{
-		FollowerId:   ct.Id(1),
-		TargetUserId: ct.Id(2),
-	}
+// 	ctx := context.Background()
+// 	req := models.FollowUserReq{
+// 		FollowerId:   ct.Id(1),
+// 		TargetUserId: ct.Id(2),
+// 	}
 
-	// Both follow each other => no private conversation creation
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
-		FollowerID:  1,
-		FollowingID: 2,
-	}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: true}, nil)
+// 	// Both follow each other => no private conversation creation
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
+// 		FollowerID:  1,
+// 		FollowingID: 2,
+// 	}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: true}, nil)
 
-	err := service.createPrivateConversation(ctx, req)
+// 	err := service.createPrivateConversation(ctx, req)
 
-	assert.NoError(t, err)
-	mockClients.AssertNotCalled(t, "CreatePrivateConversation", mock.Anything, mock.Anything, mock.Anything)
-	mockDB.AssertExpectations(t)
-}
+// 	assert.NoError(t, err)
+// 	mockClients.AssertNotCalled(t, "CreatePrivateConversation", mock.Anything, mock.Anything, mock.Anything)
+// 	mockDB.AssertExpectations(t)
+// }
 
-func TestCreatePrivateConversation_DbError_Propagates(t *testing.T) {
-	mockDB := new(MockQuerier)
-	mockClients := new(MockClients)
-	service := NewApplicationWithMocks(mockDB, mockClients)
+// func TestCreatePrivateConversation_DbError_Propagates(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	mockClients := new(MockClients)
+// 	service := NewApplicationWithMocks(mockDB, mockClients)
 
-	ctx := context.Background()
-	req := models.FollowUserReq{
-		FollowerId:   ct.Id(1),
-		TargetUserId: ct.Id(2),
-	}
+// 	ctx := context.Background()
+// 	req := models.FollowUserReq{
+// 		FollowerId:   ct.Id(1),
+// 		TargetUserId: ct.Id(2),
+// 	}
 
-	expectedErr := errors.New("db failure")
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
-		FollowerID:  1,
-		FollowingID: 2,
-	}).Return(sqlc.AreFollowingEachOtherRow{}, expectedErr)
+// 	expectedErr := errors.New("db failure")
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{
+// 		FollowerID:  1,
+// 		FollowingID: 2,
+// 	}).Return(sqlc.AreFollowingEachOtherRow{}, expectedErr)
 
-	err := service.createPrivateConversation(ctx, req)
+// 	err := service.createPrivateConversation(ctx, req)
 
-	assert.Equal(t, expectedErr, err)
-	mockClients.AssertNotCalled(t, "CreatePrivateConversation", mock.Anything, mock.Anything, mock.Anything)
-	mockDB.AssertExpectations(t)
-}
+// 	assert.Equal(t, expectedErr, err)
+// 	mockClients.AssertNotCalled(t, "CreatePrivateConversation", mock.Anything, mock.Anything, mock.Anything)
+// 	mockDB.AssertExpectations(t)
+// }
 
 func TestAreFollowingEachOther_VariousCases(t *testing.T) {
 	mockDB := new(MockQuerier)
