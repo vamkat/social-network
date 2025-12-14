@@ -10,7 +10,7 @@ import (
 //   - If a field does not have `validate:"nullable"` tag, zero values are flagged as errors.
 //   - Nullable fields if empty return nil error.
 //   - All primitives are excluded except slices containing custom types.
-//   - If a field is a slice of a custom type null values are considered invalid.
+//   - If a field is a slice of a custom type null values in that slice are considered invalid.
 //
 // Example:
 //
@@ -20,7 +20,6 @@ import (
 //		    LastName  customtypes.Name     		`json:"last_name"` // required
 //		    About     customtypes.About    		`json:"about"`     // required
 //		    Email     customtypes.Email    		`json:"email,omitempty" validate:"nullable"` // optional
-//			ElementsNullableIDs []customtypes.Id 	`validate:"nullable,elements=nullable"`
 //	}
 func ValidateStruct(s any) error {
 	v := reflect.ValueOf(s)

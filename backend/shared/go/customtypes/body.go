@@ -172,7 +172,7 @@ func (m MsgBody) IsValid() bool {
 func (m MsgBody) Validate() error {
 	if !m.IsValid() {
 		return errors.Join(ErrValidation,
-			fmt.Errorf("comment body must be %d–%d chars and contain no control characters",
+			fmt.Errorf("message body must be %d–%d chars and contain no control characters",
 				commentBodyCharsMin,
 				commentBodyCharsMax,
 			))

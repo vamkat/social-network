@@ -43,7 +43,7 @@ func (t Title) IsValid() bool {
 func (t Title) Validate() error {
 	if !t.IsValid() {
 		return errors.Join(ErrValidation,
-			fmt.Errorf("invalid title: must be %d-%d chars, no control characters, and not an honorific",
+			fmt.Errorf("title must be %d-%d chars and contain no control characters",
 				minTitleChars,
 				maxTitleChars,
 			))

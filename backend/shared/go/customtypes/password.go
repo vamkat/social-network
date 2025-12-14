@@ -93,7 +93,7 @@ func (p Password) String() string {
 // HashedPassword
 // ------------------------------------------------------------
 
-// Password is not nullable. The length is checked and error is returned during json unmarshall and validation methods.
+// HashedPassword is not nullable. The length is checked and error is returned during json unmarshall and validation methods.
 type HashedPassword string
 
 func (hp HashedPassword) MarshalJSON() ([]byte, error) {
