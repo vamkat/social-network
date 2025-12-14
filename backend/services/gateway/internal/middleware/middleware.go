@@ -52,7 +52,7 @@ func (m *MiddleSystem) add(f func(http.ResponseWriter, *http.Request) (bool, *ht
 // AllowedMethod sets allowed HTTP methods and handles CORS preflight requests
 func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		fmt.Println("endpoint called:", r.URL.Path, " with method: ", r.Method)
+		fmt.Println("[DEBUG] endpoint called:", r.URL.Path, " with method: ", r.Method)
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", ")+", OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Timestamp, Authorization")
@@ -65,7 +65,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		// w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		if r.Method == http.MethodOptions {
-			fmt.Println("Method in options")
+			fmt.Println("[DEBUG] Method in options")
 			w.WriteHeader(http.StatusNoContent) // 204
 			return false, nil
 		}
@@ -76,7 +76,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 
 		// method not allowed
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		fmt.Println("method not allowed")
+		fmt.Println("[DEBUG] method not allowed")
 		return false, nil
 	})
 	return m
@@ -95,25 +95,26 @@ func (m *MiddleSystem) EnrichContext() *MiddleSystem {
 // Auth middleware to validate JWT and enrich context with claims
 func (m *MiddleSystem) Auth() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		fmt.Println("in auth")
+		fmt.Println("[DEBUG] in auth")
 		// fmt.Println("Cookies received:", r.Cookies())
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
-			fmt.Println("no cookie")
+			fmt.Println("[WARNING] no cookie")
 			utils.ErrorJSON(w, http.StatusUnauthorized, "missing auth cookie")
 			return false, nil
 		}
 		// fmt.Println("JWT cookie value:", cookie.Value)
 		claims, err := security.ParseAndValidate(cookie.Value)
 		if err != nil {
-			fmt.Println("unauthorized")
+			fmt.Println("[WARNING] unauthorized")
 			utils.ErrorJSON(w, http.StatusUnauthorized, err.Error())
 			return false, nil
 		}
 		// enrich request with claims
-		fmt.Println("auth ok")
+		fmt.Println("[DEBUG] auth ok")
 		r = utils.RequestWithValue(r, ct.ClaimsKey, claims)
 		r = utils.RequestWithValue(r, ct.UserId, claims.UserId)
+		fmt.Println("[DEBUG] adding these to context -> claims:", claims, ", userid: ", claims.UserId)
 		return true, r
 	})
 	return m
@@ -129,11 +130,11 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 // 	return m
 // }
 
-type rateLimitType int
+type rateLimitType string
 
 const (
-	UserLimit   rateLimitType = 1
-	GlobalLimit rateLimitType = 2
+	UserLimit rateLimitType = "user"
+	IPLimit   rateLimitType = "ip"
 )
 
 func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, durationSeconds int64) *MiddleSystem {
@@ -142,7 +143,7 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 		fmt.Println("[DEBUG] in ratelimit, type: ", rateLimitType)
 		rateLimitKey := ""
 		switch rateLimitType {
-		case GlobalLimit:
+		case IPLimit:
 			remoteIp, err := getRemoteIpKey(r)
 			if err != nil {
 				fmt.Println("[DEBUG] rate limited remoteIp:", remoteIp)
@@ -153,7 +154,7 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 		case UserLimit:
 			userId, ok := ctx.Value(ct.UserId).(string)
 			if !ok || userId == "" {
-				fmt.Println("[WARNING], err or no userId: ", userId)
+				fmt.Println("[WARNING], err or no userId:", userId, " ok:", ok)
 				utils.ErrorJSON(w, http.StatusNotAcceptable, "how the hell did you end up here without a user id?")
 				return false, nil
 			}

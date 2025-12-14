@@ -25,7 +25,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 	middlewareObj := middleware.NewMiddleware(ratelimiter, "gateway")
 	Chain := middlewareObj.Chain
 
-	IP := middleware.GlobalLimit
+	IP := middleware.IPLimit
 	USERID := middleware.UserLimit
 
 	mux.HandleFunc("/test",
