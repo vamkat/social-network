@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
@@ -82,10 +81,10 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 
 		//try and create conversation in chat service if none exists
 		//condition that exactly one user follows the other is checked before call is made
-		err = s.createPrivateConversation(ctx, req)
-		if err != nil {
-			fmt.Println("conversation couldn't be created", err)
-		}
+		// err = s.createPrivateConversation(ctx, req)
+		// if err != nil {
+		// 	fmt.Println("conversation couldn't be created", err)
+		// }
 	}
 
 	return resp, nil
@@ -103,10 +102,10 @@ func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq
 		return false, err
 	}
 
-	err = s.deletePrivateConversation(ctx, req)
-	if err != nil {
-		fmt.Println("conversation couldn't be deleted", err)
-	}
+	// err = s.deletePrivateConversation(ctx, req)
+	// if err != nil {
+	// 	fmt.Println("conversation couldn't be deleted", err)
+	// }
 
 	return true, nil
 }
@@ -127,13 +126,13 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 
 		//try and create conversation in chat service if none exists
 		//condition that exactly one user follows the other is checked before call is made
-		err = s.createPrivateConversation(ctx, models.FollowUserReq{
-			FollowerId:   req.RequesterId,
-			TargetUserId: req.UserId,
-		})
-		if err != nil {
-			fmt.Println("conversation couldn't be created", err)
-		}
+		// err = s.createPrivateConversation(ctx, models.FollowUserReq{
+		// 	FollowerId:   req.RequesterId,
+		// 	TargetUserId: req.UserId,
+		// })
+		// if err != nil {
+		// 	fmt.Println("conversation couldn't be created", err)
+		// }
 
 	} else {
 		err = s.db.RejectFollowRequest(ctx, sqlc.RejectFollowRequestParams{
@@ -239,33 +238,33 @@ func (s *Application) AreFollowingEachOther(ctx context.Context, req models.Foll
 	return nil, nil //neither follows the other
 }
 
-func (s *Application) createPrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
-	if err != nil {
-		return err
-	}
-	if atLeastOneIsFollowing != nil && !*atLeastOneIsFollowing { //I need exactly one follower, so false
-		err := s.clients.CreatePrivateConversation(ctx, req.FollowerId.Int64(), req.TargetUserId.Int64())
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func (s *Application) createPrivateConversation(ctx context.Context, req models.FollowUserReq) error {
+// 	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if atLeastOneIsFollowing != nil && !*atLeastOneIsFollowing { //I need exactly one follower, so false
+// 		err := s.clients.CreatePrivateConversation(ctx, req.FollowerId.Int64(), req.TargetUserId.Int64())
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
-func (s *Application) deletePrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
-	if err != nil {
-		return err
-	}
-	if atLeastOneIsFollowing == nil { //neither follows the other
-		err := s.clients.DeleteConversationByExactMembers(ctx, []int64{req.FollowerId.Int64(), req.TargetUserId.Int64()})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func (s *Application) deletePrivateConversation(ctx context.Context, req models.FollowUserReq) error {
+// 	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if atLeastOneIsFollowing == nil { //neither follows the other
+// 		err := s.clients.DeleteConversationByExactMembers(ctx, []int64{req.FollowerId.Int64(), req.TargetUserId.Int64()})
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 // ---------------------------------------------------------------------
 // low priority

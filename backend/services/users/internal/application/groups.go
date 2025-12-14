@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"social-network/services/users/internal/db/sqlc"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
@@ -299,10 +298,10 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 
 		}
 
-		err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.InvitedId.Int64()})
-		if err != nil {
-			fmt.Println("could not add member to group conversation:", err)
-		}
+		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.InvitedId.Int64()})
+		// if err != nil {
+		// 	fmt.Println("could not add member to group conversation:", err)
+		// }
 
 	} else {
 		err := s.db.DeclineGroupInvite(ctx, sqlc.DeclineGroupInviteParams{
@@ -341,10 +340,10 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			return err
 		}
 
-		err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.RequesterId.Int64()})
-		if err != nil {
-			fmt.Println("could not add member to group conversation:", err)
-		}
+		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.RequesterId.Int64()})
+		// if err != nil {
+		// 	fmt.Println("could not add member to group conversation:", err)
+		// }
 
 	} else {
 		err = s.db.RejectGroupJoinRequest(ctx, sqlc.RejectGroupJoinRequestParams{
@@ -417,10 +416,10 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 	}
 
 	//call to chat service to create group conversation with owner as member
-	err = s.clients.CreateGroupConversation(ctx, groupId, req.OwnerId.Int64())
-	if err != nil {
-		fmt.Println("group conversation couldn't be created", err)
-	}
+	// err = s.clients.CreateGroupConversation(ctx, groupId, req.OwnerId.Int64())
+	// if err != nil {
+	// 	fmt.Println("group conversation couldn't be created", err)
+	// }
 
 	return models.GroupId(groupId), nil
 }
