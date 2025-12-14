@@ -51,8 +51,10 @@ social-sphere/yarn-error.log*
 social-sphere/.pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env.frontend
-.env.backend
+# env files (can opt-in for committing if needed)
+social-sphere/.env
+social-sphere/.env.*
+!social-sphere/.env*.example
 
 # vercel
 .vercel
