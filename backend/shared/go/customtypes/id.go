@@ -15,7 +15,7 @@ import (
 // Allows null values.
 // When Umarshaled to JSON format the int64 value is encrypted using "github.com/speps/go-hashids/v2".
 // Relies on enviromental variable "ENC_KEY" to be present.
-type EncryptedId int64
+type Id int64
 
 var salt string = os.Getenv("ENC_KEY")
 
@@ -27,7 +27,7 @@ var hd = func() *hashids.HashID {
 	return encoder
 }()
 
-func (e EncryptedId) MarshalJSON() ([]byte, error) {
+func (e Id) MarshalJSON() ([]byte, error) {
 	hash, err := hd.EncodeInt64([]int64{int64(e)})
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (e EncryptedId) MarshalJSON() ([]byte, error) {
 	return json.Marshal(hash)
 }
 
-func (e *EncryptedId) UnmarshalJSON(data []byte) error {
+func (e *Id) UnmarshalJSON(data []byte) error {
 	var hash string
 	if err := json.Unmarshal(data, &hash); err != nil {
 		return err
@@ -46,34 +46,34 @@ func (e *EncryptedId) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*e = EncryptedId(decoded[0])
+	*e = Id(decoded[0])
 	return nil
 }
 
-func (e EncryptedId) IsValid() bool {
+func (e Id) IsValid() bool {
 	return e >= 0
 }
 
-func DecryptId(hash string) (EncryptedId, error) {
+func DecryptId(hash string) (Id, error) {
 	decoded, err := hd.DecodeInt64WithError(hash)
 	if err != nil || len(decoded) == 0 {
 		return 0, err
 	}
-	return EncryptedId(decoded[0]), nil
+	return Id(decoded[0]), nil
 }
 
 func EncryptId(id int64) (encrypted string, err error) {
 	return hd.EncodeInt64([]int64{int64(id)})
 }
 
-func (e EncryptedId) Validate() error {
+func (e Id) Validate() error {
 	if !e.IsValid() {
-		return errors.Join(ErrValidation, errors.New("encryptedId must be positive"))
+		return errors.Join(ErrValidation, errors.New("aaaaaaa must be positive"))
 	}
 	return nil
 }
 
-func (e EncryptedId) Int64() int64 {
+func (e Id) Int64() int64 {
 	return int64(e)
 }
 
@@ -82,33 +82,33 @@ func (e EncryptedId) Int64() int64 {
 // ------------------------------------------------------------
 
 // Validation requires for the int64 value to be above zero.
-type Id int64
+type UnsafeId int64
 
-func (i Id) MarshalJSON() ([]byte, error) {
+func (i UnsafeId) MarshalJSON() ([]byte, error) {
 	return json.Marshal(int64(i))
 }
 
-func (i *Id) UnmarshalJSON(data []byte) error {
+func (i *UnsafeId) UnmarshalJSON(data []byte) error {
 	var v int64
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	*i = Id(v)
+	*i = UnsafeId(v)
 	return nil
 }
 
-func (i Id) IsValid() bool {
+func (i UnsafeId) IsValid() bool {
 	return i > 0
 }
 
-func (i Id) Validate() error {
+func (i UnsafeId) Validate() error {
 	if !i.IsValid() {
 		return errors.Join(ErrValidation, errors.New("id must be positive"))
 	}
 	return nil
 }
 
-func (i *Id) Scan(src any) error {
+func (i *UnsafeId) Scan(src any) error {
 	if src == nil {
 		// SQL NULL reached
 		*i = 0 // or whatever "invalid" means in your domain
@@ -117,7 +117,7 @@ func (i *Id) Scan(src any) error {
 
 	switch v := src.(type) {
 	case int64:
-		*i = Id(v)
+		*i = UnsafeId(v)
 		return nil
 
 	case []byte:
@@ -125,21 +125,21 @@ func (i *Id) Scan(src any) error {
 		if err != nil {
 			return err
 		}
-		*i = Id(n)
+		*i = UnsafeId(n)
 		return nil
 	}
 
 	return fmt.Errorf("cannot scan type %T into Id", src)
 }
 
-func (i Id) Value() (driver.Value, error) {
+func (i UnsafeId) Value() (driver.Value, error) {
 	if !i.IsValid() {
 		return nil, nil
 	}
 	return i.Int64(), nil
 }
 
-func (i Id) Int64() int64 {
+func (i UnsafeId) Int64() int64 {
 	return int64(i)
 }
 

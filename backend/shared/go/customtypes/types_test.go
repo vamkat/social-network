@@ -20,18 +20,18 @@ func mustSetEnv(t *testing.T, key, value string) {
 }
 
 // ------------------------------------------------------------
-// EncryptedId
+// Id
 // ------------------------------------------------------------
-func TestEncryptedIdJSON(t *testing.T) {
+func TestIdJSON(t *testing.T) {
 	mustSetEnv(t, "ENC_KEY", "test-salt")
 
-	id := customtypes.EncryptedId(123)
+	id := customtypes.Id(123)
 	b, err := json.Marshal(id)
 	if err != nil {
 		t.Fatalf("marshal error: %v", err)
 	}
 
-	var decoded customtypes.EncryptedId
+	var decoded customtypes.Id
 	err = json.Unmarshal(b, &decoded)
 	if err != nil {
 		t.Fatalf("unmarshal error: %v", err)
@@ -42,9 +42,9 @@ func TestEncryptedIdJSON(t *testing.T) {
 	}
 }
 
-func TestEncryptedIdValidate(t *testing.T) {
-	if err := customtypes.EncryptedId(-5).Validate(); err == nil {
-		t.Fatal("expected validation error for negative encryptedId")
+func TestIdValidate(t *testing.T) {
+	if err := customtypes.Id(-5).Validate(); err == nil {
+		t.Fatal("expected validation error for negative Id")
 	}
 }
 
