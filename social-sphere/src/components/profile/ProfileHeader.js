@@ -1,25 +1,62 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Link as Lock, Globe, UserPlus, UserCheck, UserMinus } from "lucide-react";
+import { Calendar, Link as Lock, Globe, UserPlus, UserCheck, UserMinus, Clock } from "lucide-react";
 import Image from "next/image";
 import ProfileStats from "./ProfileStats";
-// import { toggleFollowUser, togglePrivacy } from "@/services/profile/profile-actions";
 import Modal from "@/components/ui/Modal";
+import { follow, unfollow } from "@/services/profile/follow";
 
 export function ProfileHeader({ user }) {
     const [isFollowing, setIsFollowing] = useState(user.viewer_is_following);
     const [isPublic, setIsPublic] = useState(user.public);
     const [isHovering, setIsHovering] = useState(false);
+    const [isPending, setIsPending] = useState(user.is_pending);
     const [isPrivacyHovering, setIsPrivacyHovering] = useState(false);
-    // const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
     const handleFollow = async () => {
+        if (isLoading) return;
+        setIsLoading(true);
+
         try {
-            
+            if (isFollowing) {
+                // Handle Unfollow
+                const response = await unfollow(user.user_id);
+                if (response.success) {
+                    setIsFollowing(false);
+                    setIsPending(false);
+                } else {
+                    console.error("Error unfollowing user:", response.error);
+                }
+            } else if (isPending) {
+                // If pending, maybe we want to cancel request? 
+                // For now, let's treat clicking on Pending as Unfollow/Cancel Request
+                const response = await unfollow(user.user_id);
+                if (response.success) {
+                    setIsPending(false);
+                    setIsFollowing(false);
+                } else {
+                    console.error("Error cancelling follow request:", response.error);
+                }
+            } else {
+                // Handle Follow
+                const response = await follow(user.user_id);
+                if (response.success) {
+                    if (isPublic) {
+                        setIsFollowing(true);
+                    } else {
+                        setIsPending(true);
+                    }
+                } else {
+                    console.error("Error following user:", response.error);
+                }
+            }
         } catch (error) {
-            
+            console.error("Unexpected error handling follow action:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -28,14 +65,11 @@ export function ProfileHeader({ user }) {
     };
 
     const confirmPrivacyToggle = async () => {
-        try {
-            
-        } catch (error) {
-            
-        }
+        // Placeholder for future privacy toggle implementation
+        setShowPrivacyModal(false);
     };
 
-    const showStats = user.own_profile || (isPublic || isFollowing);
+    const canViewProfile = user.own_profile || isPublic || isFollowing;
 
     return (
         <>
@@ -70,7 +104,7 @@ export function ProfileHeader({ user }) {
                                     </h1>
                                     <p className="text-(--muted) font-medium text-base">@{user.username}</p>
                                 </div>
-                                {showStats && (
+                                {canViewProfile && (
                                     <ProfileStats stats={{
                                         followers: user.followers_count,
                                         following: user.following_count,
@@ -79,8 +113,8 @@ export function ProfileHeader({ user }) {
                                 )}
                             </div>
 
-                            {/* Middle: Bio */}
-                            {user.about && (
+                            {/* Middle: Bio - Only show if allowed */}
+                            {canViewProfile && user.about && (
                                 <div className="mb-8 max-w-2xl">
                                     <p className="text-(--foreground)/80 leading-relaxed whitespace-pre-wrap text-[15px]">
                                         {user.about}
@@ -90,12 +124,14 @@ export function ProfileHeader({ user }) {
 
                             {/* Bottom Row: Meta & Actions */}
                             <div className="flex flex-col md:flex-row justify-between items-end gap-6 mt-auto">
-                                {/* Meta Info */}
+                                {/* Meta Info - Only show if allowed */}
                                 <div className="flex flex-wrap items-center gap-6 text-sm text-(--muted)">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>Joined {new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
-                                    </div>
+                                    {canViewProfile && (
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="w-4 h-4" />
+                                            <span>Joined {new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Actions */}
@@ -119,11 +155,15 @@ export function ProfileHeader({ user }) {
                                     ) : (
                                         <button
                                             onClick={handleFollow}
+                                            disabled={isLoading}
                                             onMouseEnter={() => setIsHovering(true)}
                                             onMouseLeave={() => setIsHovering(false)}
-                                            className={`flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${isFollowing
-                                                ? "bg-(--muted)/10 text-foreground hover:bg-red-500/10 hover:text-red-500 border border-transparent"
-                                                : "bg-foreground text-background hover:opacity-90 shadow-lg shadow-black/5"
+                                            className={`flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${isLoading ? "opacity-70 cursor-wait" : ""
+                                                } ${isFollowing
+                                                    ? "bg-(--muted)/10 text-foreground hover:bg-red-500/10 hover:text-red-500 border border-transparent"
+                                                    : isPending
+                                                        ? "bg-(--muted)/10 text-(--muted) border border-transparent"
+                                                        : "bg-foreground text-background hover:opacity-90 shadow-lg shadow-black/5"
                                                 }`}
                                         >
                                             {isFollowing ? (
@@ -138,6 +178,11 @@ export function ProfileHeader({ user }) {
                                                         Following
                                                     </>
                                                 )
+                                            ) : isPending ? (
+                                                <>
+                                                    <Clock className="w-4 h-4" />
+                                                    Pending
+                                                </>
                                             ) : (
                                                 <>
                                                     <UserPlus className="w-4 h-4" />

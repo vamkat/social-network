@@ -97,140 +97,140 @@ services:
   # ---------------------------
   # CHAT SERVICE + DATABASE
   # ---------------------------
-  chat:
-    build:
-      context: backend/.
-      dockerfile: services/chat/Dockerfile
-    environment:
-      <<: *common-env
-      DATABASE_URL: postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
-       # Explicit DB_* variables for clarity and local tooling
-      DB_HOST: chat-db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: secret
-      DB_NAME: social_chat
-      SSL_MODE: disable
-    depends_on:
-      chat-db:
-        condition: service_healthy
-    ports:
-      - "50053:50051" 
+  # chat:
+  #   build:
+  #     context: backend/.
+  #     dockerfile: services/chat/Dockerfile
+  #   environment:
+  #     <<: *common-env
+  #     DATABASE_URL: postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable
+  #      # Explicit DB_* variables for clarity and local tooling
+  #     DB_HOST: chat-db
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: secret
+  #     DB_NAME: social_chat
+  #     SSL_MODE: disable
+  #   depends_on:
+  #     chat-db:
+  #       condition: service_healthy
+  #   ports:
+  #     - "50053:50051" 
 
 
-  chat-db:
-    image: postgres:16
-    container_name: chat-db
-    environment:
-      <<: *common-env
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: social_chat
-    ports:
-      - "5435:5432"
-    volumes:
-      - chat-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d social_chat"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+  # chat-db:
+  #   image: postgres:16
+  #   container_name: chat-db
+  #   environment:
+  #     <<: *common-env
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: secret
+  #     POSTGRES_DB: social_chat
+  #   ports:
+  #     - "5435:5432"
+  #   volumes:
+  #     - chat-db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres -d social_chat"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 5s
 
 
-  # ---------------------------
-  # NOTIFICATIONS SERVICE + DATABASE
-  # ---------------------------
-  notifications:
-    build:
-      context: backend/.
-      dockerfile: services/notifications/Dockerfile
-    environment:
-      <<: *common-env
-      DATABASE_URL: postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable
-       # Explicit DB_* variables for clarity and local tooling
-      DB_HOST: notifications-db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: secret
-      DB_NAME: social_notifications
-      SSL_MODE: disable
-    depends_on:
-      notifications-db:
-        condition: service_healthy
-    ports:
-      - "50054:50051" 
+  # # ---------------------------
+  # # NOTIFICATIONS SERVICE + DATABASE
+  # # ---------------------------
+  # notifications:
+  #   build:
+  #     context: backend/.
+  #     dockerfile: services/notifications/Dockerfile
+  #   environment:
+  #     <<: *common-env
+  #     DATABASE_URL: postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable
+  #      # Explicit DB_* variables for clarity and local tooling
+  #     DB_HOST: notifications-db
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: secret
+  #     DB_NAME: social_notifications
+  #     SSL_MODE: disable
+  #   depends_on:
+  #     notifications-db:
+  #       condition: service_healthy
+  #   ports:
+  #     - "50054:50051" 
 
 
-  notifications-db:
-    image: postgres:16
-    container_name: notifications-db
-    environment:
-      <<: *common-env
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: social_notifications
-    ports:
-      - "5436:5432"
-    volumes:
-      - notifications-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d social_notifications"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+  # notifications-db:
+  #   image: postgres:16
+  #   container_name: notifications-db
+  #   environment:
+  #     <<: *common-env
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: secret
+  #     POSTGRES_DB: social_notifications
+  #   ports:
+  #     - "5436:5432"
+  #   volumes:
+  #     - notifications-db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres -d social_notifications"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 5s
 
-  # ---------------------------
-  # MEDIA SERVICE + DATABASE
-  # ---------------------------
-  media:
-    build:
-      context: backend/.
-      dockerfile: services/media/Dockerfile
-    environment:
-      <<: *common-env
-      DATABASE_URL: postgres://postgres:secret@media-db:5432/social_media?sslmode=disable
-      DB_HOST: media-db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: secret
-      DB_NAME: social_media
-      SSL_MODE: disable 
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    depends_on:
-      media-db:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    ports:
-      - "50055:50051" 
+  # # ---------------------------
+  # # MEDIA SERVICE + DATABASE
+  # # ---------------------------
+  # media:
+  #   build:
+  #     context: backend/.
+  #     dockerfile: services/media/Dockerfile
+  #   environment:
+  #     <<: *common-env
+  #     DATABASE_URL: postgres://postgres:secret@media-db:5432/social_media?sslmode=disable
+  #     DB_HOST: media-db
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: secret
+  #     DB_NAME: social_media
+  #     SSL_MODE: disable 
+  #     MINIO_ENDPOINT: minio:9000
+  #     MINIO_ACCESS_KEY: minioadmin
+  #     MINIO_SECRET_KEY: minioadmin
+  #   depends_on:
+  #     media-db:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #   ports:
+  #     - "50055:50051" 
 
 
-  media-db:
-    image: postgres:16
-    container_name: media-db
-    environment:
-      <<: *common-env
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: social_media
-    ports:
-      - "5437:5432"
-    volumes:
-      - media-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d social_media"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+  # media-db:
+  #   image: postgres:16
+  #   container_name: media-db
+  #   environment:
+  #     <<: *common-env
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: secret
+  #     POSTGRES_DB: social_media
+  #   ports:
+  #     - "5437:5432"
+  #   volumes:
+  #     - media-db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres -d social_media"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 5s
 
-  # ---------------------------
-  # MINIO
-  # ---------------------------
+  # # ---------------------------
+  # # MINIO
+  # # ---------------------------
 
   minio:
     image: minio/minio:latest
