@@ -14,48 +14,96 @@ import (
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
+	configutil "social-network/shared/go/configs"
 	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
-
 	redis_connector "social-network/shared/go/redis"
 	"syscall"
 	"time"
-
-	"go.opentelemetry.io/contrib/bridges/otelslog"
 )
 
-var logger = otelslog.NewLogger("api-gateway")
+// var logger = otelslog.NewLogger("api-gateway")
 
-// server starting sequence
+type configs struct {
+	RedisAddr     string `env:"REDIS_ADDR"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisDB       int    `env:"REDIS_DB"`
+
+	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
+	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
+	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
+
+	HTTPAddr        string `env:"HTTP_ADDR"`
+	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+}
+
+var cfg configs
+
+func init() {
+	// sensible defaults
+	cfg = configs{
+		RedisAddr:       "redis:6379",
+		RedisPassword:   "",
+		RedisDB:         0,
+		UsersGRPCAddr:   "users:50051",
+		PostsGRPCAddr:   "posts:50051",
+		ChatGRPCAddr:    "chat:50051",
+		HTTPAddr:        "0.0.0.0:8081",
+		ShutdownTimeout: 5,
+	}
+
+	// load environment variables if present
+	if err := configutil.LoadConfigs(&cfg); err != nil {
+		log.Fatalf("failed to load env variables into config struct: %v", err)
+	}
+}
+
 func Start() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
 	gatewayApplication := application.GatewayApp{}
 
 	// REDIS
-	gatewayApplication.Redis = redis_connector.NewRedisClient("redis:6379", "", 0)
-	err := gatewayApplication.Redis.TestRedisConnection()
-	if err != nil {
+	gatewayApplication.Redis = redis_connector.NewRedisClient(
+		cfg.RedisAddr,
+		cfg.RedisPassword,
+		cfg.RedisDB,
+	)
+	if err := gatewayApplication.Redis.TestRedisConnection(); err != nil {
 		log.Fatalf("connection test failed, ERROR: %v", err)
 	}
 	fmt.Println("redis connection started correctly")
 
 	// GRPC CLIENTS
-	gatewayApplication.Users, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", contextkeys.CommonKeys())
+	var err error
+	gatewayApplication.Users, err = gorpc.GetGRpcClient(
+		users.NewUserServiceClient,
+		cfg.UsersGRPCAddr,
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		log.Fatalf("failed to connect to users service: %v", err)
 	}
-	gatewayApplication.Posts, err = gorpc.GetGRpcClient(posts.NewPostsServiceClient, "posts:50051", contextkeys.CommonKeys())
+
+	gatewayApplication.Posts, err = gorpc.GetGRpcClient(
+		posts.NewPostsServiceClient,
+		cfg.PostsGRPCAddr,
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		log.Fatalf("failed to connect to posts service: %v", err)
 	}
-	gatewayApplication.Chat, err = gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", contextkeys.CommonKeys())
+
+	gatewayApplication.Chat, err = gorpc.GetGRpcClient(
+		chat.NewChatServiceClient,
+		cfg.ChatGRPCAddr,
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		log.Fatalf("failed to connect to chat service: %v", err)
 	}
 
 	// HANDLER
-	fmt.Println(gatewayApplication)
 	apiHandlers, err := handlers.NewHandlers(gatewayApplication)
 	if err != nil {
 		log.Fatal("Can't create handlers, ERROR:", err)
@@ -63,9 +111,9 @@ func Start() {
 	apiMux := apiHandlers.BuildMux("gateway")
 
 	// SERVER
-	var server = &http.Server{
+	server := &http.Server{
 		Handler:     apiMux,
-		Addr:        "0.0.0.0:8081",
+		Addr:        cfg.HTTPAddr,
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
@@ -82,11 +130,14 @@ func Start() {
 			log.Fatalf("Failed to listen and serve: %v", err)
 		}
 	case <-ctx.Done():
-		stopSignal() //may be redundant
+		stopSignal()
 	}
 
 	log.Println("Shutting down server...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(cfg.ShutdownTimeout)*time.Second,
+	)
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {

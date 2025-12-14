@@ -8,5 +8,10 @@ import (
 type ChatHandler struct {
 	pb.UnimplementedChatServiceServer
 	Application *application.ChatService
-	Port        string
+}
+
+func NewChatHandler(app *application.ChatService) *ChatHandler {
+	return &ChatHandler{
+		Application: app,
+	}
 }

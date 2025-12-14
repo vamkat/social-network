@@ -29,9 +29,7 @@ type Clients interface {
 		ids ct.Ids) (userInfo []md.User, err error)
 }
 
-func NewChatService(pool *pgxpool.Pool,
-	clients *client.Clients, queries dbservice.Querier,
-) *ChatService {
+func NewChatService(pool *pgxpool.Pool, clients *client.Clients, queries dbservice.Querier) *ChatService {
 	var txRunner TxRunner
 	if pool != nil {
 		queries, ok := queries.(*dbservice.Queries)

@@ -1,68 +1,72 @@
-package configs
+package configutil
 
-import "os"
+import (
+	"errors"
+	"fmt"
+	"os"
+	"reflect"
+	"strconv"
+)
 
-type Configs struct {
-	PassSecret    string
-	JwtSecret     []byte
-	EncrytpionKey string
+var (
+	ErrBadArgument     = errors.New("argument must be pointer to struct")
+	ErrUnsettableField = errors.New("field cannot be set (must be exported)")
+	ErrMissingEnv      = errors.New("required env var missing")
+	ErrBadConversion   = errors.New("env var conversion failed")
+	ErrNoTaggedFields  = errors.New("no env-tagged fields found")
+)
 
-	DbURL      string
-	DbHost     string
-	DbPort     string
-	DbUser     string
-	DbPassword string
-	DbName     string
-	SslMode    string
+func LoadConfigs(localConfig any) error {
+	fmt.Println("before:", localConfig)
+	reflectVal := reflect.ValueOf(localConfig)
+	if reflectVal.Kind() != reflect.Ptr || reflectVal.Elem().Kind() != reflect.Struct {
+		return ErrBadArgument
+	}
 
-	MinioEndpoint  string
-	MinioAccessKey string
-	MinioSecretKey string
+	strctVal := reflectVal.Elem()
+	strctType := strctVal.Type()
 
-	// Redis
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
+	for i := 0; i < strctVal.NumField(); i++ {
+		valField := strctVal.Field(i)
+		typeField := strctType.Field(i)
 
-	// Ports
-	UsersPort         string
-	PostsPort         string
-	ChatPort          string
-	NotificationsPort string
-	MediaPort         string
-}
+		tagVal := typeField.Tag.Get("env")
+		if tagVal == "" {
+			continue
+		}
 
-var Cfgs Configs
+		if !valField.CanSet() {
+			return fmt.Errorf("%w: %s", ErrUnsettableField, typeField.Name)
+		}
 
-func init() {
-	Cfgs.PassSecret = os.Getenv("PASSWORD_SECRET")
-	Cfgs.JwtSecret = []byte(os.Getenv("JWT_KEY"))
+		envVal, ok := os.LookupEnv(tagVal)
+		if !ok {
+			continue
+		}
 
-	// Primary database URL (usually for production/Kube)
-	Cfgs.DbURL = os.Getenv("DATABASE_URL")
+		switch valField.Kind() {
+		case reflect.Int:
+			v, err := strconv.ParseInt(envVal, 10, 64)
+			if err != nil {
+				return fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
+			}
+			valField.SetInt(v)
 
-	// Explicit DB variables (Docker compose local dev)
-	Cfgs.DbHost = os.Getenv("DB_HOST")
-	Cfgs.DbPort = os.Getenv("DB_PORT")
-	Cfgs.DbUser = os.Getenv("DB_USER")
-	Cfgs.DbPassword = os.Getenv("DB_PASSWORD")
-	Cfgs.DbName = os.Getenv("DB_NAME")
-	Cfgs.SslMode = os.Getenv("SSL_MODE")
+		case reflect.String:
+			valField.SetString(envVal)
 
-	// MinIO (used in media + gateway)
-	Cfgs.MinioEndpoint = os.Getenv("MINIO_ENDPOINT")
-	Cfgs.MinioAccessKey = os.Getenv("MINIO_ACCESS_KEY")
-	Cfgs.MinioSecretKey = os.Getenv("MINIO_SECRET_KEY")
+		case reflect.Float64:
+			v, err := strconv.ParseFloat(envVal, 64)
+			if err != nil {
+				return fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
+			}
+			valField.SetFloat(v)
 
-	// Redis
-	Cfgs.RedisHost = os.Getenv("REDIS_HOST")
-	Cfgs.RedisPort = os.Getenv("REDIS_PORT")
-	Cfgs.RedisPassword = os.Getenv("REDIS_PASSWORD")
+		default:
+			return fmt.Errorf("unsupported kind %s on field %s", valField.Kind(), typeField.Name)
+		}
 
-	// PORTS
-	Cfgs.UsersPort = os.Getenv("USERS_PORT")
-	Cfgs.PostsPort = os.Getenv("POSTS_PORT")
-	Cfgs.ChatPort = os.Getenv("CHAT_PORT")
-	Cfgs.NotificationsPort = os.Getenv("NOTIFICATIONS_PORT")
-	Cfgs.MediaPort = os.Getenv("MEDIA_PORT")
+	}
+	fmt.Println("after:", localConfig)
+	return nil
 }

@@ -42,10 +42,9 @@ func Run() error {
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
-	clients := client.NewClients(chatClient, notificationsClient)
 
 	// APPLICATION
-
+	clients := client.NewClients(chatClient, notificationsClient)
 	app := application.NewApplication(sqlc.New(pool), pool, clients)
 	service := *handler.NewUsersHanlder(app)
 
@@ -76,7 +75,6 @@ func Run() error {
 	stopServerFunc()
 	log.Println("Server stopped")
 	return nil
-
 }
 
 func connectToDb(ctx context.Context, address string) (pool *pgxpool.Pool, err error) {

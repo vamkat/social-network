@@ -18,11 +18,8 @@ COPY --from=build /app/chat_service .
 COPY --from=build /app/migrate .
 COPY --from=build /app/services/chat/internal/db/migrations ./migrations
 # COPY --from=build /app/services/chat/internal/db/seeds ./seeds
+COPY ./services/chat/entrypoint.sh /app/entrypoint.sh
 
-COPY services/chat/entrypoint.sh /app/entrypoint.sh
 
-# RUN chmod +x /app/seeds/seed.sh 
- RUN chmod +x /app/entrypoint.sh
-
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["./chat_service"]
+# Use a shell explicitly via JSON form
+CMD ["sh", "-c", "set -e; echo 'Running migrations...' && ./migrate; echo 'Running seeds...' && ./seeds/seed.sh || true; echo 'Starting service...' && exec ./chat_service"]

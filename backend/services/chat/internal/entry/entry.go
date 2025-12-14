@@ -4,56 +4,88 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"social-network/services/chat/internal/application"
+	"social-network/services/chat/internal/client"
 	"social-network/services/chat/internal/db/dbservice"
 	"social-network/services/chat/internal/handler"
 	"social-network/shared/gen-go/chat"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/gen-go/notifications"
+	"social-network/shared/gen-go/users"
+	configutil "social-network/shared/go/configs"
+	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
 
 	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"google.golang.org/grpc"
 )
 
 type configs struct {
-	address string
-	port    string
-	timeout int
+	DatabaseConn        string `env:"DATABASE_URL"`
+	GrpcServerPort      string `env:"GRPC_SERVER_PORT"`
+	NotificationsAdress string `env:"NOTIFICATIONS_ADDRESS"`
+	UsersAdress         string `env:"USERS_ADDRESS"`
+}
+
+var cfgs configs
+
+func init() {
+	cfgs = configs{
+		DatabaseConn:        "postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable",
+		GrpcServerPort:      ":50051",
+		NotificationsAdress: "notifications:50051",
+		UsersAdress:         "users:50051",
+	}
+	configutil.LoadConfigs(&cfgs)
 }
 
 func Run() error {
+	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignal()
 
-	pool, err := connectToDb(context.Background())
+	pool, err := connectToDb(ctx, cfgs.DatabaseConn)
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
 	defer pool.Close()
+	fmt.Println("Conneted to DB")
 
-	log.Println("Connected to chat database")
+	notifClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, cfgs.NotificationsAdress, contextkeys.CommonKeys())
+	if err != nil {
+		log.Fatal("failed to create notification client: ", err)
+	}
+	userClient, err := gorpc.GetGRpcClient(users.NewUserServiceClient, cfgs.UsersAdress, contextkeys.CommonKeys())
+	if err != nil {
+		log.Fatal("failed to create user client: ", err)
+	}
 
+	clients := client.NewClients(userClient, notifClient)
 	app := application.NewChatService(
 		pool,
-		InitClients(),
+		&clients,
 		dbservice.New(pool),
 	)
 
-	service := &handler.ChatHandler{
-		Application: app,
-		Port:        ":50051",
-	}
+	handler := handler.NewChatHandler(app)
 
-	log.Println("Running gRpc service...")
-
-	grpc, err := RunGRPCServer(service)
+	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[chat.ChatServiceServer](chat.RegisterChatServiceServer, handler, cfgs.GrpcServerPort, contextkeys.CommonKeys())
 	if err != nil {
-		return err
+		log.Fatal("failed to create server:", err.Error())
 	}
+
+	go func() {
+		fmt.Println("Starting grpc server at port: ", cfgs.GrpcServerPort)
+		err := startServerFunc()
+		if err != nil {
+			log.Fatal("server failed to start")
+		}
+		fmt.Println("server finished")
+	}()
+
+	log.Printf("gRPC server listening on %s", cfgs.GrpcServerPort)
 
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -62,15 +94,14 @@ func Run() error {
 	<-quit
 
 	log.Println("Shutting down server...")
-	grpc.GracefulStop()
+	stopServerFunc()
 	log.Println("Server stopped")
 	return nil
 }
 
-func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
-	connStr := os.Getenv("DATABASE_URL")
+func connectToDb(ctx context.Context, address string) (pool *pgxpool.Pool, err error) {
 	for i := range 10 {
-		pool, err = pgxpool.New(ctx, connStr)
+		pool, err = pgxpool.New(ctx, address)
 		if err == nil {
 			break
 		}
@@ -78,35 +109,4 @@ func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
 		time.Sleep(2 * time.Second)
 	}
 	return pool, err
-}
-
-// RunGRPCServer starts the gRPC server and blocks
-func RunGRPCServer(s *handler.ChatHandler) (*grpc.Server, error) {
-	lis, err := net.Listen("tcp", s.Port)
-	if err != nil {
-		log.Fatalf("Failed to listen on %s: %v", s.Port, err)
-	}
-
-	customUnaryInterceptor, err := gorpc.UnaryServerInterceptorWithContextKeys([]gorpc.StringableKey{ct.UserId, ct.ReqID, ct.TraceId}...)
-	if err != nil {
-		return nil, err
-	}
-	customStreamInterceptor, err := gorpc.StreamServerInterceptorWithContextKeys([]gorpc.StringableKey{ct.UserId, ct.ReqID, ct.TraceId}...)
-	if err != nil {
-		return nil, err
-	}
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(customUnaryInterceptor),
-		grpc.StreamInterceptor(customStreamInterceptor),
-	)
-
-	chat.RegisterChatServiceServer(grpcServer, s)
-
-	log.Printf("gRPC server listening on %s", s.Port)
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve gRPC: %v", err)
-		}
-	}()
-	return grpcServer, nil
 }
