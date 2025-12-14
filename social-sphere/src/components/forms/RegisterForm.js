@@ -177,6 +177,7 @@ export default function RegisterForm() {
                                 id="first_name"
                                 name="first_name"
                                 type="text"
+                                value="hello"
                                 required
                                 className="form-input"
                                 placeholder="Jane"
@@ -192,6 +193,7 @@ export default function RegisterForm() {
                                 id="last_name"
                                 name="last_name"
                                 type="text"
+                                value="world"
                                 required
                                 className="form-input"
                                 placeholder="Doe"
@@ -210,6 +212,7 @@ export default function RegisterForm() {
                             id="email"
                             name="email"
                             type="email"
+                            value="hello@world.com"
                             required
                             className="form-input"
                             placeholder="jane@example.com"
@@ -228,6 +231,7 @@ export default function RegisterForm() {
                                 id="password"
                                 name="password"
                                 type={showPassword ? "text" : "password"}
+                                value="Hello12!"
                                 required
                                 className="form-input pr-12"
                                 placeholder="HelloWorld123!"
@@ -255,6 +259,7 @@ export default function RegisterForm() {
                                 id="confirmPassword"
                                 name="confirmPassword"
                                 type={showConfirmPassword ? "text" : "password"}
+                                value="Hello12!"
                                 required
                                 className="form-input pr-12"
                                 placeholder="Confirm password"
@@ -281,6 +286,7 @@ export default function RegisterForm() {
                             id="date_of_birth"
                             name="date_of_birth"
                             type="date"
+                            value="2000-01-01"
                             required
                             className="form-input focus:outline-none"
                             onChange={(e) => handleFieldValidation("date_of_birth", e.target.value)}

@@ -28,8 +28,8 @@ func TestUpdateUserPassword_Success(t *testing.T) {
 
 	req := models.UpdatePasswordRequest{
 		UserId:      ct.Id(1),
-		OldPassword: ct.Password(oldPassword),
-		NewPassword: ct.Password(newPassword),
+		OldPassword: ct.HashedPassword(oldPassword),
+		NewPassword: ct.HashedPassword(newPassword),
 	}
 
 	ctx := context.Background()
@@ -54,8 +54,8 @@ func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
 
 	req := models.UpdatePasswordRequest{
 		UserId:      ct.Id(1),
-		OldPassword: ct.Password("WrongPass456!"),
-		NewPassword: ct.Password("NewPass789!"),
+		OldPassword: ct.HashedPassword("WrongPass456!"),
+		NewPassword: ct.HashedPassword("NewPass789!"),
 	}
 
 	ctx := context.Background()

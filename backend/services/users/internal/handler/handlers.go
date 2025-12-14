@@ -32,7 +32,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		FirstName:   ct.Name(req.GetFirstName()),
 		LastName:    ct.Name(req.GetLastName()),
 		Email:       ct.Email(req.GetEmail()),
-		Password:    ct.Password(req.GetPassword()),
+		Password:    ct.HashedPassword(req.GetPassword()),
 		DateOfBirth: ct.DateOfBirth(req.GetDateOfBirth().AsTime()),
 		AvatarId:    ct.Id(req.GetAvatar()),
 		About:       ct.About(req.GetAbout()),
@@ -69,7 +69,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 
 	user, err := s.Application.LoginUser(ctx, models.LoginRequest{
 		Identifier: ct.Identifier(Identifier),
-		Password:   ct.Password(Password),
+		Password:   ct.HashedPassword(Password),
 	})
 	if err != nil {
 		fmt.Println("Error in LoginUser:", err)
@@ -100,7 +100,7 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 
 	err := s.Application.UpdateUserPassword(ctx, models.UpdatePasswordRequest{
 		UserId:      ct.Id(userId),
-		NewPassword: ct.Password(newPassword),
+		NewPassword: ct.HashedPassword(newPassword),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "UpdateUserPassword: %v", err)

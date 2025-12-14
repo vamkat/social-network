@@ -3,12 +3,12 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function getProfileInfo(userId) {
     const isServer = typeof window === 'undefined';
-    
+
     try {
         const apiFn = isServer ? serverApiRequest : apiRequest;
-        
+
         const user = await apiFn(`/profile/${userId}`, {
-            method: "GET",
+            method: "POST",
         });
 
         return user;

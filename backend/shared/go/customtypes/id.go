@@ -51,7 +51,7 @@ func (e *Id) UnmarshalJSON(data []byte) error {
 }
 
 func (e Id) IsValid() bool {
-	return e >= 0
+	return e > 0
 }
 
 func DecryptId(hash string) (Id, error) {
@@ -66,9 +66,40 @@ func EncryptId(id int64) (encrypted string, err error) {
 	return hd.EncodeInt64([]int64{int64(id)})
 }
 
+func (i *Id) Scan(src any) error {
+	if src == nil {
+		// SQL NULL reached
+		*i = 0 // or whatever "invalid" means in your domain
+		return nil
+	}
+
+	switch v := src.(type) {
+	case int64:
+		*i = Id(v)
+		return nil
+
+	case []byte:
+		n, err := strconv.ParseInt(string(v), 10, 64)
+		if err != nil {
+			return err
+		}
+		*i = Id(n)
+		return nil
+	}
+
+	return fmt.Errorf("cannot scan type %T into Id", src)
+}
+
+func (i Id) Value() (driver.Value, error) {
+	if !i.IsValid() {
+		return nil, nil
+	}
+	return i.Int64(), nil
+}
+
 func (e Id) Validate() error {
 	if !e.IsValid() {
-		return errors.Join(ErrValidation, errors.New("aaaaaaa must be positive"))
+		return errors.Join(ErrValidation, errors.New("id must be positive"))
 	}
 	return nil
 }

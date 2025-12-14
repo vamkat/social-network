@@ -3,7 +3,7 @@ import { serverApiRequest } from "@/lib/server-api";
 export async function getAllGroups(limit, offset) {
     try {
         const groups = await serverApiRequest(`/groups/paginated`, {
-            method: "GET",
+            method: "POST",
             body: JSON.stringify({
                 limit: limit,
                 offset: offset,

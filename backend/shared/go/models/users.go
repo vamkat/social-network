@@ -9,15 +9,15 @@ import (
 //-------------------------------------------
 
 type RegisterUserRequest struct {
-	Username    ct.Username    `json:"username" validate:"nullable"`
-	FirstName   ct.Name        `json:"first_name"`
-	LastName    ct.Name        `json:"last_name"`
-	DateOfBirth ct.DateOfBirth `json:"date_of_birth"`
-	AvatarId    ct.Id          `json:"avatar_id" validate:"nullable"`
-	About       ct.About       `json:"about" validate:"nullable"`
-	Public      bool           `json:"public"`
-	Email       ct.Email       `json:"email"`
-	Password    ct.Password    `json:"password"`
+	Username    ct.Username       `json:"username" validate:"nullable"`
+	FirstName   ct.Name           `json:"first_name"`
+	LastName    ct.Name           `json:"last_name"`
+	DateOfBirth ct.DateOfBirth    `json:"date_of_birth"`
+	AvatarId    ct.Id             `json:"avatar_id" validate:"nullable"`
+	About       ct.About          `json:"about" validate:"nullable"`
+	Public      bool              `json:"public"`
+	Email       ct.Email          `json:"email"`
+	Password    ct.HashedPassword `json:"password"`
 }
 
 type RegisterUserResponse struct {
@@ -25,14 +25,14 @@ type RegisterUserResponse struct {
 }
 
 type LoginRequest struct {
-	Identifier ct.Identifier `json:"identifier"`
-	Password   ct.Password   `json:"password"`
+	Identifier ct.Identifier     `json:"identifier"`
+	Password   ct.HashedPassword `json:"password"`
 }
 
 type UpdatePasswordRequest struct {
-	UserId      ct.Id       `json:"user_id"`
-	OldPassword ct.Password `json:"old_password"`
-	NewPassword ct.Password `json:"new_password"`
+	UserId      ct.Id             `json:"user_id"`
+	OldPassword ct.HashedPassword `json:"old_password"`
+	NewPassword ct.HashedPassword `json:"new_password"`
 }
 
 type UpdateEmailRequest struct {

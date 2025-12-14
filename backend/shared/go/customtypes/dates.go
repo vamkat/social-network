@@ -139,7 +139,7 @@ func (edt *EventDateTime) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	t, err := time.Parse(eventDateLayout, s)
+	t, err := time.Parse(genDateTimeLayout, s)
 	if err != nil {
 		return err
 	}

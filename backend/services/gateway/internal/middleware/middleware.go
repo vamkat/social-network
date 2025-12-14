@@ -152,8 +152,8 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 			}
 			rateLimitKey = fmt.Sprintf("%s:ip:%s", m.serviceName, remoteIp)
 		case UserLimit:
-			userId, ok := ctx.Value(ct.UserId).(string)
-			if !ok || userId == "" {
+			userId, ok := ctx.Value(ct.UserId).(int64)
+			if !ok {
 				fmt.Println("[WARNING], err or no userId:", userId, " ok:", ok)
 				utils.ErrorJSON(w, http.StatusNotAcceptable, "how the hell did you end up here without a user id?")
 				return false, nil

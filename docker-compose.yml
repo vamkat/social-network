@@ -289,8 +289,6 @@ services:
       - NODE_ENV=production
     restart: unless-stopped
 
-    
-
 
 volumes:
   users-db-data:
