@@ -7,15 +7,16 @@
 package users
 
 import (
+	reflect "reflect"
+	common "social-network/shared/gen-go/common"
+	sync "sync"
+	unsafe "unsafe"
+
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
-	reflect "reflect"
-	common "social-network/shared/gen-go/common"
-	sync "sync"
-	unsafe "unsafe"
 )
 
 const (
@@ -1368,6 +1369,7 @@ func (x *HandleGroupInviteRequest) GetAccepted() bool {
 	return false
 }
 
+// @ kv is this the response? and why is ownerid here?
 type HandleJoinRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`

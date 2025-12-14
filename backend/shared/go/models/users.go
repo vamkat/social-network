@@ -167,6 +167,7 @@ type HandleGroupInviteRequest struct {
 	Accepted  bool
 }
 
+// @kv why is requesterid here?
 type GroupJoinRequest struct {
 	GroupId     ct.Id
 	RequesterId ct.Id

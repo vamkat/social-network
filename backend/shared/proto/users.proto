@@ -53,7 +53,7 @@ service UserService {
   rpc GetFollowSuggestions (google.protobuf.Int64Value) returns (common.ListUsers);
 
   // Returns whether follower_id currently follows target_user_id.
-  rpc IsFollowing (FollowUserRequest) returns (google.protobuf.BoolValue);
+  rpc IsFollowing (IsFollowingRequest) returns (google.protobuf.BoolValue);
 
   // Returns whether both users follow each other.
   rpc AreFollowingEachOther (FollowUserRequest) returns (google.protobuf.BoolValue);
