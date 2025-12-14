@@ -218,15 +218,16 @@ func (a *Application) CreatePostCommentNotification(ctx context.Context, userID,
 }
 
 // CreateMentionNotification creates a notification when a user is mentioned in a post or comment
-func (a *Application) CreateMentionNotification(ctx context.Context, userID, mentionerID, postID int64, mentionerUsername, postContent string) error {
+func (a *Application) CreateMentionNotification(ctx context.Context, userID, mentionerID, postID int64, mentionerUsername, postContent, mentionText string) error {
 	title := "You were mentioned"
 	message := fmt.Sprintf("%s mentioned you in a post", mentionerUsername)
-	
+
 	payload := map[string]string{
 		"mentioner_id":    fmt.Sprintf("%d", mentionerID),
 		"mentioner_name":  mentionerUsername,
 		"post_id":         fmt.Sprintf("%d", postID),
 		"post_content":    postContent,
+		"mention_text":    mentionText,
 		"action":          "view_post",
 	}
 
@@ -243,6 +244,37 @@ func (a *Application) CreateMentionNotification(ctx context.Context, userID, men
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create mention notification: %w", err)
+	}
+
+	return nil
+}
+
+// CreateNewMessageNotification creates a notification when a user receives a new message in a chat
+func (a *Application) CreateNewMessageNotification(ctx context.Context, userID, senderID, chatID int64, senderUsername, messageContent string) error {
+	title := "New Message"
+	message := fmt.Sprintf("%s sent you a message", senderUsername)
+
+	payload := map[string]string{
+		"sender_id":       fmt.Sprintf("%d", senderID),
+		"sender_name":     senderUsername,
+		"chat_id":         fmt.Sprintf("%d", chatID),
+		"message_content": messageContent,
+		"action":          "view_chat",
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		userID,                 // recipient
+		NewMessage,             // type
+		title,                  // title
+		message,                // message
+		"chat",                 // source service
+		chatID,                 // source entity ID (the chat)
+		false,                  // doesn't need action (just informational)
+		payload,                // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create new message notification: %w", err)
 	}
 
 	return nil

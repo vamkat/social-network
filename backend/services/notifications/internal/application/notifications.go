@@ -265,6 +265,7 @@ func (a *Application) CreateDefaultNotificationTypes(ctx context.Context) error 
 		{string(PostLike), "posts", true},
 		{string(PostComment), "posts", true},
 		{string(Mention), "posts", true},
+		{string(NewMessage), "chat", true},
 	}
 
 	for _, nt := range defaultTypes {

@@ -17,7 +17,8 @@ VALUES
   ('new_event', 'group',  TRUE),
   ('new_message', 'chat',  TRUE),
   ('post_reply', 'posts', TRUE),
-  ('like', 'posts', TRUE);
+  ('like', 'posts', TRUE),
+  ('mention', 'posts', TRUE);
 
 ------------------------------------------
 -- Notifications

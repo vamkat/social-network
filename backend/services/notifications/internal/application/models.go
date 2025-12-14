@@ -16,6 +16,7 @@ const (
 	PostLike           NotificationType = "like"
 	PostComment        NotificationType = "post_reply"
 	Mention            NotificationType = "mention"
+	NewMessage         NotificationType = "new_message"
 )
 
 // Notification represents a notification entity
