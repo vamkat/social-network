@@ -35,7 +35,7 @@ func (s *Handlers) CreateGroup() http.HandlerFunc {
 			GroupImage:       createGroupDataRequest.GroupImage,
 		}
 
-		groupId, err := s.App.Users.CreateGroup(ctx, &createGroupRequest)
+		groupId, err := s.UsersService.CreateGroup(ctx, &createGroupRequest)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not create group: "+err.Error())
 			return
@@ -78,7 +78,7 @@ func (s *Handlers) GetAllGroupsPaginated() http.HandlerFunc {
 			Offset: body.Offset,
 		}
 
-		out, err := s.App.Users.GetAllGroupsPaginated(ctx, &req)
+		out, err := s.UsersService.GetAllGroupsPaginated(ctx, &req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch groups: "+err.Error())
 			return

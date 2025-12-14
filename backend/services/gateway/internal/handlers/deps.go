@@ -1,10 +1,7 @@
-package application
+package handlers
 
 import (
 	"context"
-	"social-network/shared/gen-go/chat"
-	"social-network/shared/gen-go/posts"
-	"social-network/shared/gen-go/users"
 	"time"
 )
 
@@ -16,13 +13,4 @@ type CacheService interface {
 	GetObj(ctx context.Context, key string, dest any) error
 	Del(ctx context.Context, key string) error
 	TestRedisConnection() error
-}
-
-// GatewayApp is what holds all the tools that this server needs
-type GatewayApp struct {
-	//telemetry
-	Redis CacheService
-	Users users.UserServiceClient
-	Posts posts.PostsServiceClient
-	Chat  chat.ChatServiceClient
 }

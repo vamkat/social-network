@@ -44,7 +44,7 @@ func (s *Handlers) GetFollowingPaginated() http.HandlerFunc {
 			Offset: body.Offset,
 		}
 
-		grpcResp, err := s.App.Users.GetFollowingPaginated(ctx, req)
+		grpcResp, err := s.UsersService.GetFollowingPaginated(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch following users: "+err.Error())
 			return
@@ -89,7 +89,7 @@ func (s *Handlers) GetGroupInfo() http.HandlerFunc {
 			UserId:  claims.UserId,
 		}
 
-		grpcResp, err := s.App.Users.GetGroupInfo(ctx, req)
+		grpcResp, err := s.UsersService.GetGroupInfo(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch group info: "+err.Error())
 			return
@@ -139,7 +139,7 @@ func (s *Handlers) GetGroupMembers() http.HandlerFunc {
 			Offset:  body.Offset,
 		}
 
-		grpcResp, err := s.App.Users.GetGroupMembers(ctx, req)
+		grpcResp, err := s.UsersService.GetGroupMembers(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch group members: "+err.Error())
 			return
@@ -187,7 +187,7 @@ func (s *Handlers) GetUserGroupsPaginated() http.HandlerFunc {
 			Offset: body.Offset,
 		}
 
-		grpcResp, err := s.App.Users.GetUserGroupsPaginated(ctx, req)
+		grpcResp, err := s.UsersService.GetUserGroupsPaginated(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch user groups: "+err.Error())
 			return
@@ -239,7 +239,7 @@ func (s *Handlers) HandleFollowRequest() http.HandlerFunc {
 			Accept:      body.Accept,
 		}
 
-		_, err = s.App.Users.HandleFollowRequest(ctx, req)
+		_, err = s.UsersService.HandleFollowRequest(ctx, req)
 		if err != nil { //soft TODO better error?
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not handle follow request: "+err.Error())
 			return
@@ -271,7 +271,7 @@ func (s *Handlers) HandleGroupJoinRequest() http.HandlerFunc {
 			Accepted:    body.Accepted,
 		}
 
-		_, err = s.App.Users.HandleGroupJoinRequest(ctx, req)
+		_, err = s.UsersService.HandleGroupJoinRequest(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not handle group join request: "+err.Error())
 			return
@@ -302,7 +302,7 @@ func (s *Handlers) InviteToGroup() http.HandlerFunc {
 			GroupId:   body.GroupId.Int64(),
 		}
 
-		_, err = s.App.Users.InviteToGroup(ctx, req)
+		_, err = s.UsersService.InviteToGroup(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not invite user to group: "+err.Error())
 			return
@@ -332,7 +332,7 @@ func (s *Handlers) LeaveGroup() http.HandlerFunc {
 			GroupId: body.GroupId.Int64(),
 		}
 
-		_, err = s.App.Users.LeaveGroup(ctx, req)
+		_, err = s.UsersService.LeaveGroup(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not leave group: "+err.Error())
 			return
@@ -362,7 +362,7 @@ func (s *Handlers) RequestJoinGroupOrCancel() http.HandlerFunc {
 			GroupId:     body.GroupId.Int64(),
 		}
 
-		_, err = s.App.Users.RequestJoinGroup(ctx, req)
+		_, err = s.UsersService.RequestJoinGroup(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not process join request: "+err.Error())
 			return
@@ -398,7 +398,7 @@ func (s *Handlers) RespondToGroupInvite() http.HandlerFunc {
 			Accepted:  body.Accept,
 		}
 
-		_, err = s.App.Users.RespondToGroupInvite(ctx, req)
+		_, err = s.UsersService.RespondToGroupInvite(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not respond to invite: "+err.Error())
 			return
@@ -436,7 +436,7 @@ func (s *Handlers) SearchGroups() http.HandlerFunc {
 			UserId:     claims.UserId,
 		}
 
-		grpcResp, err := s.App.Users.SearchGroups(ctx, req)
+		grpcResp, err := s.UsersService.SearchGroups(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not search groups: "+err.Error())
 			return
@@ -486,7 +486,7 @@ func (s *Handlers) SearchUsers() http.HandlerFunc {
 			Limit:      body.Limit,
 		}
 
-		grpcResp, err := s.App.Users.SearchUsers(ctx, req)
+		grpcResp, err := s.UsersService.SearchUsers(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not search users: "+err.Error())
 			return
@@ -534,7 +534,7 @@ func (s *Handlers) UnFollowUser() http.HandlerFunc {
 			TargetUserId: body.UserId,
 		}
 
-		resp, err := s.App.Users.UnFollowUser(ctx, req)
+		resp, err := s.UsersService.UnFollowUser(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not unfollow user: "+err.Error())
 			return
@@ -568,7 +568,7 @@ func (s *Handlers) UpdateProfilePrivacy() http.HandlerFunc {
 			Public: body.Public,
 		}
 
-		_, err = s.App.Users.UpdateProfilePrivacy(ctx, req)
+		_, err = s.UsersService.UpdateProfilePrivacy(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update privacy: "+err.Error())
 			return
@@ -602,7 +602,7 @@ func (s *Handlers) UpdateUserEmail() http.HandlerFunc {
 			Email:  body.Email,
 		}
 
-		_, err = s.App.Users.UpdateUserEmail(ctx, req)
+		_, err = s.UsersService.UpdateUserEmail(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update email: "+err.Error())
 			return
@@ -638,7 +638,7 @@ func (s *Handlers) UpdateUserPassword() http.HandlerFunc {
 			NewPassword: body.NewPassword,
 		}
 
-		_, err = s.App.Users.UpdateUserPassword(ctx, req)
+		_, err = s.UsersService.UpdateUserPassword(ctx, req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update password: "+err.Error())
 			return
@@ -680,7 +680,7 @@ func (s *Handlers) UpdateUserProfile() http.HandlerFunc {
 			Avatar:      body.AvatarId.Int64(),
 		}
 
-		grpcResp, err := s.App.Users.UpdateUserProfile(ctx, grpcRequest)
+		grpcResp, err := s.UsersService.UpdateUserProfile(ctx, grpcRequest)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update profile: "+err.Error())
 			return

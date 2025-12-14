@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+//TODO convert string keys back to stringable interface keys
+
 // this interface exists to enforce usage of typed context keys instead of just strings
 type StringableKey interface {
 	String() string

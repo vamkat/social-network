@@ -2,26 +2,40 @@ package handlers
 
 import (
 	"net/http"
-	"social-network/services/gateway/internal/application"
 	"social-network/services/gateway/internal/middleware"
+	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/posts"
+	"social-network/shared/gen-go/users"
 	"social-network/shared/go/ratelimit"
 )
 
 type Handlers struct {
-	App application.GatewayApp
+	CacheService CacheService
+	UsersService users.UserServiceClient
+	PostsService posts.PostsServiceClient
+	ChatService  chat.ChatServiceClient
 }
 
-func NewHandlers(app application.GatewayApp) (*Handlers, error) {
-	handlers := &Handlers{
-		App: app,
+func NewHandlers(
+	serviceName string,
+	CacheService CacheService,
+	UsersService users.UserServiceClient,
+	PostsService posts.PostsServiceClient,
+	ChatService chat.ChatServiceClient,
+) *http.ServeMux {
+	handlers := Handlers{
+		CacheService: CacheService,
+		UsersService: UsersService,
+		PostsService: PostsService,
+		ChatService:  ChatService,
 	}
-	return handlers, nil
+	return handlers.BuildMux(serviceName)
 }
 
 // BuildMux builds and returns the HTTP request multiplexer with all routes and middleware applied
 func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 	mux := http.NewServeMux()
-	ratelimiter := ratelimit.NewRateLimiter(serviceName+":", h.App.Redis)
+	ratelimiter := ratelimit.NewRateLimiter(serviceName+":", h.CacheService)
 	middlewareObj := middleware.NewMiddleware(ratelimiter, "gateway")
 	Chain := middlewareObj.Chain
 

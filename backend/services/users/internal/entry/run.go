@@ -38,7 +38,11 @@ func Run() error {
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
-	notificationsClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, "notifications:50051", contextkeys.CommonKeys())
+	notificationsClient, err := gorpc.GetGRpcClient(
+		notifications.NewNotificationServiceClient,
+		"notifications:50051",
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
@@ -50,7 +54,16 @@ func Run() error {
 
 	port := ":50051"
 
-	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[users.UserServiceServer](users.RegisterUserServiceServer, &service, port, contextkeys.CommonKeys())
+	//
+	//
+	//
+	// SERVER
+	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[users.UserServiceServer](
+		users.RegisterUserServiceServer,
+		&service,
+		port,
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		log.Fatalf("couldn't create gRpc Server: %s", err.Error())
 	}
@@ -62,6 +75,11 @@ func Run() error {
 		}
 		fmt.Println("server finished")
 	}()
+
+	//
+	//
+	//
+	// SHUTDOWN
 
 	log.Printf("gRPC server listening on %s", port)
 

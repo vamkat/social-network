@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"social-network/services/gateway/internal/application"
 	"social-network/services/gateway/internal/handlers"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/posts"
@@ -21,8 +20,6 @@ import (
 	"syscall"
 	"time"
 )
-
-// var logger = otelslog.NewLogger("api-gateway")
 
 type configs struct {
 	RedisAddr     string `env:"REDIS_ADDR"`
@@ -61,22 +58,23 @@ func init() {
 func Start() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	gatewayApplication := application.GatewayApp{}
-
-	// REDIS
-	gatewayApplication.Redis = redis_connector.NewRedisClient(
+	// Cache
+	CacheService := redis_connector.NewRedisClient(
 		cfg.RedisAddr,
 		cfg.RedisPassword,
 		cfg.RedisDB,
 	)
-	if err := gatewayApplication.Redis.TestRedisConnection(); err != nil {
+	if err := CacheService.TestRedisConnection(); err != nil {
 		log.Fatalf("connection test failed, ERROR: %v", err)
 	}
-	fmt.Println("redis connection started correctly")
+	fmt.Println("Cache service connection started correctly")
 
+	//
+	//
+	//
 	// GRPC CLIENTS
 	var err error
-	gatewayApplication.Users, err = gorpc.GetGRpcClient(
+	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfg.UsersGRPCAddr,
 		contextkeys.CommonKeys(),
@@ -85,7 +83,7 @@ func Start() {
 		log.Fatalf("failed to connect to users service: %v", err)
 	}
 
-	gatewayApplication.Posts, err = gorpc.GetGRpcClient(
+	PostsService, err := gorpc.GetGRpcClient(
 		posts.NewPostsServiceClient,
 		cfg.PostsGRPCAddr,
 		contextkeys.CommonKeys(),
@@ -94,7 +92,7 @@ func Start() {
 		log.Fatalf("failed to connect to posts service: %v", err)
 	}
 
-	gatewayApplication.Chat, err = gorpc.GetGRpcClient(
+	ChatService, err := gorpc.GetGRpcClient(
 		chat.NewChatServiceClient,
 		cfg.ChatGRPCAddr,
 		contextkeys.CommonKeys(),
@@ -103,13 +101,24 @@ func Start() {
 		log.Fatalf("failed to connect to chat service: %v", err)
 	}
 
+	//
+	//
+	//
 	// HANDLER
-	apiHandlers, err := handlers.NewHandlers(gatewayApplication)
+	apiMux := handlers.NewHandlers(
+		"gateway",
+		CacheService,
+		UsersService,
+		PostsService,
+		ChatService,
+	)
 	if err != nil {
 		log.Fatal("Can't create handlers, ERROR:", err)
 	}
-	apiMux := apiHandlers.BuildMux("gateway")
 
+	//
+	//
+	//
 	// SERVER
 	server := &http.Server{
 		Handler:     apiMux,
@@ -123,6 +132,9 @@ func Start() {
 		srvErr <- server.ListenAndServe()
 	}()
 
+	//
+	//
+	//
 	// SHUTDOWN
 	select {
 	case err = <-srvErr:

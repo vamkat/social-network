@@ -38,7 +38,7 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			RequesterId: requesterId,
 		}
 
-		grpcResp, err := h.App.Users.GetUserProfile(r.Context(), &grpcReq)
+		grpcResp, err := h.UsersService.GetUserProfile(r.Context(), &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get user info: "+err.Error())
 			return

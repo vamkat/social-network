@@ -24,13 +24,13 @@ func (s *Handlers) GetFollowSuggestions() http.HandlerFunc {
 
 		req := wrapperspb.Int64Value{Value: requesterId}
 
-		part1, err := s.App.Users.GetFollowSuggestions(ctx, &req)
+		part1, err := s.UsersService.GetFollowSuggestions(ctx, &req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch suggestions from users: "+err.Error())
 			return
 		}
 
-		part2, err := s.App.Posts.SuggestUsersByPostActivity(ctx, &posts.SimpleIdReq{Id: requesterId})
+		part2, err := s.PostsService.SuggestUsersByPostActivity(ctx, &posts.SimpleIdReq{Id: requesterId})
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch suggestions from posts: "+err.Error())
 			return
@@ -85,7 +85,7 @@ func (s *Handlers) GetFollowersPaginated() http.HandlerFunc {
 			Offset: body.Offset,
 		}
 
-		out, err := s.App.Users.GetFollowersPaginated(ctx, &req)
+		out, err := s.UsersService.GetFollowersPaginated(ctx, &req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch followers: "+err.Error())
 			return
@@ -118,7 +118,7 @@ func (s *Handlers) FollowUser() http.HandlerFunc {
 			TargetUserId: body.TargetUserId,
 		}
 
-		resp, err := s.App.Users.FollowUser(ctx, &req)
+		resp, err := s.UsersService.FollowUser(ctx, &req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not follow user: "+err.Error())
 			return

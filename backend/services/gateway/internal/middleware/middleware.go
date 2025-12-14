@@ -159,7 +159,7 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 				return false, nil
 			}
 			fmt.Println("[DEBUG] rate limited userId:", userId)
-			rateLimitKey = fmt.Sprintf("%s:id:%s", m.serviceName, userId)
+			rateLimitKey = fmt.Sprintf("%s:id:%d", m.serviceName, userId)
 		default:
 			panic("bad rate limit type argument!")
 		}

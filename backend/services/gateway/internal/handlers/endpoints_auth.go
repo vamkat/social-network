@@ -52,7 +52,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 		fmt.Println(httpReq.Password.String())
 
-		resp, err := h.App.Users.LoginUser(r.Context(), &gRpcReq)
+		resp, err := h.UsersService.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return
@@ -201,7 +201,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			// Avatar:      httpReq.Avatar,
 		}
 
-		resp, err := h.App.Users.RegisterUser(r.Context(), &gRpcReq)
+		resp, err := h.UsersService.RegisterUser(r.Context(), &gRpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return

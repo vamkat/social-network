@@ -26,7 +26,7 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 			Offset:      0,  ////hardcoded for now, TODO make dynamic
 		}
 
-		grpcResp, err := h.App.Posts.GetPublicFeed(r.Context(), &grpcReq)
+		grpcResp, err := h.PostsService.GetPublicFeed(r.Context(), &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
 			return
