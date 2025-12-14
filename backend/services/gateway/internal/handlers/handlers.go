@@ -56,7 +56,6 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			AllowedMethod("POST").
 			RateLimit(IP, 5, 5).
 			EnrichContext().
-			RateLimit(USERID, 5, 5).
 			Finalize(h.registerHandler()))
 
 	mux.HandleFunc("/logout",
@@ -134,15 +133,6 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			RateLimit(USERID, 5, 5).
 			Finalize(h.GetFollowSuggestions()))
-
-	// mux.HandleFunc("/public-feed",
-	// 	Chain().
-	// 		AllowedMethod("POST").
-	// 		RateLimit(IP,5, 5).
-	// 		Auth()
-	// 		EnrichContext().
-	// 		RateLimit(USERID, 5, 5).
-	// 		Finalize(h.GetFollowingIds()))
 
 	mux.HandleFunc("/following",
 		Chain().

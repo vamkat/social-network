@@ -139,7 +139,7 @@ const (
 func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, durationSeconds int64) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		ctx := r.Context()
-
+		fmt.Println("[DEBUG] in ratelimit, type: ", rateLimitType)
 		rateLimitKey := ""
 		switch rateLimitType {
 		case GlobalLimit:
@@ -149,7 +149,7 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 				utils.ErrorJSON(w, http.StatusNotAcceptable, "your IP is absolutely WACK")
 				return false, nil
 			}
-			rateLimitKey = fmt.Sprintf("ip:%s:%s", m.serviceName, remoteIp)
+			rateLimitKey = fmt.Sprintf("%s:ip:%s", m.serviceName, remoteIp)
 		case UserLimit:
 			userId, ok := ctx.Value(ct.UserId).(string)
 			if !ok || userId == "" {
@@ -158,7 +158,7 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 				return false, nil
 			}
 			fmt.Println("[DEBUG] rate limited userId:", userId)
-			rateLimitKey = fmt.Sprintf("ip:%s:%s", m.serviceName, userId)
+			rateLimitKey = fmt.Sprintf("%s:id:%s", m.serviceName, userId)
 		default:
 			panic("bad rate limit type argument!")
 		}
