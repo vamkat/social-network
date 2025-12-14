@@ -89,7 +89,7 @@ type Querier interface {
 	// Returns memebers of a conversation that user is a member.
 	GetConversationMembers(ctx context.Context, arg md.GetConversationMembersParams) (members ct.Ids, err error)
 
-	// Fetches paginated conversation details, conversation members Ids and unread messages count for a user and a group
+	// Fetches paginated conversation details, conversation members Ids and unread messages count for a user and a group.
 	// To get DMS group Id parameter must be zero.
 	GetUserConversations(ctx context.Context, arg md.GetUserConversationsParams) ([]GetUserConversationsRow, error)
 

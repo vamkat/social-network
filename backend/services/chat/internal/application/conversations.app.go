@@ -81,6 +81,7 @@ func (c *ChatService) GetUserConversations(ctx context.Context,
 	}
 
 	if !arg.HydrateUsers {
+		// Calling with nil usersMap. No hydration just conversion
 		return ConvertConversations(ctx, nil, resp)
 	}
 
@@ -98,7 +99,7 @@ func (c *ChatService) GetUserConversations(ctx context.Context,
 
 // Helper to convert a slice of GetUserConversationsRow containing userIds
 // to a slice of GetUserConversationsResp containg User.
-// If nil usersMap is passed then conversations are
+// If nil usersMap is passed then conversion does not hydrate Members with username and avatar.
 func ConvertConversations(
 	ctx context.Context,
 	usersMap map[ct.Id]md.User,
