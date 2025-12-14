@@ -80,6 +80,7 @@ message UserIds {
 }
 
 // A conversation entity, including metadata timestamps.
+// OUTDATED !!!
 message Conversation {
     // Unique identifier of the conversation.
     int64 id = 1;
