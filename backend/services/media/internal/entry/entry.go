@@ -10,7 +10,8 @@ import (
 
 	"social-network/services/media/internal/application"
 	"social-network/services/media/internal/client"
-	"social-network/services/media/internal/db/sqlc"
+	"social-network/services/media/internal/configs"
+	"social-network/services/media/internal/db/dbservice"
 	"social-network/services/media/internal/handler"
 	pb "social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
@@ -32,15 +33,34 @@ func Run() error {
 
 	log.Println("Connected to chat database")
 
+	cfgs := configs.Config{
+		Port: ":50051",
+		FileService: configs.FileService{
+			Buckets: configs.Buckets{
+				Originals: "uploads-originals",
+				Variants:  "uploads-variants",
+			},
+			Endpoint:  os.Getenv("MINIO_ENDPOINT"),
+			AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
+			Secret:    os.Getenv("MINIO_SECRET_KEY"),
+		},
+	}
+
+	fileServiceClient, err := NewMinIOConn(cfgs.FileService)
+	if err != nil {
+		return err
+	}
+
 	app := application.NewMediaService(
 		pool,
-		&client.Clients{MinIOClient: NewMinIOConn()},
-		sqlc.New(pool),
+		&client.Clients{MinIOClient: fileServiceClient},
+		dbservice.New(pool),
+		cfgs,
 	)
 
 	service := &handler.MediaHandler{
 		Application: app,
-		Port:        ":50051",
+		Port:        cfgs.Port,
 	}
 
 	log.Println("Running gRpc service...")

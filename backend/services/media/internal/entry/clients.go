@@ -2,22 +2,22 @@ package entry
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
+	"reflect"
+	"social-network/services/media/internal/configs"
 	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func NewMinIOConn() *minio.Client {
+func NewMinIOConn(cfgs configs.FileService) (*minio.Client, error) {
 	var minioClient *minio.Client
 	var err error
 
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	accessKey := os.Getenv("MINIO_ACCESS_KEY")
-	secret := os.Getenv("MINIO_SECRET_KEY")
+	endpoint := cfgs.Endpoint
+	accessKey := cfgs.AccessKey
+	secret := cfgs.Secret
 
 	for range 10 {
 		minioClient, err = minio.New(endpoint, &minio.Options{
@@ -31,22 +31,40 @@ func NewMinIOConn() *minio.Client {
 		time.Sleep(2 * time.Second)
 	}
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	// Ensure bucket exists
-	bucket := "images"
 	ctx := context.Background()
-	exists, errBucketExists := minioClient.BucketExists(ctx, bucket)
-	if errBucketExists != nil {
-		log.Fatalln(errBucketExists)
+	if err := EnsureBuckets(ctx,
+		minioClient, cfgs.Buckets); err != nil {
+		return nil, err
 	}
-	if !exists {
-		err = minioClient.MakeBucket(ctx, bucket, minio.MakeBucketOptions{})
-		if err != nil {
-			log.Fatalln(err)
+
+	return minioClient, nil
+}
+
+func EnsureBuckets(ctx context.Context, client *minio.Client, buckets configs.Buckets) error {
+	v := reflect.ValueOf(buckets)
+
+	for i := 0; i < v.NumField(); i++ {
+		bucketName := v.Field(i).String()
+
+		if bucketName == "" {
+			continue
 		}
-		fmt.Println("Created bucket:", bucket)
+
+		exists, err := client.BucketExists(ctx, bucketName)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			if err := client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{}); err != nil {
+				return err
+			}
+		}
 	}
-	return minioClient
+
+	return nil
 }

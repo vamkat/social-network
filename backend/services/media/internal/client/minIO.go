@@ -3,56 +3,168 @@ package client
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"os"
-	"social-network/shared/go/models"
+	"errors"
+	"image"
+	"math"
+	"net/url"
+	ct "social-network/shared/go/customtypes"
+	md "social-network/shared/go/models"
+	"time"
+
+	"github.com/chai2010/webp"
 
 	"github.com/minio/minio-go/v7"
+	"golang.org/x/image/draw"
 )
 
-func (c *Clients) UploadToMinIO(
+func (c *Clients) GenerateDownloadURL(
 	ctx context.Context,
-	fileContent []byte,
-	filename string,
 	bucket string,
-	contentType string,
-) (minio.UploadInfo, error) {
+	objectKey string,
+	expiry time.Duration,
+) (*url.URL, error) {
 
-	tmp, err := os.CreateTemp("", "upload-*")
-	if err != nil {
-		return minio.UploadInfo{}, err
-	}
-	defer os.Remove(tmp.Name())
-	defer tmp.Close()
-
-	reader := bytes.NewReader(fileContent)
-	if _, err = io.Copy(tmp, reader); err != nil {
-		return minio.UploadInfo{}, err
-	}
-
-	info, err := c.MinIOClient.FPutObject(
+	return c.MinIOClient.PresignedGetObject(
 		ctx,
 		bucket,
-		filename,
-		tmp.Name(),
-		minio.PutObjectOptions{
-			ContentType: contentType,
-		},
+		objectKey,
+		expiry,
+		nil,
 	)
-	if err != nil {
-		return minio.UploadInfo{}, err
-	}
-
-	return info, nil
 }
 
-// GetFromMiniIo returns an object from MinIO
-func (c *Clients) GetFromMiniIo(ctx context.Context, info models.FileMeta) (*minio.Object, error) {
-	obj, err := c.MinIOClient.GetObject(ctx, info.Bucket, info.ObjectKey, minio.GetObjectOptions{})
+func (c *Clients) GenerateUploadURL(
+	ctx context.Context,
+	bucket string,
+	objectKey string,
+	expiry time.Duration,
+) (*url.URL, error) {
+
+	return c.MinIOClient.PresignedPutObject(
+		ctx,
+		bucket,
+		objectKey,
+		expiry,
+	)
+}
+
+func (c *Clients) ValidateUpload(
+	ctx context.Context,
+	fm md.FileMeta,
+) error {
+
+	info, err := c.MinIOClient.StatObject(
+		ctx,
+		fm.Bucket,
+		fm.ObjectKey,
+		minio.StatObjectOptions{},
+	)
 	if err != nil {
-		return obj, fmt.Errorf("failed to get object from MinIO: %w", err)
+		return err // upload never completed
+	}
+
+	if info.Size != fm.SizeBytes {
+		return errors.New("size mismatch")
+	}
+
+	// TODO: Compress and copy to file variant
+
+	// TODO: deep validation (images)
+	// obj, err := c.MinIOClient.GetObject(ctx, fm.Bucket, fm.ObjectKey, minio.GetObjectOptions{})
+	// if err != nil {
+	// 	return err
+	// }
+	// defer obj.Close()
+
+	// if _, _, err := image.DecodeConfig(obj); err != nil {
+	// 	return errors.New("invalid image")
+	// }
+	if fm.Variant != ct.Large {
+		// Generate Variant
+		// go c.generateVariant(context.Background(),)
+	}
+	return nil
+}
+
+func (c *Clients) GenerateVariant(
+	ctx context.Context,
+	fm md.FileMeta,
+) error {
+
+	obj, err := c.MinIOClient.GetObject(ctx, fm.Bucket, fm.ObjectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return err
 	}
 	defer obj.Close()
-	return obj, nil
+
+	img, _, err := image.Decode(obj)
+	if err != nil {
+		return err
+	}
+
+	resized := resizeForVariant(img, fm.Variant)
+
+	var buf bytes.Buffer
+	if err := webp.Encode(&buf, resized, &webp.Options{Quality: 80}); err != nil {
+		return err
+	}
+
+	_, err = c.MinIOClient.PutObject(
+		ctx,
+		c.Configs.Buckets.Variants,
+		fm.ObjectKey,
+		&buf,
+		int64(buf.Len()),
+		minio.PutObjectOptions{
+			ContentType: "image/webp",
+		},
+	)
+	return err
+}
+
+func resizeForVariant(src image.Image, variant ct.ImgVariant) image.Image {
+	maxWidth, maxHeight := variantToSize(variant)
+	bounds := src.Bounds()
+	w := bounds.Dx()
+	h := bounds.Dy()
+
+	ratioW := float64(maxWidth) / float64(w)
+	ratioH := float64(maxHeight) / float64(h)
+	ratio := math.Min(ratioW, ratioH)
+
+	newW := int(float64(w) * ratio)
+	newH := int(float64(h) * ratio)
+
+	dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
+
+	draw.CatmullRom.Scale(
+		dst,
+		dst.Bounds(),
+		src,
+		bounds,
+		draw.Over,
+		nil,
+	)
+
+	return dst
+}
+
+func variantToSize(variant ct.ImgVariant) (maxWidth, maxHeight int) {
+	switch variant {
+	case ct.Large:
+		return 1600, 1600
+
+	case ct.Medium:
+		return 800, 800
+
+	case ct.Small:
+		return 400, 400
+
+	case ct.Thumbnail:
+		return 150, 150
+
+	default:
+		// fallback (treat as medium)
+		return 800, 800
+	}
 }
