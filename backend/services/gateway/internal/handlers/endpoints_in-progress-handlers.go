@@ -696,6 +696,7 @@ func (s *Handlers) UpdateUserProfile() http.HandlerFunc {
 			LastName:    body.LastName.String(),
 			DateOfBirth: body.DateOfBirth.ToProto(),
 			Avatar:      body.AvatarId.Int64(),
+			About:       body.About.String(),
 		}
 
 		grpcResp, err := s.UsersService.UpdateUserProfile(ctx, grpcRequest)

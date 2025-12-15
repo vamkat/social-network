@@ -66,7 +66,7 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			IsPending         bool           `json:"is_pending"`
 		}
 
-		userProfileResponse := userProfile{
+		userProfileResponse := models.UserProfile{
 			UserId:            ct.Id(grpcResp.UserId),
 			Username:          ct.Username(grpcResp.Username),
 			FirstName:         ct.Name(grpcResp.FirstName),

@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
   "identifier": "myuser1234",
-  "password": "superSecret1234"
+  "password": "superSecret123"
 }
 
 ### 2) LOGOUT
@@ -78,6 +78,6 @@ POST {{baseUrl}}/account/update/password
 Content-Type: application/json
 
 {
-  "old_password": "superSecret123",
-  "new_password": "superSecret1234"
+  "old_password": "superSecret1234",
+  "new_password": "superSecret123"
 }
