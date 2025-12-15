@@ -54,7 +54,7 @@ superSecret123
 ### 4) USERPROFILE
 
 # use user id from register or login
-GET {{baseUrl}}/profile/GWpmbk5ezJn4 
+POST {{baseUrl}}/profile/GWpmbk5ezJn4 
 
 ### 5) PUBLICFEED
 
@@ -71,4 +71,13 @@ Content-Type: application/json
 {
   "limit": 10,
   "offset": 0
+}
+
+### 7) CHANGE PASSWORD
+POST {{baseUrl}}/account/update/password
+Content-Type: application/json
+
+{
+  "old_password": "superSecret123",
+  "new_password": "superSecret1234"
 }

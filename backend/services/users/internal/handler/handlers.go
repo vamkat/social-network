@@ -100,6 +100,7 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 
 	err := s.Application.UpdateUserPassword(ctx, models.UpdatePasswordRequest{
 		UserId:      ct.Id(userId),
+		OldPassword: ct.HashedPassword(req.GetOldPassword()),
 		NewPassword: ct.HashedPassword(newPassword),
 	})
 	if err != nil {

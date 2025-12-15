@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
@@ -631,6 +632,7 @@ func (s *Handlers) UpdateUserPassword() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
+		fmt.Println("old password", body.OldPassword, body.NewPassword)
 
 		req := &users.UpdatePasswordRequest{
 			UserId:      claims.UserId,
