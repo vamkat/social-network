@@ -18,8 +18,7 @@ func (q *Queries) CreateFile(
 			size_bytes,
 			bucket,
 			object_key,
-			visibility,
-			status
+			visibility
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
@@ -34,7 +33,6 @@ func (q *Queries) CreateFile(
 		fm.Bucket,
 		fm.ObjectKey,
 		fm.Visibility,
-		fm.Status,
 	).Scan(&fileId)
 
 	return fileId, err
@@ -53,8 +51,7 @@ func (q *Queries) GetFileById(
 			size_bytes,
 			bucket,
 			object_key,
-			visibility,
-			status
+			visibility
 		FROM files
 		WHERE id = $1
 	`
@@ -67,7 +64,6 @@ func (q *Queries) GetFileById(
 		&fm.Bucket,
 		&fm.ObjectKey,
 		&fm.Visibility,
-		&fm.Status,
 	)
 
 	return fm, err
@@ -75,31 +71,33 @@ func (q *Queries) GetFileById(
 
 func (q *Queries) CreateVariant(
 	ctx context.Context,
-	fm Variant,
+	fm File,
 ) (variantId customtypes.Id, err error) {
 
 	const query = `
 		INSERT INTO file_variants (
 			file_id,
+			mime_type,
+			size_bytes,
 			variant,
 			bucket,
 			object_key,
-			width,
-			height
+			status
 		)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 
 	err = q.db.QueryRow(
 		ctx,
 		query,
-		fm.FileId,
+		fm.Id, // fileId
+		fm.MimeType,
+		fm.SizeBytes,
 		fm.Variant,
 		fm.Bucket,
 		fm.ObjectKey,
-		fm.Width,
-		fm.Height,
+		fm.Status,
 	).Scan(&variantId)
 
 	return variantId, err
@@ -115,12 +113,12 @@ func (q *Queries) GetVariant(
 		SELECT
 			f.id,
 			f.filename,
-			f.mime_type,
-			f.size_bytes,
+			v.mime_type,
+			v.size_bytes,
 			v.bucket,
 			v.object_key,
 			f.visibility,
-			f.status,
+			v.status,
 			v.variant
 		FROM files f
 		JOIN file_variants v ON v.file_id = f.id
@@ -143,17 +141,18 @@ func (q *Queries) GetVariant(
 	return fm, err
 }
 
-func (q *Queries) UpdateStatus(
+func (q *Queries) UpdateVariantStatus(
 	ctx context.Context,
 	fileId customtypes.Id,
+	variant customtypes.ImgVariant,
 	status customtypes.UploadStatus,
 ) error {
 
 	const query = `
-		UPDATE files
+		UPDATE file_variants
 		SET status = $2,
 		    updated_at = now()
-		WHERE id = $1
+		WHERE file_id = $1
 	`
 
 	res, err := q.db.Exec(ctx, query, fileId, status)

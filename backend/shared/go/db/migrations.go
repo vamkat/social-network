@@ -33,6 +33,18 @@ func run(dbUrl string, migrationsPath string) error {
 		return fmt.Errorf("failed to initialize migrate: %w", err)
 	}
 
+	// Check if database is dirty
+	version, dirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		return fmt.Errorf("failed to get migration version: %w", err)
+	}
+	if dirty {
+		log.Printf("Database is dirty at version %d, forcing version", version)
+		if err := m.Force(int(version)); err != nil {
+			return fmt.Errorf("failed to force version: %w", err)
+		}
+	}
+
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("migration failed: %w", err)
 	}

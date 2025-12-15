@@ -118,6 +118,7 @@ const (
 	Small     ImgVariant = "small"
 	Medium    ImgVariant = "medium"
 	Large     ImgVariant = "large"
+	Original  ImgVariant = "original"
 )
 
 func (v ImgVariant) String() string {
@@ -200,13 +201,14 @@ func (v ImgVariant) Value() (driver.Value, error) {
 // =======================
 
 // Describes the file upload status:
-// pending, complete, failed
+// pending, processing, complete, failed
 type UploadStatus string
 
 const (
-	Pending  UploadStatus = "pending"
-	Complete UploadStatus = "complete"
-	Failed   UploadStatus = "failed"
+	Pending    UploadStatus = "pending"
+	Processing UploadStatus = "processing"
+	Complete   UploadStatus = "complete"
+	Failed     UploadStatus = "failed"
 )
 
 func (v UploadStatus) String() string {

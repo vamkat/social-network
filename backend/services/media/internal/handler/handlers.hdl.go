@@ -1,10 +1,17 @@
 package handler
 
 import (
+	"context"
+	"time"
+
 	"social-network/services/media/internal/application"
 	pb "social-network/shared/gen-go/media"
+	ct "social-network/shared/go/customtypes"
+	md "social-network/shared/go/models"
 
-	_ "github.com/lib/pq"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type MediaHandler struct {
@@ -13,80 +20,146 @@ type MediaHandler struct {
 	Port        string
 }
 
-func PresignedUpload()   {}
-func PresignedDownload() {}
-func VerifyUpload()      {}
+// pbToCtImgVariant converts protobuf ImgVariant to customtypes ImgVariant
+func pbToCtImgVariant(v pb.ImgVariant) ct.ImgVariant {
+	switch v {
+	case pb.ImgVariant_THUMBNAIL:
+		return ct.Thumbnail
+	case pb.ImgVariant_SMALL:
+		return ct.Small
+	case pb.ImgVariant_MEDIUM:
+		return ct.Medium
+	case pb.ImgVariant_LARGE:
+		return ct.Large
+	case pb.ImgVariant_ORIGINAL:
+		return ct.Original
+	default:
+		return ct.ImgVariant("") // invalid, but handle gracefully
+	}
+}
 
-// func (s *MediaHandler) UploadImage(ctx context.Context, req *pb.UploadImageRequest,
-// ) (*pb.UploadImageResponse, error) {
-// 	// Call your existing SaveImage method
-// 	info, err := s.Application.SaveImage(ctx, req.FileContent, req.Filename)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to save image: %w", err)
+// ctToPbImgVariant converts customtypes ImgVariant to protobuf ImgVariant
+// func ctToPbImgVariant(v ct.ImgVariant) pb.ImgVariant {
+// 	switch v {
+// 	case ct.Thumbnail:
+// 		return pb.ImgVariant_THUMBNAIL
+// 	case ct.Small:
+// 		return pb.ImgVariant_SMALL
+// 	case ct.Medium:
+// 		return pb.ImgVariant_MEDIUM
+// 	case ct.Large:
+// 		return pb.ImgVariant_LARGE
+// 	case ct.Original:
+// 		return pb.ImgVariant_ORIGINAL
+// 	default:
+// 		return pb.ImgVariant_IMG_VARIANT_UNSPECIFIED
 // 	}
-
-// 	return &pb.UploadImageResponse{
-// 		Id:        info.Id,
-// 		MimeType:  info.MimeType,
-// 		SizeBytes: info.SizeBytes,
-// 		Bucket:    info.Bucket,
-// 		ObjectKey: info.ObjectKey,
-// 	}, nil
 // }
 
-// func (s *MediaHandler) RetrieveImage(
-// 	req *pb.RetrieveImageRequest, stream pb.MediaService_RetrieveImageServer,
-// ) error {
+// pbToCtFileVisibility converts protobuf FileVisibility to customtypes FileVisibility
+func pbToCtFileVisibility(v pb.FileVisibility) ct.FileVisibility {
+	switch v {
+	case pb.FileVisibility_PRIVATE:
+		return ct.Private
+	case pb.FileVisibility_PUBLIC:
+		return ct.Public
+	default:
+		return ct.FileVisibility("") // invalid
+	}
+}
 
-// 	ctx := stream.Context()
-
-// 	// --- 1. Call your domain service ---
-// 	reader, meta, err := s.Application.RetriveImageById(ctx, customtypes.Id(req.ImageId))
-// 	if err != nil {
-// 		return status.Errorf(codes.NotFound, "cannot retrieve image: %v", err)
+// ctToPbFileVisibility converts customtypes FileVisibility to protobuf FileVisibility
+// func ctToPbFileVisibility(v ct.FileVisibility) pb.FileVisibility {
+// 	switch v {
+// 	case ct.Private:
+// 		return pb.FileVisibility_PRIVATE
+// 	case ct.Public:
+// 		return pb.FileVisibility_PUBLIC
+// 	default:
+// 		return pb.FileVisibility_FILE_VISIBILITY_UNSPECIFIED
 // 	}
-// 	defer reader.Close()
-
-// 	// --- 2. Send metadata first ---
-// 	metaMsg := &pb.ImageMeta{
-// 		Id:        meta.Id,
-// 		Filename:  meta.Filename,
-// 		MimeType:  meta.MimeType,
-// 		SizeBytes: meta.SizeBytes,
-// 		Bucket:    meta.Bucket,
-// 		ObjectKey: meta.ObjectKey,
-// 	}
-
-// 	if err := stream.Send(&pb.RetrieveImageResponse{
-// 		Payload: &pb.RetrieveImageResponse_Meta{
-// 			Meta: metaMsg,
-// 		},
-// 	}); err != nil {
-// 		return status.Errorf(codes.Internal, "failed to send meta: %v", err)
-// 	}
-
-// 	// --- 3. Now stream chunks ---
-// 	buf := make([]byte, 32*1024) // 32KB recommended
-
-// 	for {
-// 		n, readErr := reader.Read(buf)
-// 		if readErr == io.EOF {
-// 			break
-// 		}
-// 		if readErr != nil {
-// 			return status.Errorf(codes.Internal, "failed to read image: %v", readErr)
-// 		}
-
-// 		chunk := &pb.ImageChunk{Data: buf[:n]}
-
-// 		if err := stream.Send(&pb.RetrieveImageResponse{
-// 			Payload: &pb.RetrieveImageResponse_Chunk{
-// 				Chunk: chunk,
-// 			},
-// 		}); err != nil {
-// 			return status.Errorf(codes.Internal, "failed to send chunk: %v", err)
-// 		}
-// 	}
-
-// 	return nil
 // }
+
+// pbToMdFileMeta converts protobuf FileMeta to models FileMeta
+func pbToMdFileMeta(fm *pb.FileMeta) md.FileMeta {
+	return md.FileMeta{
+		Id:         ct.Id(fm.Id),
+		Filename:   fm.Filename,
+		MimeType:   fm.MimeType,
+		SizeBytes:  fm.SizeBytes,
+		Bucket:     fm.Bucket,
+		ObjectKey:  fm.ObjectKey,
+		Visibility: pbToCtFileVisibility(fm.Visibility),
+		Variant:    pbToCtImgVariant(fm.Variant),
+	}
+}
+
+// mdToPbFileMeta converts models FileMeta to protobuf FileMeta
+// func mdToPbFileMeta(fm md.FileMeta) *pb.FileMeta {
+// 	return &pb.FileMeta{
+// 		Id:         int64(fm.Id),
+// 		Filename:   fm.Filename,
+// 		MimeType:   fm.MimeType,
+// 		SizeBytes:  fm.SizeBytes,
+// 		Bucket:     fm.Bucket,
+// 		ObjectKey:  fm.ObjectKey,
+// 		Visibility: ctToPbFileVisibility(fm.Visibility),
+// 		Variant:    ctToPbImgVariant(fm.Variant),
+// 	}
+// }
+
+// UploadImage handles the gRPC request for uploading an image
+func (m *MediaHandler) UploadImage(ctx context.Context, req *pb.UploadImageRequest) (*pb.UploadImageResponse, error) {
+	if req == nil || req.FileMeta == nil {
+		return nil, status.Error(codes.InvalidArgument, "request or file_meta is nil")
+	}
+
+	// Convert variants
+	variants := make([]ct.ImgVariant, len(req.Variants))
+	for i, v := range req.Variants {
+		variants[i] = pbToCtImgVariant(v)
+	}
+
+	// Call application
+	fileId, upUrl, err := m.Application.UploadImage(ctx, pbToMdFileMeta(req.FileMeta), time.Duration(req.ExpirationSeconds)*time.Second, variants)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to upload image: %v", err)
+	}
+
+	return &pb.UploadImageResponse{
+		FileId:    int64(fileId),
+		UploadUrl: upUrl,
+	}, nil
+}
+
+// GetImage handles the gRPC request for retrieving an image download URL
+func (m *MediaHandler) GetImage(ctx context.Context, req *pb.GetImageRequest) (*pb.GetImageResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+
+	// Call application
+	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), pbToCtImgVariant(req.Variant))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get image: %v", err)
+	}
+
+	return &pb.GetImageResponse{
+		DownloadUrl: downUrl,
+	}, nil
+}
+
+// ValidateUpload handles the gRPC request for validating upload metadata
+func (m *MediaHandler) ValidateUpload(ctx context.Context, req *pb.ValidateUploadRequest) (*emptypb.Empty, error) {
+	if req == nil || req.Upload == nil {
+		return nil, status.Error(codes.InvalidArgument, "request or upload is nil")
+	}
+
+	// Call application
+	err := m.Application.ValidateUpload(ctx, pbToMdFileMeta(req.Upload))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to validate upload: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
+}

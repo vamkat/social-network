@@ -11,17 +11,7 @@ type File struct {
 	ObjectKey string // the name given to file in fileservice
 
 	Visibility ct.FileVisibility
-	Status     ct.UploadStatus // pending, complete, failed
-	Variant    ct.ImgVariant   // thumb, small, medium, large
-}
+	Status     ct.UploadStatus // pending, processing, complete, failed
 
-type Variant struct {
-	Id        ct.Id
-	FileId    ct.Id
-	Variant   ct.ImgVariant
-	Bucket    string // images, videos etc
-	ObjectKey string // the name given to file in fileservice
-
-	Width  int
-	Height int
+	Variant ct.ImgVariant // thumb, small, medium, large, original
 }

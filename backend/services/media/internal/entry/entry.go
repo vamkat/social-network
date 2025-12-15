@@ -25,16 +25,9 @@ import (
 )
 
 func Run() error {
-	pool, err := connectToDb(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to connect db: %v", err)
-	}
-	defer pool.Close()
-
-	log.Println("Connected to chat database")
-
 	cfgs := configs.Config{
-		Port: ":50051",
+		Port:  os.Getenv("SERVICE_PORT"),
+		DbURl: os.Getenv("DATABASE_URL"),
 		FileService: configs.FileService{
 			Buckets: configs.Buckets{
 				Originals: "uploads-originals",
@@ -45,6 +38,14 @@ func Run() error {
 			Secret:    os.Getenv("MINIO_SECRET_KEY"),
 		},
 	}
+
+	pool, err := connectToDb(context.Background(), cfgs.DbURl)
+	if err != nil {
+		return fmt.Errorf("failed to connect db: %v", err)
+	}
+	defer pool.Close()
+
+	log.Println("Connected to media database")
 
 	fileServiceClient, err := NewMinIOConn(cfgs.FileService)
 	if err != nil {
@@ -82,8 +83,7 @@ func Run() error {
 	return nil
 }
 
-func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
-	connStr := os.Getenv("DATABASE_URL")
+func connectToDb(ctx context.Context, connStr string) (pool *pgxpool.Pool, err error) {
 	for i := range 10 {
 		pool, err = pgxpool.New(ctx, connStr)
 		if err == nil {

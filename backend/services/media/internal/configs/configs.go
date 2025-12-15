@@ -2,6 +2,7 @@ package configs
 
 type Config struct {
 	Port        string
+	DbURl       string
 	FileService FileService
 	Clients     Clients
 }
