@@ -6,6 +6,7 @@ import Image from "next/image";
 import ProfileStats from "./ProfileStats";
 import Modal from "@/components/ui/Modal";
 import { handleFollowRequest, unfollowUser } from "@/services/requests/followRequest";
+import { updatePrivacyAction } from "@/app/actions/settings";
 
 export function ProfileHeader({ user }) {
     const [isFollowing, setIsFollowing] = useState(user.viewer_is_following);
@@ -65,8 +66,24 @@ export function ProfileHeader({ user }) {
     };
 
     const confirmPrivacyToggle = async () => {
-        // Placeholder for future privacy toggle implementation
-        setShowPrivacyModal(false);
+        if (isLoading) return;
+        setIsLoading(true);
+
+        try {
+            const newPrivacyState = !isPublic;
+            const response = await updatePrivacyAction(newPrivacyState);
+
+            if (response.success) {
+                setIsPublic(newPrivacyState);
+                setShowPrivacyModal(false);
+            } else {
+                console.error("Failed to update privacy settings");
+            }
+        } catch (error) {
+            console.error("Error updating privacy:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const canViewProfile = user.own_profile || isPublic || isFollowing;
@@ -210,15 +227,17 @@ export function ProfileHeader({ user }) {
                     <>
                         <button
                             onClick={() => setShowPrivacyModal(false)}
-                            className="px-4 py-2 rounded-full text-sm font-medium text-(--muted) hover:bg-(--muted)/10 transition-colors cursor-pointer"
+                            disabled={isLoading}
+                            className="px-4 py-2 rounded-full text-sm font-medium text-(--muted) hover:bg-(--muted)/10 transition-colors cursor-pointer disabled:opacity-50"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={confirmPrivacyToggle}
-                            className="px-4 py-2 rounded-full text-sm font-medium bg-(--accent) text-background hover:bg-(--accent-hover) transition-opacity cursor-pointer"
+                            disabled={isLoading}
+                            className="px-4 py-2 rounded-full text-sm font-medium bg-(--accent) text-background hover:bg-(--accent-hover) transition-opacity cursor-pointer disabled:opacity-50"
                         >
-                            {isPublic ? "Switch to Private" : "Switch to Public"}
+                            {isLoading ? "Updating..." : (isPublic ? "Switch to Private" : "Switch to Public")}
                         </button>
                     </>
                 }
