@@ -151,7 +151,6 @@ func Start() {
 		time.Duration(cfg.ShutdownTimeout)*time.Second,
 	)
 	defer cancel()
-
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("Graceful server Shutdown Failed: %v", err)
 	}

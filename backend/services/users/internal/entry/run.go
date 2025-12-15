@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"social-network/services/users/internal/application"
-	"social-network/services/users/internal/client"
 	"social-network/services/users/internal/db/sqlc"
 	"social-network/services/users/internal/handler"
 	"social-network/shared/gen-go/chat"
@@ -15,6 +14,7 @@ import (
 	"social-network/shared/gen-go/users"
 	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
+	"social-network/shared/go/postgresql"
 	"syscall"
 	"time"
 
@@ -24,9 +24,11 @@ import (
 //TODO add logs as things are getting initialized
 
 func Run() error {
+	_, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignal()
 
 	// DATABASE
-	pool, err := connectToDb(context.Background(), os.Getenv("DATABASE_URL"))
+	pool, err := postgresql.GetPool(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
@@ -38,7 +40,7 @@ func Run() error {
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
-	notificationsClient, err := gorpc.GetGRpcClient(
+	notifClient, err := gorpc.GetGRpcClient(
 		notifications.NewNotificationServiceClient,
 		"notifications:50051",
 		contextkeys.CommonKeys(),
@@ -47,17 +49,15 @@ func Run() error {
 		log.Fatal("failed to create chat client")
 	}
 
+	querier := sqlc.New(pool)
+	txRunner := postgresql.NewPgxTxRunner[*sqlc.Queries](pool, querier)
+
 	// APPLICATION
-	clients := client.NewClients(chatClient, notificationsClient)
-	app := application.NewApplication(sqlc.New(pool), pool, clients)
+	app := application.NewApplication[application.TxRunner](querier, txRunner, chatClient, notifClient)
 	service := *handler.NewUsersHanlder(app)
 
 	port := ":50051"
 
-	//
-	//
-	//
-	// SERVER
 	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[users.UserServiceServer](
 		users.RegisterUserServiceServer,
 		&service,
@@ -75,11 +75,6 @@ func Run() error {
 		}
 		fmt.Println("server finished")
 	}()
-
-	//
-	//
-	//
-	// SHUTDOWN
 
 	log.Printf("gRPC server listening on %s", port)
 
