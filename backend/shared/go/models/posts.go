@@ -63,16 +63,16 @@ type EditPostReq struct {
 }
 
 type GetUserPostsReq struct {
-	CreatorId   ct.Id
+	CreatorId   ct.Id `json:"creator_id"`
 	RequesterId ct.Id
-	Limit       ct.Limit
-	Offset      ct.Offset
+	Limit       ct.Limit  `json:"limit"`
+	Offset      ct.Offset `json:"offset"`
 }
 
 type GetPersonalizedFeedReq struct {
 	RequesterId ct.Id
-	Limit       ct.Limit
-	Offset      ct.Offset
+	Limit       ct.Limit  `json:"limit"`
+	Offset      ct.Offset `json:"offset"`
 }
 
 type GetGroupPostsReq struct {

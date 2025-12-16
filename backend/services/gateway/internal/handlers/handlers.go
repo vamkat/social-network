@@ -303,6 +303,24 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 5, 5).
 			Finalize(h.getPublicFeed()))
 
+	mux.HandleFunc("/friends-feed",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.getPersonalizedFeed()))
+
+	mux.HandleFunc("/user/posts",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.getUserPostsPaginated()))
+
 	mux.HandleFunc("/post/",
 		Chain().
 			AllowedMethod("POST").
