@@ -20,12 +20,6 @@ type Application struct {
 	userRetriever UserRetriever
 }
 
-type UserHydrator struct {
-	clients UsersBatchClient
-	cache   RedisCache
-	ttl     time.Duration
-}
-
 // UsersBatchClient abstracts the single RPC used by the hydrator to fetch basic user info.
 type UsersBatchClient interface {
 	GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*cm.ListUsers, error)

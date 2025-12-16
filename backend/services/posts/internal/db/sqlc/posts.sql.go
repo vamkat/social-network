@@ -90,7 +90,7 @@ SELECT
     p.id,
     p.post_body,
     p.creator_id,
-    p.group_id,
+    COALESCE(p.group_id, 0)::bigint AS group_id,
     p.audience,
     p.comments_count,
     p.reactions_count,
@@ -121,7 +121,7 @@ type GetMostPopularPostInGroupRow struct {
 	ID              int64
 	PostBody        string
 	CreatorID       int64
-	GroupID         pgtype.Int8
+	GroupID         int64
 	Audience        IntendedAudience
 	CommentsCount   int32
 	ReactionsCount  int32
@@ -184,7 +184,7 @@ SELECT
     p.id,
     p.post_body,
     p.creator_id,
-    p.group_id,
+    COALESCE(p.group_id, 0)::bigint AS group_id,
     p.audience,
     p.comments_count,
     p.reactions_count,
@@ -223,7 +223,7 @@ type GetPostByIDRow struct {
 	ID              int64
 	PostBody        string
 	CreatorID       int64
-	GroupID         pgtype.Int8
+	GroupID         int64
 	Audience        IntendedAudience
 	CommentsCount   int32
 	ReactionsCount  int32

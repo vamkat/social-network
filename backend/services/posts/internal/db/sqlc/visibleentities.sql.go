@@ -26,7 +26,7 @@ WITH ent AS (
     -- Event
     SELECT
         id,
-        creator_id,
+        event_creator_id,
         NULL AS audience,
         group_id
     FROM events
@@ -98,16 +98,14 @@ SELECT
     )::BIGINT AS creator_id,
 
     -- group_id: post.group_id, event.group_id, or parent post group for comments
-    (
-        CASE
-            WHEN mi.content_type = 'post'
-                THEN p.group_id
-            WHEN mi.content_type = 'event'
-                THEN e.group_id
-            WHEN mi.content_type = 'comment'
-                THEN p2.group_id  -- comment's parent post
-        END
-    )::BIGINT AS group_id
+COALESCE(
+    CASE
+        WHEN mi.content_type = 'post'    THEN p.group_id
+        WHEN mi.content_type = 'event'   THEN e.group_id
+        WHEN mi.content_type = 'comment' THEN p2.group_id
+    END,
+    0
+)::BIGINT AS group_id
 
 FROM master_index mi
 LEFT JOIN posts p ON p.id = mi.id

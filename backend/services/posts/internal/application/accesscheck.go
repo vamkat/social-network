@@ -20,9 +20,13 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 	if err != nil {
 		return false, err
 	}
-	isMember, err := s.clients.IsGroupMember(ctx, req.requesterId, row.GroupID)
-	if err != nil {
-		return false, err
+
+	var isMember bool
+	if row.GroupID > 0 {
+		isMember, err = s.clients.IsGroupMember(ctx, req.requesterId, row.GroupID)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	canSee, err := s.db.CanUserSeeEntity(ctx, sqlc.CanUserSeeEntityParams{

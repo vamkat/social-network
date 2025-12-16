@@ -10,47 +10,47 @@ type SimpleIdReq struct {
 
 type GenericReq struct {
 	RequesterId ct.Id
-	EntityId    ct.Id
+	EntityId    ct.Id `json:"entity_id"`
 }
 
 type EntityIdPaginatedReq struct {
 	RequesterId ct.Id
-	EntityId    ct.Id
-	Limit       ct.Limit
-	Offset      ct.Offset
+	EntityId    ct.Id     `json:"entity_id"`
+	Limit       ct.Limit  `json:"limit"`
+	Offset      ct.Offset `json:"offset"`
 }
 
 type GenericPaginatedReq struct {
 	RequesterId ct.Id
-	Limit       ct.Limit
-	Offset      ct.Offset
+	Limit       ct.Limit  `json:"limit"`
+	Offset      ct.Offset `json:"offset"`
 }
 
 // -------------------------------------------
 // Posts
 // -------------------------------------------
 type Post struct {
-	PostId          ct.Id
-	Body            ct.PostBody
-	User            User
-	GroupId         ct.Id `validate:"nullable"`
-	Audience        ct.Audience
-	CommentsCount   int
-	ReactionsCount  int
-	LastCommentedAt ct.GenDateTime
-	CreatedAt       ct.GenDateTime
-	UpdatedAt       ct.GenDateTime
-	LikedByUser     bool
-	Image           ct.Id `validate:"nullable"`
+	PostId          ct.Id          `json:"post_id"`
+	Body            ct.PostBody    `json:"post_body"`
+	User            User           `json:"post_user"`
+	GroupId         ct.Id          `json:"group_id" validate:"nullable"`
+	Audience        ct.Audience    `json:"audience"`
+	CommentsCount   int            `json:"comments_count"`
+	ReactionsCount  int            `json:"reactions_count"`
+	LastCommentedAt ct.GenDateTime `json:"last_commented_at"`
+	CreatedAt       ct.GenDateTime `json:"created_at"`
+	UpdatedAt       ct.GenDateTime `json:"updated_at" validate:"nullable"`
+	LikedByUser     bool           `json:"liked_by_user"`
+	Image           ct.Id          `json:"image" validate:"nullable"`
 }
 
 type CreatePostReq struct {
 	CreatorId   ct.Id
-	Body        ct.PostBody
-	GroupId     ct.Id `validate:"nullable"`
-	Audience    ct.Audience
-	AudienceIds ct.Ids `validate:"nullable"`
-	Image       ct.Id  `validate:"nullable"`
+	Body        ct.PostBody `json:"post_body"`
+	GroupId     ct.Id       `json:"group_id" validate:"nullable"`
+	Audience    ct.Audience `json:"audience"`
+	AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
+	Image       ct.Id       `json:"image" validate:"nullable"`
 }
 
 type EditPostReq struct {

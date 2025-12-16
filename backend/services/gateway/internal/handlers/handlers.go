@@ -90,15 +90,6 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 5, 5).
 			Finalize(h.authStatus()))
 
-	mux.HandleFunc("/public-feed",
-		Chain().
-			AllowedMethod("POST").
-			RateLimit(IP, 5, 5).
-			Auth().
-			EnrichContext().
-			RateLimit(USERID, 5, 5).
-			Finalize(h.getPublicFeed()))
-
 	//NEW ENDPOINTS BELOW:
 
 	// Groups
@@ -300,6 +291,44 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			RateLimit(USERID, 5, 5).
 			Finalize(h.UpdateUserProfile()))
+
+	// POSTS
+
+	mux.HandleFunc("/public-feed",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.getPublicFeed()))
+
+	mux.HandleFunc("/post/",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.getPostById()))
+
+	mux.HandleFunc("/posts/create",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.createPost()))
+
+	mux.HandleFunc("/posts/delete/",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.deletePost()))
 
 	return mux
 }

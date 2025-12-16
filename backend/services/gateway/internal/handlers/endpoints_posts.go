@@ -5,28 +5,35 @@ import (
 	"net/http"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
+	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/customtypes"
-	"time"
+	"social-network/shared/go/models"
 )
 
 func (h *Handlers) getPublicFeed() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("getPublicFeed handler called")
 
+		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
 		}
-		requesterId := int64(claims.UserId)
 
-		grpcReq := posts.GenericPaginatedReq{
-			RequesterId: requesterId,
-			Limit:       10, //hardcoded for now, TODO make dynamic
-			Offset:      0,  ////hardcoded for now, TODO make dynamic
+		body, err := utils.JSON2Struct(&models.GenericPaginatedReq{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
 		}
 
-		grpcResp, err := h.PostsService.GetPublicFeed(r.Context(), &grpcReq)
+		grpcReq := posts.GenericPaginatedReq{
+			RequesterId: claims.UserId,
+			Limit:       body.Limit.Int32(),
+			Offset:      body.Offset.Int32(),
+		}
+
+		grpcResp, err := h.PostsService.GetPublicFeed(ctx, &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
 			return
@@ -34,34 +41,23 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 		fmt.Println("retrieved public feed: ", grpcResp)
 
-		type Post struct {
-			PostId          ct.Id       `json:"post_id"`
-			Body            ct.PostBody `json:"post_body"`
-			CreatorId       ct.Id       `json:"post_creator_id"`
-			CreatorUsername ct.Username `json:"post_creator_username"`
-			CreatorAvater   ct.Id       `json:"post_creator_avatar,omitempty"`
-			CommentsCount   int         `json:"comments_count"`
-			ReactionsCount  int         `json:"reactions_count"`
-			LastCommentedAt time.Time   `json:"last_created_at"`
-			CreatedAt       time.Time   `json:"created_at"`
-			UpdatedAt       time.Time   `json:"updated_at,omitempty"`
-			LikedByUser     bool        `json:"liked_by_user"`
-			Image           ct.Id       `json:"image,omitempty"`
-		}
-
-		var postsResponse []Post
+		var postsResponse []models.Post
 		for _, p := range grpcResp.Posts {
-			post := Post{
-				PostId:          ct.Id(p.PostId),
-				Body:            ct.PostBody(p.PostBody),
-				CreatorId:       ct.Id(p.User.UserId),
-				CreatorUsername: ct.Username(p.User.Username),
-				CreatorAvater:   ct.Id(p.User.Avatar),
+			post := models.Post{
+				PostId: ct.Id(p.PostId),
+				Body:   ct.PostBody(p.PostBody),
+				User: models.User{
+					UserId:   ct.Id(p.User.UserId),
+					Username: ct.Username(p.User.Username),
+					AvatarId: ct.Id(p.User.Avatar),
+				},
+				GroupId:         ct.Id(p.GroupId),
+				Audience:        ct.Audience(p.Audience),
 				CommentsCount:   int(p.CommentsCount),
 				ReactionsCount:  int(p.ReactionsCount),
-				LastCommentedAt: p.LastCommentedAt.AsTime(),
-				CreatedAt:       p.CreatedAt.AsTime(),
-				UpdatedAt:       p.UpdatedAt.AsTime(),
+				LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.AsTime()),
+				CreatedAt:       ct.GenDateTime(p.CreatedAt.AsTime()),
+				UpdatedAt:       ct.GenDateTime(p.UpdatedAt.AsTime()),
 				LikedByUser:     p.LikedByUser,
 				Image:           ct.Id(p.Image),
 			}
@@ -71,6 +67,134 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 		err = utils.WriteJSON(w, http.StatusOK, postsResponse)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send public feed")
+			return
+		}
+
+	}
+}
+
+func (h *Handlers) getPostById() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("getPostById handler called")
+
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		grpcReq := posts.GenericReq{
+			RequesterId: int64(claims.UserId),
+			EntityId:    body.EntityId.Int64(),
+		}
+
+		grpcResp, err := h.PostsService.GetPostById(r.Context(), &grpcReq)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
+			return
+		}
+
+		fmt.Println("retrieved post by id: ", grpcResp)
+
+		post := models.Post{
+			PostId: ct.Id(grpcResp.PostId),
+			Body:   ct.PostBody(grpcResp.PostBody),
+			User: models.User{
+				UserId:   ct.Id(grpcResp.User.UserId),
+				Username: ct.Username(grpcResp.User.Username),
+				AvatarId: ct.Id(grpcResp.User.Avatar),
+			},
+			GroupId:         ct.Id(grpcResp.GroupId),
+			Audience:        ct.Audience(grpcResp.Audience),
+			CommentsCount:   int(grpcResp.CommentsCount),
+			ReactionsCount:  int(grpcResp.ReactionsCount),
+			LastCommentedAt: ct.GenDateTime(grpcResp.LastCommentedAt.AsTime()),
+			CreatedAt:       ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
+			UpdatedAt:       ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
+			LikedByUser:     grpcResp.LikedByUser,
+			Image:           ct.Id(grpcResp.Image),
+		}
+
+		err = utils.WriteJSON(w, http.StatusOK, post)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send post by id")
+			return
+		}
+
+	}
+}
+
+func (h *Handlers) createPost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("createPost handler called")
+
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		type createPostReq struct {
+			Body        string  `json:"post_body"`
+			GroupId     int64   `json:"group_id"`
+			Audience    string  `json:"audience"`
+			AudienceIds []int64 `json:"audience_ids"`
+			Image       int64   `json:"image"`
+		}
+
+		body, err := utils.JSON2Struct(&createPostReq{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		grpcReq := posts.CreatePostReq{
+			CreatorId: int64(claims.UserId),
+			Body:      body.Body,
+			GroupId:   body.GroupId,
+			Audience:  body.Audience,
+			AudienceIds: &common.UserIds{
+				Values: body.AudienceIds,
+			},
+			Image: body.Image,
+		}
+
+		_, err = h.PostsService.CreatePost(r.Context(), &grpcReq)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			return
+		}
+
+	}
+}
+
+func (h *Handlers) deletePost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("deletePost handler called")
+
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		grpcReq := posts.GenericReq{
+			RequesterId: int64(claims.UserId),
+			EntityId:    body.EntityId.Int64(),
+		}
+
+		_, err = h.PostsService.DeletePost(r.Context(), &grpcReq)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 
