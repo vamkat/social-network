@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updatePrivacyAction } from "@/services/actions/settings";
+import { updatePrivacyAction } from "@/actions/profile/settings";
 import { Lock, Globe, Loader2 } from "lucide-react";
 
 export default function PrivacyForm({ user }) {

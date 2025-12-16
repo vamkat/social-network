@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useFormValidation } from "@/hooks/useFormValidation";
-import { login } from "@/services/auth/login";
+import { login } from "@/actions/auth/login";
 import { useStore } from "@/store/store";
 import { useRouter } from "next/router";
 
@@ -28,8 +28,8 @@ export default function LoginForm() {
 
         try {
             // call API to login
-            const resp = await login({identifier, password});
-            
+            const resp = await login({ identifier, password });
+
             // chceck err
             if (!resp.success || resp.error) {
                 setError(resp.error || "Invalid credentials");

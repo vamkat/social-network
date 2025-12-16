@@ -6,9 +6,9 @@ import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useStore } from "@/store/store";
-import { logout } from "@/services/auth/logout";
+import { logout } from "@/actions/auth/logout";
 import { useRouter } from "next/navigation";
-import { SearchUsers } from "@/services/search/searchUsers";
+import { SearchUsers } from "@/actions/search/search-users";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -118,10 +118,9 @@ export default function Navbar() {
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-(--border) bg-(--background)/95 backdrop-blur-md">
             <div className="w-full px-3 sm:px-4 md:px-6">
-                <div className="flex items-center justify-between h-16 gap-3">
-                    {/* Left Section: Logo + Search */}
-                    <div className="flex items-center gap-70 flex-1">
-                        {/* Logo - Hidden on smallest screens */}
+                <div className="relative flex items-center justify-between h-16 gap-3">
+                    {/* Left Section: Logo */}
+                    <div className="flex items-center shrink-0">
                         <Link
                             href="/feed/public"
                             className="hidden sm:flex items-center shrink-0"
@@ -130,66 +129,66 @@ export default function Navbar() {
                                 SocialSphere
                             </span>
                         </Link>
+                    </div>
 
-                        {/* Desktop Search Bar */}
-                        <div className="hidden lg:flex flex-1 max-w-md" ref={searchRef}>
-                            <div className="relative w-full group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    {isSearching ? (
-                                        <Loader2 className="h-4 w-4 text-(--muted) animate-spin" />
-                                    ) : (
-                                        <Search className="h-4 w-4 text-(--muted) group-focus-within:text-(--accent) transition-colors" />
-                                    )}
-                                </div>
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onFocus={() => {
-                                        if (searchResults.length > 0) setShowSearchResults(true);
-                                    }}
-                                    className="block w-full pl-11 pr-4 py-2.5 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
-                                    placeholder="Search users..."
-                                />
-
-                                {/* Search Results Dropdown */}
-                                {showSearchResults && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                        {searchResults.length > 0 ? (
-                                            <div className="py-2">
-                                                {searchResults.map((result) => (
-                                                    <Link
-                                                        key={result.user_id}
-                                                        href={`/profile/${result.user_id}`}
-                                                        onClick={() => {
-                                                            setShowSearchResults(false);
-                                                            setSearchQuery("");
-                                                        }}
-                                                        className="flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors"
-                                                    >
-                                                        <div className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
-                                                            {/* {result.avatar_id ? (
-                                                                <img src={result.avatar_id} alt={result.username} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <User className="w-5 h-5 text-(--muted)" />
-                                                            )} */}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-medium text-foreground truncate">
-                                                                {result.username}
-                                                            </p>
-                                                        </div>
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 text-center text-sm text-(--muted)">
-                                                No users found
-                                            </div>
-                                        )}
-                                    </div>
+                    {/* Desktop Search Bar - Centered */}
+                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-10" ref={searchRef}>
+                        <div className="relative w-full group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                {isSearching ? (
+                                    <Loader2 className="h-4 w-4 text-(--muted) animate-spin" />
+                                ) : (
+                                    <Search className="h-4 w-4 text-(--muted) group-focus-within:text-(--accent) transition-colors" />
                                 )}
                             </div>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => {
+                                    if (searchResults.length > 0) setShowSearchResults(true);
+                                }}
+                                className="block w-full pl-11 pr-4 py-2.5 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
+                                placeholder="Search users..."
+                            />
+
+                            {/* Search Results Dropdown */}
+                            {showSearchResults && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    {searchResults.length > 0 ? (
+                                        <div className="py-2">
+                                            {searchResults.map((result) => (
+                                                <Link
+                                                    key={result.id}
+                                                    href={`/profile/${result.id}`}
+                                                    onClick={() => {
+                                                        setShowSearchResults(false);
+                                                        setSearchQuery("");
+                                                    }}
+                                                    className="flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors"
+                                                >
+                                                    <div className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                        {/* {result.avatar_id ? (
+                                                            <img src={result.avatar_id} alt={result.username} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-5 h-5 text-(--muted)" />
+                                                        )} */}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-foreground truncate">
+                                                            {result.username}
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 text-center text-sm text-(--muted)">
+                                            No users found
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
