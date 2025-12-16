@@ -9,6 +9,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
 
 func NewMinIOConn(cfgs configs.FileService) (*minio.Client, error) {
@@ -39,6 +40,29 @@ func NewMinIOConn(cfgs configs.FileService) (*minio.Client, error) {
 	if err := EnsureBuckets(ctx,
 		minioClient, cfgs.Buckets); err != nil {
 		return nil, err
+	}
+
+	lcfg := lifecycle.NewConfiguration()
+
+	rule := lifecycle.Rule{
+		ID:     "delete-unvalidated",
+		Status: "Enabled",
+		RuleFilter: lifecycle.Filter{
+			Tag: lifecycle.Tag{
+				Key:   "validated",
+				Value: "false",
+			},
+		},
+		Expiration: lifecycle.Expiration{
+			Days: lifecycle.ExpirationDays(1),
+		},
+	}
+
+	lcfg.Rules = append(lcfg.Rules, rule)
+
+	err = minioClient.SetBucketLifecycle(ctx, cfgs.Buckets.Originals, lcfg)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return minioClient, nil

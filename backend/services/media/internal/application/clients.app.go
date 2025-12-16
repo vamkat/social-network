@@ -31,4 +31,9 @@ type Clients interface {
 		ctx context.Context,
 		fm md.FileMeta,
 	) error
+
+	DeleteFile(ctx context.Context,
+		bucket string,
+		objectKey string,
+	) error
 }

@@ -189,7 +189,12 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 	}
 
 	if err := m.Clients.ValidateUpload(ctx, dbToExt(fileMeta)); err != nil {
-		m.Queries.UpdateFileStatus(ctx, fileId, ct.Failed)
+		if err := m.Clients.DeleteFile(ctx, fileMeta.Bucket, fileMeta.ObjectKey); err != nil {
+			return err
+		}
+		if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Failed); err != nil {
+			return err
+		}
 		return err
 	}
 

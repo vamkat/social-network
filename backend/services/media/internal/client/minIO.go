@@ -14,6 +14,7 @@ import (
 	"github.com/chai2010/webp"
 
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/tags"
 	"golang.org/x/image/draw"
 )
 
@@ -77,7 +78,34 @@ func (c *Clients) ValidateUpload(
 	// if _, _, err := image.DecodeConfig(obj); err != nil {
 	// 	return errors.New("invalid image")
 	// }
-	return nil
+
+	tagSet, err := tags.NewTags(map[string]string{
+		"validated": "true",
+	},
+		true,
+	)
+	if err != nil {
+		return err
+	}
+	return c.MinIOClient.PutObjectTagging(
+		ctx,
+		fm.Bucket,
+		fm.ObjectKey,
+		tagSet,
+		minio.PutObjectTaggingOptions{},
+	)
+}
+
+func (c *Clients) DeleteFile(ctx context.Context,
+	bucket string,
+	objectKey string,
+) error {
+	return c.MinIOClient.RemoveObject(
+		ctx,
+		bucket,
+		objectKey,
+		minio.RemoveObjectOptions{},
+	)
 }
 
 func (c *Clients) GenerateVariant(

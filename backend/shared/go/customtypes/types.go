@@ -24,7 +24,6 @@ const (
 	commentBodyCharsMax     = 400
 	eventBodyCharsMin       = 3
 	eventBodyCharsMax       = 400
-	eventDateLayout         = "2006-01-02"
 	dobMinAgeInYears        = 13
 	dobMaxAgeInYears        = 120
 	eventDateMaxMonthsAhead = 6
