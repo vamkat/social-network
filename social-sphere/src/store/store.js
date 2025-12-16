@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { apiRequest } from '@/lib/api'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { getProfileInfo } from '@/actions/profile/get-profile-info';
 
 export const useStore = create(
   persist(
@@ -14,9 +14,12 @@ export const useStore = create(
         set({ loading: true })
         try {
           console.log("calling backend for user data")
-          const userData = await apiRequest(`/profile/${userId}`, {
-            method: "POST",
-          })
+          const userData = await getProfileInfo(userId)
+
+          if (!userData || userData.success === false) {
+            throw new Error(userData?.error || "Failed to load profile");
+          }
+
           set({ user: { id: userData.user_id, avatar: userData.avatar }, loading: false })
           return { success: true }
         } catch (error) {
