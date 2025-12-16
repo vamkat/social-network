@@ -4,7 +4,7 @@ import ct "social-network/shared/go/customtypes"
 
 type FileMeta struct {
 	Id        ct.Id  // db row Id
-	Filename  string `json:"filename"` // the original name given by sender
+	Filename  string // the original name given by sender
 	MimeType  string // content type
 	SizeBytes int64
 	Bucket    string // images, videos etc

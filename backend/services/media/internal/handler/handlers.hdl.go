@@ -7,7 +7,6 @@ import (
 	"social-network/services/media/internal/application"
 	pb "social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
-	md "social-network/shared/go/models"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -81,18 +80,18 @@ func pbToCtFileVisibility(v pb.FileVisibility) ct.FileVisibility {
 // }
 
 // pbToMdFileMeta converts protobuf FileMeta to models FileMeta
-func pbToMdFileMeta(fm *pb.FileMeta) md.FileMeta {
-	return md.FileMeta{
-		Id:         ct.Id(fm.Id),
-		Filename:   fm.Filename,
-		MimeType:   fm.MimeType,
-		SizeBytes:  fm.SizeBytes,
-		Bucket:     fm.Bucket,
-		ObjectKey:  fm.ObjectKey,
-		Visibility: pbToCtFileVisibility(fm.Visibility),
-		Variant:    pbToCtImgVariant(fm.Variant),
-	}
-}
+// func pbToMdFileMeta(fm *pb.FileMeta) md.FileMeta {
+// 	return md.FileMeta{
+// 		Id:         ct.Id(fm.Id),
+// 		Filename:   fm.Filename,
+// 		MimeType:   fm.MimeType,
+// 		SizeBytes:  fm.SizeBytes,
+// 		Bucket:     fm.Bucket,
+// 		ObjectKey:  fm.ObjectKey,
+// 		Visibility: pbToCtFileVisibility(fm.Visibility),
+// 		Variant:    pbToCtImgVariant(fm.Variant),
+// 	}
+// }
 
 // mdToPbFileMeta converts models FileMeta to protobuf FileMeta
 // func mdToPbFileMeta(fm md.FileMeta) *pb.FileMeta {
@@ -110,7 +109,7 @@ func pbToMdFileMeta(fm *pb.FileMeta) md.FileMeta {
 
 // UploadImage handles the gRPC request for uploading an image
 func (m *MediaHandler) UploadImage(ctx context.Context, req *pb.UploadImageRequest) (*pb.UploadImageResponse, error) {
-	if req == nil || req.FileMeta == nil {
+	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request or file_meta is nil")
 	}
 
@@ -119,9 +118,14 @@ func (m *MediaHandler) UploadImage(ctx context.Context, req *pb.UploadImageReque
 	for i, v := range req.Variants {
 		variants[i] = pbToCtImgVariant(v)
 	}
-
+	appReq := application.UploadImageReq{
+		Filename:   req.Filename,
+		MimeType:   req.MimeType,
+		SizeBytes:  req.SizeBytes,
+		Visibility: pbToCtFileVisibility(req.Visibility),
+	}
 	// Call application
-	fileId, upUrl, err := m.Application.UploadImage(ctx, pbToMdFileMeta(req.FileMeta), time.Duration(req.ExpirationSeconds)*time.Second, variants)
+	fileId, upUrl, err := m.Application.UploadImage(ctx, appReq, time.Duration(req.ExpirationSeconds)*time.Second, variants)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to upload image: %v", err)
 	}
@@ -151,12 +155,12 @@ func (m *MediaHandler) GetImage(ctx context.Context, req *pb.GetImageRequest) (*
 
 // ValidateUpload handles the gRPC request for validating upload metadata
 func (m *MediaHandler) ValidateUpload(ctx context.Context, req *pb.ValidateUploadRequest) (*emptypb.Empty, error) {
-	if req == nil || req.Upload == nil {
+	if req == nil || req.FileId < 1 {
 		return nil, status.Error(codes.InvalidArgument, "request or upload is nil")
 	}
 
 	// Call application
-	err := m.Application.ValidateUpload(ctx, pbToMdFileMeta(req.Upload))
+	err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to validate upload: %v", err)
 	}

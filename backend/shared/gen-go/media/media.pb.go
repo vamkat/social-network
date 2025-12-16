@@ -235,9 +235,12 @@ func (x *FileMeta) GetVariant() ImgVariant {
 // Request message for uploading an image
 type UploadImageRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	FileMeta          *FileMeta              `protobuf:"bytes,1,opt,name=file_meta,json=fileMeta,proto3" json:"file_meta,omitempty"`                             // Metadata of the file to upload
-	ExpirationSeconds int64                  `protobuf:"varint,2,opt,name=expiration_seconds,json=expirationSeconds,proto3" json:"expiration_seconds,omitempty"` // Expiration time for the upload URL in seconds
-	Variants          []ImgVariant           `protobuf:"varint,3,rep,packed,name=variants,proto3,enum=media.ImgVariant" json:"variants,omitempty"`               // List of image variants to generate
+	Filename          string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"` // Metadata of the file to upload
+	MimeType          string                 `protobuf:"bytes,2,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+	SizeBytes         int64                  `protobuf:"varint,3,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	Visibility        FileVisibility         `protobuf:"varint,4,opt,name=visibility,proto3,enum=media.FileVisibility" json:"visibility,omitempty"`
+	ExpirationSeconds int64                  `protobuf:"varint,5,opt,name=expiration_seconds,json=expirationSeconds,proto3" json:"expiration_seconds,omitempty"` // Expiration time for the upload URL in seconds
+	Variants          []ImgVariant           `protobuf:"varint,6,rep,packed,name=variants,proto3,enum=media.ImgVariant" json:"variants,omitempty"`               // List of image variants to generate
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -272,11 +275,32 @@ func (*UploadImageRequest) Descriptor() ([]byte, []int) {
 	return file_media_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *UploadImageRequest) GetFileMeta() *FileMeta {
+func (x *UploadImageRequest) GetFilename() string {
 	if x != nil {
-		return x.FileMeta
+		return x.Filename
 	}
-	return nil
+	return ""
+}
+
+func (x *UploadImageRequest) GetMimeType() string {
+	if x != nil {
+		return x.MimeType
+	}
+	return ""
+}
+
+func (x *UploadImageRequest) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+func (x *UploadImageRequest) GetVisibility() FileVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return FileVisibility_FILE_VISIBILITY_UNSPECIFIED
 }
 
 func (x *UploadImageRequest) GetExpirationSeconds() int64 {
@@ -447,7 +471,7 @@ func (x *GetImageResponse) GetDownloadUrl() string {
 // Request message for validating an upload
 type ValidateUploadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Upload        *FileMeta              `protobuf:"bytes,1,opt,name=upload,proto3" json:"upload,omitempty"` // Metadata of the upload to validate
+	FileId        int64                  `protobuf:"varint,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"` // Metadata of the upload to validate
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -482,11 +506,11 @@ func (*ValidateUploadRequest) Descriptor() ([]byte, []int) {
 	return file_media_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ValidateUploadRequest) GetUpload() *FileMeta {
+func (x *ValidateUploadRequest) GetFileId() int64 {
 	if x != nil {
-		return x.Upload
+		return x.FileId
 	}
-	return nil
+	return 0
 }
 
 var File_media_proto protoreflect.FileDescriptor
@@ -506,11 +530,17 @@ const file_media_proto_rawDesc = "" +
 	"\n" +
 	"visibility\x18\a \x01(\x0e2\x15.media.FileVisibilityR\n" +
 	"visibility\x12+\n" +
-	"\avariant\x18\b \x01(\x0e2\x11.media.ImgVariantR\avariant\"\xa0\x01\n" +
-	"\x12UploadImageRequest\x12,\n" +
-	"\tfile_meta\x18\x01 \x01(\v2\x0f.media.FileMetaR\bfileMeta\x12-\n" +
-	"\x12expiration_seconds\x18\x02 \x01(\x03R\x11expirationSeconds\x12-\n" +
-	"\bvariants\x18\x03 \x03(\x0e2\x11.media.ImgVariantR\bvariants\"M\n" +
+	"\avariant\x18\b \x01(\x0e2\x11.media.ImgVariantR\avariant\"\x81\x02\n" +
+	"\x12UploadImageRequest\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x1b\n" +
+	"\tmime_type\x18\x02 \x01(\tR\bmimeType\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x03 \x01(\x03R\tsizeBytes\x125\n" +
+	"\n" +
+	"visibility\x18\x04 \x01(\x0e2\x15.media.FileVisibilityR\n" +
+	"visibility\x12-\n" +
+	"\x12expiration_seconds\x18\x05 \x01(\x03R\x11expirationSeconds\x12-\n" +
+	"\bvariants\x18\x06 \x03(\x0e2\x11.media.ImgVariantR\bvariants\"M\n" +
 	"\x13UploadImageResponse\x12\x17\n" +
 	"\afile_id\x18\x01 \x01(\x03R\x06fileId\x12\x1d\n" +
 	"\n" +
@@ -519,9 +549,9 @@ const file_media_proto_rawDesc = "" +
 	"\bimage_id\x18\x01 \x01(\x03R\aimageId\x12+\n" +
 	"\avariant\x18\x02 \x01(\x0e2\x11.media.ImgVariantR\avariant\"5\n" +
 	"\x10GetImageResponse\x12!\n" +
-	"\fdownload_url\x18\x01 \x01(\tR\vdownloadUrl\"@\n" +
-	"\x15ValidateUploadRequest\x12'\n" +
-	"\x06upload\x18\x01 \x01(\v2\x0f.media.FileMetaR\x06upload*h\n" +
+	"\fdownload_url\x18\x01 \x01(\tR\vdownloadUrl\"0\n" +
+	"\x15ValidateUploadRequest\x12\x17\n" +
+	"\afile_id\x18\x01 \x01(\x03R\x06fileId*h\n" +
 	"\n" +
 	"ImgVariant\x12\x1b\n" +
 	"\x17IMG_VARIANT_UNSPECIFIED\x10\x00\x12\r\n" +
@@ -569,21 +599,20 @@ var file_media_proto_goTypes = []any{
 var file_media_proto_depIdxs = []int32{
 	1, // 0: media.FileMeta.visibility:type_name -> media.FileVisibility
 	0, // 1: media.FileMeta.variant:type_name -> media.ImgVariant
-	2, // 2: media.UploadImageRequest.file_meta:type_name -> media.FileMeta
+	1, // 2: media.UploadImageRequest.visibility:type_name -> media.FileVisibility
 	0, // 3: media.UploadImageRequest.variants:type_name -> media.ImgVariant
 	0, // 4: media.GetImageRequest.variant:type_name -> media.ImgVariant
-	2, // 5: media.ValidateUploadRequest.upload:type_name -> media.FileMeta
-	3, // 6: media.MediaService.UploadImage:input_type -> media.UploadImageRequest
-	5, // 7: media.MediaService.GetImage:input_type -> media.GetImageRequest
-	7, // 8: media.MediaService.ValidateUpload:input_type -> media.ValidateUploadRequest
-	4, // 9: media.MediaService.UploadImage:output_type -> media.UploadImageResponse
-	6, // 10: media.MediaService.GetImage:output_type -> media.GetImageResponse
-	8, // 11: media.MediaService.ValidateUpload:output_type -> google.protobuf.Empty
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	3, // 5: media.MediaService.UploadImage:input_type -> media.UploadImageRequest
+	5, // 6: media.MediaService.GetImage:input_type -> media.GetImageRequest
+	7, // 7: media.MediaService.ValidateUpload:input_type -> media.ValidateUploadRequest
+	4, // 8: media.MediaService.UploadImage:output_type -> media.UploadImageResponse
+	6, // 9: media.MediaService.GetImage:output_type -> media.GetImageResponse
+	8, // 10: media.MediaService.ValidateUpload:output_type -> google.protobuf.Empty
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_media_proto_init() }

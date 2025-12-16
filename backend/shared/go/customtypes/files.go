@@ -24,7 +24,7 @@ func (v FileVisibility) String() string {
 	return string(v)
 }
 
-func (v FileVisibility) isValid() bool {
+func (v FileVisibility) IsValid() bool {
 	switch v {
 	case Private, Public:
 		return true
@@ -34,7 +34,7 @@ func (v FileVisibility) isValid() bool {
 }
 
 func (v FileVisibility) Validate() error {
-	if !v.isValid() {
+	if !v.IsValid() {
 		return fmt.Errorf("invalid FileVisibility: %q", v)
 	}
 	return nil
@@ -54,7 +54,7 @@ func (v *FileVisibility) UnmarshalJSON(data []byte) error {
 	}
 
 	val := FileVisibility(s)
-	if !val.isValid() {
+	if !val.IsValid() {
 		return fmt.Errorf("invalid FileVisibility: %q", s)
 	}
 
@@ -71,14 +71,14 @@ func (v *FileVisibility) Scan(src any) error {
 	switch s := src.(type) {
 	case string:
 		val := FileVisibility(s)
-		if !val.isValid() {
+		if !val.IsValid() {
 			return fmt.Errorf("invalid FileVisibility: %q", s)
 		}
 		*v = val
 		return nil
 	case []byte:
 		val := FileVisibility(string(s))
-		if !val.isValid() {
+		if !val.IsValid() {
 			return fmt.Errorf("invalid FileVisibility: %q", s)
 		}
 		*v = val

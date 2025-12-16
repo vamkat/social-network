@@ -37,9 +37,12 @@ message FileMeta {
 
 // Request message for uploading an image
 message UploadImageRequest {
-  FileMeta file_meta = 1; // Metadata of the file to upload
-  int64 expiration_seconds = 2; // Expiration time for the upload URL in seconds
-  repeated ImgVariant variants = 3; // List of image variants to generate
+  string filename = 1; // Metadata of the file to upload
+  string mime_type = 2;
+  int64 size_bytes = 3;
+  FileVisibility visibility = 4;
+  int64 expiration_seconds = 5; // Expiration time for the upload URL in seconds
+  repeated ImgVariant variants = 6; // List of image variants to generate
 }
 
 // Response message for uploading an image
@@ -61,7 +64,7 @@ message GetImageResponse {
 
 // Request message for validating an upload
 message ValidateUploadRequest {
-  FileMeta upload = 1; // Metadata of the upload to validate
+  int64 file_id = 1; // Metadata of the upload to validate
 }
 
 // Service definition for media operations
