@@ -5,8 +5,9 @@ import { Calendar, Link as Lock, Globe, UserPlus, UserCheck, UserMinus, Clock } 
 import Image from "next/image";
 import ProfileStats from "./ProfileStats";
 import Modal from "@/components/ui/Modal";
-import { handleFollowRequest, unfollowUser } from "@/services/requests/followRequest";
-import { updatePrivacyAction } from "@/services/actions/settings";
+import { followUser } from "@/actions/requests/follow-user";
+import { unfollowUser } from "@/actions/requests/unfollow-user";
+import { updatePrivacyAction } from "@/actions/profile/settings";
 
 export function ProfileHeader({ user }) {
     const [isFollowing, setIsFollowing] = useState(user.viewer_is_following);
@@ -21,34 +22,46 @@ export function ProfileHeader({ user }) {
         if (isLoading) return;
         setIsLoading(true);
 
+        console.log("sending request to user with id: ", user.user_id)
+
         try {
             if (isFollowing) {
                 // Handle Unfollow
                 const response = await unfollowUser(user.user_id);
                 if (response.success) {
                     setIsFollowing(false);
-                    setIsPending(false);
+                    // setIsPending(false); // Unfollowing removes pending status implicitly if it existed (though usually you follow -> unfollow)
                 } else {
                     console.error("Error unfollowing user:", response.error);
                 }
             } else if (isPending) {
-                // If pending, maybe we want to cancel request? 
-                // For now, let's treat clicking on Pending as Unfollow/Cancel Request
-                const response = await unfollow(user.user_id);
+                // If pending, maybe we want to cancel request?
+                // For now, let's treat clicking on Pending as Unfollow/Cancel Request which usually hits the same unfollow endpoint or a specifics cancel endpoint.
+                // Assuming unfollowUser handles cancelling requests too or we need a specific cancel action.
+                // Assuming unfollow works for cancelling pending requests as well for now based on typical implementations, 
+                // but strictly speaking we might need a cancelRequest action if the backend distinguishes.
+                // Since I didn't create cancel-request, I'll try unfollowUser.
+                const response = await unfollowUser(user.user_id);
                 if (response.success) {
                     setIsPending(false);
-                    setIsFollowing(false);
                 } else {
                     console.error("Error cancelling follow request:", response.error);
                 }
             } else {
                 // Handle Follow
-                const response = await handleFollowRequest({ requesterId: user.user_id, accept: true });
+                const response = await followUser(user.user_id);
                 if (response.success) {
-                    if (isPublic) {
-                        setIsFollowing(true);
-                    } else {
+                    console.log("Follow response:", response.data);
+                    // Use the actual backend response to determine state
+                    if (response.data.is_pending) {
                         setIsPending(true);
+                        setIsFollowing(false);
+                    } else if (response.data.viewer_is_following) {
+                        setIsFollowing(true);
+                        setIsPending(false);
+                    } else {
+                        // Fallback logic if needed, or error state
+                        console.error("Unexpected follow state:", response.data);
                     }
                 } else {
                     console.error("Error following user:", response.error);

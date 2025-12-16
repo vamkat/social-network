@@ -1,4 +1,4 @@
-import { getProfileInfo } from "@/services/profile/getProfileInfo";
+import { getProfileInfo } from "@/actions/profile/get-profile-info";
 import { redirect } from "next/navigation";
 import SettingsClient from "./SettingsClient";
 

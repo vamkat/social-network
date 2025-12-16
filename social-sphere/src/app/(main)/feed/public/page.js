@@ -1,8 +1,7 @@
 import { LogoutButton } from "@/components/LogoutButton";
-import { getPublicPosts } from "@/services/posts/public-posts";
+import { getPublicPosts } from "@/actions/posts/get-public-posts";
 import PostCard from "@/components/ui/PostCard";
 import CreatePost from "@/components/ui/CreatePost";
-import { getAllGroups } from "@/services/groups/getAllGroups";
 
 export const metadata = {
     title: "Public Feed",
@@ -13,9 +12,7 @@ export default async function PublicFeedPage() {
     const limit = 10;
     const offset = 0;
     const posts = await getPublicPosts({ limit, offset });
-    const groups = await getAllGroups({ limit, offset });
     console.log("posts", posts);
-    console.log("groups", groups);
 
     return (
         <div>

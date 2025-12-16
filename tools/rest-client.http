@@ -1,4 +1,5 @@
 @baseUrl = http://localhost:8081
+@token= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMSwiZXhwIjoxNzgxNTk2NTk1LCJpYXQiOjE3NjU4NzE3OTV9.t26_Z2z_7PbcCo232SlQIIo1maR7nPJ8o627yybHGkw"
 
 ### 1) LOGIN
 POST {{baseUrl}}/login
@@ -20,7 +21,7 @@ Content-Type: multipart/form-data; boundary=BOUNDARY
 --BOUNDARY
 Content-Disposition: form-data; name="username"
 
-myuser1234
+user123
 --BOUNDARY
 Content-Disposition: form-data; name="first_name"
 
@@ -44,7 +45,7 @@ true
 --BOUNDARY
 Content-Disposition: form-data; name="email"
 
-john22@example.com
+user123@example.com
 --BOUNDARY
 Content-Disposition: form-data; name="password"
 
@@ -56,13 +57,9 @@ superSecret1234
 # use user id from register or login
 POST {{baseUrl}}/profile/GWpmbk5ezJn4 
 
-### 5) PUBLICFEED
-
-# use user id from register or login
-GET {{baseUrl}}/public-feed 
 
 ### 5) FOLLOW SUGGESTIONS
-GET {{baseUrl}}/users/follow-suggestions
+POST {{baseUrl}}/users/follow-suggestions
 
 ### 6) USER GROUPS
 POST {{baseUrl}}/groups/user/
@@ -80,4 +77,41 @@ Content-Type: application/json
 {
   "old_password": "superSecret1234",
   "new_password": "superSecret123"
+}
+
+### GET POST BY ID
+POST {{baseUrl}}/post/
+Content-Type: application/json
+
+{
+  "entity_id": 1,
+}
+
+### CREATE POST
+POST {{baseUrl}}/posts/create
+Content-Type: application/json
+
+{
+	"body": "What a glorious day",
+	"audience":"everyone"
+	
+}
+
+### DELETE POST
+POST {{baseUrl}}/posts/delete/
+Content-Type: application/json
+
+{
+  "entity_id": ,
+}
+
+###  PUBLICFEED
+
+# use user id from register or login
+POST {{baseUrl}}/public-feed 
+Content-Type: application/json
+Authorization: Bearer {{token}}
+{
+  "limit": 10,
+  "offset": 0
 }

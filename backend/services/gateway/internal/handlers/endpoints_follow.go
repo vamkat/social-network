@@ -103,11 +103,7 @@ func (s *Handlers) FollowUser() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			TargetUserId int64 `json:"target_user_id"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
+		body, err := utils.JSON2Struct(&models.FollowUserReq{}, r)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
 			return
@@ -115,7 +111,7 @@ func (s *Handlers) FollowUser() http.HandlerFunc {
 
 		req := users.FollowUserRequest{
 			FollowerId:   claims.UserId,
-			TargetUserId: body.TargetUserId,
+			TargetUserId: body.TargetUserId.Int64(),
 		}
 
 		resp, err := s.UsersService.FollowUser(ctx, &req)

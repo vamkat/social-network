@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { useFormValidation } from "@/hooks/useFormValidation";
-import { register } from "@/services/auth/register";
+import { register } from "@/actions/auth/register";
 import { useStore } from "@/store/store";
 
 export default function RegisterForm() {
@@ -28,8 +28,14 @@ export default function RegisterForm() {
         const formData = new FormData(event.currentTarget);
 
         // Append avatar file if present
-        if (avatarFile) {
+        if (formData.get("avatar").size > 0) {
             formData.set("avatar", avatarFile);
+        } else {
+            formData.delete("avatar");
+        }
+
+        for (const [key, value] of formData.entries()) {
+            console.log(key, value);
         }
 
         try {

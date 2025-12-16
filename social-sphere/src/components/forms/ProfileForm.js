@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateProfileAction } from "@/services/actions/settings";
+import { updateProfileAction } from "@/actions/profile/settings";
 import { Camera, Loader2 } from "lucide-react";
 
 const initialState = {

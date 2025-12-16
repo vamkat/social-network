@@ -1,6 +1,6 @@
 "use server";
 
-import { updateProfileInfo, updateProfileEmail, updateProfilePassword, updateProfilePrivacy } from "@/services/profile/updateProfile";
+import { updateProfileInfo, updateProfileEmail, updateProfilePassword, updateProfilePrivacy } from "@/actions/profile/update-profile";
 import { revalidatePath } from "next/cache";
 import { isValidEmail, isStrongPassword, calculateAge, USERNAME_PATTERN, ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/validation";
 

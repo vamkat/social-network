@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 // import { fetchComments } from "@/services/comments/comments";
 import { Heart, MessageCircle, Pencil, Trash2, MoreHorizontal, Share2, Globe, Lock, Users } from "lucide-react";
-import PostImage from "./PostImage";
+// import PostImage from "./PostImage";
 
 export default function PostCard({ post }) {
     const [comments, setComments] = useState([]);
@@ -177,19 +177,19 @@ export default function PostCard({ post }) {
             {/* Header */}
             <div className="p-5 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <Link href={`/profile/${post.post_creator_id}`} className="shrink-0">
+                    <Link href={`/profile/${post.post_user.id}`} className="shrink-0">
                         {/* <div className="w-10 h-10 rounded-full overflow-hidden border border-(--border)">
                             <img
-                                src={post.post_creator_avatar}
+                                src={post.post_user.avatar_id}
                                 alt="Avatar"
                                 className="w-full h-full object-cover"
                             />
                         </div> */}
                     </Link>
                     <div>
-                        <Link href={`/profile/${post.post_creator_id}`}>
+                        <Link href={`/profile/${post.post_user.id}`}>
                             <h3 className="font-semibold text-foreground hover:underline decoration-2 underline-offset-2">
-                                @{post.post_creator_username}
+                                @{post.post_user.username}
                             </h3>
                         </Link>
                         <div className="flex items-center gap-2 text-xs text-(--muted) mt-0.5">
@@ -265,7 +265,7 @@ export default function PostCard({ post }) {
                     <div className="flex items-center gap-6">
                         <button
                             className="flex items-center gap-2 text-(--muted) hover:text-red-500 transition-colors group/heart"
-                            
+
                         >
                             <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110 ${post.liked_by_user ? "fill-red-500 text-red-500" : ""}`} />
                             <span className="text-sm font-medium">{post.reactions_count}</span>
@@ -273,7 +273,7 @@ export default function PostCard({ post }) {
 
                         <button
                             className={`flex items-center gap-2 transition-colors group/comment ${isExpanded ? "text-(--accent)" : "text-(--muted) hover:text-(--accent)"}`}
-                            
+
                         >
                             <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 ${isExpanded ? "fill-(--accent)/10" : ""}`} />
                             <span className="text-sm font-medium">{post.comments_count}</span>
@@ -285,7 +285,7 @@ export default function PostCard({ post }) {
             {/* Expanded Section: Comments + Composer */}
             {/* {isExpanded && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-200"> */}
-                    {/* Comments List
+            {/* Comments List
                     {comments.length > 0 && (
                         <div className="bg-(--muted)/5 border-t border-(--border) px-5 py-4">
                             {hasMore && (
@@ -377,7 +377,7 @@ export default function PostCard({ post }) {
                     )}
 
                     {/* Comment Composer */}
-                    {/* <div className="border-t border-(--border) p-4 bg-(--muted)/5">
+            {/* <div className="border-t border-(--border) p-4 bg-(--muted)/5">
                         <div className="flex gap-3">
                             <div className="w-8 h-8 rounded-full overflow-hidden bg-(--muted)/10 shrink-0">
                                 {currentUser?.Avatar && (

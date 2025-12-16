@@ -87,19 +87,6 @@ func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) err
 		return err
 	}
 
-	accessCtx := accessContext{
-		requesterId: req.RequesterId.Int64(),
-		entityId:    req.EntityId.Int64(),
-	}
-
-	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if err != nil {
-		return err
-	}
-	if !hasAccess {
-		return ErrNotAllowed
-	}
-
 	rowsAffected, err := s.db.DeletePost(ctx, sqlc.DeletePostParams{
 		ID:        int64(req.EntityId),
 		CreatorID: req.RequesterId.Int64(),
@@ -258,7 +245,10 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 		return models.Post{}, ErrNotAllowed
 	}
 
-	p, err := s.db.GetPostByID(ctx, sqlc.GetPostByIDParams{})
+	p, err := s.db.GetPostByID(ctx, sqlc.GetPostByIDParams{
+		UserID: req.RequesterId.Int64(),
+		ID:     req.EntityId.Int64(),
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.Post{}, ErrNotFound
@@ -271,20 +261,18 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 		return models.Post{}, err
 	}
 
-	var groupId pgtype.Int8
-	groupId.Int64 = p.GroupID.Int64
-	groupId.Valid = true
 	post := models.Post{
 		PostId:          ct.Id(p.ID),
 		Body:            ct.PostBody(p.PostBody),
 		User:            userMap[p.CreatorID],
-		GroupId:         ct.Id(groupId.Int64),
+		GroupId:         ct.Id(p.GroupID),
 		Audience:        ct.Audience(p.Audience),
 		CommentsCount:   int(p.CommentsCount),
 		ReactionsCount:  int(p.ReactionsCount),
 		LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.Time),
 		CreatedAt:       ct.GenDateTime(p.CreatedAt.Time),
 		UpdatedAt:       ct.GenDateTime(p.UpdatedAt.Time),
+		LikedByUser:     p.LikedByUser,
 		Image:           ct.Id(p.Image),
 	}
 
