@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"social-network/services/gateway/internal/middleware"
 	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	"social-network/shared/go/ratelimit"
@@ -14,6 +15,7 @@ type Handlers struct {
 	UsersService users.UserServiceClient
 	PostsService posts.PostsServiceClient
 	ChatService  chat.ChatServiceClient
+	MediaService media.MediaServiceClient
 }
 
 func NewHandlers(
@@ -22,6 +24,7 @@ func NewHandlers(
 	UsersService users.UserServiceClient,
 	PostsService posts.PostsServiceClient,
 	ChatService chat.ChatServiceClient,
+	MediaService media.MediaServiceClient,
 ) *http.ServeMux {
 	handlers := Handlers{
 		CacheService: CacheService,
@@ -356,6 +359,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			RateLimit(USERID, 5, 5).
 			Finalize(h.createComment()))
+
+	mux.HandleFunc("/comments/",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.getCommentsByParentId()))
 
 	return mux
 }

@@ -210,24 +210,24 @@ services:
   #     - "50055:50051" 
 
 
-  # media-db:
-  #   image: postgres:16
-  #   container_name: media-db
-  #   environment:
-  #     <<: *common-env
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: secret
-  #     POSTGRES_DB: social_media
-  #   ports:
-  #     - "5437:5432"
-  #   volumes:
-  #     - media-db-data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres -d social_media"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 5s
+  media-db:
+    image: postgres:16
+    container_name: media-db
+    environment:
+      <<: *common-env
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_media
+    ports:
+      - "5437:5432"
+    volumes:
+      - media-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d social_media"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # # ---------------------------
   # # MINIO
@@ -275,8 +275,7 @@ services:
     depends_on:
       redis:
         condition: service_started
-      minio:
-        condition: service_healthy
+
 
 
   # social-sphere:

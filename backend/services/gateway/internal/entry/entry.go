@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"social-network/services/gateway/internal/handlers"
 	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
@@ -29,6 +30,7 @@ type configs struct {
 	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
 	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
 	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
+	MediaGRPCAddr string `env:"MEDIA_GRPC_ADDR"`
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
@@ -45,6 +47,7 @@ func init() {
 		UsersGRPCAddr:   "users:50051",
 		PostsGRPCAddr:   "posts:50051",
 		ChatGRPCAddr:    "chat:50051",
+		MediaGRPCAddr:   "media:50051",
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
 	}
@@ -101,6 +104,15 @@ func Start() {
 		log.Fatalf("failed to connect to chat service: %v", err)
 	}
 
+	MediaService, err := gorpc.GetGRpcClient(
+		media.NewMediaServiceClient,
+		cfg.MediaGRPCAddr,
+		contextkeys.CommonKeys(),
+	)
+	if err != nil {
+		log.Fatalf("failed to connect to media service: %v", err)
+	}
+
 	//
 	//
 	//
@@ -111,6 +123,7 @@ func Start() {
 		UsersService,
 		PostsService,
 		ChatService,
+		MediaService,
 	)
 	if err != nil {
 		log.Fatal("Can't create handlers, ERROR:", err)
