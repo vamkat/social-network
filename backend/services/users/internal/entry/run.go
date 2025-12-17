@@ -2,6 +2,7 @@ package entry
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"social-network/shared/gen-go/users"
 	contextkeys "social-network/shared/go/context-keys"
 	"social-network/shared/go/gorpc"
+	"social-network/shared/go/postgresql"
 	"syscall"
 	"time"
 
@@ -104,5 +106,19 @@ func connectToDb(ctx context.Context, address string) (pool *pgxpool.Pool, err e
 		log.Printf("DB not ready yet (attempt %d): %v", i+1, err)
 		time.Sleep(2 * time.Second)
 	}
+	ttest()
 	return pool, err
+}
+
+func ttest() {
+	pool, _ := postgresql.NewPool(context.Background(), os.Getenv("DATABASE_URL"))
+
+	queries := sqlc.New(pool)
+	x := sql.DB{}
+	y, _ := x.Begin()
+
+	queriesTx := queries.WithTx(context.Background())
+
+	queries.AcceptFollowRequest()
+
 }
