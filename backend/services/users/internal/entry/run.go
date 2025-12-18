@@ -2,7 +2,6 @@ package entry
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -111,14 +110,26 @@ func connectToDb(ctx context.Context, address string) (pool *pgxpool.Pool, err e
 }
 
 func ttest() {
-	pool, _ := postgresql.NewPool(context.Background(), os.Getenv("DATABASE_URL"))
+	ctx := context.Background()
 
-	queries := sqlc.New(pool)
-	x := sql.DB{}
-	y, _ := x.Begin()
+	//create it
+	pg, err := postgresql.NewPostgre(ctx, os.Getenv("DATABASE_URL"), sqlc.New, &sqlc.Queries{})
+	if err != nil {
+		log.Fatal("failed to create postgre instance")
+	}
 
-	queriesTx := queries.WithTx(context.Background())
+	//use it without transaction
+	pg.Queries().AcceptFollowRequest(ctx, sqlc.AcceptFollowRequestParams{})
 
-	queries.AcceptFollowRequest()
+	//use itwith transaction
+	TxQueries, tx, err := pg.TxQueries(ctx)
+	if err != nil {
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	TxQueries.AcceptFollowRequest(ctx, sqlc.AcceptFollowRequestParams{})
+
+	tx.Commit(ctx)
 
 }

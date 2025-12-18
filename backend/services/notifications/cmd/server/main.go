@@ -6,7 +6,6 @@ import (
 	"os"
 	"social-network/services/notifications/internal/application"
 	"social-network/services/notifications/internal/server"
-	"social-network/shared/go/postgresql"
 	"time"
 
 	"social-network/services/notifications/internal/db/sqlc"
@@ -51,11 +50,4 @@ func main() {
 	s := server.NewNotificationsServer(app)
 	s.InitClients()
 	s.RunGRPCServer()
-}
-
-func test() {
-	pool, _ := postgresql.NewPool(context.Background(), os.Getenv("DATABASE_URL"))
-	postgre, _ := postgresql.NewPostgre(pool, sqlc.New(pool))
-	p.Queries.CreateNotification(back)
-
 }
