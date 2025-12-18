@@ -9,9 +9,10 @@ import (
 )
 
 type Clients struct {
-	Configs     configs.FileService
-	MinIOClient *minio.Client
-	Validator   Validator
+	Configs           configs.FileService
+	MinIOClient       *minio.Client
+	PublicMinIOClient *minio.Client
+	Validator         Validator
 }
 
 type Validator interface {

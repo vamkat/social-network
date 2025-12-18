@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"social-network/services/media/internal/db/dbservice"
 	ct "social-network/shared/go/customtypes"
@@ -44,7 +45,7 @@ func (m *MediaService) UploadImage(ctx context.Context,
 				Visibility: req.Visibility,
 				Bucket:     m.Cfgs.FileService.Buckets.Originals,
 				ObjectKey:  objectKey,
-				Status:     ct.Complete,
+				Status:     ct.Pending,
 				Variant:    ct.Original,
 			})
 
@@ -215,6 +216,8 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 	if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Complete); err != nil {
 		return err
 	}
+
+	log.Printf("Media Service: FileId %v successfully validated and marked as Complete", fileId)
 
 	return nil
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { register } from "@/actions/auth/register";
+import { validateUpload } from "@/actions/auth/validate-upload";
 import { useStore } from "@/store/store";
 
 export default function RegisterForm() {
@@ -25,32 +26,66 @@ export default function RegisterForm() {
         setIsLoading(true);
         setError("");
 
-        const formData = new FormData(event.currentTarget);
+        const rawFormData = new FormData(event.currentTarget);
+        const userData = {
+            username: rawFormData.get("username"),
+            first_name: rawFormData.get("first_name"),
+            last_name: rawFormData.get("last_name"),
+            date_of_birth: rawFormData.get("date_of_birth"),
+            about: rawFormData.get("about"),
+            email: rawFormData.get("email"),
+            password: rawFormData.get("password"),
+        };
 
-        // Append avatar file if present
-        if (formData.get("avatar").size > 0) {
-            formData.set("avatar", avatarFile);
-        } else {
-            formData.delete("avatar");
+        // Add avatar metadata if present
+        if (avatarFile) {
+            userData.avatar_name = avatarFile.name;
+            userData.avatar_size = avatarFile.size;
+            userData.avatar_type = avatarFile.type;
         }
 
-        for (const [key, value] of formData.entries()) {
-            console.log(key, value);
-        }
+        console.log("userData", userData);
 
         try {
-            // call API to register
-            const resp = await register(formData);
+            // Step 1: Register with metadata
+            const resp = await register(userData);
 
-            // check err
             if (!resp.success || resp.error) {
                 setError(resp.error || "Registration failed")
                 setIsLoading(false);
                 return;
             }
 
+            // Step 2: Upload avatar if needed
+            if (avatarFile && resp.UploadUrl) {
+                try {
+                    const uploadRes = await fetch(resp.UploadUrl, {
+                        method: "PUT",
+                        body: avatarFile
+                    });
+
+                    if (!uploadRes.ok) {
+                        const errorText = await uploadRes.text();
+                        throw new Error(`Storage error (${uploadRes.status}): ${errorText}`);
+                    }
+
+                    // Step 3: Validate upload
+                    const validateResp = await validateUpload(resp.FileId);
+                    if (!validateResp.success) {
+                        console.error("Upload validation failed:", validateResp.error);
+                        // We might continue anyway if registration was successful
+                    }
+                } catch (uploadError) {
+                    console.error("Avatar upload error:", uploadError);
+                    setError("Avatar upload failed: " + uploadError.message);
+                    // Optional: we could still proceed if registration itself succeeded
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             // get user id from response, get user profile and store in localStorage
-            const user = await loadUserProfile(resp.user_id);
+            const user = await loadUserProfile(resp.UserId);
 
             // check err
             if (!user.success) {

@@ -11,6 +11,7 @@ type Config struct {
 
 type FileService struct {
 	Endpoint              string
+	PublicEndpoint        string
 	AccessKey             string
 	Secret                string
 	Buckets               Buckets

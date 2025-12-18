@@ -341,6 +341,7 @@ func (q *Queries) GetPendingVariants(
 		FROM file_variants fv
 		JOIN files f ON fv.file_id = f.id
 		WHERE fv.status = 'pending'
+		  AND f.status = 'complete'
 	`
 
 	rows, err := q.db.Query(ctx, query)

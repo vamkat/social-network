@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/media"
@@ -28,6 +29,9 @@ func (h *Handlers) validateFileUpload() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+
+		log.Printf("Gateway: Successfully validated file upload for FileId: %v", httpReq.FileId)
+
 		if err := utils.WriteJSON(w, http.StatusCreated, nil); err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send registration ACK")
 			return

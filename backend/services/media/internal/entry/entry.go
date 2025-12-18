@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/minio/minio-go/v7"
 	"google.golang.org/grpc"
 )
 
@@ -50,10 +51,18 @@ func Run() error {
 					"image/gif":  true,
 					"image/webp": true,
 				},
+				AllowedExt: map[string]bool{
+					".jpg":  true,
+					".jpeg": true,
+					".png":  true,
+					".gif":  true,
+					".webp": true,
+				},
 			},
-			Endpoint:  os.Getenv("MINIO_ENDPOINT"),
-			AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
-			Secret:    os.Getenv("MINIO_SECRET_KEY"),
+			Endpoint:       os.Getenv("MINIO_ENDPOINT"),
+			PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
+			AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
+			Secret:         os.Getenv("MINIO_SECRET_KEY"),
 		},
 	}
 
@@ -68,15 +77,30 @@ func Run() error {
 
 	log.Println("Connected to media database")
 
-	fileServiceClient, err := NewMinIOConn(cfgs.FileService)
+	// Internal client for backend operations
+	fileServiceClient, err := NewMinIOConn(cfgs.FileService, cfgs.FileService.Endpoint, false)
 	if err != nil {
 		return err
 	}
+
+	// Optional public client for URL generation (e.g. localhost in dev)
+	var publicFileServiceClient *minio.Client
+	if cfgs.FileService.PublicEndpoint != "" {
+		publicFileServiceClient, err = NewMinIOConn(cfgs.FileService, cfgs.FileService.PublicEndpoint, true)
+		if err != nil {
+			log.Printf("Warning: failed to initialize public MinIO client: %v", err)
+		} else {
+			log.Println("Initialized public MinIO client for URL generation")
+		}
+	}
+
 	querier := dbservice.NewQuerier(pool)
 	app := application.NewMediaService(
 		pool,
 		&client.Clients{
-			MinIOClient: fileServiceClient,
+			Configs:           cfgs.FileService,
+			MinIOClient:       fileServiceClient,
+			PublicMinIOClient: publicFileServiceClient,
 			Validator: &validator.ImageValidator{
 				Config: cfgs.FileService.FileConstraints,
 			},

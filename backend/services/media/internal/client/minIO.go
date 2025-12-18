@@ -13,6 +13,12 @@ import (
 	"strings"
 	"time"
 
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+
+	_ "golang.org/x/image/webp"
+
 	"github.com/chai2010/webp"
 
 	"github.com/minio/minio-go/v7"
@@ -27,7 +33,12 @@ func (c *Clients) GenerateDownloadURL(
 	expiry time.Duration,
 ) (*url.URL, error) {
 
-	return c.MinIOClient.PresignedGetObject(
+	client := c.MinIOClient
+	if c.PublicMinIOClient != nil {
+		client = c.PublicMinIOClient
+	}
+
+	return client.PresignedGetObject(
 		ctx,
 		bucket,
 		objectKey,
@@ -43,7 +54,12 @@ func (c *Clients) GenerateUploadURL(
 	expiry time.Duration,
 ) (*url.URL, error) {
 
-	return c.MinIOClient.PresignedPutObject(
+	client := c.MinIOClient
+	if c.PublicMinIOClient != nil {
+		client = c.PublicMinIOClient
+	}
+
+	return client.PresignedPutObject(
 		ctx,
 		bucket,
 		objectKey,

@@ -13,11 +13,10 @@ import (
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
 
-func NewMinIOConn(cfgs configs.FileService) (*minio.Client, error) {
+func NewMinIOConn(cfgs configs.FileService, endpoint string, skipBucketCreation bool) (*minio.Client, error) {
 	var minioClient *minio.Client
 	var err error
 
-	endpoint := cfgs.Endpoint
 	accessKey := cfgs.AccessKey
 	secret := cfgs.Secret
 
@@ -38,6 +37,10 @@ func NewMinIOConn(cfgs configs.FileService) (*minio.Client, error) {
 	}
 
 	log.Println("Connected to minio client")
+
+	if skipBucketCreation {
+		return minioClient, nil
+	}
 
 	// Ensure bucket exists
 	ctx := context.Background()
@@ -68,7 +71,8 @@ func NewMinIOConn(cfgs configs.FileService) (*minio.Client, error) {
 
 	err = minioClient.SetBucketLifecycle(ctx, cfgs.Buckets.Originals, lcfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error setting lifecycle:", err)
+		// We might still continue
 	}
 
 	return minioClient, nil
