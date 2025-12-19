@@ -7,6 +7,7 @@ package entry
 import (
 	"fmt"
 	"social-network/services/posts/internal/client"
+	mediapb "social-network/shared/gen-go/media"
 	userpb "social-network/shared/gen-go/users"
 	"social-network/shared/ports"
 	"time"
@@ -37,6 +38,7 @@ func InitClients() *client.Clients {
 	// List of initializer functions
 	initializers := []func(opts []grpc.DialOption, c *client.Clients) error{
 		InitUserClient,
+		InitMediaClient,
 		// Add more here as you add more clients
 	}
 
@@ -54,5 +56,14 @@ func InitUserClient(opts []grpc.DialOption, c *client.Clients) (err error) {
 		err = fmt.Errorf("failed to dial user service: %v", err)
 	}
 	c.UserClient = userpb.NewUserServiceClient(conn)
+	return err
+}
+
+func InitMediaClient(opts []grpc.DialOption, c *client.Clients) (err error) {
+	conn, err := grpc.NewClient(ports.Media, opts...)
+	if err != nil {
+		err = fmt.Errorf("failed to dial media service: %v", err)
+	}
+	c.MediaClient = mediapb.NewMediaServiceClient(conn)
 	return err
 }

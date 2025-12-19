@@ -9,5 +9,6 @@ const (
 	Posts         string = "posts:50051"
 	Chat          string = "chat:50051"
 	Notifications string = "notifications:50051"
+	Media         string = "media:50051"
 	Example       string = "example:50051"
 )

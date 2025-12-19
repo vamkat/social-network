@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	cm "social-network/shared/gen-go/common"
+	mediapb "social-network/shared/gen-go/media"
 	userpb "social-network/shared/gen-go/users"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -10,7 +11,8 @@ import (
 
 // Holds connections to clients
 type Clients struct {
-	UserClient userpb.UserServiceClient
+	UserClient  userpb.UserServiceClient
+	MediaClient mediapb.MediaServiceClient
 }
 
 func (c *Clients) IsFollowing(ctx context.Context, userId, targetUserId int64) (bool, error) {
@@ -65,6 +67,24 @@ func (c *Clients) GetFollowingIds(ctx context.Context, userId int64) ([]int64, e
 	}
 
 	return resp.Values, nil
+}
+
+func (c *Clients) GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error) {
+	req := &mediapb.GetImagesRequest{
+		ImgIds:  &mediapb.ImageIds{ImgIds: imageIds},
+		Variant: 1,
+	}
+	resp, err := c.MediaClient.GetImages(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+	var imagesToDelete []int64
+	for _, failedImage := range resp.FailedIds {
+		if failedImage.GetStatus() == 4 || failedImage.GetStatus() == 0 {
+			imagesToDelete = append(imagesToDelete, failedImage.FileId)
+		}
+	}
+	return resp.DownloadUrls, imagesToDelete, nil
 }
 
 // func (c *Clients) GetFollowerIds(ctx context.Context, userId int64) ([]int64, error) {

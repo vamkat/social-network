@@ -23,6 +23,7 @@ type Application struct {
 // UsersBatchClient abstracts the single RPC used by the hydrator to fetch basic user info.
 type UsersBatchClient interface {
 	GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*cm.ListUsers, error)
+	GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error)
 }
 
 // RedisCache defines the minimal Redis operations used by the hydrator.
@@ -34,6 +35,7 @@ type RedisCache interface {
 // Hydrator defines the subset of behavior used by application for user hydration.
 type UserRetriever interface {
 	GetUsers(ctx context.Context, userIDs []int64) (map[int64]models.User, error)
+	GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error)
 }
 
 // ClientsInterface defines the methods that Application needs from clients.

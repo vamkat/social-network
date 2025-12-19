@@ -10,6 +10,7 @@ import (
 )
 
 // key for basic user info: "basic_user_info:<id>" Returns models.User
+// key for image url: "img_<variant>:<id>"
 
 var (
 	ErrNoConnection = errors.New("can't find redis")

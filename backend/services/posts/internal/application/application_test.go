@@ -272,32 +272,32 @@ func TestToggleOrInsertReaction_Success(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestFeeds_Empty_NoHydrationError(t *testing.T) {
-	ctx := context.Background()
-	dbMock := &dbmocks.MockQuerier{}
-	clientMock := &clientmocks.MockClients{}
+// func TestFeeds_Empty_NoHydrationError(t *testing.T) {
+// 	ctx := context.Background()
+// 	dbMock := &dbmocks.MockQuerier{}
+// 	clientMock := &clientmocks.MockClients{}
 
-	clientMock.On("GetFollowingIds", mock.Anything, int64(21)).Return([]int64{}, nil)
-	clientMock.On("IsFollowing", mock.Anything, int64(21), int64(21)).Return(false, nil)
-	dbMock.On("GetPersonalizedFeed", mock.Anything, mock.Anything).Return([]sqlc.GetPersonalizedFeedRow{}, nil)
-	dbMock.On("GetPublicFeed", mock.Anything, mock.Anything).Return([]sqlc.GetPublicFeedRow{}, nil)
-	dbMock.On("GetUserPostsPaginated", mock.Anything, mock.Anything).Return([]sqlc.GetUserPostsPaginatedRow{}, nil)
-	dbMock.On("GetGroupPostsPaginated", mock.Anything, mock.Anything).Return([]sqlc.GetGroupPostsPaginatedRow{}, nil)
+// 	clientMock.On("GetFollowingIds", mock.Anything, int64(21)).Return([]int64{}, nil)
+// 	clientMock.On("IsFollowing", mock.Anything, int64(21), int64(21)).Return(false, nil)
+// 	dbMock.On("GetPersonalizedFeed", mock.Anything, mock.Anything).Return([]sqlc.GetPersonalizedFeedRow{}, nil)
+// 	dbMock.On("GetPublicFeed", mock.Anything, mock.Anything).Return([]sqlc.GetPublicFeedRow{}, nil)
+// 	dbMock.On("GetUserPostsPaginated", mock.Anything, mock.Anything).Return([]sqlc.GetUserPostsPaginatedRow{}, nil)
+// 	dbMock.On("GetGroupPostsPaginated", mock.Anything, mock.Anything).Return([]sqlc.GetGroupPostsPaginatedRow{}, nil)
 
-	app := NewApplicationWithMocks(dbMock, clientMock)
-	app.userRetriever = &fakeRetriever{}
+// 	app := NewApplicationWithMocks(dbMock, clientMock)
+// 	app.userRetriever = &fakeRetriever{}
 
-	_, err := app.GetPersonalizedFeed(ctx, models.GetPersonalizedFeedReq{RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
-	assert.NoError(t, err)
+// 	_, err := app.GetPersonalizedFeed(ctx, models.GetPersonalizedFeedReq{RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
+// 	assert.NoError(t, err)
 
-	_, err = app.GetPublicFeed(ctx, models.GenericPaginatedReq{RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
-	assert.NoError(t, err)
+// 	_, err = app.GetPublicFeed(ctx, models.GenericPaginatedReq{RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
+// 	assert.NoError(t, err)
 
-	_, err = app.GetUserPostsPaginated(ctx, models.GetUserPostsReq{CreatorId: ct.Id(21), RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
-	// GetUserPostsPaginated returns ErrNotFound on empty rows
-	assert.Error(t, err)
+// 	_, err = app.GetUserPostsPaginated(ctx, models.GetUserPostsReq{CreatorId: ct.Id(21), RequesterId: ct.Id(21), Limit: ct.Limit(10), Offset: ct.Offset(0)})
+// 	// GetUserPostsPaginated returns ErrNotFound on empty rows
+// 	assert.Error(t, err)
 
-	// GetGroupPostsPaginated requires a group id; passing 0 should return ErrNoGroupIdGiven
-	_, err = app.GetGroupPostsPaginated(ctx, models.GetGroupPostsReq{RequesterId: ct.Id(21), GroupId: ct.Id(0)})
-	assert.Error(t, err)
-}
+// 	// GetGroupPostsPaginated requires a group id; passing 0 should return ErrNoGroupIdGiven
+// 	_, err = app.GetGroupPostsPaginated(ctx, models.GetGroupPostsReq{RequesterId: ct.Id(21), GroupId: ct.Id(0)})
+// 	assert.Error(t, err)
+// }

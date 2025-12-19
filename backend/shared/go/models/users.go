@@ -47,9 +47,10 @@ type UpdateEmailRequest struct {
 type UserId int64
 
 type User struct {
-	UserId   ct.Id       `json:"id"`
-	Username ct.Username `json:"username"`
-	AvatarId ct.Id       `json:"avatar_id" validate:"nullable"`
+	UserId    ct.Id       `json:"id"`
+	Username  ct.Username `json:"username"`
+	AvatarId  ct.Id       `json:"avatar_id" validate:"nullable"`
+	AvatarURL string      `json:"avatar_url" `
 }
 
 type Users struct {
