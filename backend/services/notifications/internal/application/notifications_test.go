@@ -607,3 +607,255 @@ func TestCreateNotificationWithAggregationDisabled(t *testing.T) {
 
 	mockDB.AssertExpectations(t)
 }
+
+// Test CreateFollowRequestAcceptedNotification function
+func TestCreateFollowRequestAcceptedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplication(mockDB)
+
+	ctx := context.Background()
+	requesterUserID := int64(1)
+	targetUserID := int64(2)
+	targetUsername := "targetuser"
+
+	payloadBytes, _ := json.Marshal(map[string]string{
+		"target_id":   "2",
+		"target_name": "targetuser",
+	})
+
+	expectedNotification := sqlc.Notification{
+		ID:             1,
+		UserID:         requesterUserID,
+		NotifType:      string(FollowRequestAccepted),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: targetUserID, Valid: true},
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: false, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        payloadBytes,
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
+
+	err := app.CreateFollowRequestAcceptedNotification(ctx, requesterUserID, targetUserID, targetUsername)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test CreateFollowRequestRejectedNotification function
+func TestCreateFollowRequestRejectedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplication(mockDB)
+
+	ctx := context.Background()
+	requesterUserID := int64(1)
+	targetUserID := int64(2)
+	targetUsername := "targetuser"
+
+	payloadBytes, _ := json.Marshal(map[string]string{
+		"target_id":   "2",
+		"target_name": "targetuser",
+	})
+
+	expectedNotification := sqlc.Notification{
+		ID:             1,
+		UserID:         requesterUserID,
+		NotifType:      string(FollowRequestRejected),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: targetUserID, Valid: true},
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: false, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        payloadBytes,
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
+
+	err := app.CreateFollowRequestRejectedNotification(ctx, requesterUserID, targetUserID, targetUsername)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test CreateGroupInviteAcceptedNotification function
+func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplication(mockDB)
+
+	ctx := context.Background()
+	inviterUserID := int64(1)
+	invitedUserID := int64(2)
+	groupID := int64(100)
+	invitedUsername := "inviteduser"
+	groupName := "Test Group"
+
+	payloadBytes, _ := json.Marshal(map[string]string{
+		"invited_id":    "2",
+		"invited_name":  "inviteduser",
+		"group_id":      "100",
+		"group_name":    "Test Group",
+	})
+
+	expectedNotification := sqlc.Notification{
+		ID:             1,
+		UserID:         inviterUserID,
+		NotifType:      string(GroupInviteAccepted),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true},
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: false, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        payloadBytes,
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
+
+	err := app.CreateGroupInviteAcceptedNotification(ctx, inviterUserID, invitedUserID, groupID, invitedUsername, groupName)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test CreateGroupInviteRejectedNotification function
+func TestCreateGroupInviteRejectedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplication(mockDB)
+
+	ctx := context.Background()
+	inviterUserID := int64(1)
+	invitedUserID := int64(2)
+	groupID := int64(100)
+	invitedUsername := "inviteduser"
+	groupName := "Test Group"
+
+	payloadBytes, _ := json.Marshal(map[string]string{
+		"invited_id":    "2",
+		"invited_name":  "inviteduser",
+		"group_id":      "100",
+		"group_name":    "Test Group",
+	})
+
+	expectedNotification := sqlc.Notification{
+		ID:             1,
+		UserID:         inviterUserID,
+		NotifType:      string(GroupInviteRejected),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true},
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: false, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        payloadBytes,
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
+
+	err := app.CreateGroupInviteRejectedNotification(ctx, inviterUserID, invitedUserID, groupID, invitedUsername, groupName)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test CreateGroupJoinRequestAcceptedNotification function
+func TestCreateGroupJoinRequestAcceptedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplication(mockDB)
+
+	ctx := context.Background()
+	requesterUserID := int64(1)
+	groupOwnerID := int64(2)
+	groupID := int64(100)
+	groupName := "Test Group"
+
+	payloadBytes, _ := json.Marshal(map[string]string{
+		"group_owner_id": "2",
+		"group_id":       "100",
+		"group_name":     "Test Group",
+	})
+
+	expectedNotification := sqlc.Notification{
+		ID:             1,
+		UserID:         requesterUserID,
+		NotifType:      string(GroupJoinRequestAccepted),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true},
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: false, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        payloadBytes,
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
+
+	err := app.CreateGroupJoinRequestAcceptedNotification(ctx, requesterUserID, groupOwnerID, groupID, groupName)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test CreateGroupJoinRequestRejectedNotification function
+func TestCreateGroupJoinRequestRejectedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplication(mockDB)
+
+	ctx := context.Background()
+	requesterUserID := int64(1)
+	groupOwnerID := int64(2)
+	groupID := int64(100)
+	groupName := "Test Group"
+
+	payloadBytes, _ := json.Marshal(map[string]string{
+		"group_owner_id": "2",
+		"group_id":       "100",
+		"group_name":     "Test Group",
+	})
+
+	expectedNotification := sqlc.Notification{
+		ID:             1,
+		UserID:         requesterUserID,
+		NotifType:      string(GroupJoinRequestRejected),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true},
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: false, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        payloadBytes,
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
+
+	err := app.CreateGroupJoinRequestRejectedNotification(ctx, requesterUserID, groupOwnerID, groupID, groupName)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}

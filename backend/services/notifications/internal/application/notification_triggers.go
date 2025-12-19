@@ -290,3 +290,177 @@ func (a *Application) CreateNewMessageNotification(ctx context.Context, userID, 
 
 	return nil
 }
+
+// CreateFollowRequestAcceptedNotification creates a notification when a follow request is accepted
+func (a *Application) CreateFollowRequestAcceptedNotification(ctx context.Context, requesterUserID, targetUserID int64, targetUsername string) error {
+	title := "Follow Request Accepted"
+	message := fmt.Sprintf("%s accepted your follow request", targetUsername)
+
+	payload := map[string]string{
+		"target_id":   fmt.Sprintf("%d", targetUserID),
+		"target_name": targetUsername,
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		requesterUserID,           // recipient (the original requester)
+		FollowRequestAccepted,     // type
+		title,                     // title
+		message,                   // message
+		"users",                   // source service
+		targetUserID,              // source entity ID
+		false,                     // doesn't need action (just informational)
+		payload,                   // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create follow request accepted notification: %w", err)
+	}
+
+	return nil
+}
+
+// CreateFollowRequestRejectedNotification creates a notification when a follow request is rejected
+func (a *Application) CreateFollowRequestRejectedNotification(ctx context.Context, requesterUserID, targetUserID int64, targetUsername string) error {
+	title := "Follow Request Rejected"
+	message := fmt.Sprintf("%s rejected your follow request", targetUsername)
+
+	payload := map[string]string{
+		"target_id":   fmt.Sprintf("%d", targetUserID),
+		"target_name": targetUsername,
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		requesterUserID,           // recipient (the original requester)
+		FollowRequestRejected,     // type
+		title,                     // title
+		message,                   // message
+		"users",                   // source service
+		targetUserID,              // source entity ID
+		false,                     // doesn't need action (just informational)
+		payload,                   // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create follow request rejected notification: %w", err)
+	}
+
+	return nil
+}
+
+// CreateGroupInviteAcceptedNotification creates a notification when a group invite is accepted
+func (a *Application) CreateGroupInviteAcceptedNotification(ctx context.Context, inviterUserID, invitedUserID, groupID int64, invitedUsername, groupName string) error {
+	title := "Group Invite Accepted"
+	message := fmt.Sprintf("%s accepted your group invitation to '%s'", invitedUsername, groupName)
+
+	payload := map[string]string{
+		"invited_id":    fmt.Sprintf("%d", invitedUserID),
+		"invited_name":  invitedUsername,
+		"group_id":      fmt.Sprintf("%d", groupID),
+		"group_name":    groupName,
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		inviterUserID,             // recipient (the original inviter)
+		GroupInviteAccepted,       // type
+		title,                     // title
+		message,                   // message
+		"users",                   // source service
+		groupID,                   // source entity ID (the group)
+		false,                     // doesn't need action (just informational)
+		payload,                   // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create group invite accepted notification: %w", err)
+	}
+
+	return nil
+}
+
+// CreateGroupInviteRejectedNotification creates a notification when a group invite is rejected
+func (a *Application) CreateGroupInviteRejectedNotification(ctx context.Context, inviterUserID, invitedUserID, groupID int64, invitedUsername, groupName string) error {
+	title := "Group Invite Rejected"
+	message := fmt.Sprintf("%s declined your group invitation to '%s'", invitedUsername, groupName)
+
+	payload := map[string]string{
+		"invited_id":    fmt.Sprintf("%d", invitedUserID),
+		"invited_name":  invitedUsername,
+		"group_id":      fmt.Sprintf("%d", groupID),
+		"group_name":    groupName,
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		inviterUserID,             // recipient (the original inviter)
+		GroupInviteRejected,       // type
+		title,                     // title
+		message,                   // message
+		"users",                   // source service
+		groupID,                   // source entity ID (the group)
+		false,                     // doesn't need action (just informational)
+		payload,                   // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create group invite rejected notification: %w", err)
+	}
+
+	return nil
+}
+
+// CreateGroupJoinRequestAcceptedNotification creates a notification when a group join request is accepted
+func (a *Application) CreateGroupJoinRequestAcceptedNotification(ctx context.Context, requesterUserID, groupOwnerID, groupID int64, groupName string) error {
+	title := "Group Join Request Accepted"
+	message := fmt.Sprintf("Your request to join group '%s' was approved", groupName)
+
+	payload := map[string]string{
+		"group_owner_id": fmt.Sprintf("%d", groupOwnerID),
+		"group_id":       fmt.Sprintf("%d", groupID),
+		"group_name":     groupName,
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		requesterUserID,             // recipient (the original requester)
+		GroupJoinRequestAccepted,    // type
+		title,                       // title
+		message,                     // message
+		"users",                     // source service
+		groupID,                     // source entity ID (the group)
+		false,                       // doesn't need action (just informational)
+		payload,                     // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create group join request accepted notification: %w", err)
+	}
+
+	return nil
+}
+
+// CreateGroupJoinRequestRejectedNotification creates a notification when a group join request is rejected
+func (a *Application) CreateGroupJoinRequestRejectedNotification(ctx context.Context, requesterUserID, groupOwnerID, groupID int64, groupName string) error {
+	title := "Group Join Request Rejected"
+	message := fmt.Sprintf("Your request to join group '%s' was declined", groupName)
+
+	payload := map[string]string{
+		"group_owner_id": fmt.Sprintf("%d", groupOwnerID),
+		"group_id":       fmt.Sprintf("%d", groupID),
+		"group_name":     groupName,
+	}
+
+	_, err := a.CreateNotification(
+		ctx,
+		requesterUserID,             // recipient (the original requester)
+		GroupJoinRequestRejected,    // type
+		title,                       // title
+		message,                     // message
+		"users",                     // source service
+		groupID,                     // source entity ID (the group)
+		false,                       // doesn't need action (just informational)
+		payload,                     // payload
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create group join request rejected notification: %w", err)
+	}
+
+	return nil
+}

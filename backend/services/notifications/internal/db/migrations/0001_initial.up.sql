@@ -18,7 +18,13 @@ VALUES
   ('new_message', 'chat',  TRUE),
   ('post_reply', 'posts', TRUE),
   ('like', 'posts', TRUE),
-  ('mention', 'posts', TRUE);
+  ('mention', 'posts', TRUE),
+  ('follow_request_accepted', 'social',  TRUE),
+  ('follow_request_rejected', 'social',  TRUE),
+  ('group_invite_accepted', 'group',  TRUE),
+  ('group_invite_rejected', 'group',  TRUE),
+  ('group_join_request_accepted', 'group',  TRUE),
+  ('group_join_request_rejected', 'group',  TRUE);
 
 ------------------------------------------
 -- Notifications

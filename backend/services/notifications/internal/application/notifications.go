@@ -395,6 +395,12 @@ func (a *Application) CreateDefaultNotificationTypes(ctx context.Context) error 
 		{string(PostComment), "posts", true},
 		{string(Mention), "posts", true},
 		{string(NewMessage), "chat", true},
+		{string(FollowRequestAccepted), "social", true},
+		{string(FollowRequestRejected), "social", true},
+		{string(GroupInviteAccepted), "group", true},
+		{string(GroupInviteRejected), "group", true},
+		{string(GroupJoinRequestAccepted), "group", true},
+		{string(GroupJoinRequestRejected), "group", true},
 	}
 
 	for _, nt := range defaultTypes {

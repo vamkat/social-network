@@ -270,6 +270,18 @@ func shouldAggregateNotification(notificationType notifPb.NotificationType) bool
 		return true
 	case notifPb.NotificationType_NOTIFICATION_TYPE_NEW_MESSAGE:
 		return true
+	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
+		return false  // Follow request responses are specific to each request
+	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
+		return false  // Follow request responses are specific to each request
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
+		return false  // Group invite responses are specific to each invitation
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
+		return false  // Group invite responses are specific to each invitation
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
+		return false  // Group join request responses are specific to each request
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
+		return false  // Group join request responses are specific to each request
 	default:
 		return false
 	}
@@ -294,6 +306,18 @@ func convertApplicationNotificationTypeToProto(appType application.NotificationT
 		return notifPb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT
 	case application.Mention:
 		return notifPb.NotificationType_NOTIFICATION_TYPE_MENTION
+	case application.FollowRequestAccepted:
+		return notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED
+	case application.FollowRequestRejected:
+		return notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED
+	case application.GroupInviteAccepted:
+		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED
+	case application.GroupInviteRejected:
+		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED
+	case application.GroupJoinRequestAccepted:
+		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED
+	case application.GroupJoinRequestRejected:
+		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED
 	default:
 		return notifPb.NotificationType_NOTIFICATION_TYPE_UNSPECIFIED
 	}
@@ -318,6 +342,18 @@ func convertProtoNotificationTypeToApplication(protoType notifPb.NotificationTyp
 		return application.PostComment
 	case notifPb.NotificationType_NOTIFICATION_TYPE_MENTION:
 		return application.Mention
+	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
+		return application.FollowRequestAccepted
+	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
+		return application.FollowRequestRejected
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
+		return application.GroupInviteAccepted
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
+		return application.GroupInviteRejected
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
+		return application.GroupJoinRequestAccepted
+	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
+		return application.GroupJoinRequestRejected
 	default:
 		return application.NotificationType("")
 	}
