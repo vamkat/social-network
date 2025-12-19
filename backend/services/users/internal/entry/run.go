@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"social-network/services/users/internal/application"
-	"social-network/services/users/internal/client"
 	"social-network/services/users/internal/db/sqlc"
 	"social-network/services/users/internal/handler"
 	"social-network/shared/gen-go/chat"
@@ -17,40 +16,40 @@ import (
 	"social-network/shared/go/gorpc"
 	"social-network/shared/go/postgresql"
 	"syscall"
-	"time"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 //TODO add logs as things are getting initialized
 
 func Run() error {
-
+	ctx := context.Background()
 	// DATABASE
-	pool, err := connectToDb(context.Background(), os.Getenv("DATABASE_URL"))
+	pg, closeFunc, err := postgresql.NewPostgre(ctx, os.Getenv("DATABASE_URL"), sqlc.New, &sqlc.Queries{})
 	if err != nil {
-		return fmt.Errorf("failed to connect db: %v", err)
+		log.Fatal("failed to create postgress object:", err.Error())
 	}
-	defer pool.Close()
+	defer closeFunc()
 	log.Println("Connected to users-db database")
 
 	// CLIENT SERVICES
-	chatClient, err := gorpc.GetGRpcClient(chat.NewChatServiceClient, "chat:50051", contextkeys.CommonKeys())
+	chatService, err := gorpc.GetGRpcClient(
+		chat.NewChatServiceClient,
+		"chat:50051",
+		contextkeys.CommonKeys())
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
-	notificationsClient, err := gorpc.GetGRpcClient(
+
+	notifService, err := gorpc.GetGRpcClient(
 		notifications.NewNotificationServiceClient,
 		"notifications:50051",
 		contextkeys.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatal("failed to create chat client")
+		log.Fatal("failed to create notifications client")
 	}
 
 	// APPLICATION
-	clients := client.NewClients(chatClient, notificationsClient)
-	app := application.NewApplication(sqlc.New(pool), pool, clients)
+	app := application.NewApplication(pg, chatService, notifService)
 	service := *handler.NewUsersHanlder(app)
 
 	port := ":50051"
@@ -94,42 +93,4 @@ func Run() error {
 	stopServerFunc()
 	log.Println("Server stopped")
 	return nil
-}
-
-func connectToDb(ctx context.Context, address string) (pool *pgxpool.Pool, err error) {
-	for i := range 10 {
-		pool, err = pgxpool.New(ctx, address)
-		if err == nil {
-			break
-		}
-		log.Printf("DB not ready yet (attempt %d): %v", i+1, err)
-		time.Sleep(2 * time.Second)
-	}
-	ttest()
-	return pool, err
-}
-
-func ttest() {
-	ctx := context.Background()
-
-	//create it
-	pg, err := postgresql.NewPostgre(ctx, os.Getenv("DATABASE_URL"), sqlc.New, &sqlc.Queries{})
-	if err != nil {
-		log.Fatal("failed to create postgre instance")
-	}
-
-	//use it without transaction
-	pg.Queries().AcceptFollowRequest(ctx, sqlc.AcceptFollowRequestParams{})
-
-	//use itwith transaction
-	TxQueries, tx, err := pg.TxQueries(ctx)
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(ctx)
-
-	TxQueries.AcceptFollowRequest(ctx, sqlc.AcceptFollowRequestParams{})
-
-	tx.Commit(ctx)
-
 }

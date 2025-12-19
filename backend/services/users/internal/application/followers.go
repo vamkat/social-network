@@ -7,12 +7,12 @@ import (
 	"social-network/shared/go/models"
 )
 
-func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
+func (app *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return []models.User{}, err
 	}
 	//paginated, sorted by newest first
-	rows, err := s.db.GetFollowers(ctx, sqlc.GetFollowersParams{
+	rows, err := app.db.GetFollowers(ctx, sqlc.GetFollowersParams{
 		FollowingID: req.UserId.Int64(),
 		Limit:       req.Limit.Int32(),
 		Offset:      req.Offset.Int32(),
@@ -33,13 +33,13 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 
 }
 
-func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
+func (app *Application) GetFollowingPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return []models.User{}, err
 	}
 
 	//paginated, sorted by newest first
-	rows, err := s.db.GetFollowing(ctx, sqlc.GetFollowingParams{
+	rows, err := app.db.GetFollowing(ctx, sqlc.GetFollowingParams{
 		FollowerID: req.UserId.Int64(),
 		Limit:      req.Limit.Int32(),
 		Offset:     req.Offset.Int32(),
@@ -60,11 +60,11 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 
 }
 
-func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) (resp models.FollowUserResp, err error) {
+func (app *Application) FollowUser(ctx context.Context, req models.FollowUserReq) (resp models.FollowUserResp, err error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return models.FollowUserResp{}, err
 	}
-	status, err := s.db.FollowUser(ctx, sqlc.FollowUserParams{
+	status, err := app.db.FollowUser(ctx, sqlc.FollowUserParams{
 		PFollower: req.FollowerId.Int64(),
 		PTarget:   req.TargetUserId.Int64(),
 	})
@@ -90,11 +90,11 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 	return resp, nil
 }
 
-func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq) (viewerIsFollowing bool, err error) {
+func (app *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq) (viewerIsFollowing bool, err error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
-	err = s.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
+	err = app.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
 		FollowerID:  req.FollowerId.Int64(),
 		FollowingID: req.TargetUserId.Int64(),
 	})
@@ -110,13 +110,13 @@ func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq
 	return true, nil
 }
 
-func (s *Application) HandleFollowRequest(ctx context.Context, req models.HandleFollowRequestReq) error {
+func (app *Application) HandleFollowRequest(ctx context.Context, req models.HandleFollowRequestReq) error {
 	var err error
 	if err := ct.ValidateStruct(req); err != nil {
 		return err
 	}
 	if req.Accept {
-		err = s.db.AcceptFollowRequest(ctx, sqlc.AcceptFollowRequestParams{
+		err = app.db.AcceptFollowRequest(ctx, sqlc.AcceptFollowRequestParams{
 			RequesterID: req.RequesterId.Int64(),
 			TargetID:    req.UserId.Int64(),
 		})
@@ -135,7 +135,7 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 		// }
 
 	} else {
-		err = s.db.RejectFollowRequest(ctx, sqlc.RejectFollowRequestParams{
+		err = app.db.RejectFollowRequest(ctx, sqlc.RejectFollowRequestParams{
 			RequesterID: req.RequesterId.Int64(),
 			TargetID:    req.UserId.Int64(),
 		})
@@ -148,11 +148,11 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 }
 
 // returns ids of people a user follows for posts service so that the feed can be fetched
-func (s *Application) GetFollowingIds(ctx context.Context, userId ct.Id) ([]int64, error) {
+func (app *Application) GetFollowingIds(ctx context.Context, userId ct.Id) ([]int64, error) {
 	if err := userId.Validate(); err != nil {
 		return []int64{}, err
 	}
-	ids, err := s.db.GetFollowingIds(ctx, userId.Int64())
+	ids, err := app.db.GetFollowingIds(ctx, userId.Int64())
 	if err != nil {
 		return nil, err
 	}
@@ -160,11 +160,11 @@ func (s *Application) GetFollowingIds(ctx context.Context, userId ct.Id) ([]int6
 }
 
 // returns ten random users that people you follow follow, or are in your groups
-func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([]models.User, error) {
+func (app *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([]models.User, error) {
 	if err := userId.Validate(); err != nil {
 		return []models.User{}, err
 	}
-	rows, err := s.db.GetFollowSuggestions(ctx, userId.Int64())
+	rows, err := app.db.GetFollowSuggestions(ctx, userId.Int64())
 	if err != nil {
 		return nil, err
 	}
@@ -180,11 +180,11 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 }
 
 // NOT GRPC
-func (s *Application) isFollowRequestPending(ctx context.Context, req models.FollowUserReq) (bool, error) {
+func (app *Application) isFollowRequestPending(ctx context.Context, req models.FollowUserReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
-	isPending, err := s.db.IsFollowRequestPending(ctx, sqlc.IsFollowRequestPendingParams{
+	isPending, err := app.db.IsFollowRequestPending(ctx, sqlc.IsFollowRequestPendingParams{
 		RequesterID: req.FollowerId.Int64(),
 		TargetID:    req.TargetUserId.Int64(),
 	})
@@ -194,11 +194,11 @@ func (s *Application) isFollowRequestPending(ctx context.Context, req models.Fol
 	return isPending, nil
 }
 
-func (s *Application) IsFollowing(ctx context.Context, req models.FollowUserReq) (bool, error) {
+func (app *Application) IsFollowing(ctx context.Context, req models.FollowUserReq) (bool, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return false, err
 	}
-	isfollowing, err := s.db.IsFollowing(ctx, sqlc.IsFollowingParams{
+	isfollowing, err := app.db.IsFollowing(ctx, sqlc.IsFollowingParams{
 		FollowerID:  req.FollowerId.Int64(),
 		FollowingID: req.TargetUserId.Int64(),
 	})
@@ -209,13 +209,13 @@ func (s *Application) IsFollowing(ctx context.Context, req models.FollowUserReq)
 }
 
 // returns a bool pointer. Nil: neither is following the other, false: one is following the other, true: both are following each other
-func (s *Application) AreFollowingEachOther(ctx context.Context, req models.FollowUserReq) (*bool, error) {
+func (app *Application) AreFollowingEachOther(ctx context.Context, req models.FollowUserReq) (*bool, error) {
 	var mutualFollow *bool // default: nil
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
 
-	row, err := s.db.AreFollowingEachOther(ctx, sqlc.AreFollowingEachOtherParams{
+	row, err := app.db.AreFollowingEachOther(ctx, sqlc.AreFollowingEachOtherParams{
 		FollowerID:  req.FollowerId.Int64(),
 		FollowingID: req.TargetUserId.Int64(),
 	})
