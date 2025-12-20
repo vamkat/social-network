@@ -6,8 +6,8 @@ POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "identifier": "myuser1234",
-  "password": "superSecret123"
+  "identifier": "hello@world.com",
+  "password": "Hello12!"
 }
 
 ### 2) LOGOUT
@@ -20,35 +20,44 @@ Content-Type: application/json
 Host: minio:9000
 
 {
-  "username": "johnaoe",
+  "username": "johndoe",
   "first_name": "John",
   "last_name": "Doe",
   "date_of_birth": "1995-04-12",
   "about": "Software engineer and coffee lover",
   "public": true,
-  "email": "john.aoe@example.com",
+  "email": "john.doe@example.com",
   "password": "StrongPassword123!",
 
-  "avatar_name": "avatar.png",
-  "avatar_size": 397,
+  "avatar_name": "avatar.jpg",
+  "avatar_size": 14,
   "avatar_type": "image/jpg"
 }
 
 ### Upload file
-PUT http://minio:9000/uploads-originals/6476b142-e64d-43ed-b6b3-95e80be13ba6?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20251216%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251216T202445Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=57b9a69ff965a6bbc565003016f333fc3c4aa994637e3a9451641bac0340158a
-
+PUT http://localhost:9000/uploads-originals/5331ed2e-0ce6-42f9-a0f5-df38c857d85a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20251220%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251220T084913Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=253a7eeb00d79d0c9d0102164448cec931b0d398e0b3c413eced85956e5b4af9
 Content-Type: application/octet-stream
-Host: minio:9000
 
-<./test.jpg>
+<./avatar.jpg>
 
 ### Validate file
 POST {{baseUrl}}/validate-file-upload
 Content-Type: application/json
 
 {
-  "file_id":"BWJxbojagwOL"
+  "file_id":"GWpmbk5ezJn4"
 }
+
+### GetImage
+POST {{baseUrl}}/get-image
+Content-Type: application/json
+
+{
+  "image_id":"2VolejRejNmG",
+  "variant":"thumb"
+}
+
+http://localhost:9000/uploads-variants/3b5f5f21-e7b2-4d16-9446-9148baae5823/thumb?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20251220%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251220T124833Z&X-Amz-Expires=21600&X-Amz-SignedHeaders=host&X-Amz-Signature=6221347b0ec75785a7ebd1cc36059b78b5f97933042dd8f460669b75493a8261
 
 
 ### 4) USERPROFILE
