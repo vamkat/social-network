@@ -32,7 +32,7 @@ type Database[T any] interface {
 	Queries() T
 }
 
-// postgre is the concrete PostgreSQL implementation of Database.
+// Postgre is the concrete PostgreSQL implementation of Database.
 //
 // Q is the sqlc-generated Queries type.
 //
@@ -40,10 +40,10 @@ type Database[T any] interface {
 //   - queriesTx: helper that can bind queries to a pgx.Tx.
 //   - queries: non-transactional queries bound to the pool.
 //   - pool: pgx connection pool used for queries and transactions.
-type postgre[Q any] struct {
-	queriesTx HasWithTX[Q]
-	queries   Q
-	pool      *pgxpool.Pool
+type Postgre[Q any] struct {
+	QueriesTx   HasWithTX[Q]
+	QueriesNorm Q
+	pool        *pgxpool.Pool
 }
 
 var ErrAlreadyFinished = errors.New("this transaction is already completed")
@@ -74,7 +74,7 @@ var ErrAlreadyFinished = errors.New("this transaction is already completed")
 // Behavior:
 //   - Calling either commit or rollback more than once returns ErrAlreadyFinished.
 //   - It is suggested to always defer rollback, as it becomes intempodent after commit is called
-func (p postgre[T]) TxQueries(ctx context.Context) (T, func(context.Context) error, func(context.Context) error, error) {
+func (p Postgre[T]) TxQueries(ctx context.Context) (T, func(context.Context) error, func(context.Context) error, error) {
 	tx, err := p.newTx(ctx)
 	if err != nil {
 		return *new(T), nil, nil, err
@@ -98,7 +98,7 @@ func (p postgre[T]) TxQueries(ctx context.Context) (T, func(context.Context) err
 		return tx.Rollback(ctx)
 	}
 
-	return p.queriesTx.WithTx(tx), commit, rollback, nil
+	return p.QueriesTx.WithTx(tx), commit, rollback, nil
 }
 
 // Queries returns a non-transactional queries instance.
@@ -110,8 +110,8 @@ func (p postgre[T]) TxQueries(ctx context.Context) (T, func(context.Context) err
 // Notes:
 //   - Queries are executed directly against the pool.
 //   - No transaction is created.
-func (p postgre[T]) Queries() T {
-	return p.queries
+func (p Postgre[T]) Queries() T {
+	return p.QueriesNorm
 }
 
 // NewPostgre initializes a PostgreSQL-backed Database implementation.
@@ -146,23 +146,23 @@ func NewPostgre[Q any, DB any](
 	address string,
 	constuctor func(DB) Q,
 	txQueries HasWithTX[Q],
-) (postgre[Q], func(), error) {
+) (Postgre[Q], func(), error) {
 	dbtx, pool, err := NewPool(ctx, address)
 	if err != nil {
-		return postgre[Q]{}, nil, err
+		return Postgre[Q]{}, nil, err
 	}
 
 	newPool, ok := dbtx.(DB)
 	if !ok {
-		return postgre[Q]{}, nil, fmt.Errorf("DB type %T does not implement expected interface", dbtx)
+		return Postgre[Q]{}, nil, fmt.Errorf("DB type %T does not implement expected interface", dbtx)
 	}
 
 	queries := constuctor(newPool)
 
-	p := postgre[Q]{
-		queriesTx: txQueries,
-		queries:   queries,
-		pool:      pool,
+	p := Postgre[Q]{
+		QueriesTx:   txQueries,
+		QueriesNorm: queries,
+		pool:        pool,
 	}
 
 	return p, pool.Close, nil
@@ -214,10 +214,16 @@ func NewPool(ctx context.Context, address string) (DBTX, *pgxpool.Pool, error) {
 // Returns:
 //   - pgx.Tx: started transaction.
 //   - error: non-nil if the transaction cannot be created.
-func (p *postgre[T]) newTx(ctx context.Context) (pgx.Tx, error) {
+func (p *Postgre[T]) newTx(ctx context.Context) (pgx.Tx, error) {
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return tx, nil
+}
+
+// FakeDB is used for controlling db responses for testing purposes
+type FakeDB interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+	// We don't need other methods since sqlc only uses DBTX methods
 }

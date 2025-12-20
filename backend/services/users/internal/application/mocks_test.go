@@ -1,356 +1,441 @@
 package application
 
-import (
-	"context"
+// // MockQuerier is a mock implementation of sqlc.Querier
+// type MockQuerier struct {
+// 	mock.Mock
+// }
 
-	"social-network/services/users/internal/db/sqlc"
+// // Auth-related methods
+// func (m *MockQuerier) InsertNewUser(ctx context.Context, arg sqlc.InsertNewUserParams) (int64, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.Get(0).(int64), args.Error(1)
+// }
 
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/stretchr/testify/mock"
-)
+// func (m *MockQuerier) InsertNewUserAuth(ctx context.Context, arg sqlc.InsertNewUserAuthParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-// MockQuerier is a mock implementation of sqlc.Querier
-type MockQuerier struct {
-	mock.Mock
-}
+// func (m *MockQuerier) GetUserForLogin(ctx context.Context, arg sqlc.GetUserForLoginParams) (sqlc.GetUserForLoginRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return sqlc.GetUserForLoginRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.GetUserForLoginRow), args.Error(1)
+// }
 
-// Auth-related methods
-func (m *MockQuerier) InsertNewUser(ctx context.Context, arg sqlc.InsertNewUserParams) (int64, error) {
-	args := m.Called(ctx, arg)
-	return args.Get(0).(int64), args.Error(1)
-}
+// func (m *MockQuerier) IncrementFailedLoginAttempts(ctx context.Context, userID int64) error {
+// 	args := m.Called(ctx, userID)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) InsertNewUserAuth(ctx context.Context, arg sqlc.InsertNewUserAuthParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) ResetFailedLoginAttempts(ctx context.Context, userID int64) error {
+// 	args := m.Called(ctx, userID)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) GetUserForLogin(ctx context.Context, arg sqlc.GetUserForLoginParams) (sqlc.GetUserForLoginRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return sqlc.GetUserForLoginRow{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.GetUserForLoginRow), args.Error(1)
-}
+// func (m *MockQuerier) GetUserPassword(ctx context.Context, userID int64) (string, error) {
+// 	args := m.Called(ctx, userID)
+// 	return args.String(0), args.Error(1)
+// }
 
-func (m *MockQuerier) IncrementFailedLoginAttempts(ctx context.Context, userID int64) error {
-	args := m.Called(ctx, userID)
-	return args.Error(0)
-}
+// func (m *MockQuerier) UpdateUserPassword(ctx context.Context, arg sqlc.UpdateUserPasswordParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) ResetFailedLoginAttempts(ctx context.Context, userID int64) error {
-	args := m.Called(ctx, userID)
-	return args.Error(0)
-}
+// func (m *MockQuerier) UpdateUserEmail(ctx context.Context, arg sqlc.UpdateUserEmailParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) GetUserPassword(ctx context.Context, userID int64) (string, error) {
-	args := m.Called(ctx, userID)
-	return args.String(0), args.Error(1)
-}
+// // Profile-related methods
+// func (m *MockQuerier) GetUserBasic(ctx context.Context, id int64) (sqlc.GetUserBasicRow, error) {
+// 	args := m.Called(ctx, id)
+// 	if args.Get(0) == nil {
+// 		return sqlc.GetUserBasicRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.GetUserBasicRow), args.Error(1)
+// }
 
-func (m *MockQuerier) UpdateUserPassword(ctx context.Context, arg sqlc.UpdateUserPasswordParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) GetBatchUsersBasic(ctx context.Context, dollar_1 []int64) ([]sqlc.GetBatchUsersBasicRow, error) {
+// 	args := m.Called(ctx, dollar_1)
+// 	if args.Get(0) == nil {
+// 		return []sqlc.GetBatchUsersBasicRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetBatchUsersBasicRow), args.Error(1)
+// }
 
-func (m *MockQuerier) UpdateUserEmail(ctx context.Context, arg sqlc.UpdateUserEmailParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) GetUserProfile(ctx context.Context, id int64) (sqlc.GetUserProfileRow, error) {
+// 	args := m.Called(ctx, id)
+// 	if args.Get(0) == nil {
+// 		return sqlc.GetUserProfileRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.GetUserProfileRow), args.Error(1)
+// }
 
-// Profile-related methods
-func (m *MockQuerier) GetUserBasic(ctx context.Context, id int64) (sqlc.GetUserBasicRow, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return sqlc.GetUserBasicRow{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.GetUserBasicRow), args.Error(1)
-}
+// func (m *MockQuerier) GetFollowerCount(ctx context.Context, id int64) (int64, error) {
+// 	args := m.Called(ctx, id)
+// 	return args.Get(0).(int64), args.Error(1)
+// }
 
-func (m *MockQuerier) GetBatchUsersBasic(ctx context.Context, dollar_1 []int64) ([]sqlc.GetBatchUsersBasicRow, error) {
-	args := m.Called(ctx, dollar_1)
-	if args.Get(0) == nil {
-		return []sqlc.GetBatchUsersBasicRow{}, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetBatchUsersBasicRow), args.Error(1)
-}
+// func (m *MockQuerier) GetFollowingCount(ctx context.Context, id int64) (int64, error) {
+// 	args := m.Called(ctx, id)
+// 	return args.Get(0).(int64), args.Error(1)
+// }
 
-func (m *MockQuerier) GetUserProfile(ctx context.Context, id int64) (sqlc.GetUserProfileRow, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return sqlc.GetUserProfileRow{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.GetUserProfileRow), args.Error(1)
-}
+// func (m *MockQuerier) GetUserGroups(ctx context.Context, arg sqlc.GetUserGroupsParams) ([]sqlc.GetUserGroupsRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetUserGroupsRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetFollowerCount(ctx context.Context, id int64) (int64, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(int64), args.Error(1)
-}
+// func (m *MockQuerier) SearchUsers(ctx context.Context, arg sqlc.SearchUsersParams) ([]sqlc.SearchUsersRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.SearchUsersRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetFollowingCount(ctx context.Context, id int64) (int64, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(int64), args.Error(1)
-}
+// func (m *MockQuerier) UpdateUserProfile(ctx context.Context, arg sqlc.UpdateUserProfileParams) (sqlc.User, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return sqlc.User{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.User), args.Error(1)
+// }
 
-func (m *MockQuerier) GetUserGroups(ctx context.Context, arg sqlc.GetUserGroupsParams) ([]sqlc.GetUserGroupsRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetUserGroupsRow), args.Error(1)
-}
+// func (m *MockQuerier) UpdateProfilePrivacy(ctx context.Context, arg sqlc.UpdateProfilePrivacyParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) SearchUsers(ctx context.Context, arg sqlc.SearchUsersParams) ([]sqlc.SearchUsersRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.SearchUsersRow), args.Error(1)
-}
+// // Followers-related methods
+// func (m *MockQuerier) GetFollowers(ctx context.Context, arg sqlc.GetFollowersParams) ([]sqlc.GetFollowersRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetFollowersRow), args.Error(1)
+// }
 
-func (m *MockQuerier) UpdateUserProfile(ctx context.Context, arg sqlc.UpdateUserProfileParams) (sqlc.User, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return sqlc.User{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.User), args.Error(1)
-}
+// func (m *MockQuerier) GetFollowing(ctx context.Context, arg sqlc.GetFollowingParams) ([]sqlc.GetFollowingRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetFollowingRow), args.Error(1)
+// }
 
-func (m *MockQuerier) UpdateProfilePrivacy(ctx context.Context, arg sqlc.UpdateProfilePrivacyParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) FollowUser(ctx context.Context, arg sqlc.FollowUserParams) (string, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.String(0), args.Error(1)
+// }
 
-// Followers-related methods
-func (m *MockQuerier) GetFollowers(ctx context.Context, arg sqlc.GetFollowersParams) ([]sqlc.GetFollowersRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetFollowersRow), args.Error(1)
-}
+// func (m *MockQuerier) UnfollowUser(ctx context.Context, arg sqlc.UnfollowUserParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) GetFollowing(ctx context.Context, arg sqlc.GetFollowingParams) ([]sqlc.GetFollowingRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetFollowingRow), args.Error(1)
-}
+// func (m *MockQuerier) AcceptFollowRequest(ctx context.Context, arg sqlc.AcceptFollowRequestParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) FollowUser(ctx context.Context, arg sqlc.FollowUserParams) (string, error) {
-	args := m.Called(ctx, arg)
-	return args.String(0), args.Error(1)
-}
+// func (m *MockQuerier) RejectFollowRequest(ctx context.Context, arg sqlc.RejectFollowRequestParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) UnfollowUser(ctx context.Context, arg sqlc.UnfollowUserParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) IsFollowing(ctx context.Context, arg sqlc.IsFollowingParams) (bool, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.Bool(0), args.Error(1)
+// }
 
-func (m *MockQuerier) AcceptFollowRequest(ctx context.Context, arg sqlc.AcceptFollowRequestParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) IsFollowRequestPending(ctx context.Context, arg sqlc.IsFollowRequestPendingParams) (bool, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.Bool(0), args.Error(1)
+// }
 
-func (m *MockQuerier) RejectFollowRequest(ctx context.Context, arg sqlc.RejectFollowRequestParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) GetMutualFollowers(ctx context.Context, arg sqlc.GetMutualFollowersParams) ([]sqlc.GetMutualFollowersRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetMutualFollowersRow), args.Error(1)
+// }
 
-func (m *MockQuerier) IsFollowing(ctx context.Context, arg sqlc.IsFollowingParams) (bool, error) {
-	args := m.Called(ctx, arg)
-	return args.Bool(0), args.Error(1)
-}
+// func (m *MockQuerier) AreFollowingEachOther(ctx context.Context, arg sqlc.AreFollowingEachOtherParams) (sqlc.AreFollowingEachOtherRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return sqlc.AreFollowingEachOtherRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.AreFollowingEachOtherRow), args.Error(1)
+// }
 
-func (m *MockQuerier) IsFollowRequestPending(ctx context.Context, arg sqlc.IsFollowRequestPendingParams) (bool, error) {
-	args := m.Called(ctx, arg)
-	return args.Bool(0), args.Error(1)
-}
+// func (m *MockQuerier) GetFollowSuggestions(ctx context.Context, followerID int64) ([]sqlc.GetFollowSuggestionsRow, error) {
+// 	args := m.Called(ctx, followerID)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetFollowSuggestionsRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetMutualFollowers(ctx context.Context, arg sqlc.GetMutualFollowersParams) ([]sqlc.GetMutualFollowersRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetMutualFollowersRow), args.Error(1)
-}
+// func (m *MockQuerier) GetFollowingIds(ctx context.Context, userID int64) ([]int64, error) {
+// 	args := m.Called(ctx, userID)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]int64), args.Error(1)
+// }
 
-func (m *MockQuerier) AreFollowingEachOther(ctx context.Context, arg sqlc.AreFollowingEachOtherParams) (sqlc.AreFollowingEachOtherRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return sqlc.AreFollowingEachOtherRow{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.AreFollowingEachOtherRow), args.Error(1)
-}
+// // Groups-related methods
+// func (m *MockQuerier) GetAllGroups(ctx context.Context, arg sqlc.GetAllGroupsParams) ([]sqlc.GetAllGroupsRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetAllGroupsRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetFollowSuggestions(ctx context.Context, followerID int64) ([]sqlc.GetFollowSuggestionsRow, error) {
-	args := m.Called(ctx, followerID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetFollowSuggestionsRow), args.Error(1)
-}
+// func (m *MockQuerier) GetGroupInfo(ctx context.Context, groupID int64) (sqlc.GetGroupInfoRow, error) {
+// 	args := m.Called(ctx, groupID)
+// 	if args.Get(0) == nil {
+// 		return sqlc.GetGroupInfoRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.GetGroupInfoRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetFollowingIds(ctx context.Context, userID int64) ([]int64, error) {
-	args := m.Called(ctx, userID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]int64), args.Error(1)
-}
+// func (m *MockQuerier) GetGroupMembers(ctx context.Context, arg sqlc.GetGroupMembersParams) ([]sqlc.GetGroupMembersRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.GetGroupMembersRow), args.Error(1)
+// }
 
-// Groups-related methods
-func (m *MockQuerier) GetAllGroups(ctx context.Context, arg sqlc.GetAllGroupsParams) ([]sqlc.GetAllGroupsRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetAllGroupsRow), args.Error(1)
-}
+// func (m *MockQuerier) SearchGroupsFuzzy(ctx context.Context, arg sqlc.SearchGroupsFuzzyParams) ([]sqlc.SearchGroupsFuzzyRow, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return nil, args.Error(1)
+// 	}
+// 	return args.Get(0).([]sqlc.SearchGroupsFuzzyRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetGroupInfo(ctx context.Context, groupID int64) (sqlc.GetGroupInfoRow, error) {
-	args := m.Called(ctx, groupID)
-	if args.Get(0) == nil {
-		return sqlc.GetGroupInfoRow{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.GetGroupInfoRow), args.Error(1)
-}
+// func (m *MockQuerier) CreateGroup(ctx context.Context, arg sqlc.CreateGroupParams) (int64, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.Get(0).(int64), args.Error(1)
+// }
 
-func (m *MockQuerier) GetGroupMembers(ctx context.Context, arg sqlc.GetGroupMembersParams) ([]sqlc.GetGroupMembersRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.GetGroupMembersRow), args.Error(1)
-}
+// func (m *MockQuerier) AddUserToGroup(ctx context.Context, arg sqlc.AddUserToGroupParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) SearchGroupsFuzzy(ctx context.Context, arg sqlc.SearchGroupsFuzzyParams) ([]sqlc.SearchGroupsFuzzyRow, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]sqlc.SearchGroupsFuzzyRow), args.Error(1)
-}
+// func (m *MockQuerier) SendGroupInvite(ctx context.Context, arg sqlc.SendGroupInviteParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) CreateGroup(ctx context.Context, arg sqlc.CreateGroupParams) (int64, error) {
-	args := m.Called(ctx, arg)
-	return args.Get(0).(int64), args.Error(1)
-}
+// func (m *MockQuerier) CancelGroupInvite(ctx context.Context, arg sqlc.CancelGroupInviteParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) AddUserToGroup(ctx context.Context, arg sqlc.AddUserToGroupParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) AcceptGroupInvite(ctx context.Context, arg sqlc.AcceptGroupInviteParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) SendGroupInvite(ctx context.Context, arg sqlc.SendGroupInviteParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) SendGroupJoinRequest(ctx context.Context, arg sqlc.SendGroupJoinRequestParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) CancelGroupInvite(ctx context.Context, arg sqlc.CancelGroupInviteParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) CancelGroupJoinRequest(ctx context.Context, arg sqlc.CancelGroupJoinRequestParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) AcceptGroupInvite(ctx context.Context, arg sqlc.AcceptGroupInviteParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) AcceptGroupJoinRequest(ctx context.Context, arg sqlc.AcceptGroupJoinRequestParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) SendGroupJoinRequest(ctx context.Context, arg sqlc.SendGroupJoinRequestParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) DeclineGroupInvite(ctx context.Context, arg sqlc.DeclineGroupInviteParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) CancelGroupJoinRequest(ctx context.Context, arg sqlc.CancelGroupJoinRequestParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) RejectGroupJoinRequest(ctx context.Context, arg sqlc.RejectGroupJoinRequestParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) AcceptGroupJoinRequest(ctx context.Context, arg sqlc.AcceptGroupJoinRequestParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) IsUserGroupMember(ctx context.Context, arg sqlc.IsUserGroupMemberParams) (bool, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.Bool(0), args.Error(1)
+// }
 
-func (m *MockQuerier) DeclineGroupInvite(ctx context.Context, arg sqlc.DeclineGroupInviteParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) IsUserGroupOwner(ctx context.Context, arg sqlc.IsUserGroupOwnerParams) (bool, error) {
+// 	args := m.Called(ctx, arg)
+// 	return args.Bool(0), args.Error(1)
+// }
 
-func (m *MockQuerier) RejectGroupJoinRequest(ctx context.Context, arg sqlc.RejectGroupJoinRequestParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) LeaveGroup(ctx context.Context, arg sqlc.LeaveGroupParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) IsUserGroupMember(ctx context.Context, arg sqlc.IsUserGroupMemberParams) (bool, error) {
-	args := m.Called(ctx, arg)
-	return args.Bool(0), args.Error(1)
-}
+// // Admin-related methods
+// func (m *MockQuerier) AddGroupOwnerAsMember(ctx context.Context, arg sqlc.AddGroupOwnerAsMemberParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) IsUserGroupOwner(ctx context.Context, arg sqlc.IsUserGroupOwnerParams) (bool, error) {
-	args := m.Called(ctx, arg)
-	return args.Bool(0), args.Error(1)
-}
+// func (m *MockQuerier) BanUser(ctx context.Context, arg sqlc.BanUserParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) LeaveGroup(ctx context.Context, arg sqlc.LeaveGroupParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) SoftDeleteGroup(ctx context.Context, id int64) error {
+// 	args := m.Called(ctx, id)
+// 	return args.Error(0)
+// }
 
-// Admin-related methods
-func (m *MockQuerier) AddGroupOwnerAsMember(ctx context.Context, arg sqlc.AddGroupOwnerAsMemberParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) SoftDeleteUser(ctx context.Context, id int64) error {
+// 	args := m.Called(ctx, id)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) BanUser(ctx context.Context, arg sqlc.BanUserParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) TransferOwnership(ctx context.Context, arg sqlc.TransferOwnershipParams) error {
+// 	args := m.Called(ctx, arg)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) SoftDeleteGroup(ctx context.Context, id int64) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
+// func (m *MockQuerier) UnbanUser(ctx context.Context, id int64) error {
+// 	args := m.Called(ctx, id)
+// 	return args.Error(0)
+// }
 
-func (m *MockQuerier) SoftDeleteUser(ctx context.Context, id int64) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
+// func (m *MockQuerier) GetUserGroupRole(ctx context.Context, arg sqlc.GetUserGroupRoleParams) (sqlc.NullGroupRole, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return sqlc.NullGroupRole{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.NullGroupRole), args.Error(1)
+// }
 
-func (m *MockQuerier) TransferOwnership(ctx context.Context, arg sqlc.TransferOwnershipParams) error {
-	args := m.Called(ctx, arg)
-	return args.Error(0)
-}
+// func (m *MockQuerier) IsGroupMembershipPending(ctx context.Context, arg sqlc.IsGroupMembershipPendingParams) (pgtype.Bool, error) {
+// 	args := m.Called(ctx, arg)
+// 	if args.Get(0) == nil {
+// 		return pgtype.Bool{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(pgtype.Bool), args.Error(1)
+// }
 
-func (m *MockQuerier) UnbanUser(ctx context.Context, id int64) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
+// // Newer sqlc Querier includes UserGroupCountsPerRole — add to mock
+// func (m *MockQuerier) UserGroupCountsPerRole(ctx context.Context, groupOwner int64) (sqlc.UserGroupCountsPerRoleRow, error) {
+// 	args := m.Called(ctx, groupOwner)
+// 	if args.Get(0) == nil {
+// 		return sqlc.UserGroupCountsPerRoleRow{}, args.Error(1)
+// 	}
+// 	return args.Get(0).(sqlc.UserGroupCountsPerRoleRow), args.Error(1)
+// }
 
-func (m *MockQuerier) GetUserGroupRole(ctx context.Context, arg sqlc.GetUserGroupRoleParams) (sqlc.NullGroupRole, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return sqlc.NullGroupRole{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.NullGroupRole), args.Error(1)
-}
+// // ==============
+// // ===== mock_db_test.go =====
 
-func (m *MockQuerier) IsGroupMembershipPending(ctx context.Context, arg sqlc.IsGroupMembershipPendingParams) (pgtype.Bool, error) {
-	args := m.Called(ctx, arg)
-	if args.Get(0) == nil {
-		return pgtype.Bool{}, args.Error(1)
-	}
-	return args.Get(0).(pgtype.Bool), args.Error(1)
-}
+// /*
+// DATABASE INTERFACE (for reference)
 
-// Newer sqlc Querier includes UserGroupCountsPerRole — add to mock
-func (m *MockQuerier) UserGroupCountsPerRole(ctx context.Context, groupOwner int64) (sqlc.UserGroupCountsPerRoleRow, error) {
-	args := m.Called(ctx, groupOwner)
-	if args.Get(0) == nil {
-		return sqlc.UserGroupCountsPerRoleRow{}, args.Error(1)
-	}
-	return args.Get(0).(sqlc.UserGroupCountsPerRoleRow), args.Error(1)
-}
+// type Database interface {
+// 	TxQueries(context.Context) (*sqlc.Queries, func(context.Context) error, func(context.Context) error, error)
+// 	Queries() *sqlc.Queries
+// }
+// */
+
+// //
+// // ---- Fake DBTX (what sqlc actually talks to)
+// //
+
+// type FakeDBTX struct {
+// 	ExecFn     func(context.Context, string, ...any) (pgconn.CommandTag, error)
+// 	QueryFn    func(context.Context, string, ...any) (pgx.Rows, error)
+// 	QueryRowFn func(context.Context, string, ...any) pgx.Row
+// }
+
+// func (f *FakeDBTX) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+// 	return f.ExecFn(ctx, sql, args...)
+// }
+
+// func (f *FakeDBTX) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+// 	return f.QueryFn(ctx, sql, args...)
+// }
+
+// func (f *FakeDBTX) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+// 	return f.QueryRowFn(ctx, sql, args...)
+// }
+
+// //
+// // ---- Fake Row (sqlc only calls Scan)
+// //
+
+// type FakeRow struct {
+// 	ScanFn func(...any) error
+// }
+
+// func (r *FakeRow) Scan(dest ...any) error {
+// 	return r.ScanFn(dest...)
+// }
+
+// //
+// // ---- Mock Database (what Application receives)
+// //
+
+// type MockDatabase struct {
+// 	Q *sqlc.Queries
+// }
+
+// func (m *MockDatabase) Queries() *sqlc.Queries {
+// 	return m.Q
+// }
+
+// func (m *MockDatabase) TxQueries(
+// 	ctx context.Context,
+// ) (*sqlc.Queries, func(context.Context) error, func(context.Context) error, error) {
+// 	commit := func(context.Context) error { return nil }
+// 	rollback := func(context.Context) error { return nil }
+// 	return m.Q, commit, rollback, nil
+// }
+
+// //
+// // ---- Example test wiring
+// //
+
+// func newErroringApplication() *application.Application {
+// 	fakeDB := &FakeDBTX{
+// 		QueryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+// 			return &FakeRow{
+// 				ScanFn: func(dest ...any) error {
+// 					return errors.New("user not found")
+// 				},
+// 			}
+// 		},
+// 		ExecFn: func(context.Context, string, ...any) (pgconn.CommandTag, error) {
+// 			return pgconn.CommandTag{}, nil
+// 		},
+// 		QueryFn: func(context.Context, string, ...any) (pgx.Rows, error) {
+// 			return nil, nil
+// 		},
+// 	}
+
+// 	queries := sqlc.New(fakeDB)
+
+// 	db := &MockDatabase{Q: queries}
+
+// 	return application.NewApplication(db, nil, nil)
+// }

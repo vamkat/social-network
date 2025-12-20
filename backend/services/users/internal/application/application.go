@@ -11,6 +11,7 @@ type Database interface {
 	TxQueries(context.Context) (*sqlc.Queries, func(context.Context) error, func(context.Context) error, error)
 	Queries() *sqlc.Queries
 }
+
 type Application struct {
 	db            Database
 	ChatService   chat.ChatServiceClient

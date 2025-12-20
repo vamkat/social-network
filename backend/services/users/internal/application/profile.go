@@ -18,7 +18,7 @@ func (app *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (res
 		return models.User{}, err
 	}
 
-	row, err := app.db.GetUserBasic(ctx, userId.Int64())
+	row, err := app.db.Queries().GetUserBasic(ctx, userId.Int64())
 	if err != nil {
 		return models.User{}, err
 	}
@@ -36,7 +36,7 @@ func (app *Application) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Id
 		return nil, err
 	}
 
-	rows, err := app.db.GetBatchUsersBasic(ctx, userIds.Int64())
+	rows, err := app.db.Queries().GetBatchUsersBasic(ctx, userIds.Int64())
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (app *Application) GetUserProfile(ctx context.Context, req models.UserProfi
 		return profile, err
 	}
 
-	row, err := app.db.GetUserProfile(ctx, req.UserId.Int64())
+	row, err := app.db.Queries().GetUserProfile(ctx, req.UserId.Int64())
 	if err != nil {
 		fmt.Println(err)
 		return models.UserProfileResponse{}, err
@@ -104,16 +104,16 @@ func (app *Application) GetUserProfile(ctx context.Context, req models.UserProfi
 	// 	return models.UserProfileResponse{}, ErrProfilePrivate
 	// }
 
-	profile.FollowersCount, err = app.db.GetFollowerCount(ctx, req.UserId.Int64())
+	profile.FollowersCount, err = app.db.Queries().GetFollowerCount(ctx, req.UserId.Int64())
 	if err != nil {
 		return models.UserProfileResponse{}, err
 	}
-	profile.FollowingCount, err = app.db.GetFollowingCount(ctx, req.UserId.Int64())
+	profile.FollowingCount, err = app.db.Queries().GetFollowingCount(ctx, req.UserId.Int64())
 	if err != nil {
 		return models.UserProfileResponse{}, err
 	}
 
-	groupsRow, err := app.db.UserGroupCountsPerRole(ctx, req.UserId.Int64())
+	groupsRow, err := app.db.Queries().UserGroupCountsPerRole(ctx, req.UserId.Int64())
 	if err != nil {
 		return models.UserProfileResponse{}, err
 	}
@@ -133,7 +133,7 @@ func (app *Application) SearchUsers(ctx context.Context, req models.UserSearchRe
 		return []models.User{}, err
 	}
 
-	rows, err := app.db.SearchUsers(ctx, sqlc.SearchUsersParams{
+	rows, err := app.db.Queries().SearchUsers(ctx, sqlc.SearchUsersParams{
 		Username: req.SearchTerm.String(),
 		Limit:    req.Limit.Int32(),
 	})
@@ -166,7 +166,7 @@ func (app *Application) UpdateUserProfile(ctx context.Context, req models.Update
 		Valid: true,
 	}
 
-	row, err := app.db.UpdateUserProfile(ctx, sqlc.UpdateUserProfileParams{
+	row, err := app.db.Queries().UpdateUserProfile(ctx, sqlc.UpdateUserProfileParams{
 		ID:          req.UserId.Int64(),
 		Username:    req.Username.String(),
 		FirstName:   req.FirstName.String(),
@@ -204,7 +204,7 @@ func (app *Application) UpdateProfilePrivacy(ctx context.Context, req models.Upd
 		return err
 	}
 
-	err := app.db.UpdateProfilePrivacy(ctx, sqlc.UpdateProfilePrivacyParams{
+	err := app.db.Queries().UpdateProfilePrivacy(ctx, sqlc.UpdateProfilePrivacyParams{
 		ID:            req.UserId.Int64(),
 		ProfilePublic: req.Public,
 	})
