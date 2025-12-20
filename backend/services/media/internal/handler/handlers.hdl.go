@@ -96,34 +96,6 @@ func ctToPbUploadStatus(v ct.UploadStatus) pb.UploadStatus {
 	}
 }
 
-// pbToMdFileMeta converts protobuf FileMeta to models FileMeta
-// func pbToMdFileMeta(fm *pb.FileMeta) md.FileMeta {
-// 	return md.FileMeta{
-// 		Id:         ct.Id(fm.Id),
-// 		Filename:   fm.Filename,
-// 		MimeType:   fm.MimeType,
-// 		SizeBytes:  fm.SizeBytes,
-// 		Bucket:     fm.Bucket,
-// 		ObjectKey:  fm.ObjectKey,
-// 		Visibility: pbToCtFileVisibility(fm.Visibility),
-// 		Variant:    pbToCtImgVariant(fm.Variant),
-// 	}
-// }
-
-// mdToPbFileMeta converts models FileMeta to protobuf FileMeta
-// func mdToPbFileMeta(fm md.FileMeta) *pb.FileMeta {
-// 	return &pb.FileMeta{
-// 		Id:         int64(fm.Id),
-// 		Filename:   fm.Filename,
-// 		MimeType:   fm.MimeType,
-// 		SizeBytes:  fm.SizeBytes,
-// 		Bucket:     fm.Bucket,
-// 		ObjectKey:  fm.ObjectKey,
-// 		Visibility: ctToPbFileVisibility(fm.Visibility),
-// 		Variant:    ctToPbImgVariant(fm.Variant),
-// 	}
-// }
-
 // Provides image id and an upload URL that can only be accessed through container DNS.
 // All uploads are marked with a false validation tag and must be validated through ValidateUpload handler.
 // Unvalidated uploads expire after the defined `lifecycle.Expiration` on file services configuration.

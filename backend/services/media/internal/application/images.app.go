@@ -53,6 +53,8 @@ func (m *MediaService) UploadImage(ctx context.Context,
 				return err
 			}
 
+			fmt.Printf("Creating variants %v for file %v\n", variants, fileId)
+
 			for _, v := range variants {
 				_, err := m.Queries.CreateVariant(ctx, dbservice.File{
 					Id:         fileId,

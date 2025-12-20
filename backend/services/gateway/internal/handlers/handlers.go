@@ -83,6 +83,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			Finalize(h.validateFileUpload()))
 
+	// Test handler for media package
+	mux.HandleFunc("/get-image",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			EnrichContext().
+			Finalize(h.GetImageUrl()))
+
 	mux.HandleFunc("/logout",
 		Chain().
 			AllowedMethod("POST").

@@ -1,11 +1,9 @@
 package client
 
 import (
-	"bytes"
 	"context"
+	"errors"
 	"fmt"
-	"image"
-	"math"
 	"net/url"
 	"path/filepath"
 	ct "social-network/shared/go/customtypes"
@@ -13,18 +11,17 @@ import (
 	"strings"
 	"time"
 
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
+	// _ "image/gif"
+	// _ "image/jpeg"
+	// _ "image/png"
 
-	_ "golang.org/x/image/webp"
-
-	"github.com/chai2010/webp"
+	// _ "golang.org/x/image/webp"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/tags"
-	"golang.org/x/image/draw"
 )
+
+var ErrMinIO = errors.New("minio error")
 
 func (c *Clients) GenerateDownloadURL(
 	ctx context.Context,
@@ -34,6 +31,8 @@ func (c *Clients) GenerateDownloadURL(
 ) (*url.URL, error) {
 
 	client := c.MinIOClient
+
+	// Only for development
 	if c.PublicMinIOClient != nil {
 		client = c.PublicMinIOClient
 	}
@@ -55,6 +54,8 @@ func (c *Clients) GenerateUploadURL(
 ) (*url.URL, error) {
 
 	client := c.MinIOClient
+
+	// Only for development
 	if c.PublicMinIOClient != nil {
 		client = c.PublicMinIOClient
 	}
@@ -80,7 +81,7 @@ func (c *Clients) ValidateUpload(
 		minio.StatObjectOptions{},
 	)
 	if err != nil {
-		return err // upload never completed
+		return errors.Join(ErrMinIO, err) // upload never completed
 	}
 
 	if info.Size != fm.SizeBytes {
@@ -106,7 +107,7 @@ func (c *Clients) ValidateUpload(
 		}
 		obj, err := c.MinIOClient.GetObject(ctx, fm.Bucket, fm.ObjectKey, minio.GetObjectOptions{})
 		if err != nil {
-			return err
+			return errors.Join(ErrMinIO, err)
 		}
 		defer obj.Close()
 		c.Validator.ValidateImage(ctx, obj)
@@ -121,15 +122,20 @@ func (c *Clients) ValidateUpload(
 		true,
 	)
 	if err != nil {
-		return err
+		return errors.Join(ErrMinIO, err)
 	}
-	return c.MinIOClient.PutObjectTagging(
+
+	err = c.MinIOClient.PutObjectTagging(
 		ctx,
 		fm.Bucket,
 		fm.ObjectKey,
 		tagSet,
 		minio.PutObjectTaggingOptions{},
 	)
+	if err != nil {
+		return errors.Join(ErrMinIO, err)
+	}
+	return nil
 }
 
 func (c *Clients) DeleteFile(ctx context.Context,
@@ -154,79 +160,25 @@ func (c *Clients) GenerateVariant(
 	obj, err := c.MinIOClient.GetObject(ctx,
 		bucket, objectKey, minio.GetObjectOptions{})
 	if err != nil {
-		return 0, err
+		return 0, errors.Join(ErrMinIO, err)
 	}
 	defer obj.Close()
 
-	img, _, err := image.Decode(obj)
-	if err != nil {
-		return 0, err
-	}
-
-	resized := resizeForVariant(img, variant)
-
-	var buf bytes.Buffer
-	if err := webp.Encode(&buf, resized, &webp.Options{Quality: 80}); err != nil {
-		return 0, err
-	}
+	outBuf, err := c.ImageConvertor.ConvertImageToVariant(obj, variant)
 
 	info, err := c.MinIOClient.PutObject(
 		ctx,
 		c.Configs.Buckets.Variants,
-		objectKey,
-		&buf,
-		int64(buf.Len()),
+		objectKey+"/"+variant.String(),
+		&outBuf,
+		int64(outBuf.Len()),
 		minio.PutObjectOptions{
 			ContentType: "image/webp",
 		},
 	)
 	size = info.Size
-	return size, err
-}
-
-func resizeForVariant(src image.Image, variant ct.FileVariant) image.Image {
-	maxWidth, maxHeight := variantToSize(variant)
-	bounds := src.Bounds()
-	w := bounds.Dx()
-	h := bounds.Dy()
-
-	ratioW := float64(maxWidth) / float64(w)
-	ratioH := float64(maxHeight) / float64(h)
-	ratio := math.Min(ratioW, ratioH)
-
-	newW := int(float64(w) * ratio)
-	newH := int(float64(h) * ratio)
-
-	dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
-
-	draw.CatmullRom.Scale(
-		dst,
-		dst.Bounds(),
-		src,
-		bounds,
-		draw.Over,
-		nil,
-	)
-
-	return dst
-}
-
-func variantToSize(variant ct.FileVariant) (maxWidth, maxHeight int) {
-	switch variant {
-	case ct.ImgLarge:
-		return 1600, 1600
-
-	case ct.ImgMedium:
-		return 800, 800
-
-	case ct.ImgSmall:
-		return 400, 400
-
-	case ct.ImgThumbnail:
-		return 150, 150
-
-	default:
-		// fallback (treat as medium)
-		return 800, 800
+	if err != nil {
+		return 0, errors.Join(ErrMinIO, err)
 	}
+	return size, nil
 }

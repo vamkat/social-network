@@ -11,7 +11,7 @@ type Config struct {
 
 type FileService struct {
 	Endpoint              string
-	PublicEndpoint        string
+	PublicEndpoint        string // used only for dev. Should be empty for production
 	AccessKey             string
 	Secret                string
 	Buckets               Buckets
@@ -41,6 +41,6 @@ type Clients struct {
 }
 
 type Db struct {
-	URL                string
-	StaleFilesInterval time.Duration
+	URL                      string
+	StaleFilesWorkerInterval time.Duration
 }

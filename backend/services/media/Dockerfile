@@ -22,7 +22,7 @@ COPY --from=build /app/services/media/internal/db/migrations ./migrations
 COPY services/media/entrypoint.sh /app/entrypoint.sh
 
 # RUN chmod +x /app/seeds/seed.sh 
- RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["./media_service"]

@@ -340,7 +340,7 @@ func (q *Queries) GetPendingVariants(
 			fv.variant
 		FROM file_variants fv
 		JOIN files f ON fv.file_id = f.id
-		WHERE fv.status = 'pending'
+		WHERE fv.status = 'processing' -- the variant status is changed to processing by db trigger when file status is set to complete
 		  AND f.status = 'complete'
 	`
 

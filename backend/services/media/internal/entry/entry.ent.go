@@ -11,6 +11,7 @@ import (
 	"social-network/services/media/internal/application"
 	"social-network/services/media/internal/client"
 	"social-network/services/media/internal/configs"
+	"social-network/services/media/internal/convertor"
 	"social-network/services/media/internal/db/dbservice"
 	"social-network/services/media/internal/handler"
 	"social-network/services/media/internal/validator"
@@ -27,44 +28,7 @@ import (
 )
 
 func Run() error {
-	cfgs := configs.Config{
-		Server: configs.Server{
-			Port: os.Getenv("SERVICE_PORT"),
-		},
-		DB: configs.Db{
-			URL:                os.Getenv("DATABASE_URL"),
-			StaleFilesInterval: 1 * time.Hour,
-		},
-		FileService: configs.FileService{
-			Buckets: configs.Buckets{
-				Originals: "uploads-originals",
-				Variants:  "uploads-variants",
-			},
-			VariantWorkerInterval: 30 * time.Second,
-			FileConstraints: configs.FileConstraints{
-				MaxImageUpload: 5 << 20, // 5MB
-				MaxWidth:       4096,
-				MaxHeight:      4096,
-				AllowedMIMEs: map[string]bool{
-					"image/jpeg": true,
-					"image/png":  true,
-					"image/gif":  true,
-					"image/webp": true,
-				},
-				AllowedExt: map[string]bool{
-					".jpg":  true,
-					".jpeg": true,
-					".png":  true,
-					".gif":  true,
-					".webp": true,
-				},
-			},
-			Endpoint:       os.Getenv("MINIO_ENDPOINT"),
-			PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
-			AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
-			Secret:         os.Getenv("MINIO_SECRET_KEY"),
-		},
-	}
+	cfgs := getConfigs()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -104,6 +68,8 @@ func Run() error {
 			Validator: &validator.ImageValidator{
 				Config: cfgs.FileService.FileConstraints,
 			},
+			ImageConvertor: convertor.NewImageconvertor(
+				cfgs.FileService.FileConstraints),
 		},
 		querier,
 		cfgs,
@@ -111,7 +77,7 @@ func Run() error {
 	w := dbservice.NewWorker(querier)
 
 	app.StartVariantWorker(ctx, cfgs.FileService.VariantWorkerInterval)
-	w.StartStaleFilesWorker(ctx, cfgs.DB.StaleFilesInterval)
+	w.StartStaleFilesWorker(ctx, cfgs.DB.StaleFilesWorkerInterval)
 
 	service := &handler.MediaHandler{
 		Application: app,
@@ -179,4 +145,46 @@ func RunGRPCServer(s *handler.MediaHandler) (*grpc.Server, error) {
 		}
 	}()
 	return grpcServer, nil
+}
+
+func getConfigs() configs.Config {
+	return configs.Config{
+		Server: configs.Server{
+			Port: os.Getenv("SERVICE_PORT"),
+		},
+		DB: configs.Db{
+			URL:                      os.Getenv("DATABASE_URL"),
+			StaleFilesWorkerInterval: 1 * time.Hour,
+		},
+		FileService: configs.FileService{
+			Buckets: configs.Buckets{
+				Originals: "uploads-originals",
+				Variants:  "uploads-variants",
+			},
+			VariantWorkerInterval: 30 * time.Second,
+			FileConstraints: configs.FileConstraints{
+				MaxImageUpload: 5 << 20, // 5MB
+				MaxWidth:       4096,
+				MaxHeight:      4096,
+				AllowedMIMEs: map[string]bool{
+					"image/jpeg": true,
+					"image/jpg":  true,
+					"image/png":  true,
+					"image/gif":  true,
+					"image/webp": true,
+				},
+				AllowedExt: map[string]bool{
+					".jpg":  true,
+					".jpeg": true,
+					".png":  true,
+					".gif":  true,
+					".webp": true,
+				},
+			},
+			Endpoint:       os.Getenv("MINIO_ENDPOINT"),
+			PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
+			AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
+			Secret:         os.Getenv("MINIO_SECRET_KEY"),
+		},
+	}
 }

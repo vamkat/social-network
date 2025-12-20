@@ -217,7 +217,7 @@ func (v UploadStatus) String() string {
 
 func (v UploadStatus) isValid() bool {
 	switch v {
-	case Pending, Complete, Failed:
+	case Pending, Complete, Failed, Processing:
 		return true
 	default:
 		return false
