@@ -87,11 +87,13 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 		uniqueImageIds = append(uniqueImageIds, imageId)
 	}
 
-	images := make(map[int64]string, len(uniqueImageIds))
+	fmt.Println("Unique image ids", uniqueImageIds)
+
+	images := make(map[int64]string, len(uniqueImageIds)) //I don't ever user this
 	var missingImages []int64
 
 	// Redis lookup for images
-	for _, imageId := range imageIds {
+	for _, imageId := range uniqueImageIds {
 		var imageURL string
 		if err := h.cache.GetObj(ctx, fmt.Sprintf("img_thumbnail:%d", imageId), &imageURL); err == nil {
 			images[imageId] = imageURL
@@ -99,13 +101,6 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 			missingImages = append(missingImages, imageId)
 		}
 	}
-
-	//TODO:
-	// Init client for media in users
-	// send it to retrieve users
-	// change the basic user model to include url, or add a new model
-	// decide on redis keys
-	// test
 
 	// // Batch RPC for missing images
 	if len(missingImages) > 0 {
@@ -129,7 +124,8 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 		}
 
 		//batch call to delete missing image ids
-		fmt.Println(failedImages)
+		fmt.Println("failed", failedImages)
+		fmt.Println("map", imageMap)
 	}
 
 	return users, nil
