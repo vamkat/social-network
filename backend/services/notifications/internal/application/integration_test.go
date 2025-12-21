@@ -17,7 +17,7 @@ import (
 // Test that all notification trigger functions work
 func TestNotificationTriggerFunctions(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 
@@ -142,7 +142,7 @@ func TestNotificationTriggerFunctions(t *testing.T) {
 // Test notification queries work
 func TestNotificationQueries(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -171,7 +171,7 @@ func TestNotificationQueries(t *testing.T) {
 // Test aggregation functionality
 func TestAggregationFunctionality(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)

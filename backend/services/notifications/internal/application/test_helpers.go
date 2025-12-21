@@ -72,3 +72,11 @@ func (m *MockDB) GetUnreadNotificationByTypeAndEntity(ctx context.Context, arg s
 	args := m.Called(ctx, arg)
 	return args.Get(0).(sqlc.Notification), args.Error(1)
 }
+
+// NewApplicationWithMocks creates a new application service with mocked dependencies for testing
+func NewApplicationWithMocks(db DBInterface) *Application {
+	return &Application{
+		DB:      db,
+		Clients: nil, // nil for tests
+	}
+}
