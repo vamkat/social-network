@@ -3,7 +3,7 @@
 import { LogoutButton } from "@/components/LogoutButton";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 
-export default function ProfileContent({result}) {
+export default function ProfileContent({ result }) {
     // Handle error state
     if (!result.success) {
         return (

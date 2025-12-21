@@ -24,8 +24,8 @@ export function LogoutButton() {
             // clear user from state and local storage
             clearUser();
 
-            // Redirect to login
-            router.push("/login");
+            // Redirect to login using hard navigation to clear all app state
+            window.location.href = "/login";
 
         } catch (error) {
             console.error('Logout error:', error)

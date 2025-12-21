@@ -12,7 +12,6 @@ export default async function PublicFeedPage() {
     const limit = 10;
     const offset = 0;
     const posts = await getPublicPosts({ limit, offset });
-    console.log("posts", posts);
 
     return (
         <div>
