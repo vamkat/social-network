@@ -255,9 +255,9 @@ export default function PostCard({ post }) {
             </div>
 
             {/* Image */}
-            {/* {post.image && (
-                <PostImage src={} alt="He" />
-            )} */}
+            {post.avatar_url && (
+                <PostImage src={post.avatar_url} alt="He" />
+            )}
 
             {/* Actions Footer */}
             <div className="px-5 py-4">

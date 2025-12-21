@@ -2,8 +2,10 @@
 
 import { LogoutButton } from "@/components/LogoutButton";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import CreatePost from "@/components/ui/CreatePost";
+import PostCard from "@/components/ui/PostCard";
 
-export default function ProfileContent({ result }) {
+export default function ProfileContent({ result, posts }) {
     // Handle error state
     if (!result.success) {
         return (
@@ -30,11 +32,54 @@ export default function ProfileContent({ result }) {
         );
     }
 
+    console.log(result.user);
+
     // Render profile
     return (
-        <div className="w-full py-3 animate-in fade-in duration-500">
-            <div className="max-w-full mx-auto px-22 pr-22">
+        <div >
+            <div>
                 <ProfileHeader user={result.user} />
+                {result.user.own_profile ? (
+                    <div>
+                        <div className="pt-3 flex flex-col px-70">
+                            <CreatePost />
+                        </div>
+                        <div className="mt-8 mb-6">
+                            <h1 className="text-center feed-title">My Feed</h1>
+                            <p className="text-center feed-subtitle">What's happening in my sphere?</p>
+                        </div>
+                        <div className="section-divider mb-6" />
+                    </div>
+                ) : (
+                    <div>
+                        <div className="mt-8 mb-6">
+                            <h1 className="text-center feed-title">{result.user.username}'s Feed</h1>
+                            <p className="text-center feed-subtitle">What's happening in {result.user.username}'s sphere?</p>
+                        </div>
+                        <div className="section-divider mb-6" />
+                    </div>
+                )}
+                <div className="pt-6 flex flex-col px-70">
+                {posts?.length > 0 ? (
+                    posts.map((post, index) => {
+                        if (posts.length === index + 1) {
+                            return (
+                                <div key={`${post.ID}-${index}`}>
+                                    <PostCard post={post} className="mb-6"/>
+                                </div>
+                            );
+                        } else {
+                            return <PostCard key={`${post.ID}-${index}`} post={post} />;
+                        }
+                    })
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+                        <p className="text-muted text-center max-w-md">
+                            Nothing.
+                        </p>
+                    </div>
+                )}
+                </div>
                 <LogoutButton />
             </div>
         </div>

@@ -103,7 +103,8 @@ export function ProfileHeader({ user }) {
 
     return (
         <>
-            <div className="bg-background border border-(--border) rounded-2xl overflow-hidden mb-6 py-2">
+            <div className="bg-background overflow-hidden mt-3">
+                <div className="prof-divider mt-6" />
                 <div className="p-6 md:p-8">
                     <div className="flex flex-col md:flex-row gap-8">
                         {/* Avatar */}
@@ -226,6 +227,7 @@ export function ProfileHeader({ user }) {
                         </div>
                     </div>
                 </div>
+                <div className="prof-divider mt-6" />
             </div>
 
             <Modal
