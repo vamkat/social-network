@@ -9,4 +9,5 @@ var (
 	ErrNotAuthorized     = errors.New("user not authorized")
 	ErrInvalidDateFormat = errors.New("invalid date format: expected YYYY-MM-DD")
 	ErrWrongCredentials  = errors.New("invalid identifier or password")
+	ErrNotFound          = errors.New("no rows affected")
 )

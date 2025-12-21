@@ -8,6 +8,7 @@ import (
 )
 
 func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
+	//don't I need to check viewer has right to see? Or is this open to anyone?
 	if err := ct.ValidateStruct(req); err != nil {
 		return []models.User{}, err
 	}
@@ -21,13 +22,27 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 		return []models.User{}, err
 	}
 	users := make([]models.User, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
+		imageIds = append(imageIds, r.AvatarID)
 	}
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return []models.User{}, err
+		}
+		for i := range users {
+			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+		}
+	}
+
+	//fmt.Println(users)
 
 	return users, nil
 
@@ -48,12 +63,25 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 		return []models.User{}, err
 	}
 	users := make([]models.User, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
+		imageIds = append(imageIds, r.AvatarID)
+	}
+
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return []models.User{}, err
+		}
+		for i := range users {
+			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+		}
 	}
 
 	return users, nil
@@ -90,16 +118,22 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 	return resp, nil
 }
 
-func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq) (viewerIsFollowing bool, err error) {
+func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq) (err error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return false, err
+		return err
 	}
-	err = s.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
+	//if already following, unfollows
+	// if request pending, cancels request
+
+	rowsAffected, err := s.db.UnfollowUser(ctx, sqlc.UnfollowUserParams{
 		FollowerID:  req.FollowerId.Int64(),
 		FollowingID: req.TargetUserId.Int64(),
 	})
 	if err != nil {
-		return false, err
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrNotFound
 	}
 
 	// err = s.deletePrivateConversation(ctx, req)
@@ -107,7 +141,7 @@ func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq
 	// 	fmt.Println("conversation couldn't be deleted", err)
 	// }
 
-	return true, nil
+	return nil
 }
 
 func (s *Application) HandleFollowRequest(ctx context.Context, req models.HandleFollowRequestReq) error {
@@ -169,13 +203,27 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 		return nil, err
 	}
 	users := make([]models.User, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
+		imageIds = append(imageIds, r.AvatarID)
 	}
+
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return []models.User{}, err
+		}
+		for i := range users {
+			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+		}
+	}
+
 	return users, nil
 }
 

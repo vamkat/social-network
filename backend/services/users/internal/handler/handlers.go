@@ -223,7 +223,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 	}, nil
 }
 
-func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserRequest) (*wrapperspb.BoolValue, error) {
+func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserRequest) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UnFollowUser: request is nil")
 	}
@@ -238,7 +238,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 		return nil, err
 	}
 
-	resp, err := s.Application.UnFollowUser(ctx, models.FollowUserReq{
+	err := s.Application.UnFollowUser(ctx, models.FollowUserReq{
 		FollowerId:   ct.Id(followerId),
 		TargetUserId: ct.Id(targetUserId),
 	})
@@ -246,7 +246,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 		return nil, status.Errorf(codes.Internal, "UnFollowUser: %v", err)
 	}
 
-	return wrapperspb.Bool(resp), nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFollowRequestRequest) (*emptypb.Empty, error) {
@@ -920,9 +920,10 @@ func usersToPB(dbUsers []models.User) *cm.ListUsers {
 
 	for _, u := range dbUsers {
 		pbUsers = append(pbUsers, &cm.User{
-			UserId:   u.UserId.Int64(),
-			Username: u.Username.String(),
-			Avatar:   u.AvatarId.Int64(),
+			UserId:    u.UserId.Int64(),
+			Username:  u.Username.String(),
+			Avatar:    u.AvatarId.Int64(),
+			AvatarUrl: u.AvatarURL,
 		})
 	}
 

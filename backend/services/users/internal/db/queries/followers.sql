@@ -5,9 +5,25 @@ SELECT follow_user($1, $2);
 -- returns followed or requested depending on target's privacy settings
 
 
--- name: UnfollowUser :exec
-DELETE FROM follows
-WHERE follower_id = $1 AND following_id = $2;
+
+-- name: UnfollowUser :execrows
+WITH deleted_follow AS (
+    DELETE FROM follows
+    WHERE follower_id = $1
+      AND following_id = $2
+    RETURNING 1
+),
+deleted_request AS (
+    DELETE FROM follow_requests
+    WHERE requester_id = $1
+      AND target_id = $2
+    RETURNING 1
+)
+SELECT 1
+FROM deleted_follow
+UNION ALL
+SELECT 1
+FROM deleted_request;
 
 
 -- name: GetFollowers :many

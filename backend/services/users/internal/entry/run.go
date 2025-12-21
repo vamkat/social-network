@@ -11,6 +11,7 @@ import (
 	"social-network/services/users/internal/db/sqlc"
 	"social-network/services/users/internal/handler"
 	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/users"
 	contextkeys "social-network/shared/go/context-keys"
@@ -38,6 +39,10 @@ func Run() error {
 	if err != nil {
 		log.Fatal("failed to create chat client")
 	}
+	mediaClient, err := gorpc.GetGRpcClient(media.NewMediaServiceClient, "media:50051", contextkeys.CommonKeys())
+	if err != nil {
+		log.Fatal("failed to create media client")
+	}
 	notificationsClient, err := gorpc.GetGRpcClient(
 		notifications.NewNotificationServiceClient,
 		"notifications:50051",
@@ -48,7 +53,7 @@ func Run() error {
 	}
 
 	// APPLICATION
-	clients := client.NewClients(chatClient, notificationsClient)
+	clients := client.NewClients(chatClient, notificationsClient, mediaClient)
 	app := application.NewApplication(sqlc.New(pool), pool, clients)
 	service := *handler.NewUsersHanlder(app)
 

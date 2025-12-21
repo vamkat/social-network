@@ -2052,7 +2052,7 @@ const file_users_proto_rawDesc = "" +
 	"\x05about\x18\a \x01(\tR\x05about\"N\n" +
 	"\x1bUpdateProfilePrivacyRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x16\n" +
-	"\x06public\x18\x02 \x01(\bR\x06public2\xd5\x10\n" +
+	"\x06public\x18\x02 \x01(\bR\x06public2\xd1\x10\n" +
 	"\vUserService\x128\n" +
 	"\fRegisterUser\x12\x1a.users.RegisterUserRequest\x1a\f.common.User\x12.\n" +
 	"\tLoginUser\x12\x13.users.LoginRequest\x1a\f.common.User\x12J\n" +
@@ -2061,8 +2061,8 @@ const file_users_proto_rawDesc = "" +
 	"\x15GetFollowersPaginated\x12\x11.users.Pagination\x1a\x11.common.ListUsers\x12=\n" +
 	"\x15GetFollowingPaginated\x12\x11.users.Pagination\x1a\x11.common.ListUsers\x12A\n" +
 	"\n" +
-	"FollowUser\x12\x18.users.FollowUserRequest\x1a\x19.users.FollowUserResponse\x12D\n" +
-	"\fUnFollowUser\x12\x18.users.FollowUserRequest\x1a\x1a.google.protobuf.BoolValue\x12P\n" +
+	"FollowUser\x12\x18.users.FollowUserRequest\x1a\x19.users.FollowUserResponse\x12@\n" +
+	"\fUnFollowUser\x12\x18.users.FollowUserRequest\x1a\x16.google.protobuf.Empty\x12P\n" +
 	"\x13HandleFollowRequest\x12!.users.HandleFollowRequestRequest\x1a\x16.google.protobuf.Empty\x12?\n" +
 	"\x0fGetFollowingIds\x12\x1b.google.protobuf.Int64Value\x1a\x0f.common.UserIds\x12F\n" +
 	"\x14GetFollowSuggestions\x12\x1b.google.protobuf.Int64Value\x1a\x11.common.ListUsers\x12D\n" +
@@ -2183,7 +2183,7 @@ var file_users_proto_depIdxs = []int32{
 	33, // 41: users.UserService.GetFollowersPaginated:output_type -> common.ListUsers
 	33, // 42: users.UserService.GetFollowingPaginated:output_type -> common.ListUsers
 	7,  // 43: users.UserService.FollowUser:output_type -> users.FollowUserResponse
-	34, // 44: users.UserService.UnFollowUser:output_type -> google.protobuf.BoolValue
+	32, // 44: users.UserService.UnFollowUser:output_type -> google.protobuf.Empty
 	32, // 45: users.UserService.HandleFollowRequest:output_type -> google.protobuf.Empty
 	30, // 46: users.UserService.GetFollowingIds:output_type -> common.UserIds
 	33, // 47: users.UserService.GetFollowSuggestions:output_type -> common.ListUsers

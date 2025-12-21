@@ -41,7 +41,7 @@ service UserService {
   rpc FollowUser (FollowUserRequest) returns (FollowUserResponse);
 
   // Unfollows a target user or cancels a pending follow request.
-  rpc UnFollowUser (FollowUserRequest) returns (google.protobuf.BoolValue);
+  rpc UnFollowUser (FollowUserRequest) returns (google.protobuf.Empty);
 
   // Accepts or rejects a pending follow request.
   rpc HandleFollowRequest (HandleFollowRequestRequest) returns (google.protobuf.Empty);

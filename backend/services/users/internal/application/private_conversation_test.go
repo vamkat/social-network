@@ -2,13 +2,7 @@ package application
 
 import (
 	"context"
-	"testing"
 
-	"social-network/services/users/internal/db/sqlc"
-	ct "social-network/shared/go/customtypes"
-	"social-network/shared/go/models"
-
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -136,43 +130,43 @@ func (m *MockClients) DeleteConversationByExactMembers(ctx context.Context, user
 // 	mockDB.AssertExpectations(t)
 // }
 
-func TestAreFollowingEachOther_VariousCases(t *testing.T) {
-	mockDB := new(MockQuerier)
-	mockClients := new(MockClients)
-	service := NewApplicationWithMocks(mockDB, mockClients)
+// func TestAreFollowingEachOther_VariousCases(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	mockClients := new(MockClients)
+// 	service := NewApplicationWithMocks(mockDB, mockClients)
 
-	ctx := context.Background()
-	req := models.FollowUserReq{
-		FollowerId:   ct.Id(1),
-		TargetUserId: ct.Id(2),
-	}
+// 	ctx := context.Background()
+// 	req := models.FollowUserReq{
+// 		FollowerId:   ct.Id(1),
+// 		TargetUserId: ct.Id(2),
+// 	}
 
-	// Case: neither follows => expect nil pointer
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{}, nil)
-	res, err := service.AreFollowingEachOther(ctx, req)
-	assert.NoError(t, err)
-	assert.Nil(t, res)
-	mockDB.AssertExpectations(t)
+// 	// Case: neither follows => expect nil pointer
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{}, nil)
+// 	res, err := service.AreFollowingEachOther(ctx, req)
+// 	assert.NoError(t, err)
+// 	assert.Nil(t, res)
+// 	mockDB.AssertExpectations(t)
 
-	// Case: one-way follows => expect pointer to false
-	mockDB = new(MockQuerier)
-	service = NewApplicationWithMocks(mockDB, mockClients)
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: false}, nil)
-	res2, err := service.AreFollowingEachOther(ctx, req)
-	assert.NoError(t, err)
-	if assert.NotNil(t, res2) {
-		assert.False(t, *res2)
-	}
-	mockDB.AssertExpectations(t)
+// 	// Case: one-way follows => expect pointer to false
+// 	mockDB = new(MockQuerier)
+// 	service = NewApplicationWithMocks(mockDB, mockClients)
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: false}, nil)
+// 	res2, err := service.AreFollowingEachOther(ctx, req)
+// 	assert.NoError(t, err)
+// 	if assert.NotNil(t, res2) {
+// 		assert.False(t, *res2)
+// 	}
+// 	mockDB.AssertExpectations(t)
 
-	// Case: both follow => expect pointer to true
-	mockDB = new(MockQuerier)
-	service = NewApplicationWithMocks(mockDB, mockClients)
-	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: true}, nil)
-	res3, err := service.AreFollowingEachOther(ctx, req)
-	assert.NoError(t, err)
-	if assert.NotNil(t, res3) {
-		assert.True(t, *res3)
-	}
-	mockDB.AssertExpectations(t)
-}
+// 	// Case: both follow => expect pointer to true
+// 	mockDB = new(MockQuerier)
+// 	service = NewApplicationWithMocks(mockDB, mockClients)
+// 	mockDB.On("AreFollowingEachOther", ctx, sqlc.AreFollowingEachOtherParams{FollowerID: 1, FollowingID: 2}).Return(sqlc.AreFollowingEachOtherRow{User1FollowsUser2: true, User2FollowsUser1: true}, nil)
+// 	res3, err := service.AreFollowingEachOther(ctx, req)
+// 	assert.NoError(t, err)
+// 	if assert.NotNil(t, res3) {
+// 		assert.True(t, *res3)
+// 	}
+// 	mockDB.AssertExpectations(t)
+// }

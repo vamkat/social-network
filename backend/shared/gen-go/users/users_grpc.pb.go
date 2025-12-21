@@ -84,7 +84,7 @@ type UserServiceClient interface {
 	// Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
 	FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*FollowUserResponse, error)
 	// Unfollows a target user or cancels a pending follow request.
-	UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
+	UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Accepts or rejects a pending follow request.
 	HandleFollowRequest(ctx context.Context, in *HandleFollowRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Returns ids that the user is following.
@@ -211,9 +211,9 @@ func (c *userServiceClient) FollowUser(ctx context.Context, in *FollowUserReques
 	return out, nil
 }
 
-func (c *userServiceClient) UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+func (c *userServiceClient) UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(wrapperspb.BoolValue)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, UserService_UnFollowUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -480,7 +480,7 @@ type UserServiceServer interface {
 	// Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
 	FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error)
 	// Unfollows a target user or cancels a pending follow request.
-	UnFollowUser(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error)
+	UnFollowUser(context.Context, *FollowUserRequest) (*emptypb.Empty, error)
 	// Accepts or rejects a pending follow request.
 	HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error)
 	// Returns ids that the user is following.
@@ -558,7 +558,7 @@ func (UnimplementedUserServiceServer) GetFollowingPaginated(context.Context, *Pa
 func (UnimplementedUserServiceServer) FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method FollowUser not implemented")
 }
-func (UnimplementedUserServiceServer) UnFollowUser(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error) {
+func (UnimplementedUserServiceServer) UnFollowUser(context.Context, *FollowUserRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UnFollowUser not implemented")
 }
 func (UnimplementedUserServiceServer) HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error) {

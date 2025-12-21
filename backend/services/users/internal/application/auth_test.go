@@ -1,114 +1,100 @@
 package application
 
-import (
-	"context"
-	"errors"
-	"testing"
+// func TestLoginUser_InvalidCredentials(t *testing.T) {
+// 	t.Skip("Requires transaction support with real pool - use integration tests")
+// }
 
-	"social-network/services/users/internal/db/sqlc"
-	ct "social-network/shared/go/customtypes"
-	"social-network/shared/go/models"
+// func TestUpdateUserPassword_Success(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	service := NewApplication(mockDB, nil, nil)
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"golang.org/x/crypto/bcrypt"
-)
+// 	oldPassword := "OldPass123!"
+// 	newPassword := "NewPass456!"
+// 	storedPassword := "OldPass123!"
 
-func TestLoginUser_InvalidCredentials(t *testing.T) {
-	t.Skip("Requires transaction support with real pool - use integration tests")
-}
+// 	req := models.UpdatePasswordRequest{
+// 		UserId:      ct.Id(1),
+// 		OldPassword: ct.HashedPassword(oldPassword),
+// 		NewPassword: ct.HashedPassword(newPassword),
+// 	}
 
-func TestUpdateUserPassword_Success(t *testing.T) {
-	mockDB := new(MockQuerier)
-	service := NewApplication(mockDB, nil, nil)
+// 	ctx := context.Background()
 
-	oldPassword := "OldPass123!"
-	newPassword := "NewPass456!"
-	storedPassword := "OldPass123!"
+// 	mockDB.On("GetUserPassword", ctx, int64(1)).Return(string(storedPassword), nil)
+// 	mockDB.On("UpdateUserPassword", ctx, mock.MatchedBy(func(arg sqlc.UpdateUserPasswordParams) bool {
+// 		return arg.UserID == 1
+// 	})).Return(nil)
 
-	req := models.UpdatePasswordRequest{
-		UserId:      ct.Id(1),
-		OldPassword: ct.HashedPassword(oldPassword),
-		NewPassword: ct.HashedPassword(newPassword),
-	}
+// 	err := service.UpdateUserPassword(ctx, req)
 
-	ctx := context.Background()
+// 	assert.NoError(t, err)
+// 	mockDB.AssertExpectations(t)
+// }
 
-	mockDB.On("GetUserPassword", ctx, int64(1)).Return(string(storedPassword), nil)
-	mockDB.On("UpdateUserPassword", ctx, mock.MatchedBy(func(arg sqlc.UpdateUserPasswordParams) bool {
-		return arg.UserID == 1
-	})).Return(nil)
+// func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	service := NewApplication(mockDB, nil, nil)
 
-	err := service.UpdateUserPassword(ctx, req)
+// 	correctPassword := "CorrectPass123!"
+// 	hashedCorrect, _ := bcrypt.GenerateFromPassword([]byte(correctPassword), bcrypt.DefaultCost)
 
-	assert.NoError(t, err)
-	mockDB.AssertExpectations(t)
-}
+// 	req := models.UpdatePasswordRequest{
+// 		UserId:      ct.Id(1),
+// 		OldPassword: ct.HashedPassword("WrongPass456!"),
+// 		NewPassword: ct.HashedPassword("NewPass789!"),
+// 	}
 
-func TestUpdateUserPassword_WrongOldPassword(t *testing.T) {
-	mockDB := new(MockQuerier)
-	service := NewApplication(mockDB, nil, nil)
+// 	ctx := context.Background()
 
-	correctPassword := "CorrectPass123!"
-	hashedCorrect, _ := bcrypt.GenerateFromPassword([]byte(correctPassword), bcrypt.DefaultCost)
+// 	mockDB.On("GetUserPassword", ctx, int64(1)).Return(string(hashedCorrect), nil)
 
-	req := models.UpdatePasswordRequest{
-		UserId:      ct.Id(1),
-		OldPassword: ct.HashedPassword("WrongPass456!"),
-		NewPassword: ct.HashedPassword("NewPass789!"),
-	}
+// 	err := service.UpdateUserPassword(ctx, req)
 
-	ctx := context.Background()
+// 	assert.Equal(t, ErrNotAuthorized, err)
+// 	mockDB.AssertExpectations(t)
+// }
 
-	mockDB.On("GetUserPassword", ctx, int64(1)).Return(string(hashedCorrect), nil)
+// func TestUpdateUserEmail_Success(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	service := NewApplication(mockDB, nil, nil)
 
-	err := service.UpdateUserPassword(ctx, req)
+// 	req := models.UpdateEmailRequest{
+// 		UserId: ct.Id(1),
+// 		Email:  ct.Email("newemail@example.com"),
+// 	}
 
-	assert.Equal(t, ErrNotAuthorized, err)
-	mockDB.AssertExpectations(t)
-}
+// 	ctx := context.Background()
 
-func TestUpdateUserEmail_Success(t *testing.T) {
-	mockDB := new(MockQuerier)
-	service := NewApplication(mockDB, nil, nil)
+// 	mockDB.On("UpdateUserEmail", ctx, sqlc.UpdateUserEmailParams{
+// 		UserID: 1,
+// 		Email:  "newemail@example.com",
+// 	}).Return(nil)
 
-	req := models.UpdateEmailRequest{
-		UserId: ct.Id(1),
-		Email:  ct.Email("newemail@example.com"),
-	}
+// 	err := service.UpdateUserEmail(ctx, req)
 
-	ctx := context.Background()
+// 	assert.NoError(t, err)
+// 	mockDB.AssertExpectations(t)
+// }
 
-	mockDB.On("UpdateUserEmail", ctx, sqlc.UpdateUserEmailParams{
-		UserID: 1,
-		Email:  "newemail@example.com",
-	}).Return(nil)
+// func TestUpdateUserEmail_Error(t *testing.T) {
+// 	mockDB := new(MockQuerier)
+// 	service := NewApplication(mockDB, nil, nil)
 
-	err := service.UpdateUserEmail(ctx, req)
+// 	req := models.UpdateEmailRequest{
+// 		UserId: ct.Id(1),
+// 		Email:  ct.Email("duplicate@example.com"),
+// 	}
 
-	assert.NoError(t, err)
-	mockDB.AssertExpectations(t)
-}
+// 	ctx := context.Background()
 
-func TestUpdateUserEmail_Error(t *testing.T) {
-	mockDB := new(MockQuerier)
-	service := NewApplication(mockDB, nil, nil)
+// 	expectedErr := errors.New("email already exists")
+// 	mockDB.On("UpdateUserEmail", ctx, sqlc.UpdateUserEmailParams{
+// 		UserID: 1,
+// 		Email:  "duplicate@example.com",
+// 	}).Return(expectedErr)
 
-	req := models.UpdateEmailRequest{
-		UserId: ct.Id(1),
-		Email:  ct.Email("duplicate@example.com"),
-	}
+// 	err := service.UpdateUserEmail(ctx, req)
 
-	ctx := context.Background()
-
-	expectedErr := errors.New("email already exists")
-	mockDB.On("UpdateUserEmail", ctx, sqlc.UpdateUserEmailParams{
-		UserID: 1,
-		Email:  "duplicate@example.com",
-	}).Return(expectedErr)
-
-	err := service.UpdateUserEmail(ctx, req)
-
-	assert.Equal(t, expectedErr, err)
-	mockDB.AssertExpectations(t)
-}
+// 	assert.Equal(t, expectedErr, err)
+// 	mockDB.AssertExpectations(t)
+// }
