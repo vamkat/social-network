@@ -17,7 +17,7 @@ import (
 // Test CreateNotification function
 func TestCreateNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -68,7 +68,7 @@ func TestCreateNotification(t *testing.T) {
 // Test GetNotification function
 func TestGetNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	notificationID := int64(1)
@@ -115,7 +115,7 @@ func TestGetNotification(t *testing.T) {
 // Test GetUserNotifications function
 func TestGetUserNotifications(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -160,7 +160,7 @@ func TestGetUserNotifications(t *testing.T) {
 // Test GetUserNotificationsCount function
 func TestGetUserNotificationsCount(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -179,7 +179,7 @@ func TestGetUserNotificationsCount(t *testing.T) {
 // Test GetUserUnreadNotificationsCount function
 func TestGetUserUnreadNotificationsCount(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -198,7 +198,7 @@ func TestGetUserUnreadNotificationsCount(t *testing.T) {
 // Test MarkNotificationAsRead function
 func TestMarkNotificationAsRead(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	notificationID := int64(1)
@@ -216,7 +216,7 @@ func TestMarkNotificationAsRead(t *testing.T) {
 // Test MarkAllAsRead function
 func TestMarkAllAsRead(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(10)
@@ -233,7 +233,7 @@ func TestMarkAllAsRead(t *testing.T) {
 // Test DeleteNotification function
 func TestDeleteNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	notificationID := int64(1)
@@ -251,7 +251,7 @@ func TestDeleteNotification(t *testing.T) {
 // Test CreateNotificationType function
 func TestCreateNotificationType(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 
@@ -267,7 +267,7 @@ func TestCreateNotificationType(t *testing.T) {
 // Test the specific notification trigger functions
 func TestCreateFollowRequestNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	targetUserID := int64(1)
@@ -307,7 +307,7 @@ func TestCreateFollowRequestNotification(t *testing.T) {
 // Test CreateGroupInviteNotification function
 func TestCreateGroupInviteNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	invitedUserID := int64(1)
@@ -352,7 +352,7 @@ func TestCreateGroupInviteNotification(t *testing.T) {
 // Test CreateGroupJoinRequestNotification function
 func TestCreateGroupJoinRequestNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	groupOwnerID := int64(1)
@@ -397,7 +397,7 @@ func TestCreateGroupJoinRequestNotification(t *testing.T) {
 // Test CreateNewEventNotification function
 func TestCreateNewEventNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -442,7 +442,7 @@ func TestCreateNewEventNotification(t *testing.T) {
 // Test CreateNotificationWithAggregation function - no aggregation path
 func TestCreateNotificationWithAggregationNoExisting(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -493,7 +493,7 @@ func TestCreateNotificationWithAggregationNoExisting(t *testing.T) {
 // Test CreateNotificationWithAggregation function - aggregation path
 func TestCreateNotificationWithAggregationExisting(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -563,7 +563,7 @@ func TestCreateNotificationWithAggregationExisting(t *testing.T) {
 // Test CreateNotificationWithAggregation with aggregation disabled
 func TestCreateNotificationWithAggregationDisabled(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	userID := int64(1)
@@ -611,7 +611,7 @@ func TestCreateNotificationWithAggregationDisabled(t *testing.T) {
 // Test CreateFollowRequestAcceptedNotification function
 func TestCreateFollowRequestAcceptedNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	requesterUserID := int64(1)
@@ -651,7 +651,7 @@ func TestCreateFollowRequestAcceptedNotification(t *testing.T) {
 // Test CreateFollowRequestRejectedNotification function
 func TestCreateFollowRequestRejectedNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	requesterUserID := int64(1)
@@ -691,7 +691,7 @@ func TestCreateFollowRequestRejectedNotification(t *testing.T) {
 // Test CreateGroupInviteAcceptedNotification function
 func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	inviterUserID := int64(1)
@@ -735,7 +735,7 @@ func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
 // Test CreateGroupInviteRejectedNotification function
 func TestCreateGroupInviteRejectedNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	inviterUserID := int64(1)
@@ -779,7 +779,7 @@ func TestCreateGroupInviteRejectedNotification(t *testing.T) {
 // Test CreateGroupJoinRequestAcceptedNotification function
 func TestCreateGroupJoinRequestAcceptedNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	requesterUserID := int64(1)
@@ -821,7 +821,7 @@ func TestCreateGroupJoinRequestAcceptedNotification(t *testing.T) {
 // Test CreateGroupJoinRequestRejectedNotification function
 func TestCreateGroupJoinRequestRejectedNotification(t *testing.T) {
 	mockDB := new(MockDB)
-	app := NewApplication(mockDB)
+	app := NewApplicationWithMocks(mockDB)
 
 	ctx := context.Background()
 	requesterUserID := int64(1)

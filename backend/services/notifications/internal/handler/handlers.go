@@ -1,4 +1,4 @@
-package server
+package handler
 
 import (
 	"context"
@@ -9,12 +9,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	application "social-network/services/notifications/internal/application"
-	notifPb "social-network/shared/gen-go/notifications"
+	"social-network/services/notifications/internal/application"
+	pb "social-network/shared/gen-go/notifications"
 )
 
 // CreateNotification creates a new notification
-func (s *Server) CreateNotification(ctx context.Context, req *notifPb.CreateNotificationRequest) (*notifPb.Notification, error) {
+func (s *Server) CreateNotification(ctx context.Context, req *pb.CreateNotificationRequest) (*pb.Notification, error) {
 	if req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
@@ -48,7 +48,7 @@ func (s *Server) CreateNotification(ctx context.Context, req *notifPb.CreateNoti
 }
 
 // CreateNotifications creates multiple notifications
-func (s *Server) CreateNotifications(ctx context.Context, req *notifPb.CreateNotificationsRequest) (*notifPb.CreateNotificationsResponse, error) {
+func (s *Server) CreateNotifications(ctx context.Context, req *pb.CreateNotificationsRequest) (*pb.CreateNotificationsResponse, error) {
 	// Create notifications individually to allow for aggregation control
 	createdNotifications := make([]*application.Notification, 0, len(req.Notifications))
 
@@ -81,18 +81,18 @@ func (s *Server) CreateNotifications(ctx context.Context, req *notifPb.CreateNot
 		createdNotifications = append(createdNotifications, notification)
 	}
 
-	pbNotifications := make([]*notifPb.Notification, len(createdNotifications))
+	pbNotifications := make([]*pb.Notification, len(createdNotifications))
 	for i, n := range createdNotifications {
 		pbNotifications[i] = s.convertToProtoNotification(n)
 	}
 
-	return &notifPb.CreateNotificationsResponse{
+	return &pb.CreateNotificationsResponse{
 		CreatedNotifications: pbNotifications,
 	}, nil
 }
 
 // GetUserNotifications retrieves notifications for a user
-func (s *Server) GetUserNotifications(ctx context.Context, req *notifPb.GetUserNotificationsRequest) (*notifPb.GetUserNotificationsResponse, error) {
+func (s *Server) GetUserNotifications(ctx context.Context, req *pb.GetUserNotificationsRequest) (*pb.GetUserNotificationsResponse, error) {
 	if req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
@@ -107,7 +107,7 @@ func (s *Server) GetUserNotifications(ctx context.Context, req *notifPb.GetUserN
 	}
 
 	// Convert to protobuf notifications
-	pbNotifications := make([]*notifPb.Notification, len(notifications))
+	pbNotifications := make([]*pb.Notification, len(notifications))
 	for i, n := range notifications {
 		pbNotifications[i] = s.convertToProtoNotification(n)
 	}
@@ -124,7 +124,7 @@ func (s *Server) GetUserNotifications(ctx context.Context, req *notifPb.GetUserN
 		return nil, status.Errorf(codes.Internal, "failed to get unread notifications count: %v", err)
 	}
 
-	return &notifPb.GetUserNotificationsResponse{
+	return &pb.GetUserNotificationsResponse{
 		Notifications: pbNotifications,
 		TotalCount:    int32(totalCount),
 		UnreadCount:   int32(unreadCount),
@@ -148,7 +148,7 @@ func (s *Server) GetUnreadNotificationsCount(ctx context.Context, req *wrappersp
 }
 
 // MarkNotificationAsRead marks a notification as read
-func (s *Server) MarkNotificationAsRead(ctx context.Context, req *notifPb.MarkNotificationAsReadRequest) (*emptypb.Empty, error) {
+func (s *Server) MarkNotificationAsRead(ctx context.Context, req *pb.MarkNotificationAsReadRequest) (*emptypb.Empty, error) {
 	if req.NotificationId == 0 || req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "notification_id and user_id are required")
 	}
@@ -176,7 +176,7 @@ func (s *Server) MarkAllAsRead(ctx context.Context, req *wrapperspb.Int64Value) 
 }
 
 // DeleteNotification deletes a notification
-func (s *Server) DeleteNotification(ctx context.Context, req *notifPb.DeleteNotificationRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNotification(ctx context.Context, req *pb.DeleteNotificationRequest) (*emptypb.Empty, error) {
 	if req.NotificationId == 0 || req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "notification_id and user_id are required")
 	}
@@ -190,29 +190,29 @@ func (s *Server) DeleteNotification(ctx context.Context, req *notifPb.DeleteNoti
 }
 
 // GetNotificationPreferences returns notification preferences for a user
-func (s *Server) GetNotificationPreferences(ctx context.Context, req *wrapperspb.Int64Value) (*notifPb.NotificationPreferences, error) {
+func (s *Server) GetNotificationPreferences(ctx context.Context, req *wrapperspb.Int64Value) (*pb.NotificationPreferences, error) {
 	// For now, return default preferences
 	// In a real implementation, this would fetch from a user preferences table
 	defaultPrefs := make(map[string]bool)
-	for _, notifType := range notifPb.NotificationType_name {
+	for _, notifType := range pb.NotificationType_name {
 		defaultPrefs[notifType] = true
 	}
 
-	return &notifPb.NotificationPreferences{
+	return &pb.NotificationPreferences{
 		UserId:       req.Value,
 		Preferences:  defaultPrefs,
 	}, nil
 }
 
 // UpdateNotificationPreferences updates notification preferences for a user
-func (s *Server) UpdateNotificationPreferences(ctx context.Context, req *notifPb.UpdateNotificationPreferencesRequest) (*emptypb.Empty, error) {
+func (s *Server) UpdateNotificationPreferences(ctx context.Context, req *pb.UpdateNotificationPreferencesRequest) (*emptypb.Empty, error) {
 	// For now, just return success
 	// In a real implementation, this would update a user preferences table
 	return &emptypb.Empty{}, nil
 }
 
 // convertToProtoNotification converts our internal notification model to protobuf format
-func (s *Server) convertToProtoNotification(notification *application.Notification) *notifPb.Notification {
+func (s *Server) convertToProtoNotification(notification *application.Notification) *pb.Notification {
 	// Convert map[string]string to map[string]string (which protobuf handles as map<string, string>)
 	payload := make(map[string]string)
 	for k, v := range notification.Payload {
@@ -229,19 +229,19 @@ func (s *Server) convertToProtoNotification(notification *application.Notificati
 		expiresAt = timestamppb.New(*notification.ExpiresAt)
 	}
 
-	var status notifPb.NotificationStatus
+	var status pb.NotificationStatus
 	if notification.Seen {
-		status = notifPb.NotificationStatus_NOTIFICATION_STATUS_READ
+		status = pb.NotificationStatus_NOTIFICATION_STATUS_READ
 	} else {
-		status = notifPb.NotificationStatus_NOTIFICATION_STATUS_UNREAD
+		status = pb.NotificationStatus_NOTIFICATION_STATUS_UNREAD
 	}
 
 	// If deleted_at is not nil, the notification is deleted
 	if notification.DeletedAt != nil {
-		status = notifPb.NotificationStatus_NOTIFICATION_STATUS_DELETED
+		status = pb.NotificationStatus_NOTIFICATION_STATUS_DELETED
 	}
 
-	return &notifPb.Notification{
+	return &pb.Notification{
 		Id:             notification.ID,
 		UserId:         notification.UserID,
 		Type:           convertApplicationNotificationTypeToProto(notification.Type),
@@ -260,27 +260,27 @@ func (s *Server) convertToProtoNotification(notification *application.Notificati
 }
 
 // Helper function to determine if a notification type should be aggregated
-func shouldAggregateNotification(notificationType notifPb.NotificationType) bool {
+func shouldAggregateNotification(notificationType pb.NotificationType) bool {
 	switch notificationType {
-	case notifPb.NotificationType_NOTIFICATION_TYPE_POST_LIKE:
+	case pb.NotificationType_NOTIFICATION_TYPE_POST_LIKE:
 		return true
-	case notifPb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT:
+	case pb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT:
 		return true
-	case notifPb.NotificationType_NOTIFICATION_TYPE_NEW_FOLLOWER:
+	case pb.NotificationType_NOTIFICATION_TYPE_NEW_FOLLOWER:
 		return true
-	case notifPb.NotificationType_NOTIFICATION_TYPE_NEW_MESSAGE:
+	case pb.NotificationType_NOTIFICATION_TYPE_NEW_MESSAGE:
 		return true
-	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
 		return false  // Follow request responses are specific to each request
-	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
 		return false  // Follow request responses are specific to each request
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
 		return false  // Group invite responses are specific to each invitation
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
 		return false  // Group invite responses are specific to each invitation
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
 		return false  // Group join request responses are specific to each request
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
 		return false  // Group join request responses are specific to each request
 	default:
 		return false
@@ -288,71 +288,71 @@ func shouldAggregateNotification(notificationType notifPb.NotificationType) bool
 }
 
 // convertApplicationNotificationTypeToProto converts application notification type to protobuf notification type
-func convertApplicationNotificationTypeToProto(appType application.NotificationType) notifPb.NotificationType {
+func convertApplicationNotificationTypeToProto(appType application.NotificationType) pb.NotificationType {
 	switch appType {
 	case application.FollowRequest:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST
+		return pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST
 	case application.NewFollower:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_NEW_FOLLOWER
+		return pb.NotificationType_NOTIFICATION_TYPE_NEW_FOLLOWER
 	case application.GroupInvite:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE
+		return pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE
 	case application.GroupJoinRequest:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST
+		return pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST
 	case application.NewEvent:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_NEW_EVENT
+		return pb.NotificationType_NOTIFICATION_TYPE_NEW_EVENT
 	case application.PostLike:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_POST_LIKE
+		return pb.NotificationType_NOTIFICATION_TYPE_POST_LIKE
 	case application.PostComment:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT
+		return pb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT
 	case application.Mention:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_MENTION
+		return pb.NotificationType_NOTIFICATION_TYPE_MENTION
 	case application.FollowRequestAccepted:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED
+		return pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED
 	case application.FollowRequestRejected:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED
+		return pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED
 	case application.GroupInviteAccepted:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED
+		return pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED
 	case application.GroupInviteRejected:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED
+		return pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED
 	case application.GroupJoinRequestAccepted:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED
+		return pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED
 	case application.GroupJoinRequestRejected:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED
+		return pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED
 	default:
-		return notifPb.NotificationType_NOTIFICATION_TYPE_UNSPECIFIED
+		return pb.NotificationType_NOTIFICATION_TYPE_UNSPECIFIED
 	}
 }
 
 // convertProtoNotificationTypeToApplication converts protobuf notification type to application notification type
-func convertProtoNotificationTypeToApplication(protoType notifPb.NotificationType) application.NotificationType {
+func convertProtoNotificationTypeToApplication(protoType pb.NotificationType) application.NotificationType {
 	switch protoType {
-	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST:
+	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST:
 		return application.FollowRequest
-	case notifPb.NotificationType_NOTIFICATION_TYPE_NEW_FOLLOWER:
+	case pb.NotificationType_NOTIFICATION_TYPE_NEW_FOLLOWER:
 		return application.NewFollower
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE:
 		return application.GroupInvite
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST:
 		return application.GroupJoinRequest
-	case notifPb.NotificationType_NOTIFICATION_TYPE_NEW_EVENT:
+	case pb.NotificationType_NOTIFICATION_TYPE_NEW_EVENT:
 		return application.NewEvent
-	case notifPb.NotificationType_NOTIFICATION_TYPE_POST_LIKE:
+	case pb.NotificationType_NOTIFICATION_TYPE_POST_LIKE:
 		return application.PostLike
-	case notifPb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT:
+	case pb.NotificationType_NOTIFICATION_TYPE_POST_COMMENT:
 		return application.PostComment
-	case notifPb.NotificationType_NOTIFICATION_TYPE_MENTION:
+	case pb.NotificationType_NOTIFICATION_TYPE_MENTION:
 		return application.Mention
-	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
 		return application.FollowRequestAccepted
-	case notifPb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
 		return application.FollowRequestRejected
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
 		return application.GroupInviteAccepted
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
 		return application.GroupInviteRejected
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
 		return application.GroupJoinRequestAccepted
-	case notifPb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
+	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
 		return application.GroupJoinRequestRejected
 	default:
 		return application.NotificationType("")
