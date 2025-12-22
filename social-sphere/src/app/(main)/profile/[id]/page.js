@@ -1,6 +1,6 @@
 import { getProfileInfo } from "@/actions/profile/get-profile-info";
 import ProfileContent from "@/components/profile/ProfileContent";
-import { getUserPosts } from "@/actions/posts/get-user-posts";
+// import { getUserPosts } from "@/actions/posts/get-user-posts";
 
 async function getUserProfile(userId) {
     try {
@@ -28,8 +28,8 @@ export async function generateMetadata({ params }) {
 export default async function ProfilePage({ params }) {
     const { id } = await params;
     const result = await getUserProfile(id);
-    const posts = await getUserPosts({ creatorId: id });
-
+    //const posts = await getUserPosts({ creatorId: id });
+[]
     // Pass the result object (contains success, user, or error)
-    return <ProfileContent result={result} posts={posts} />;
+    return <ProfileContent result={result} posts={[]} />;
 }
