@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	md "social-network/services/media/internal/models"
 	ct "social-network/shared/go/customtypes"
-	md "social-network/shared/go/models"
 	"strings"
 	"time"
 

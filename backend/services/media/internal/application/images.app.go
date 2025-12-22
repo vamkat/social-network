@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/url"
 	"social-network/services/media/internal/db/dbservice"
+	"social-network/services/media/internal/mapping"
 	ct "social-network/shared/go/customtypes"
 	"time"
 
@@ -216,7 +217,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 		return url, err
 	}
 
-	if err := m.Clients.ValidateUpload(ctx, dbToExt(fileMeta)); err != nil {
+	if err := m.Clients.ValidateUpload(ctx, mapping.DbToModel(fileMeta)); err != nil {
 		if err := m.Clients.DeleteFile(ctx, fileMeta.Bucket, fileMeta.ObjectKey); err != nil {
 			return url, err
 		}

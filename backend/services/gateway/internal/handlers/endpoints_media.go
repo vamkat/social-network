@@ -8,6 +8,7 @@ import (
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/mapping"
 )
 
 func (h *Handlers) validateFileUpload() http.HandlerFunc {
@@ -66,7 +67,7 @@ func (h *Handlers) GetImageUrl() http.HandlerFunc {
 
 		res, err := h.MediaService.GetImage(r.Context(), &media.GetImageRequest{
 			ImageId: httpReq.ImageId.Int64(),
-			Variant: ProtoToFileVariant(httpReq.Variant),
+			Variant: mapping.CtToPbFileVariant(httpReq.Variant),
 		})
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
@@ -82,22 +83,5 @@ func (h *Handlers) GetImageUrl() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send registration ACK")
 			return
 		}
-	}
-}
-
-func ProtoToFileVariant(pv ct.FileVariant) media.FileVariant {
-	switch pv {
-	case ct.ImgThumbnail:
-		return media.FileVariant_THUMBNAIL
-	case ct.ImgSmall:
-		return media.FileVariant_SMALL
-	case ct.ImgMedium:
-		return media.FileVariant_MEDIUM
-	case ct.ImgLarge:
-		return media.FileVariant_LARGE
-	case ct.Original:
-		return media.FileVariant_ORIGINAL
-	default:
-		return media.FileVariant_IMG_VARIANT_UNSPECIFIED
 	}
 }

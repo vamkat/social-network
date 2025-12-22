@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 	"net/url"
+	md "social-network/services/media/internal/models"
 	ct "social-network/shared/go/customtypes"
-	md "social-network/shared/go/models"
 	"time"
 )
 

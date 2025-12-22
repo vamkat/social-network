@@ -8,6 +8,7 @@ import (
 	"social-network/services/media/internal/configs"
 	pb "social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/mapping"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,82 +18,6 @@ type MediaHandler struct {
 	pb.UnimplementedMediaServiceServer
 	Application *application.MediaService
 	Configs     configs.Server
-}
-
-// pbToCtFileVariant converts protobuf ImgVariant to customtypes ImgVariant
-func pbToCtFileVariant(v pb.FileVariant) ct.FileVariant {
-	switch v {
-	case pb.FileVariant_THUMBNAIL:
-		return ct.ImgThumbnail
-	case pb.FileVariant_SMALL:
-		return ct.ImgSmall
-	case pb.FileVariant_MEDIUM:
-		return ct.ImgMedium
-	case pb.FileVariant_LARGE:
-		return ct.ImgLarge
-	case pb.FileVariant_ORIGINAL:
-		return ct.Original
-	default:
-		return ct.FileVariant("") // invalid, but handle gracefully
-	}
-}
-
-// ctToPbFileVariant converts customtypes FileVariant to protobuf FileVariant
-func ctToPbFileVariant(v ct.FileVariant) pb.FileVariant {
-	switch v {
-	case ct.ImgThumbnail:
-		return pb.FileVariant_THUMBNAIL
-	case ct.ImgSmall:
-		return pb.FileVariant_SMALL
-	case ct.ImgMedium:
-		return pb.FileVariant_MEDIUM
-	case ct.ImgLarge:
-		return pb.FileVariant_LARGE
-	case ct.Original:
-		return pb.FileVariant_ORIGINAL
-	default:
-		return pb.FileVariant_IMG_VARIANT_UNSPECIFIED
-	}
-}
-
-// pbToCtFileVisibility converts protobuf FileVisibility to customtypes FileVisibility
-func pbToCtFileVisibility(v pb.FileVisibility) ct.FileVisibility {
-	switch v {
-	case pb.FileVisibility_PRIVATE:
-		return ct.Private
-	case pb.FileVisibility_PUBLIC:
-		return ct.Public
-	default:
-		return ct.FileVisibility("") // invalid
-	}
-}
-
-// ctToPbFileVisibility converts customtypes FileVisibility to protobuf FileVisibility
-func ctToPbFileVisibility(v ct.FileVisibility) pb.FileVisibility {
-	switch v {
-	case ct.Private:
-		return pb.FileVisibility_PRIVATE
-	case ct.Public:
-		return pb.FileVisibility_PUBLIC
-	default:
-		return pb.FileVisibility_FILE_VISIBILITY_UNSPECIFIED
-	}
-}
-
-// ctToPbUploadStatus converts customtypes UploadStatus to protobuf UploadStatus
-func ctToPbUploadStatus(v ct.UploadStatus) pb.UploadStatus {
-	switch v {
-	case ct.Pending:
-		return pb.UploadStatus_UPLOAD_STATUS_PENDING
-	case ct.Processing:
-		return pb.UploadStatus_UPLOAD_STATUS_PROCESSING
-	case ct.Complete:
-		return pb.UploadStatus_UPLOAD_STATUS_COMPLETE
-	case ct.Failed:
-		return pb.UploadStatus_UPLOAD_STATUS_FAILED
-	default:
-		return pb.UploadStatus_UPLOAD_STATUS_UNSPECIFIED
-	}
 }
 
 // Provides image id and an upload URL that can only be accessed through container DNS.
@@ -124,13 +49,13 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 	// Convert variants
 	variants := make([]ct.FileVariant, len(req.Variants))
 	for i, v := range req.Variants {
-		variants[i] = pbToCtFileVariant(v)
+		variants[i] = mapping.PbToCtFileVariant(v)
 	}
 	appReq := application.UploadImageReq{
 		Filename:   req.Filename,
 		MimeType:   req.MimeType,
 		SizeBytes:  req.SizeBytes,
-		Visibility: pbToCtFileVisibility(req.Visibility),
+		Visibility: mapping.PbToCtFileVisibility(req.Visibility),
 	}
 	// Call application
 	fileId, upUrl, err := m.Application.UploadImage(
@@ -169,7 +94,7 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	}
 
 	// Call application
-	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), pbToCtFileVariant(req.Variant))
+	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get image: %v", err)
 	}
@@ -192,7 +117,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	}
 
 	// Call application
-	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, pbToCtFileVariant(req.Variant))
+	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get images: %v", err)
 	}
@@ -207,7 +132,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	for i, fid := range failedIds {
 		pbFailedIds[i] = &pb.FailedId{
 			FileId: int64(fid.Id),
-			Status: ctToPbUploadStatus(fid.Status),
+			Status: mapping.CtToPbUploadStatus(fid.Status),
 		}
 	}
 
