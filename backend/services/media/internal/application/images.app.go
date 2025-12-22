@@ -161,7 +161,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 
 	errTx := m.txRunner.RunTx(ctx, func(q *dbservice.Queries) error {
 
-		fms, na, err = m.Queries.GetVariants(ctx, uniqueIds(imgIds), variant)
+		fms, na, err = m.Queries.GetVariants(ctx, imgIds.Unique(), variant)
 		if err != nil {
 			return err
 		}
@@ -247,14 +247,14 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 }
 
 // TODO: Make this part of ct.Ids methods
-func uniqueIds(ids ct.Ids) ct.Ids {
-	uniq := make(map[ct.Id]struct{}, len(ids))
-	cleaned := make([]ct.Id, 0, len(ids))
-	for _, id := range ids {
-		if _, ok := uniq[id]; !ok {
-			uniq[id] = struct{}{}
-			cleaned = append(cleaned, id)
-		}
-	}
-	return ct.Ids(cleaned)
-}
+// func uniqueIds(ids ct.Ids) ct.Ids {
+// 	uniq := make(map[ct.Id]struct{}, len(ids))
+// 	cleaned := make([]ct.Id, 0, len(ids))
+// 	for _, id := range ids {
+// 		if _, ok := uniq[id]; !ok {
+// 			uniq[id] = struct{}{}
+// 			cleaned = append(cleaned, id)
+// 		}
+// 	}
+// 	return ct.Ids(cleaned)
+// }

@@ -79,6 +79,8 @@ if err != nil {
 
 **Usage**: For lists of IDs. Implements `Scan()` and `Value()` methods for use in postgress database calls.
 
+**Extra Features**: Implements `Unique()` method that returns a copy of type 'Ids' with only the unique entries of the given instance.
+
 ### About
 
 **Description**: Bio or description text.

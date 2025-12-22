@@ -251,6 +251,19 @@ func (ids *Ids) Scan(src any) error {
 	return nil
 }
 
+// Returns an Ids type with all unique entries from the given instance.
+func (ids Ids) Unique() Ids {
+	uniq := make(map[Id]struct{}, len(ids))
+	cleaned := make([]Id, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := uniq[id]; !ok {
+			uniq[id] = struct{}{}
+			cleaned = append(cleaned, id)
+		}
+	}
+	return Ids(cleaned)
+}
+
 // FromInt64s converts a []int64 to Ids.
 func FromInt64s(src []int64) Ids {
 	out := make(Ids, len(src))

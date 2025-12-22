@@ -84,16 +84,6 @@ func (q *Queries) GetFiles(
 		return nil, nil
 	}
 
-	// Deduplicate IDs to avoid unnecessary DB work
-	uniqueIds := make(ct.Ids, 0, len(ids))
-	seen := make(map[ct.Id]struct{})
-	for _, id := range ids {
-		if _, ok := seen[id]; !ok {
-			seen[id] = struct{}{}
-			uniqueIds = append(uniqueIds, id)
-		}
-	}
-
 	const query = `
 		SELECT
 			id,
@@ -108,7 +98,7 @@ func (q *Queries) GetFiles(
 		WHERE id = ANY($1)
 	`
 
-	rows, err := q.db.Query(ctx, query, uniqueIds)
+	rows, err := q.db.Query(ctx, query, ids.Unique())
 	if err != nil {
 		return nil, err
 	}
