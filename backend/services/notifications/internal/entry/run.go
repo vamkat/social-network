@@ -9,14 +9,17 @@ import (
 	"social-network/services/notifications/internal/application"
 	"social-network/services/notifications/internal/db/sqlc"
 	"social-network/services/notifications/internal/handler"
+	"social-network/shared/gen-go/notifications"
+	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/gorpc"
+	postgresql "social-network/shared/go/postgre"
 	"syscall"
-	"time"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func Run() error {
-	pool, err := connectToDb(context.Background())
+	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignal() //check if ok
+	pool, err := postgresql.NewPool(ctx, "postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable")
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
@@ -34,10 +37,19 @@ func Run() error {
 	service := handler.NewNotificationsHandler(app)
 
 	log.Println("Running gRpc service...")
-	grpc, err := handler.RunGRPCServer(service)
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](notifications.RegisterNotificationServiceServer, service, ":50051", contextkeys.CommonKeys())
 	if err != nil {
-		log.Fatalf("couldn't start gRpc Server: %s", err.Error())
+		return err
 	}
+	defer endServerFunc()
+
+	go func() {
+		err := startServerFunc()
+		if err != nil {
+			log.Fatal("server failed to start")
+		}
+		fmt.Println("server finished")
+	}()
 
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -46,21 +58,8 @@ func Run() error {
 	<-quit
 
 	log.Println("Shutting down server...")
-	grpc.GracefulStop()
+	endServerFunc()
 	log.Println("Server stopped")
 	return nil
 
-}
-
-func connectToDb(ctx context.Context) (pool *pgxpool.Pool, err error) {
-	connStr := os.Getenv("DATABASE_URL")
-	for i := range 10 {
-		pool, err = pgxpool.New(ctx, connStr)
-		if err == nil {
-			break
-		}
-		log.Printf("DB not ready yet (attempt %d): %v", i+1, err)
-		time.Sleep(2 * time.Second)
-	}
-	return pool, err
 }

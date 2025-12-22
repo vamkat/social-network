@@ -22,50 +22,16 @@ import (
 	"time"
 )
 
-type configs struct {
-	RedisAddr     string `env:"REDIS_ADDR"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-	RedisDB       int    `env:"REDIS_DB"`
-
-	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
-	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
-	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
-	MediaGRPCAddr string `env:"MEDIA_GRPC_ADDR"`
-
-	HTTPAddr        string `env:"HTTP_ADDR"`
-	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
-}
-
-var cfg configs
-
-func init() {
-	// sensible defaults
-	cfg = configs{
-		RedisAddr:       "redis:6379",
-		RedisPassword:   "",
-		RedisDB:         0,
-		UsersGRPCAddr:   "users:50051",
-		PostsGRPCAddr:   "posts:50051",
-		ChatGRPCAddr:    "chat:50051",
-		MediaGRPCAddr:   "media:50051",
-		HTTPAddr:        "0.0.0.0:8081",
-		ShutdownTimeout: 5,
-	}
-
-	// load environment variables if present
-	if err := configutil.LoadConfigs(&cfg); err != nil {
-		log.Fatalf("failed to load env variables into config struct: %v", err)
-	}
-}
-
 func Run() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
+	cfgs := getConfigs()
+
 	// Cache
 	CacheService := redis_connector.NewRedisClient(
-		cfg.RedisAddr,
-		cfg.RedisPassword,
-		cfg.RedisDB,
+		cfgs.RedisAddr,
+		cfgs.RedisPassword,
+		cfgs.RedisDB,
 	)
 	if err := CacheService.TestRedisConnection(); err != nil {
 		log.Fatalf("connection test failed, ERROR: %v", err)
@@ -79,7 +45,7 @@ func Run() {
 	var err error
 	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
-		cfg.UsersGRPCAddr,
+		cfgs.UsersGRPCAddr,
 		contextkeys.CommonKeys(),
 	)
 	if err != nil {
@@ -88,7 +54,7 @@ func Run() {
 
 	PostsService, err := gorpc.GetGRpcClient(
 		posts.NewPostsServiceClient,
-		cfg.PostsGRPCAddr,
+		cfgs.PostsGRPCAddr,
 		contextkeys.CommonKeys(),
 	)
 	if err != nil {
@@ -97,7 +63,7 @@ func Run() {
 
 	ChatService, err := gorpc.GetGRpcClient(
 		chat.NewChatServiceClient,
-		cfg.ChatGRPCAddr,
+		cfgs.ChatGRPCAddr,
 		contextkeys.CommonKeys(),
 	)
 	if err != nil {
@@ -106,7 +72,7 @@ func Run() {
 
 	MediaService, err := gorpc.GetGRpcClient(
 		media.NewMediaServiceClient,
-		cfg.MediaGRPCAddr,
+		cfgs.MediaGRPCAddr,
 		contextkeys.CommonKeys(),
 	)
 	if err != nil {
@@ -132,7 +98,7 @@ func Run() {
 	// SERVER
 	server := &http.Server{
 		Handler:     apiMux,
-		Addr:        cfg.HTTPAddr,
+		Addr:        cfgs.HTTPAddr,
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
@@ -158,7 +124,7 @@ func Run() {
 	log.Println("Shutting down server...")
 	shutdownCtx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(cfg.ShutdownTimeout)*time.Second,
+		time.Duration(cfgs.ShutdownTimeout)*time.Second,
 	)
 	defer cancel()
 
@@ -167,4 +133,39 @@ func Run() {
 	}
 
 	log.Println("Server stopped")
+}
+
+type configs struct {
+	RedisAddr     string `env:"REDIS_ADDR"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisDB       int    `env:"REDIS_DB"`
+
+	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
+	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
+	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
+	MediaGRPCAddr string `env:"MEDIA_GRPC_ADDR"`
+
+	HTTPAddr        string `env:"HTTP_ADDR"`
+	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+}
+
+func getConfigs() configs { // sensible defaults
+	cfgs := configs{
+		RedisAddr:       "redis:6379",
+		RedisPassword:   "",
+		RedisDB:         0,
+		UsersGRPCAddr:   "users:50051",
+		PostsGRPCAddr:   "posts:50051",
+		ChatGRPCAddr:    "chat:50051",
+		MediaGRPCAddr:   "media:50051",
+		HTTPAddr:        "0.0.0.0:8081",
+		ShutdownTimeout: 5,
+	}
+
+	// load environment variables if present
+	if err := configutil.LoadConfigs(&cfgs); err != nil {
+		log.Fatalf("failed to load env variables into config struct: %v", err)
+	}
+
+	return cfgs
 }

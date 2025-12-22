@@ -11,7 +11,7 @@ import (
 //
 // Usage:
 //
-//	grpcServer, err := gorpc.CreateGRpcServer[users.UserServiceServer](users.RegisterUserServiceServer, &service, []customtypes.CtxKey{customtypes.Key1, customtypes.Key2})
+//	startServer, endServer, err := gorpc.CreateGRpcServer[users.UserServiceServer](users.RegisterUserServiceServer, &service, []customtypes.CtxKey{customtypes.Key1, customtypes.Key2})
 //
 // Type Parameter T:
 //   - T: Pass it the service interface that the handler implements.

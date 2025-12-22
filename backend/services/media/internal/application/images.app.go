@@ -186,13 +186,13 @@ func (m *MediaService) GetImages(ctx context.Context,
 			fmt.Printf("requested file %v validation status is %v", fm.Id, fm.Status)
 			continue
 		}
-		// url, err := m.Clients.GenerateDownloadURL(ctx, fm.Bucket, fm.ObjectKey, fm.Visibility.SetExp())
-		// if err != nil {
-		// 	return nil, nil, err
-		// }
-		// downUrls[fm.Id] = url.String()
+		url, err := m.Clients.GenerateDownloadURL(ctx, fm.Bucket, fm.ObjectKey, fm.Visibility.SetExp())
+		if err != nil {
+			return nil, nil, err
+		}
+		downUrls[fm.Id] = url.String()
 		//For testing with seeds
-		downUrls[fm.Id] = fm.Filename
+		//downUrls[fm.Id] = fm.Filename
 	}
 	//fmt.Println("download urls", downUrls)
 	//fmt.Println("failed ids", failedIds)
