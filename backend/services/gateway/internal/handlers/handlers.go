@@ -122,7 +122,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			Finalize(h.CreateGroup()))
 
 	mux.HandleFunc("/groups/update",
-		Chain().
+		Chain("/groups/update").
 			AllowedMethod("POST").
 			RateLimit(IP, 5, 5).
 			Auth().
