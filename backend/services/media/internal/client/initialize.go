@@ -12,8 +12,8 @@ import (
 
 type Clients struct {
 	Configs           configs.FileService
-	MinIOClient       *minio.Client
-	PublicMinIOClient *minio.Client
+	MinIOClient       *minio.Client // replace with proper S3 service on prod
+	PublicMinIOClient *minio.Client // only for development
 	Validator         Validator
 	ImageConvertor    ImageConvertor
 }

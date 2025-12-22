@@ -206,33 +206,45 @@ func (m *MediaService) GetImages(ctx context.Context,
 // Unvalidated files expire in 24 hours and are automatically
 // deleted from file service.
 func (m *MediaService) ValidateUpload(ctx context.Context,
-	fileId ct.Id) error {
+	fileId ct.Id, returnURL bool) (url string, err error) {
 	if !fileId.IsValid() {
-		return ct.ErrValidation
+		return url, ct.ErrValidation
 	}
 
 	fileMeta, err := m.Queries.GetFileById(ctx, fileId)
 	if err != nil {
-		return err
+		return url, err
 	}
 
 	if err := m.Clients.ValidateUpload(ctx, dbToExt(fileMeta)); err != nil {
 		if err := m.Clients.DeleteFile(ctx, fileMeta.Bucket, fileMeta.ObjectKey); err != nil {
-			return err
+			return url, err
 		}
 		if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Failed); err != nil {
-			return err
+			return url, err
 		}
-		return err
+		return url, err
 	}
 
 	if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Complete); err != nil {
-		return err
+		return url, err
 	}
 
 	log.Printf("Media Service: FileId %v successfully validated and marked as Complete", fileId)
 
-	return nil
+	if returnURL {
+		u, err := m.Clients.GenerateDownloadURL(ctx,
+			fileMeta.Bucket,
+			fileMeta.ObjectKey,
+			fileMeta.Visibility.SetExp(),
+		)
+		if err != nil {
+			log.Printf("failed to fetch url for file %v\n", fileId)
+			return "", nil
+		}
+		url = u.String()
+	}
+	return url, nil
 }
 
 func uniqueIds(ids ct.Ids) ct.Ids {

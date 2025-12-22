@@ -11,7 +11,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type MediaHandler struct {
@@ -219,18 +218,18 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 }
 
 // Checks if the upload matches the pre defined file metadata and configs FileService file constraints.
-// If validation fails
+// If validation fails file cannot be retrived and will be deleted from file service after 24 hours
 func (m *MediaHandler) ValidateUpload(ctx context.Context,
-	req *pb.ValidateUploadRequest) (*emptypb.Empty, error) {
+	req *pb.ValidateUploadRequest) (*pb.ValidateUploadResponse, error) {
 	if req == nil || req.FileId < 1 {
 		return nil, status.Error(codes.InvalidArgument, "request or upload is nil")
 	}
 
 	// Call application
-	err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId))
+	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to validate upload: %v", err)
 	}
 
-	return &emptypb.Empty{}, nil
+	return &pb.ValidateUploadResponse{DownloadUrl: url}, nil
 }

@@ -79,6 +79,12 @@ message GetImageResponse {
 // Request message for validating an upload
 message ValidateUploadRequest {
   int64 file_id = 1; // Metadata of the upload to validate
+  bool return_url = 2; // request download url after validation
+}
+
+// Response on validate upload containing download url only if requested
+message ValidateUploadResponse {
+  string download_url = 1; // Pre-signed URL for downloading the image
 }
 
 message ImageIds {
@@ -133,8 +139,8 @@ service MediaService {
 
   // This is a call to validate an already uploaded file. 
   // Unvalidated files expire in 24 hours and are automatically 
-  // deleted from file service.
-  rpc ValidateUpload (ValidateUploadRequest) returns (google.protobuf.Empty);
+  // deleted from file service. If requested returns a download url.
+  rpc ValidateUpload (ValidateUploadRequest) returns (ValidateUploadResponse);
 }
 
 

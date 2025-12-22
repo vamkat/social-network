@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"social-network/services/gateway/internal/utils"
@@ -12,7 +13,8 @@ import (
 func (h *Handlers) validateFileUpload() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type validateUploadReq struct {
-			FileId ct.Id `json:"file_id"`
+			FileId    ct.Id `json:"file_id"`
+			ReturnURL bool  `json:"return_url"`
 		}
 		httpReq := validateUploadReq{}
 
@@ -22,8 +24,12 @@ func (h *Handlers) validateFileUpload() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		_, err := h.MediaService.ValidateUpload(r.Context(),
-			&media.ValidateUploadRequest{FileId: httpReq.FileId.Int64()},
+
+		res, err := h.MediaService.ValidateUpload(
+			r.Context(),
+			&media.ValidateUploadRequest{
+				FileId:    httpReq.FileId.Int64(),
+				ReturnUrl: httpReq.ReturnURL},
 		)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
@@ -32,8 +38,12 @@ func (h *Handlers) validateFileUpload() http.HandlerFunc {
 
 		log.Printf("Gateway: Successfully validated file upload for FileId: %v", httpReq.FileId)
 
-		if err := utils.WriteJSON(w, http.StatusCreated, nil); err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send registration ACK")
+		type httpResp struct {
+			DownloadUrl string `json:"download_url"`
+		}
+
+		if err := utils.WriteJSON(w, http.StatusCreated, &httpResp{DownloadUrl: res.GetDownloadUrl()}); err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to validate file %v", httpReq.FileId))
 			return
 		}
 	}

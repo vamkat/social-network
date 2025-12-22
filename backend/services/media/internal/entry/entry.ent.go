@@ -83,7 +83,12 @@ func Run() error {
 	}
 
 	log.Println("Running gRpc service...")
-	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[media.MediaServiceServer](media.RegisterMediaServiceServer, service, cfgs.Server.Port, contextkeys.CommonKeys())
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[media.MediaServiceServer](
+		media.RegisterMediaServiceServer,
+		service,
+		cfgs.Server.Port,
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		return err
 	}

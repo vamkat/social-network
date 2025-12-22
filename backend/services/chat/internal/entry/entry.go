@@ -69,7 +69,12 @@ func Run() error {
 
 	handler := handler.NewChatHandler(app)
 
-	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[chat.ChatServiceServer](chat.RegisterChatServiceServer, handler, cfgs.GrpcServerPort, contextkeys.CommonKeys())
+	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[chat.ChatServiceServer](
+		chat.RegisterChatServiceServer,
+		handler,
+		cfgs.GrpcServerPort,
+		contextkeys.CommonKeys(),
+	)
 	if err != nil {
 		log.Fatal("failed to create server:", err.Error())
 	}
