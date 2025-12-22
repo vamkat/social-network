@@ -26,7 +26,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	if !hasAccess {
 		return ErrNotAllowed
 	}
-	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 		err = q.CreateComment(ctx, sqlc.CreateCommentParams{
 			CommentCreatorID: req.CreatorId.Int64(),
 			ParentID:         req.ParentId.Int64(),
@@ -70,7 +70,7 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 		return ErrNotAllowed
 	}
 
-	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 		rowsAffected, err := q.EditComment(ctx, sqlc.EditCommentParams{
 			CommentBody:      req.Body.String(),
 			ID:               req.CommentId.Int64(),

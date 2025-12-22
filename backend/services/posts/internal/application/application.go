@@ -2,10 +2,12 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"social-network/services/posts/internal/client"
 	"social-network/services/posts/internal/db/sqlc"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/go/models"
+	postgresql "social-network/shared/go/postgre"
 	redis_connector "social-network/shared/go/redis"
 	ur "social-network/shared/go/retrieveusers"
 	"time"
@@ -13,8 +15,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// TxRunner defines the interface for running database transactions
+type TxRunner interface {
+	RunTx(ctx context.Context, fn func(*sqlc.Queries) error) error
+}
+
 type Application struct {
-	db            sqlc.Querier
+	db            *sqlc.Queries
 	txRunner      TxRunner
 	clients       ClientsInterface
 	userRetriever UserRetriever
@@ -46,14 +53,14 @@ type ClientsInterface interface {
 }
 
 // NewApplication constructs a new Application with transaction support
-func NewApplication(db sqlc.Querier, pool *pgxpool.Pool, clients *client.Clients) *Application {
+func NewApplication(db *sqlc.Queries, pool *pgxpool.Pool, clients *client.Clients) (*Application, error) {
 	var txRunner TxRunner
+	var err error
 	if pool != nil {
-		queries, ok := db.(*sqlc.Queries)
-		if !ok {
-			panic("db must be *sqlc.Queries for transaction support")
+		txRunner, err = postgresql.NewPgxTxRunner(pool, db)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create pgxTxRunner %w", err)
 		}
-		txRunner = NewPgxTxRunner(pool, queries)
 	}
 
 	cache := redis_connector.NewRedisClient("redis:6379", "", 0)
@@ -63,16 +70,16 @@ func NewApplication(db sqlc.Querier, pool *pgxpool.Pool, clients *client.Clients
 		txRunner:      txRunner,
 		clients:       clients,
 		userRetriever: ur.NewUserRetriever(clients, cache, 3*time.Minute),
-	}
+	}, nil
 }
 
-func NewApplicationWithMocks(db sqlc.Querier, clients ClientsInterface) *Application {
+func NewApplicationWithMocks(db *sqlc.Queries, clients ClientsInterface) *Application {
 	return &Application{
 		db:      db,
 		clients: clients,
 	}
 }
-func NewApplicationWithMocksTx(db sqlc.Querier, clients ClientsInterface, txRunner TxRunner) *Application {
+func NewApplicationWithMocksTx(db *sqlc.Queries, clients ClientsInterface, txRunner TxRunner) *Application {
 	return &Application{
 		db:       db,
 		clients:  clients,

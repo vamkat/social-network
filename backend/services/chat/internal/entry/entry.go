@@ -61,11 +61,14 @@ func Run() error {
 	defer pool.Close()
 	fmt.Println("Conneted to DB")
 
-	app := application.NewChatService(
+	app, err := application.NewChatService(
 		pool,
 		&clients,
 		dbservice.New(pool),
 	)
+	if err != nil {
+		log.Fatal("failed to create chat service application: ", err)
+	}
 
 	handler := handler.NewChatHandler(app)
 

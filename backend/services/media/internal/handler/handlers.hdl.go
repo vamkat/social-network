@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"social-network/services/media/internal/application"
-	"social-network/services/media/internal/configs"
 	pb "social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/mapping"
@@ -17,7 +16,7 @@ import (
 type MediaHandler struct {
 	pb.UnimplementedMediaServiceServer
 	Application *application.MediaService
-	Configs     configs.Server
+	// Configs     configs.Server
 }
 
 // Provides image id and an upload URL that can only be accessed through container DNS.

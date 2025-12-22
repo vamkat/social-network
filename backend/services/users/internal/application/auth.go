@@ -124,7 +124,7 @@ func (s *Application) UpdateUserPassword(ctx context.Context, req models.UpdateP
 			return ErrNotAuthorized
 		}
 
-		err = s.db.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
+		err = q.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
 			UserID:       req.UserId.Int64(),
 			PasswordHash: req.NewPassword.String(),
 		})

@@ -38,8 +38,8 @@ func (m *MediaService) UploadImage(ctx context.Context,
 	bucket := m.Cfgs.FileService.Buckets.Originals
 	var url *url.URL
 	errTx := m.txRunner.RunTx(ctx,
-		func(q dbservice.Querier) error {
-			fileId, err = m.Queries.CreateFile(ctx, dbservice.File{
+		func(q *dbservice.Queries) error {
+			fileId, err = q.CreateFile(ctx, dbservice.File{
 				Filename:   req.Filename,
 				MimeType:   req.MimeType,
 				SizeBytes:  req.SizeBytes,
@@ -57,7 +57,7 @@ func (m *MediaService) UploadImage(ctx context.Context,
 			fmt.Printf("Creating variants %v for file %v\n", variants, fileId)
 
 			for _, v := range variants {
-				_, err := m.Queries.CreateVariant(ctx, dbservice.File{
+				_, err := q.CreateVariant(ctx, dbservice.File{
 					Id:         fileId,
 					Filename:   req.Filename,
 					MimeType:   "image/webp",
@@ -102,14 +102,14 @@ func (m *MediaService) GetImage(ctx context.Context,
 	var url *url.URL
 
 	errTx := m.txRunner.RunTx(ctx,
-		func(q dbservice.Querier) error {
+		func(q *dbservice.Queries) error {
 			switch variant {
 			case ct.Original:
-				req, err = m.Queries.GetFileById(ctx, imgId)
+				req, err = q.GetFileById(ctx, imgId)
 			default:
-				req, err = m.Queries.GetVariant(ctx, imgId, variant)
+				req, err = q.GetVariant(ctx, imgId, variant)
 				if req.Status != ct.Complete {
-					req, err = m.Queries.GetFileById(ctx, imgId)
+					req, err = q.GetFileById(ctx, imgId)
 					if req.Status != ct.Complete {
 						return fmt.Errorf("file validation status is %v", req.Status)
 					}
@@ -159,25 +159,23 @@ func (m *MediaService) GetImages(ctx context.Context,
 	var na ct.Ids
 	var fms []dbservice.File
 
-	errTx := m.txRunner.RunTx(ctx,
-		func(q dbservice.Querier) error {
+	errTx := m.txRunner.RunTx(ctx, func(q *dbservice.Queries) error {
 
-			fms, na, err = m.Queries.GetVariants(ctx, uniqueIds(imgIds), variant)
+		fms, na, err = m.Queries.GetVariants(ctx, uniqueIds(imgIds), variant)
+		if err != nil {
+			return err
+		}
+		//fmt.Println("variants", fms)
+		if len(na) != 0 {
+			originals, err := m.Queries.GetFiles(ctx, na)
 			if err != nil {
 				return err
 			}
-			//fmt.Println("variants", fms)
-			if len(na) != 0 {
-				originals, err := m.Queries.GetFiles(ctx, na)
-				if err != nil {
-					return err
-				}
-				fms = append(fms, originals...)
-				//fmt.Println("fms", fms)
-			}
-			return nil
-		},
-	)
+			fms = append(fms, originals...)
+			//fmt.Println("fms", fms)
+		}
+		return nil
+	})
 
 	if errTx != nil {
 		return nil, nil, err

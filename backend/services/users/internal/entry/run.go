@@ -75,11 +75,11 @@ func Run() error {
 		notificationsClient,
 		mediaClient,
 	)
-	pgxRunner, err := postgresql.NewPgxTxRunner(pool, sqlc.New(pool))
+	pgxTxRunner, err := postgresql.NewPgxTxRunner(pool, sqlc.New(pool))
 	if err != nil {
-		log.Fatal("failed to create pgxRunner")
+		log.Fatal("failed to create pgxTxRunner")
 	}
-	app := application.NewApplication(sqlc.New(pool), pgxRunner, pool, clients)
+	app := application.NewApplication(sqlc.New(pool), pgxTxRunner, pool, clients)
 	service := *handler.NewUsersHanlder(app)
 
 	port := ":50051"

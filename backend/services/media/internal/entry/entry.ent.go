@@ -57,12 +57,12 @@ func Run() error {
 	}
 
 	querier := dbservice.NewQuerier(pool)
-	app := application.NewMediaService(
+	app, err := application.NewMediaService(
 		pool,
 		&client.Clients{
 			Configs:           cfgs.FileService,
 			MinIOClient:       fileServiceClient,
-			PublicMinIOClient: publicFileServiceClient,
+			PublicMinIOClient: publicFileServiceClient, //TODO look into eliminating this one, and just using the normal minio client by changing the args based on dev/prod mode
 			Validator: &validator.ImageValidator{
 				Config: cfgs.FileService.FileConstraints,
 			},
@@ -72,6 +72,10 @@ func Run() error {
 		querier,
 		cfgs,
 	)
+	if err != nil {
+		log.Fatalf("failed to initialize media application: %v", err)
+	}
+
 	w := dbservice.NewWorker(querier)
 
 	app.StartVariantWorker(ctx, cfgs.FileService.VariantWorkerInterval)
@@ -79,7 +83,7 @@ func Run() error {
 
 	service := &handler.MediaHandler{
 		Application: app,
-		Configs:     cfgs.Server,
+		// Configs:     cfgs.Server,
 	}
 
 	log.Println("Running gRpc service...")

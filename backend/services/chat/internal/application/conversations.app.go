@@ -31,7 +31,7 @@ func (c *ChatService) CreateGroupConversation(ctx context.Context,
 	}
 
 	err = c.txRunner.RunTx(ctx,
-		func(q dbservice.Querier) error {
+		func(q *dbservice.Queries) error {
 			convId, err = q.CreateGroupConv(ctx, params.GroupId)
 			if err != nil {
 				return err

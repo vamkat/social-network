@@ -2,7 +2,7 @@ package mocks
 
 import (
 	"context"
-	"social-network/services/posts/internal/db/sqlc"
+	"social-network/services/posts/internal/db/mocks"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -12,13 +12,13 @@ import (
 // called. Callers can set the Querier field to a *mocks.MockQuerier instance.
 type MockTxRunner struct {
 	mock.Mock
-	Querier sqlc.Querier
+	Queries *mocks.MockQueries
 }
 
-func (m *MockTxRunner) RunTx(ctx context.Context, fn func(sqlc.Querier) error) error {
+func (m *MockTxRunner) RunTx(ctx context.Context, fn func(*mocks.MockQueries) error) error {
 	m.Called(ctx)
-	if m.Querier != nil {
-		return fn(m.Querier)
+	if m.Queries != nil {
+		return fn(m.Queries)
 	}
 	return nil
 }

@@ -29,7 +29,10 @@ func Run() error {
 	log.Println("Connected to posts-db database")
 
 	clients := InitClients()
-	app := application.NewApplication(sqlc.New(pool), pool, clients)
+	app, err := application.NewApplication(sqlc.New(pool), pool, clients)
+	if err != nil {
+		return fmt.Errorf("failed to create posts application: %v", err)
+	}
 
 	service := handler.NewPostsHandler(app)
 

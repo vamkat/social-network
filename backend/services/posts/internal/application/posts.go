@@ -39,7 +39,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 			return ErrNotAllowed
 		}
 	}
-	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 
 		postId, err := q.CreatePost(ctx, sqlc.CreatePostParams{
 			PostBody:  req.Body.String(),
@@ -118,7 +118,7 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 		return ErrNotAllowed
 	}
 
-	return s.txRunner.RunTx(ctx, func(q sqlc.Querier) error {
+	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
 		//edit content
 		if len(req.NewBody) > 0 {
 			rowsAffected, err := q.EditPostContent(ctx, sqlc.EditPostContentParams{
