@@ -21,13 +21,13 @@ import (
 )
 
 // AUTH
-func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*cm.User, error) {
+func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
 	fmt.Println("RegisterUser gRPC method called with request_id:", ctx.Value(ct.ReqID))
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 
-	user, err := s.Application.RegisterUser(ctx, models.RegisterUserRequest{
+	userId, err := s.Application.RegisterUser(ctx, models.RegisterUserRequest{
 		Username:    ct.Username(req.GetUsername()),
 		FirstName:   ct.Name(req.GetFirstName()),
 		LastName:    ct.Name(req.GetLastName()),
@@ -43,10 +43,8 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
 	}
 
-	return &cm.User{
-		UserId:   user.UserId.Int64(),
-		Username: user.Username.String(),
-		Avatar:   user.AvatarId.Int64(),
+	return &pb.RegisterUserResponse{
+		UserId: userId.Int64(),
 	}, nil
 }
 
@@ -77,9 +75,10 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 	}
 
 	return &cm.User{
-		UserId:   user.UserId.Int64(),
-		Username: user.Username.String(),
-		Avatar:   user.AvatarId.Int64(),
+		UserId:    user.UserId.Int64(),
+		Username:  user.Username.String(),
+		Avatar:    user.AvatarId.Int64(),
+		AvatarUrl: user.AvatarURL,
 	}, nil
 }
 
@@ -449,7 +448,8 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 		GroupOwnerId:     resp.GroupOwnerId.Int64(),
 		GroupTitle:       resp.GroupTitle.String(),
 		GroupDescription: resp.GroupDescription.String(),
-		GroupImage:       resp.GroupDescription.String(),
+		GroupImageId:     resp.GroupImage.Int64(),
+		GroupImageUrl:    resp.GroupImageURL,
 		MembersCount:     resp.MembersCount,
 		IsMember:         resp.IsMember,
 		IsOwner:          resp.IsOwner,
@@ -709,8 +709,8 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 		return nil, err
 	}
 
-	GroupImage := req.GroupImage
-	if err := invalidString("GroupImage", GroupImage); err != nil {
+	GroupImage := req.GroupImageId
+	if err := invalidId("GroupImage", GroupImage); err != nil {
 		return nil, err
 	}
 
@@ -718,7 +718,7 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 		OwnerId:          ct.Id(OwnerId),
 		GroupTitle:       ct.Title(GroupTitle),
 		GroupDescription: ct.About(GroupDescription),
-		GroupImage:       GroupImage,
+		GroupImage:       ct.Id(GroupImage),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "CreateGroup: %v", err)
@@ -743,9 +743,10 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 	}
 
 	return &cm.User{
-		UserId:   u.UserId.Int64(),
-		Username: u.Username.String(),
-		Avatar:   u.AvatarId.Int64(),
+		UserId:    u.UserId.Int64(),
+		Username:  u.Username.String(),
+		Avatar:    u.AvatarId.Int64(),
+		AvatarUrl: u.AvatarURL,
 	}, nil
 }
 
@@ -807,12 +808,13 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 	fmt.Println("get user profile", profile)
 
 	return &pb.UserProfileResponse{
-		UserId:      profile.UserId.Int64(),
-		Username:    profile.Username.String(),
-		FirstName:   profile.FirstName.String(),
-		LastName:    profile.LastName.String(),
-		DateOfBirth: profile.DateOfBirth.ToProto(),
-		// Avatar: ,
+		UserId:            profile.UserId.Int64(),
+		Username:          profile.Username.String(),
+		FirstName:         profile.FirstName.String(),
+		LastName:          profile.LastName.String(),
+		DateOfBirth:       profile.DateOfBirth.ToProto(),
+		Avatar:            profile.AvatarId.Int64(),
+		AvatarUrl:         profile.AvatarURL,
 		About:             profile.About.String(),
 		Public:            profile.Public,
 		CreatedAt:         profile.CreatedAt.ToProto(),
@@ -938,7 +940,8 @@ func groupsToPb(groups []models.Group) *pb.GroupArr {
 			GroupOwnerId:     g.GroupOwnerId.Int64(),
 			GroupTitle:       g.GroupTitle.String(),
 			GroupDescription: g.GroupDescription.String(),
-			GroupImage:       g.GroupImage,
+			GroupImageId:     g.GroupImage.Int64(),
+			GroupImageUrl:    g.GroupImageURL,
 			MembersCount:     g.MembersCount,
 			IsMember:         g.IsMember,
 			IsOwner:          g.IsOwner,

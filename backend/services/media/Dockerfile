@@ -17,7 +17,7 @@ WORKDIR /app
 COPY --from=build /app/media_service .
 COPY --from=build /app/migrate .
 COPY --from=build /app/services/media/internal/db/migrations ./migrations
-# COPY --from=build /app/services/media/internal/db/seeds ./seeds
+COPY --from=build /app/services/media/internal/db/seeds ./seeds
 
 COPY services/media/entrypoint.sh /app/entrypoint.sh
 

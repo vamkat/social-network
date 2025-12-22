@@ -15,7 +15,7 @@ import "google/protobuf/wrappers.proto";
 service UserService {
   // Registers a new account and returns the created user profile.
   // Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
-  rpc RegisterUser (RegisterUserRequest) returns (common.User);
+  rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
 
   // Authenticates by username/email identifier and password.
   // Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
@@ -94,6 +94,9 @@ service UserService {
   // Creates a new group and returns its id.
   rpc CreateGroup (CreateGroupRequest) returns (google.protobuf.Int64Value);
 
+  // Updates group info (title, description, image)
+  rpc UpdateGroup (UpdateGroupRequest) returns (google.protobuf.Empty);
+
   // Retrieves basic public info for a user.
   rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (common.User);
 
@@ -122,17 +125,18 @@ message UserProfileResponse {
   string last_name = 4;
   google.protobuf.Timestamp date_of_birth = 5;
   int64 avatar = 6;
-  string about = 7;
-  bool public = 8;
-  google.protobuf.Timestamp created_at = 9;
-  string email = 10;
-  int64 followers_count = 11;
-  int64 following_count = 12;
-  int64 groups_count = 13;
-  int64 owned_groups_count = 14;
-  bool viewer_is_following = 15;
-  bool own_profile = 16;
-  bool is_pending = 17;
+  string avatar_url=7;
+  string about = 8;
+  bool public = 9;
+  google.protobuf.Timestamp created_at = 10;
+  string email = 11;
+  int64 followers_count = 12;
+  int64 following_count = 13;
+  int64 groups_count = 14;
+  int64 owned_groups_count = 15;
+  bool viewer_is_following = 16;
+  bool own_profile = 17;
+  bool is_pending = 18;
 }
 
 // REGISTER USER
@@ -146,6 +150,10 @@ message RegisterUserRequest {
   bool public = 7;
   string email = 8;
   string password = 9;
+}
+
+message RegisterUserResponse {
+  int64 user_id = 1;
 }
 
 // LOGIN 
@@ -202,11 +210,12 @@ message Group {
   int64 group_owner_id = 2;
   string group_title = 3;
   string group_description = 4;
-  string group_image = 5;
-  int32 members_count = 6;
-  bool is_member = 7;
-  bool is_owner = 8;
-  bool is_pending = 9;
+  int64 group_image_id = 5;
+  string group_image_url=6;
+  int32 members_count = 7;
+  bool is_member = 8;
+  bool is_owner = 9;
+  bool is_pending = 10;
 }
 
 message GroupArr {
@@ -229,7 +238,8 @@ message GroupUser {
   int64 user_id = 1;
   string username = 2;
   int64 avatar = 3;
-  string group_role = 4;
+  string avatar_url=4;
+  string group_role = 5;
 }
 
 message GroupUserArr {
@@ -278,16 +288,17 @@ message CreateGroupRequest {
     int64 owner_id = 1; 
     string group_title = 2;
     string group_description = 3;
-    string group_image = 4;
+    int64 group_image_id = 4;
 }
 
-// BASIC USER INFO
-message UserBasicInfoResponse {
-  int64 user_id = 1;
-  string user_name = 2;
-  int64 avatar = 3;
-  bool public_profile = 4;
+message UpdateGroupRequest{
+  int64 requester_id=1;
+  int64 group_id=2;
+  string group_title = 3;
+  string group_description = 4;
+  int64 group_image_id = 5;
 }
+
 
 // GET USER PROFILE
 message GetUserProfileRequest {

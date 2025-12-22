@@ -146,7 +146,10 @@ func (m *MediaService) GetImages(ctx context.Context,
 	imgIds ct.Ids, variant ct.FileVariant,
 ) (downUrls map[ct.Id]string, failedIds []FailedId, err error) {
 
-	//fmt.Println("received ids", imgIds)
+	fmt.Println("received ids", imgIds)
+	// fmt.Println(imgIds.IsValid())
+	// fmt.Println(variant.IsValid())
+	// fmt.Println(variant == ct.Original)
 
 	if !imgIds.IsValid() || !variant.IsValid() || variant == ct.Original {
 		//fmt.Println("validation error", ct.ErrValidation)
@@ -194,8 +197,8 @@ func (m *MediaService) GetImages(ctx context.Context,
 		//For testing with seeds
 		//downUrls[fm.Id] = fm.Filename
 	}
-	//fmt.Println("download urls", downUrls)
-	//fmt.Println("failed ids", failedIds)
+	fmt.Println("download urls", downUrls)
+	fmt.Println("failed ids", failedIds)
 	return downUrls, failedIds, nil
 }
 

@@ -111,7 +111,7 @@ func (q *Queries) CancelGroupJoinRequest(ctx context.Context, arg CancelGroupJoi
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (group_owner, group_title, group_description, group_image)
+INSERT INTO groups (group_owner, group_title, group_description, group_image_id)
 VALUES ($1, $2, $3, $4)
 RETURNING id
 `
@@ -120,7 +120,7 @@ type CreateGroupParams struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	GroupImage       string
+	GroupImageID     int64
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (int64, error) {
@@ -128,7 +128,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (int64
 		arg.GroupOwner,
 		arg.GroupTitle,
 		arg.GroupDescription,
-		arg.GroupImage,
+		arg.GroupImageID,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -158,7 +158,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
-  group_image,
+  group_image_id,
   members_count
 FROM groups
 WHERE deleted_at IS NULL
@@ -176,7 +176,7 @@ type GetAllGroupsRow struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	GroupImage       string
+	GroupImageID     int64
 	MembersCount     int32
 }
 
@@ -194,7 +194,7 @@ func (q *Queries) GetAllGroups(ctx context.Context, arg GetAllGroupsParams) ([]G
 			&i.GroupOwner,
 			&i.GroupTitle,
 			&i.GroupDescription,
-			&i.GroupImage,
+			&i.GroupImageID,
 			&i.MembersCount,
 		); err != nil {
 			return nil, err
@@ -213,7 +213,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
-  group_image,
+  group_image_id,
   members_count
 FROM groups
 WHERE id=$1
@@ -225,7 +225,7 @@ type GetGroupInfoRow struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	GroupImage       string
+	GroupImageID     int64
 	MembersCount     int32
 }
 
@@ -237,7 +237,7 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 		&i.GroupOwner,
 		&i.GroupTitle,
 		&i.GroupDescription,
-		&i.GroupImage,
+		&i.GroupImageID,
 		&i.MembersCount,
 	)
 	return i, err
@@ -325,7 +325,7 @@ SELECT
     group_owner,
     group_title,
     group_description,
-    group_image,
+    group_image_id,
     members_count,
     is_member,
     is_owner
@@ -335,7 +335,7 @@ FROM (
         g.group_owner,
         g.group_title,
         g.group_description,
-        g.group_image,
+        g.group_image_id,
         g.members_count,
         CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
         CASE WHEN g.group_owner = $1 THEN TRUE ELSE FALSE END AS is_owner,
@@ -363,7 +363,7 @@ type GetUserGroupsRow struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	GroupImage       string
+	GroupImageID     int64
 	MembersCount     int32
 	IsMember         bool
 	IsOwner          bool
@@ -383,7 +383,7 @@ func (q *Queries) GetUserGroups(ctx context.Context, arg GetUserGroupsParams) ([
 			&i.GroupOwner,
 			&i.GroupTitle,
 			&i.GroupDescription,
-			&i.GroupImage,
+			&i.GroupImageID,
 			&i.MembersCount,
 			&i.IsMember,
 			&i.IsOwner,
@@ -510,7 +510,7 @@ SELECT
     g.group_owner,
     g.group_title,
     g.group_description,
-    g.group_image,
+    g.group_image_id,
     g.members_count,
     CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
     CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,
@@ -552,7 +552,7 @@ type SearchGroupsFuzzyRow struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	GroupImage       string
+	GroupImageID     int64
 	MembersCount     int32
 	IsMember         bool
 	IsOwner          bool
@@ -578,7 +578,7 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyPa
 			&i.GroupOwner,
 			&i.GroupTitle,
 			&i.GroupDescription,
-			&i.GroupImage,
+			&i.GroupImageID,
 			&i.MembersCount,
 			&i.IsMember,
 			&i.IsOwner,
@@ -670,6 +670,35 @@ type TransferOwnershipParams struct {
 func (q *Queries) TransferOwnership(ctx context.Context, arg TransferOwnershipParams) error {
 	_, err := q.db.Exec(ctx, transferOwnership, arg.GroupID, arg.UserID, arg.UserID_2)
 	return err
+}
+
+const updateGroup = `-- name: UpdateGroup :execrows
+UPDATE groups
+SET
+    group_title      = $2,
+    group_description    = $3,
+    group_image_id     = $4
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+type UpdateGroupParams struct {
+	ID               int64
+	GroupTitle       string
+	GroupDescription string
+	GroupImageID     int64
+}
+
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateGroup,
+		arg.ID,
+		arg.GroupTitle,
+		arg.GroupDescription,
+		arg.GroupImageID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const userGroupCountsPerRole = `-- name: UserGroupCountsPerRole :one

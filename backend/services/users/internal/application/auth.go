@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserRequest) (models.User, error) {
+func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserRequest) (ct.Id, error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		return models.User{}, err
+		return 0, err
 	}
 
 	//if no username assign full name
@@ -54,14 +54,10 @@ func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserR
 	})
 
 	if err != nil {
-		return models.User{}, err //TODO check how to return correct error
+		return 0, err //TODO check how to return correct error
 	}
 
-	return models.User{
-		UserId:   newId,
-		Username: req.Username,
-		AvatarId: req.AvatarId,
-	}, nil
+	return newId, nil
 
 }
 
@@ -93,6 +89,14 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 		// if !checkPassword(row.PasswordHash, req.Password.String()) {
 		// 	return ErrWrongCredentials
 		// }
+
+		imageUrl, err := s.clients.GetImage(ctx, u.AvatarId.Int64())
+		if err != nil {
+			return err
+		}
+
+		u.AvatarURL = imageUrl
+
 		return nil
 	})
 

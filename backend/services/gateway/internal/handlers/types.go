@@ -7,7 +7,7 @@ type GroupT struct {
 	GroupOwnerId     ct.Id  `json:"group_owner_id"`
 	GroupTitle       string `json:"group_title"`
 	GroupDescription string `json:"group_description"`
-	GroupImage       string `json:"group_image"`
+	GroupImage       ct.Id  `json:"group_image"`
 	MembersCount     int32  `json:"members_count"`
 	IsMember         bool   `json:"is_member"`
 	IsOwner          bool   `json:"is_owner"`

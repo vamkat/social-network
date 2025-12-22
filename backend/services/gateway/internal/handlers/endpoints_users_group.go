@@ -1,14 +1,18 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
+	"time"
 )
 
+// ADD IMAGE UPLOAD
 func (s *Handlers) CreateGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -20,20 +24,52 @@ func (s *Handlers) CreateGroup() http.HandlerFunc {
 		type createGroupData struct {
 			GroupTitle       string `json:"group_title"`
 			GroupDescription string `json:"group_description"`
-			GroupImage       string `json:"group_image,omitempty"`
+
+			GroupImageName string `json:"group_image_name"`
+			GroupImageSize int64  `json:"group_image_size"`
+			GroupImageType string `json:"group_image_type"`
 		}
 
-		createGroupDataRequest, err := utils.JSON2Struct(&createGroupData{}, r)
-		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+		httpReq := createGroupData{}
+
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		if err := decoder.Decode(&httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var GroupImageId ct.Id
+		var uploadURL string
+
+		if httpReq.GroupImageSize != 0 {
+			exp := time.Duration(10 * time.Minute).Seconds()
+			mediaRes, err := s.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+				Filename:          httpReq.GroupImageName,
+				MimeType:          httpReq.GroupImageType,
+				SizeBytes:         httpReq.GroupImageSize,
+				Visibility:        media.FileVisibility_PUBLIC,
+				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				ExpirationSeconds: int64(exp),
+			})
+			if err != nil {
+				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			GroupImageId = ct.Id(mediaRes.FileId)
+			uploadURL = mediaRes.GetUploadUrl()
 		}
 
 		createGroupRequest := users.CreateGroupRequest{
 			OwnerId:          claims.UserId,
-			GroupTitle:       createGroupDataRequest.GroupTitle,
-			GroupDescription: createGroupDataRequest.GroupDescription,
-			GroupImage:       createGroupDataRequest.GroupImage,
+			GroupTitle:       httpReq.GroupTitle,
+			GroupDescription: httpReq.GroupDescription,
+			GroupImageId:     GroupImageId.Int64(),
 		}
 
 		groupId, err := s.UsersService.CreateGroup(ctx, &createGroupRequest)
@@ -43,11 +79,99 @@ func (s *Handlers) CreateGroup() http.HandlerFunc {
 		}
 
 		type createGroupDataResponse struct {
-			GroupId ct.Id `json:"group_id"`
+			GroupId   ct.Id `json:"group_id"`
+			FileId    ct.Id
+			UploadUrl string
 		}
 
 		resp := createGroupDataResponse{
-			GroupId: ct.Id(groupId.Value),
+			GroupId:   ct.Id(groupId.Value),
+			FileId:    GroupImageId,
+			UploadUrl: uploadURL,
+		}
+
+		utils.WriteJSON(w, http.StatusOK, resp)
+	}
+}
+
+// ADD IMAGE UPLOAD
+func (s *Handlers) UpdateGroup() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		type updateGroupData struct {
+			GroupId          int64  `json:"group_id"`
+			GroupTitle       string `json:"group_title"`
+			GroupDescription string `json:"group_description"`
+
+			GroupImageName string `json:"group_image_name"`
+			GroupImageSize int64  `json:"group_image_size"`
+			GroupImageType string `json:"group_image_type"`
+		}
+
+		httpReq := updateGroupData{}
+
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		if err := decoder.Decode(&httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var GroupImageId ct.Id
+		var uploadURL string
+
+		if httpReq.GroupImageSize != 0 {
+			exp := time.Duration(10 * time.Minute).Seconds()
+			mediaRes, err := s.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+				Filename:          httpReq.GroupImageName,
+				MimeType:          httpReq.GroupImageType,
+				SizeBytes:         httpReq.GroupImageSize,
+				Visibility:        media.FileVisibility_PUBLIC,
+				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				ExpirationSeconds: int64(exp),
+			})
+			if err != nil {
+				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			GroupImageId = ct.Id(mediaRes.FileId)
+			uploadURL = mediaRes.GetUploadUrl()
+		}
+
+		updateGroupRequest := users.UpdateGroupRequest{
+			RequesterId:      claims.UserId,
+			GroupId:          httpReq.GroupId,
+			GroupTitle:       httpReq.GroupTitle,
+			GroupDescription: httpReq.GroupDescription,
+			GroupImageId:     GroupImageId.Int64(),
+		}
+
+		_, err := s.UsersService.UpdateGroup(ctx, &updateGroupRequest)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update group: "+err.Error())
+			return
+		}
+
+		type createGroupDataResponse struct {
+			GroupId   ct.Id `json:"group_id"`
+			FileId    ct.Id
+			UploadUrl string
+		}
+
+		resp := createGroupDataResponse{
+			GroupId:   ct.Id(httpReq.GroupId),
+			FileId:    GroupImageId,
+			UploadUrl: uploadURL,
 		}
 
 		utils.WriteJSON(w, http.StatusOK, resp)
@@ -79,17 +203,33 @@ func (s *Handlers) GetAllGroupsPaginated() http.HandlerFunc {
 			Offset: body.Offset,
 		}
 
-		out, err := s.UsersService.GetAllGroupsPaginated(ctx, &req)
+		grpcResp, err := s.UsersService.GetAllGroupsPaginated(ctx, &req)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch groups: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, out)
+		resp := make([]models.Group, 0, len(grpcResp.GroupArr))
+		for _, group := range grpcResp.GroupArr {
+			newGroup := models.Group{
+				GroupId:          ct.Id(group.GroupId),
+				GroupOwnerId:     ct.Id(group.GroupOwnerId),
+				GroupTitle:       ct.Title(group.GroupTitle),
+				GroupDescription: ct.About(group.GroupDescription),
+				GroupImage:       ct.Id(group.GroupImageId),
+				GroupImageURL:    group.GroupImageUrl,
+				MembersCount:     group.MembersCount,
+				IsMember:         group.IsMember,
+				IsOwner:          group.IsOwner,
+				IsPending:        group.IsPending,
+			}
+			resp = append(resp, newGroup)
+		}
+
+		utils.WriteJSON(w, http.StatusOK, resp)
 	}
 }
 
-// OK?
 func (s *Handlers) GetGroupInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -124,7 +264,8 @@ func (s *Handlers) GetGroupInfo() http.HandlerFunc {
 			GroupOwnerId:     ct.Id(grpcResp.GroupOwnerId),
 			GroupTitle:       ct.Title(grpcResp.GroupTitle),
 			GroupDescription: ct.About(grpcResp.GroupDescription),
-			GroupImage:       grpcResp.GroupImage,
+			GroupImage:       ct.Id(grpcResp.GroupImageId),
+			GroupImageURL:    grpcResp.GroupImageUrl,
 			MembersCount:     grpcResp.MembersCount,
 			IsMember:         grpcResp.IsMember,
 			IsOwner:          grpcResp.IsOwner,
@@ -135,7 +276,6 @@ func (s *Handlers) GetGroupInfo() http.HandlerFunc {
 	}
 }
 
-// OK?
 func (s *Handlers) GetGroupMembers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -176,6 +316,7 @@ func (s *Handlers) GetGroupMembers() http.HandlerFunc {
 				UserId:    ct.Id(group.UserId),
 				Username:  ct.Username(group.Username),
 				AvatarId:  ct.Id(group.Avatar),
+				AvatarUrl: group.AvatarUrl,
 				GroupRole: group.GroupRole,
 			}
 			resp.GroupUsers = append(resp.GroupUsers, newGroup)
@@ -185,7 +326,6 @@ func (s *Handlers) GetGroupMembers() http.HandlerFunc {
 	}
 }
 
-// OK?
 func (s *Handlers) GetUserGroupsPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -217,27 +357,27 @@ func (s *Handlers) GetUserGroupsPaginated() http.HandlerFunc {
 			return
 		}
 
-		resp := GroupsT{}
+		resp := make([]models.Group, 0, len(grpcResp.GroupArr))
 		for _, group := range grpcResp.GroupArr {
-			newGroup := GroupT{
+			newGroup := models.Group{
 				GroupId:          ct.Id(group.GroupId),
 				GroupOwnerId:     ct.Id(group.GroupOwnerId),
-				GroupTitle:       group.GroupTitle,
-				GroupDescription: group.GroupDescription,
-				GroupImage:       group.GroupImage,
+				GroupTitle:       ct.Title(group.GroupTitle),
+				GroupDescription: ct.About(group.GroupDescription),
+				GroupImage:       ct.Id(group.GroupImageId),
+				GroupImageURL:    group.GroupImageUrl,
 				MembersCount:     group.MembersCount,
 				IsMember:         group.IsMember,
 				IsOwner:          group.IsOwner,
 				IsPending:        group.IsPending,
 			}
-			resp.Groups = append(resp.Groups, newGroup)
+			resp = append(resp, newGroup)
 		}
 
 		utils.WriteJSON(w, http.StatusOK, resp)
 	}
 }
 
-// OK?
 func (s *Handlers) HandleGroupJoinRequest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -269,7 +409,6 @@ func (s *Handlers) HandleGroupJoinRequest() http.HandlerFunc {
 	}
 }
 
-// OK?
 func (s *Handlers) InviteToGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -300,7 +439,6 @@ func (s *Handlers) InviteToGroup() http.HandlerFunc {
 	}
 }
 
-// OK?
 func (s *Handlers) LeaveGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -330,7 +468,6 @@ func (s *Handlers) LeaveGroup() http.HandlerFunc {
 	}
 }
 
-// OK?
 func (s *Handlers) RequestJoinGroupOrCancel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -360,7 +497,6 @@ func (s *Handlers) RequestJoinGroupOrCancel() http.HandlerFunc {
 	}
 }
 
-// OK?
 func (s *Handlers) RespondToGroupInvite() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -396,7 +532,7 @@ func (s *Handlers) RespondToGroupInvite() http.HandlerFunc {
 	}
 }
 
-// OK?
+// CONTAIN GROUP IMAGES
 func (s *Handlers) SearchGroups() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -439,7 +575,8 @@ func (s *Handlers) SearchGroups() http.HandlerFunc {
 				GroupOwnerId:     ct.Id(group.GroupOwnerId),
 				GroupTitle:       ct.Title(group.GroupTitle),
 				GroupDescription: ct.About(group.GroupDescription),
-				GroupImage:       group.GroupImage,
+				GroupImage:       ct.Id(group.GroupImageId),
+				GroupImageURL:    group.GroupImageUrl,
 				MembersCount:     group.MembersCount,
 				IsMember:         group.IsMember,
 				IsOwner:          group.IsOwner,

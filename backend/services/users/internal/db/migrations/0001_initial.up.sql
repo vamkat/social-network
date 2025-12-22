@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS groups (
     group_owner BIGINT NOT NULL REFERENCES users(id) ON DELETE NO ACTION,
     group_title TEXT NOT NULL,
     group_description TEXT NOT NULL,
-    group_image TEXT NOT NULL, 
+    group_image_id BIGINT NOT NULL, 
     members_count INT NOT NULL DEFAULT 0, 
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,

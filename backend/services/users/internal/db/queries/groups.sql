@@ -1,7 +1,16 @@
 -- name: CreateGroup :one
-INSERT INTO groups (group_owner, group_title, group_description, group_image)
+INSERT INTO groups (group_owner, group_title, group_description, group_image_id)
 VALUES ($1, $2, $3, $4)
 RETURNING id;
+
+-- name: UpdateGroup :execrows
+UPDATE groups
+SET
+    group_title      = $2,
+    group_description    = $3,
+    group_image_id     = $4
+WHERE id = $1 AND deleted_at IS NULL;
+
 
 -- name: AddGroupOwnerAsMember :exec
 INSERT INTO group_members (group_id, user_id, role)
@@ -99,7 +108,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
-  group_image,
+  group_image_id,
   members_count
 FROM groups
 WHERE deleted_at IS NULL
@@ -112,7 +121,7 @@ SELECT
     group_owner,
     group_title,
     group_description,
-    group_image,
+    group_image_id,
     members_count,
     is_member,
     is_owner
@@ -122,7 +131,7 @@ FROM (
         g.group_owner,
         g.group_title,
         g.group_description,
-        g.group_image,
+        g.group_image_id,
         g.members_count,
         CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
         CASE WHEN g.group_owner = $1 THEN TRUE ELSE FALSE END AS is_owner,
@@ -145,7 +154,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
-  group_image,
+  group_image_id,
   members_count
 FROM groups
 WHERE id=$1
@@ -173,7 +182,7 @@ SELECT
     g.group_owner,
     g.group_title,
     g.group_description,
-    g.group_image,
+    g.group_image_id,
     g.members_count,
     CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
     CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,

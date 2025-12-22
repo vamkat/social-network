@@ -121,6 +121,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.CreateGroup()))
 
+	mux.HandleFunc("/groups/update",
+		Chain().
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.UpdateGroup()))
+
 	mux.HandleFunc("/groups/paginated",
 		Chain("/groups/paginated").
 			AllowedMethod("POST").

@@ -47,6 +47,7 @@ const (
 	UserService_HandleGroupJoinRequest_FullMethodName = "/users.UserService/HandleGroupJoinRequest"
 	UserService_LeaveGroup_FullMethodName             = "/users.UserService/LeaveGroup"
 	UserService_CreateGroup_FullMethodName            = "/users.UserService/CreateGroup"
+	UserService_UpdateGroup_FullMethodName            = "/users.UserService/UpdateGroup"
 	UserService_GetBasicUserInfo_FullMethodName       = "/users.UserService/GetBasicUserInfo"
 	UserService_GetBatchBasicUserInfo_FullMethodName  = "/users.UserService/GetBatchBasicUserInfo"
 	UserService_GetUserProfile_FullMethodName         = "/users.UserService/GetUserProfile"
@@ -65,7 +66,7 @@ const (
 type UserServiceClient interface {
 	// Registers a new account and returns the created user profile.
 	// Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
-	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*common.User, error)
+	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	// Authenticates by username/email identifier and password.
 	// Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
 	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*common.User, error)
@@ -119,6 +120,8 @@ type UserServiceClient interface {
 	LeaveGroup(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Creates a new group and returns its id.
 	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
+	// Updates group info (title, description, image)
+	UpdateGroup(ctx context.Context, in *UpdateGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Retrieves basic public info for a user.
 	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.User, error)
 	// Retrieves basic info for multiple users.
@@ -141,9 +144,9 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*common.User, error) {
+func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(common.User)
+	out := new(RegisterUserResponse)
 	err := c.cc.Invoke(ctx, UserService_RegisterUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -391,6 +394,16 @@ func (c *userServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequ
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateGroup(ctx context.Context, in *UpdateGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_UpdateGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.User)
@@ -461,7 +474,7 @@ func (c *userServiceClient) UpdateProfilePrivacy(ctx context.Context, in *Update
 type UserServiceServer interface {
 	// Registers a new account and returns the created user profile.
 	// Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
-	RegisterUser(context.Context, *RegisterUserRequest) (*common.User, error)
+	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	// Authenticates by username/email identifier and password.
 	// Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
 	LoginUser(context.Context, *LoginRequest) (*common.User, error)
@@ -515,6 +528,8 @@ type UserServiceServer interface {
 	LeaveGroup(context.Context, *GeneralGroupRequest) (*emptypb.Empty, error)
 	// Creates a new group and returns its id.
 	CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error)
+	// Updates group info (title, description, image)
+	UpdateGroup(context.Context, *UpdateGroupRequest) (*emptypb.Empty, error)
 	// Retrieves basic public info for a user.
 	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*common.User, error)
 	// Retrieves basic info for multiple users.
@@ -537,7 +552,7 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
-func (UnimplementedUserServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*common.User, error) {
+func (UnimplementedUserServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterUser not implemented")
 }
 func (UnimplementedUserServiceServer) LoginUser(context.Context, *LoginRequest) (*common.User, error) {
@@ -611,6 +626,9 @@ func (UnimplementedUserServiceServer) LeaveGroup(context.Context, *GeneralGroupR
 }
 func (UnimplementedUserServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroup not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateGroup(context.Context, *UpdateGroupRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateGroup not implemented")
 }
 func (UnimplementedUserServiceServer) GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*common.User, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBasicUserInfo not implemented")
@@ -1101,6 +1119,24 @@ func _UserService_CreateGroup_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateGroup(ctx, req.(*UpdateGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_GetBasicUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(wrapperspb.Int64Value)
 	if err := dec(in); err != nil {
@@ -1315,6 +1351,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateGroup",
 			Handler:    _UserService_CreateGroup_Handler,
+		},
+		{
+			MethodName: "UpdateGroup",
+			Handler:    _UserService_UpdateGroup_Handler,
 		},
 		{
 			MethodName: "GetBasicUserInfo",

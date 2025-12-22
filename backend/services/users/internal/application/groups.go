@@ -21,6 +21,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 	}
 
 	groups := make([]models.Group, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
 
 	for _, r := range rows {
 		userInfo, err := s.userInRelationToGroup(ctx, models.GeneralGroupReq{
@@ -36,13 +37,25 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 			GroupOwnerId:     ct.Id(r.GroupOwner),
 			GroupTitle:       ct.Title(r.GroupTitle),
 			GroupDescription: ct.About(r.GroupDescription),
-			GroupImage:       r.GroupImage,
+			GroupImage:       ct.Id(r.GroupImageID),
 			MembersCount:     r.MembersCount,
 			IsMember:         userInfo.isMember,
 			IsOwner:          userInfo.isOwner,
 			IsPending:        userInfo.isPending,
 		})
+		imageIds = append(imageIds, r.GroupImageID)
 
+	}
+
+	//get image urls
+	if len(imageIds) > 0 {
+		imageMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return nil, err
+		}
+		for i := range groups {
+			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+		}
 	}
 
 	return groups, nil
@@ -63,6 +76,8 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 	}
 
 	groups := make([]models.Group, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
 		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.GroupID),
@@ -76,18 +91,29 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 			GroupOwnerId:     ct.Id(r.GroupOwner),
 			GroupTitle:       ct.Title(r.GroupTitle),
 			GroupDescription: ct.About(r.GroupDescription),
-			GroupImage:       r.GroupImage,
+			GroupImage:       ct.Id(r.GroupImageID),
 			MembersCount:     r.MembersCount,
 			IsMember:         r.IsMember,
 			IsOwner:          r.IsOwner,
 			IsPending:        isPending,
 		})
+		imageIds = append(imageIds, r.GroupImageID)
+	}
+
+	//get image urls
+	if len(imageIds) > 0 {
+		imageMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return nil, err
+		}
+		for i := range groups {
+			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+		}
 	}
 
 	return groups, nil
 }
 
-// SKIP GRPC FOR NOW
 func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupReq) (models.Group, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return models.Group{}, err
@@ -101,7 +127,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 		GroupOwnerId:     ct.Id(row.GroupOwner),
 		GroupTitle:       ct.Title(row.GroupTitle),
 		GroupDescription: ct.About(row.GroupDescription),
-		GroupImage:       row.GroupImage,
+		GroupImage:       ct.Id(row.GroupImageID),
 		MembersCount:     row.MembersCount,
 	}
 	userInfo, err := s.userInRelationToGroup(ctx, models.GeneralGroupReq{
@@ -115,9 +141,15 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	group.IsOwner = userInfo.isOwner
 	group.IsPending = userInfo.isPending
 
+	imageUrl, err := s.clients.GetImage(ctx, group.GroupImage.Int64())
+	if err != nil {
+		return models.Group{}, err
+	}
+
+	group.GroupImageURL = imageUrl
+
 	return group, nil
 
-	//different calls for chat and posts (API GATEWAY)
 }
 
 func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembersReq) ([]models.GroupUser, error) {
@@ -146,6 +178,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 		return nil, err
 	}
 	members := make([]models.GroupUser, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
 
 	for _, r := range rows {
 		var role string
@@ -159,7 +192,20 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 			AvatarId:  ct.Id(r.AvatarID),
 			GroupRole: role,
 		})
+		imageIds = append(imageIds, r.AvatarID)
 	}
+
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return []models.GroupUser{}, err
+		}
+		for i := range members {
+			members[i].AvatarUrl = avatarMap[members[i].AvatarId.Int64()]
+		}
+	}
+
 	return members, nil
 }
 
@@ -179,6 +225,8 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 		return []models.Group{}, err
 	}
 	groups := make([]models.Group, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
+
 	for _, r := range rows {
 		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.ID),
@@ -192,12 +240,24 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 			GroupOwnerId:     ct.Id(r.GroupOwner),
 			GroupTitle:       ct.Title(r.GroupTitle),
 			GroupDescription: ct.About(r.GroupDescription),
-			GroupImage:       r.GroupImage,
+			GroupImage:       ct.Id(r.GroupImageID),
 			MembersCount:     r.MembersCount,
 			IsMember:         r.IsMember,
 			IsOwner:          r.IsOwner,
 			IsPending:        isPending,
 		})
+		imageIds = append(imageIds, r.GroupImageID)
+	}
+
+	//get image urls
+	if len(imageIds) > 0 {
+		imageMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return nil, err
+		}
+		for i := range groups {
+			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+		}
 	}
 
 	return groups, nil
@@ -409,7 +469,7 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 		GroupOwner:       req.OwnerId.Int64(),
 		GroupTitle:       req.GroupTitle.String(),
 		GroupDescription: req.GroupDescription.String(),
-		GroupImage:       req.GroupImage,
+		GroupImageID:     req.GroupImage.Int64(),
 	})
 	if err != nil {
 		return 0, err
@@ -422,6 +482,42 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 	// }
 
 	return models.GroupId(groupId), nil
+}
+
+func (s *Application) UpdateGroup(ctx context.Context, req *models.UpdateGroupRequest) error {
+	//check requester is owner
+	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.RequesterId,
+	})
+	if err != nil {
+		return err
+	}
+	if !isOwner {
+		return ErrNotAuthorized
+	}
+
+	if err := ct.ValidateStruct(req); err != nil {
+		return err
+	}
+
+	rowsAffected, err := s.db.UpdateGroup(ctx, sqlc.UpdateGroupParams{
+		ID:               req.GroupId.Int64(),
+		GroupTitle:       req.GroupTitle.String(),
+		GroupDescription: req.GroupDescription.String(),
+		GroupImageID:     req.GroupImage.Int64(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected != 1 {
+		return ErrNotFound
+	}
+
+	return nil
+
 }
 
 // NOT GRPC

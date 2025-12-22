@@ -9,6 +9,7 @@ import (
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/models"
 	"time"
 )
 
@@ -87,7 +88,12 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			UserId ct.Id
 		}
 
-		httpResp := httpResponse{UserId: ct.Id(resp.UserId)}
+		httpResp := models.User{
+			UserId:    ct.Id(resp.UserId),
+			Username:  ct.Username(resp.Username),
+			AvatarId:  ct.Id(resp.Avatar),
+			AvatarURL: resp.AvatarUrl,
+		}
 
 		//SEND RESPONSE
 		err = utils.WriteJSON(w, http.StatusCreated, httpResp)
@@ -256,5 +262,92 @@ func (h *Handlers) logoutHandler() http.HandlerFunc {
 func (h *Handlers) authStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSON(w, http.StatusOK, "user is logged in")
+	}
+}
+
+// OK
+func (s *Handlers) UpdateUserEmail() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		type reqBody struct {
+			Email string `json:"email"`
+		}
+
+		body, err := utils.JSON2Struct(&reqBody{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		req := &users.UpdateEmailRequest{
+			UserId: claims.UserId,
+			Email:  body.Email,
+		}
+
+		_, err = s.UsersService.UpdateUserEmail(ctx, req)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update email: "+err.Error())
+			return
+		}
+
+		utils.WriteJSON(w, http.StatusOK, nil)
+	}
+}
+
+// TODO should probably be done using a specific link / needs extra validation
+func (s *Handlers) UpdateUserPassword() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		type reqBody struct {
+			OldPassword string `json:"old_password"`
+			NewPassword string `json:"new_password"`
+		}
+
+		body, err := utils.JSON2Struct(&reqBody{}, r)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+		_ = body
+
+		fmt.Println("old password:", body.OldPassword, " new password:", body.NewPassword)
+
+		oldPassword, err := ct.Password(body.OldPassword).Hash()
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			return
+		}
+
+		newPassword, err := ct.Password(body.NewPassword).Hash()
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			return
+		}
+
+		fmt.Println("hashed old password:", oldPassword.String(), " hashed new password:", newPassword.String())
+
+		req := &users.UpdatePasswordRequest{
+			UserId:      claims.UserId,
+			OldPassword: oldPassword.String(),
+			NewPassword: newPassword.String(),
+		}
+
+		_, err = s.UsersService.UpdateUserPassword(ctx, req)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update password: "+err.Error())
+			return
+		}
+
+		utils.WriteJSON(w, http.StatusOK, nil)
 	}
 }

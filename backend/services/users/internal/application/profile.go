@@ -31,6 +31,7 @@ func (s *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (resp 
 
 }
 
+// TO CONSIDER: who calls this and the above? Should fetching the url happen here or in retrieve users?
 func (s *Application) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) ([]models.User, error) {
 	if err := userIds.Validate(); err != nil {
 		return nil, err
@@ -121,6 +122,13 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 	profile.GroupsCount = groupsRow.TotalMemberships //owner and member, can change to member only
 	profile.OwnedGroupsCount = groupsRow.OwnerCount
 
+	imageUrl, err := s.clients.GetImage(ctx, profile.AvatarId.Int64())
+	if err != nil {
+		return models.UserProfileResponse{}, err
+	}
+
+	profile.AvatarURL = imageUrl
+
 	return profile, nil
 
 	// usergroups a different call
@@ -143,12 +151,25 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 	}
 
 	users := make([]models.User, 0, len(rows))
+	imageIds := make([]int64, 0, len(rows))
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
+		imageIds = append(imageIds, r.AvatarID)
+	}
+
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		if err != nil {
+			return []models.User{}, err
+		}
+		for i := range users {
+			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+		}
 	}
 
 	return users, nil

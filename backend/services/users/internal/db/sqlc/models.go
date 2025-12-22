@@ -305,7 +305,7 @@ type Group struct {
 	GroupOwner       int64
 	GroupTitle       string
 	GroupDescription string
-	GroupImage       string
+	GroupImageID     int64
 	MembersCount     int32
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz

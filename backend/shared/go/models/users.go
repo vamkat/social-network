@@ -74,6 +74,7 @@ type UserProfileResponse struct {
 	LastName          ct.Name        `json:"last_name"`
 	DateOfBirth       ct.DateOfBirth `json:"date_of_birth"`
 	AvatarId          ct.Id          `json:"avatar_id" validate:"nullable"`
+	AvatarURL         string         `json:"avatar_url"`
 	About             ct.About       `json:"about"`
 	Public            bool           `json:"public"`
 	CreatedAt         ct.GenDateTime `json:"created_at"`
@@ -127,6 +128,7 @@ type GroupUser struct {
 	UserId    ct.Id       `json:"user_id"`
 	Username  ct.Username `json:"username"`
 	AvatarId  ct.Id       `json:"avatar_id" validate:"nullable"`
+	AvatarUrl string      `json:"avatar_url"`
 	GroupRole string      `json:"group_role"`
 }
 
@@ -146,7 +148,8 @@ type Group struct {
 	GroupOwnerId     ct.Id    `json:"group_owner_id"`
 	GroupTitle       ct.Title `json:"group_title"`
 	GroupDescription ct.About `json:"group_description"`
-	GroupImage       string   `json:"group_image"`
+	GroupImage       ct.Id    `json:"group_image_id"`
+	GroupImageURL    string   `json:"group_image_url"`
 	MembersCount     int32    `json:"members_count"`
 	IsMember         bool     `json:"is_member"`
 	IsOwner          bool     `json:"is_owner"`
@@ -196,7 +199,15 @@ type CreateGroupRequest struct {
 	OwnerId          ct.Id    `json:"owner_id"`
 	GroupTitle       ct.Title `json:"group_title"`
 	GroupDescription ct.About `json:"group_description"`
-	GroupImage       string   `json:"group_image"`
+	GroupImage       ct.Id    `json:"group_image_id"`
+}
+
+type UpdateGroupRequest struct {
+	RequesterId      ct.Id
+	GroupId          ct.Id    `json:"group_id"`
+	GroupTitle       ct.Title `json:"group_title"`
+	GroupDescription ct.About `json:"group_description"`
+	GroupImage       ct.Id    `json:"group_image_id"`
 }
 
 // -------------------------------------------
