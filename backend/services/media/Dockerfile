@@ -24,5 +24,8 @@ COPY services/media/entrypoint.sh /app/entrypoint.sh
 # RUN chmod +x /app/seeds/seed.sh 
 RUN chmod +x /app/entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["./media_service"]
+# ENTRYPOINT ["/app/entrypoint.sh"]
+# CMD ["./media_service"]
+
+CMD ["sh", "-c", "set -e; echo 'Running migrations...' && ./migrate; echo 'Running seeds...' && ./seeds/seed.sh || true; echo 'Starting service...' && exec ./media_service"]
+
