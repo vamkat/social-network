@@ -29,7 +29,9 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
-		imageIds = append(imageIds, r.AvatarID)
+		if r.AvatarID > 0 {
+			imageIds = append(imageIds, r.AvatarID)
+		}
 	}
 	//get avatar urls
 	if len(imageIds) > 0 {
@@ -70,7 +72,9 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
-		imageIds = append(imageIds, r.AvatarID)
+		if r.AvatarID > 0 {
+			imageIds = append(imageIds, r.AvatarID)
+		}
 	}
 
 	//get avatar urls
@@ -210,7 +214,9 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
-		imageIds = append(imageIds, r.AvatarID)
+		if r.AvatarID > 0 {
+			imageIds = append(imageIds, r.AvatarID)
+		}
 	}
 
 	//get avatar urls

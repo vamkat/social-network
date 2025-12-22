@@ -122,12 +122,14 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 	profile.GroupsCount = groupsRow.TotalMemberships //owner and member, can change to member only
 	profile.OwnedGroupsCount = groupsRow.OwnerCount
 
-	imageUrl, err := s.clients.GetImage(ctx, profile.AvatarId.Int64())
-	if err != nil {
-		return models.UserProfileResponse{}, err
-	}
+	if profile.AvatarId > 0 {
+		imageUrl, err := s.clients.GetImage(ctx, profile.AvatarId.Int64())
+		if err != nil {
+			return models.UserProfileResponse{}, err
+		}
 
-	profile.AvatarURL = imageUrl
+		profile.AvatarURL = imageUrl
+	}
 
 	return profile, nil
 
@@ -158,7 +160,9 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 			Username: ct.Username(r.Username),
 			AvatarId: ct.Id(r.AvatarID),
 		})
-		imageIds = append(imageIds, r.AvatarID)
+		if r.AvatarID > 0 {
+			imageIds = append(imageIds, r.AvatarID)
+		}
 	}
 
 	//get avatar urls

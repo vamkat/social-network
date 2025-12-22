@@ -43,7 +43,9 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 			IsOwner:          userInfo.isOwner,
 			IsPending:        userInfo.isPending,
 		})
-		imageIds = append(imageIds, r.GroupImageID)
+		if r.GroupImageID > 0 {
+			imageIds = append(imageIds, r.GroupImageID)
+		}
 
 	}
 
@@ -97,7 +99,9 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 			IsOwner:          r.IsOwner,
 			IsPending:        isPending,
 		})
-		imageIds = append(imageIds, r.GroupImageID)
+		if r.GroupImageID > 0 {
+			imageIds = append(imageIds, r.GroupImageID)
+		}
 	}
 
 	//get image urls
@@ -141,12 +145,14 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	group.IsOwner = userInfo.isOwner
 	group.IsPending = userInfo.isPending
 
-	imageUrl, err := s.clients.GetImage(ctx, group.GroupImage.Int64())
-	if err != nil {
-		return models.Group{}, err
-	}
+	if group.GroupImage > 0 {
+		imageUrl, err := s.clients.GetImage(ctx, group.GroupImage.Int64())
+		if err != nil {
+			return models.Group{}, err
+		}
 
-	group.GroupImageURL = imageUrl
+		group.GroupImageURL = imageUrl
+	}
 
 	return group, nil
 
@@ -192,7 +198,9 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 			AvatarId:  ct.Id(r.AvatarID),
 			GroupRole: role,
 		})
-		imageIds = append(imageIds, r.AvatarID)
+		if r.AvatarID > 0 {
+			imageIds = append(imageIds, r.AvatarID)
+		}
 	}
 
 	//get avatar urls
@@ -246,7 +254,9 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 			IsOwner:          r.IsOwner,
 			IsPending:        isPending,
 		})
-		imageIds = append(imageIds, r.GroupImageID)
+		if r.GroupImageID > 0 {
+			imageIds = append(imageIds, r.GroupImageID)
+		}
 	}
 
 	//get image urls

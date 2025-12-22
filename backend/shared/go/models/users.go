@@ -148,7 +148,7 @@ type Group struct {
 	GroupOwnerId     ct.Id    `json:"group_owner_id"`
 	GroupTitle       ct.Title `json:"group_title"`
 	GroupDescription ct.About `json:"group_description"`
-	GroupImage       ct.Id    `json:"group_image_id"`
+	GroupImage       ct.Id    `json:"group_image_id" validate:"nullable"`
 	GroupImageURL    string   `json:"group_image_url"`
 	MembersCount     int32    `json:"members_count"`
 	IsMember         bool     `json:"is_member"`
@@ -199,7 +199,7 @@ type CreateGroupRequest struct {
 	OwnerId          ct.Id    `json:"owner_id"`
 	GroupTitle       ct.Title `json:"group_title"`
 	GroupDescription ct.About `json:"group_description"`
-	GroupImage       ct.Id    `json:"group_image_id"`
+	GroupImage       ct.Id    `json:"group_image_id" validate:"nullable"`
 }
 
 type UpdateGroupRequest struct {
@@ -207,7 +207,7 @@ type UpdateGroupRequest struct {
 	GroupId          ct.Id    `json:"group_id"`
 	GroupTitle       ct.Title `json:"group_title"`
 	GroupDescription ct.About `json:"group_description"`
-	GroupImage       ct.Id    `json:"group_image_id"`
+	GroupImage       ct.Id    `json:"group_image_id" validate:"nullable"`
 }
 
 // -------------------------------------------

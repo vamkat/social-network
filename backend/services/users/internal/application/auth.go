@@ -89,13 +89,14 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 		// if !checkPassword(row.PasswordHash, req.Password.String()) {
 		// 	return ErrWrongCredentials
 		// }
+		if u.AvatarId > 0 {
+			imageUrl, err := s.clients.GetImage(ctx, u.AvatarId.Int64())
+			if err != nil {
+				return err
+			}
 
-		imageUrl, err := s.clients.GetImage(ctx, u.AvatarId.Int64())
-		if err != nil {
-			return err
+			u.AvatarURL = imageUrl
 		}
-
-		u.AvatarURL = imageUrl
 
 		return nil
 	})
