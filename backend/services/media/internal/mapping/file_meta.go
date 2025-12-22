@@ -1,12 +1,13 @@
-package application
+package mapping
 
 import (
 	"social-network/services/media/internal/db/dbservice"
+	md "social-network/services/media/internal/models"
 	"social-network/shared/go/customtypes"
-	"social-network/shared/go/models"
 )
 
-func extToDbFile(meta models.FileMeta) dbservice.File {
+// Converts models.FileMeta to dbservice.File
+func ModelToDbFile(meta md.FileMeta) dbservice.File {
 	return dbservice.File{
 		Id:         meta.Id,
 		Filename:   meta.Filename,
@@ -19,14 +20,16 @@ func extToDbFile(meta models.FileMeta) dbservice.File {
 	}
 }
 
-func extToDbFileWithStatus(meta models.FileMeta, status customtypes.UploadStatus) dbservice.File {
-	f := extToDbFile(meta)
+// Converts models.FileMeta to dbservice.File with status
+func ModelToDbFileWithStatus(meta md.FileMeta, status customtypes.UploadStatus) dbservice.File {
+	f := ModelToDbFile(meta)
 	f.Status = status
 	return f
 }
 
-func dbToExt(file dbservice.File) models.FileMeta {
-	return models.FileMeta{
+// Converts dbservice.File to models.FileMeta
+func DbToModel(file dbservice.File) md.FileMeta {
+	return md.FileMeta{
 		Id:         file.Id,
 		Filename:   file.Filename,
 		MimeType:   file.MimeType,

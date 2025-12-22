@@ -7,7 +7,7 @@ import "google/protobuf/empty.proto";
 option go_package = "social-network/shared/gen-go/media;media";
 
 // Describes the type of file
-// original, thumb, small, medium, large
+// original, thumb, small, medium, large, original
 enum FileVariant {
   IMG_VARIANT_UNSPECIFIED = 0; // Default unspecified variant
   THUMBNAIL = 1; // Thumbnail size variant
@@ -33,20 +33,6 @@ enum UploadStatus {
   UPLOAD_STATUS_PROCESSING = 2;
   UPLOAD_STATUS_COMPLETE = 3;
   UPLOAD_STATUS_FAILED = 4;
-}
-
-
-
-// Message representing metadata for a file
-message FileMeta {
-  int64 id = 1; // Unique identifier for the file
-  string filename = 2; // Original filename provided by the user
-  string mime_type = 3; // MIME type of the file (e.g., image/jpeg)
-  int64 size_bytes = 4; // Size of the file in bytes
-  string bucket = 5; // Bucket name where the file is stored
-  string object_key = 6; // Key used to identify the file in the storage service
-  FileVisibility visibility = 7; // Visibility level of the file
-  FileVariant variant = 8; // Variant type of the image
 }
 
 // Request message for uploading an image
@@ -79,7 +65,7 @@ message GetImageResponse {
 // Request message for validating an upload
 message ValidateUploadRequest {
   int64 file_id = 1; // Metadata of the upload to validate
-  bool return_url = 2; // request download url after validation
+  bool return_url = 2; // Request download url after validation
 }
 
 // Response on validate upload containing download url only if requested
