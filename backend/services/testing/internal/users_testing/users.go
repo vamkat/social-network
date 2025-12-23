@@ -1,9 +1,10 @@
-package gateway_test
+package users_test
 
 import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"strings"
 
 	"social-network/services/testing/internal/configs"
 	"social-network/services/testing/internal/utils"
@@ -38,15 +39,15 @@ func randomRegister(ctx context.Context) {
 	fmt.Println("starting register test")
 	for range 50 {
 		req := users.RegisterUserRequest{
-			Username:    utils.RandomString(10),
-			FirstName:   utils.RandomString(10),
-			LastName:    utils.RandomString(10),
+			Username:    strings.Title(utils.RandomString(10, false)),
+			FirstName:   strings.Title(utils.RandomString(10, false)),
+			LastName:    strings.Title(utils.RandomString(10, false)),
 			DateOfBirth: timestamppb.New(time.Unix(rand.Int64N(1000000), 0)),
 			Avatar:      0,
-			About:       utils.RandomString(10),
+			About:       utils.RandomString(300, true),
 			Public:      false,
-			Email:       utils.RandomString(10),
-			Password:    utils.RandomString(10),
+			Email:       utils.RandomString(10, false) + "@hotmail.com",
+			Password:    utils.RandomString(10, true),
 		}
 		resp, err := UsersService.RegisterUser(ctx, &req)
 		if err != nil {

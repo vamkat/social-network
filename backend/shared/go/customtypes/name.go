@@ -50,7 +50,7 @@ func (n Name) IsValid() bool {
 
 func (n Name) Validate() error {
 	if !n.IsValid() {
-		return errors.Join(ErrValidation, errors.New("name must be at least 2 characters"))
+		return errors.Join(ErrValidation, errors.New("name must be at least 2 characters, received: "+n.String()))
 	}
 	return nil
 }
