@@ -1,0 +1,41 @@
+package configs
+
+import (
+	"log"
+	configutil "social-network/shared/go/configs"
+)
+
+type Configs struct {
+	RedisAddr     string `env:"REDIS_ADDR"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisDB       int    `env:"REDIS_DB"`
+
+	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
+	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
+	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
+	MediaGRPCAddr string `env:"MEDIA_GRPC_ADDR"`
+
+	HTTPAddr        string `env:"HTTP_ADDR"`
+	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+}
+
+func GetConfigs() Configs { // sensible defaults
+	cfgs := Configs{
+		RedisAddr:       "redis:6379",
+		RedisPassword:   "",
+		RedisDB:         0,
+		UsersGRPCAddr:   "users:50051",
+		PostsGRPCAddr:   "posts:50051",
+		ChatGRPCAddr:    "chat:50051",
+		MediaGRPCAddr:   "media:50051",
+		HTTPAddr:        "0.0.0.0:8081",
+		ShutdownTimeout: 5,
+	}
+
+	// load environment variables if present
+	if err := configutil.LoadConfigs(&cfgs); err != nil {
+		log.Fatalf("failed to load env variables into config struct: %v", err)
+	}
+
+	return cfgs
+}
