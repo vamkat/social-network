@@ -50,7 +50,7 @@ func (h *Handlers) validateFileUpload() http.HandlerFunc {
 	}
 }
 
-func (h *Handlers) GetImageUrl() http.HandlerFunc {
+func (h *Handlers) getImageUrl() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type getImageReq struct {
 			ImageId ct.Id          `json:"image_id"`

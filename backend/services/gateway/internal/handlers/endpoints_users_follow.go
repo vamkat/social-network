@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func (s *Handlers) GetFollowSuggestions() http.HandlerFunc {
+func (s *Handlers) getFollowSuggestions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -63,7 +63,7 @@ func (s *Handlers) GetFollowSuggestions() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) GetFollowersPaginated() http.HandlerFunc {
+func (s *Handlers) getFollowersPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		// claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -110,7 +110,7 @@ func (s *Handlers) GetFollowersPaginated() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) GetFollowingPaginated() http.HandlerFunc {
+func (s *Handlers) getFollowingPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		// claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -158,7 +158,7 @@ func (s *Handlers) GetFollowingPaginated() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) FollowUser() http.HandlerFunc {
+func (s *Handlers) followUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -187,8 +187,7 @@ func (s *Handlers) FollowUser() http.HandlerFunc {
 	}
 }
 
-// OK?
-func (s *Handlers) HandleFollowRequest() http.HandlerFunc {
+func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -223,8 +222,7 @@ func (s *Handlers) HandleFollowRequest() http.HandlerFunc {
 	}
 }
 
-// OK
-func (s *Handlers) UnFollowUser() http.HandlerFunc {
+func (s *Handlers) unFollowUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)

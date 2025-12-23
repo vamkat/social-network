@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 )
 
 // group and post audience=group: only members can see
@@ -29,7 +29,7 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		}
 	}
 
-	canSee, err := s.db.CanUserSeeEntity(ctx, sqlc.CanUserSeeEntityParams{
+	canSee, err := s.db.CanUserSeeEntity(ctx, ds.CanUserSeeEntityParams{
 		UserID:      req.requesterId,
 		EntityID:    req.entityId,
 		IsFollowing: isFollowing,

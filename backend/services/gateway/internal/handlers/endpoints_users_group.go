@@ -13,7 +13,7 @@ import (
 )
 
 // ADD IMAGE UPLOAD
-func (s *Handlers) CreateGroup() http.HandlerFunc {
+func (s *Handlers) createGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -94,8 +94,7 @@ func (s *Handlers) CreateGroup() http.HandlerFunc {
 	}
 }
 
-// ADD IMAGE UPLOAD
-func (s *Handlers) UpdateGroup() http.HandlerFunc {
+func (s *Handlers) updateGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -178,7 +177,7 @@ func (s *Handlers) UpdateGroup() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) GetAllGroupsPaginated() http.HandlerFunc {
+func (s *Handlers) getAllGroupsPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -230,7 +229,7 @@ func (s *Handlers) GetAllGroupsPaginated() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) GetGroupInfo() http.HandlerFunc {
+func (s *Handlers) getGroupInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -276,7 +275,7 @@ func (s *Handlers) GetGroupInfo() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) GetGroupMembers() http.HandlerFunc {
+func (s *Handlers) getGroupMembers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -326,7 +325,7 @@ func (s *Handlers) GetGroupMembers() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) GetUserGroupsPaginated() http.HandlerFunc {
+func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -378,7 +377,7 @@ func (s *Handlers) GetUserGroupsPaginated() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) HandleGroupJoinRequest() http.HandlerFunc {
+func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -409,7 +408,7 @@ func (s *Handlers) HandleGroupJoinRequest() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) InviteToGroup() http.HandlerFunc {
+func (s *Handlers) inviteToGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -439,7 +438,7 @@ func (s *Handlers) InviteToGroup() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) LeaveGroup() http.HandlerFunc {
+func (s *Handlers) leaveGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -468,7 +467,7 @@ func (s *Handlers) LeaveGroup() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) RequestJoinGroupOrCancel() http.HandlerFunc {
+func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -497,7 +496,7 @@ func (s *Handlers) RequestJoinGroupOrCancel() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) RespondToGroupInvite() http.HandlerFunc {
+func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -532,8 +531,7 @@ func (s *Handlers) RespondToGroupInvite() http.HandlerFunc {
 	}
 }
 
-// CONTAIN GROUP IMAGES
-func (s *Handlers) SearchGroups() http.HandlerFunc {
+func (s *Handlers) searchGroups() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)

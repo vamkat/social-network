@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 )
@@ -26,8 +26,8 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	if !hasAccess {
 		return ErrNotAllowed
 	}
-	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
-		err = q.CreateComment(ctx, sqlc.CreateCommentParams{
+	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
+		err = q.CreateComment(ctx, ds.CreateCommentParams{
 			CommentCreatorID: req.CreatorId.Int64(),
 			ParentID:         req.ParentId.Int64(),
 			CommentBody:      req.Body.String(),
@@ -38,7 +38,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		}
 
 		if req.ImageId != 0 {
-			err = q.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err = q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
 				ParentID: req.ParentId.Int64(),
 			})
@@ -70,8 +70,8 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 		return ErrNotAllowed
 	}
 
-	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
-		rowsAffected, err := q.EditComment(ctx, sqlc.EditCommentParams{
+	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
+		rowsAffected, err := q.EditComment(ctx, ds.EditCommentParams{
 			CommentBody:      req.Body.String(),
 			ID:               req.CommentId.Int64(),
 			CommentCreatorID: req.CreatorId.Int64(),
@@ -83,7 +83,7 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 			return ErrNotFound
 		}
 		if req.ImageId > 0 {
-			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err := q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
 				ParentID: req.CommentId.Int64(),
 			})
@@ -123,7 +123,7 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 		return ErrNotAllowed
 	}
 
-	rowsAffected, err := s.db.DeleteComment(ctx, sqlc.DeleteCommentParams{
+	rowsAffected, err := s.db.DeleteComment(ctx, ds.DeleteCommentParams{
 		ID:               req.EntityId.Int64(),
 		CommentCreatorID: req.RequesterId.Int64(),
 	})
@@ -155,7 +155,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		return nil, ErrNotAllowed
 	}
 
-	rows, err := s.db.GetCommentsByPostId(ctx, sqlc.GetCommentsByPostIdParams{
+	rows, err := s.db.GetCommentsByPostId(ctx, ds.GetCommentsByPostIdParams{
 		ParentID: req.EntityId.Int64(),
 		UserID:   req.RequesterId.Int64(),
 		Limit:    req.Limit.Int32(),

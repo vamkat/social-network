@@ -86,7 +86,6 @@ func (h *Handlers) createPost() http.HandlerFunc {
 			GroupId     ct.Id       `json:"group_id" validate:"nullable"`
 			Audience    ct.Audience `json:"audience"`
 			AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
-			ImageId     ct.Id       `json:"image" validate:"nullable"`
 
 			ImageName string `json:"image_name"`
 			ImageSize int64  `json:"image_size"`
@@ -139,6 +138,91 @@ func (h *Handlers) createPost() http.HandlerFunc {
 		}
 
 		_, err := h.PostsService.CreatePost(r.Context(), &grpcReq)
+		if err != nil {
+			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			return
+		}
+		type httpResponse struct {
+			UserId    ct.Id
+			FileId    ct.Id
+			UploadUrl string
+		}
+		httpResp := httpResponse{
+			UserId:    ct.Id(claims.UserId),
+			FileId:    ImageId,
+			UploadUrl: uploadURL}
+
+		utils.WriteJSON(w, http.StatusOK, httpResp)
+
+	}
+}
+
+func (h *Handlers) editPost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("editPost handler called")
+
+		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		type EditPostJSONRequest struct {
+			PostId      ct.Id       `json:"post_id"`
+			NewBody     ct.PostBody `json:"post_body"`
+			Audience    ct.Audience `json:"audience"`
+			AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
+
+			ImageName string `json:"image_name"`
+			ImageSize int64  `json:"image_size"`
+			ImageType string `json:"image_type"`
+		}
+
+		httpReq := EditPostJSONRequest{}
+
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		if err := decoder.Decode(&httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var ImageId ct.Id
+		var uploadURL string
+		if httpReq.ImageSize != 0 {
+			exp := time.Duration(10 * time.Minute).Seconds()
+			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+				Filename:          httpReq.ImageName,
+				MimeType:          httpReq.ImageType,
+				SizeBytes:         httpReq.ImageSize,
+				Visibility:        media.FileVisibility_PUBLIC,
+				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				ExpirationSeconds: int64(exp),
+			})
+			if err != nil {
+				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			ImageId = ct.Id(mediaRes.FileId)
+			uploadURL = mediaRes.GetUploadUrl()
+		}
+
+		grpcReq := posts.EditPostReq{
+			RequesterId: int64(claims.UserId),
+			PostId:      int64(httpReq.PostId),
+			Body:        httpReq.NewBody.String(),
+			Audience:    httpReq.Audience.String(),
+			AudienceIds: &common.UserIds{
+				Values: httpReq.AudienceIds.Int64(),
+			},
+			ImageId: ImageId.Int64(),
+		}
+
+		_, err := h.PostsService.EditPost(r.Context(), &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return

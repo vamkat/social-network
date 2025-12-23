@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"social-network/services/posts/internal/application"
 	"social-network/services/posts/internal/client"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/services/posts/internal/handler"
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
@@ -53,7 +53,7 @@ func Run() error {
 	}
 
 	clients := client.NewClients(UsersService, MediaService)
-	app, err := application.NewApplication(sqlc.New(pool), pool, clients)
+	app, err := application.NewApplication(ds.New(pool), pool, clients)
 	if err != nil {
 		return fmt.Errorf("failed to create posts application: %v", err)
 	}

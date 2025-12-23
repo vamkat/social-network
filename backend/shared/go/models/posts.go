@@ -56,11 +56,11 @@ type CreatePostReq struct {
 
 type EditPostReq struct {
 	RequesterId ct.Id
-	PostId      ct.Id
-	NewBody     ct.PostBody `validate:"nullable"`
-	ImageId     ct.Id       `validate:"nullable"`
-	Audience    ct.Audience
-	AudienceIds ct.Ids `validate:"nullable"`
+	PostId      ct.Id       `json:"post_id"`
+	NewBody     ct.PostBody `json:"new_body" validate:"nullable"`
+	ImageId     ct.Id       `json:"image" validate:"nullable"`
+	Audience    ct.Audience `json:"audience"`
+	AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
 }
 
 type GetUserPostsReq struct {
@@ -78,9 +78,9 @@ type GetPersonalizedFeedReq struct {
 
 type GetGroupPostsReq struct {
 	RequesterId ct.Id
-	GroupId     ct.Id
-	Limit       ct.Limit
-	Offset      ct.Offset
+	GroupId     ct.Id     `json:"group_id"`
+	Limit       ct.Limit  `json:"limit"`
+	Offset      ct.Offset `json:"offset"`
 }
 
 //-------------------------------------------
@@ -120,41 +120,41 @@ type EditCommentReq struct {
 //-------------------------------------------
 
 type Event struct {
-	EventId       ct.Id
-	Title         ct.Title
-	Body          ct.EventBody
-	User          User
-	GroupId       ct.Id
-	EventDate     ct.EventDateTime
-	GoingCount    int
-	NotGoingCount int
-	ImageId       ct.Id  `validate:"nullable"`
-	ImageUrl      string `json:"image_url"`
-	CreatedAt     ct.GenDateTime
-	UpdatedAt     ct.GenDateTime
-	UserResponse  *bool
+	EventId       ct.Id            `json:"event_id"`
+	Title         ct.Title         `json:"event_title"`
+	Body          ct.EventBody     `json:"event_body"`
+	User          User             `json:"user"`
+	GroupId       ct.Id            `json:"group_id"`
+	EventDate     ct.EventDateTime `json:"event_date"`
+	GoingCount    int              `json:"going_count"`
+	NotGoingCount int              `json:"not_going_count"`
+	ImageId       ct.Id            `json:"image" validate:"nullable"`
+	ImageUrl      string           `json:"image_url"`
+	CreatedAt     ct.GenDateTime   `json:"created_at"`
+	UpdatedAt     ct.GenDateTime   `json:"updated_at" validate:"nullable"`
+	UserResponse  *bool            `json:"user_response"`
 }
 
 type CreateEventReq struct {
-	Title     ct.Title
-	Body      ct.EventBody
+	Title     ct.Title     `json:"event_title"`
+	Body      ct.EventBody `json:"event_body"`
 	CreatorId ct.Id
-	GroupId   ct.Id
-	ImageId   ct.Id `validate:"nullable"`
-	EventDate ct.EventDateTime
+	GroupId   ct.Id            `json:"group_id"`
+	ImageId   ct.Id            `json:"image" validate:"nullable"`
+	EventDate ct.EventDateTime `json:"event_date"`
 }
 
 type EditEventReq struct {
-	EventId     ct.Id
+	EventId     ct.Id `json:"event_id"`
 	RequesterId ct.Id
-	Title       ct.Title
-	Body        ct.EventBody
-	Image       ct.Id `validate:"nullable"`
-	EventDate   ct.EventDateTime
+	Title       ct.Title         `json:"event_title"`
+	Body        ct.EventBody     `json:"event_body"`
+	Image       ct.Id            `json:"image" validate:"nullable"`
+	EventDate   ct.EventDateTime `json:"event_date"`
 }
 
 type RespondToEventReq struct {
-	EventId     ct.Id
+	EventId     ct.Id `json:"event_id"`
 	ResponderId ct.Id
-	Going       bool
+	Going       bool `json:"going"`
 }

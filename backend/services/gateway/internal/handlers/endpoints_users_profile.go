@@ -102,8 +102,7 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 	}
 }
 
-// OK?
-func (s *Handlers) SearchUsers() http.HandlerFunc {
+func (s *Handlers) searchUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -148,8 +147,7 @@ func (s *Handlers) SearchUsers() http.HandlerFunc {
 	}
 }
 
-// OK
-func (s *Handlers) UpdateProfilePrivacy() http.HandlerFunc {
+func (s *Handlers) updateProfilePrivacy() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -182,7 +180,7 @@ func (s *Handlers) UpdateProfilePrivacy() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) UpdateUserProfile() http.HandlerFunc {
+func (s *Handlers) updateUserProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)

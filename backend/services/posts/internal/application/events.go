@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 
@@ -30,7 +30,7 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 		Valid: true,
 	}
 
-	err = s.db.CreateEvent(ctx, sqlc.CreateEventParams{
+	err = s.db.CreateEvent(ctx, ds.CreateEventParams{
 		EventTitle:     req.Title.String(),
 		EventBody:      req.Body.String(),
 		EventCreatorID: req.CreatorId.Int64(),
@@ -65,7 +65,7 @@ func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) er
 		return ErrNotAllowed
 	}
 
-	rowsAffected, err := s.db.DeleteEvent(ctx, sqlc.DeleteEventParams{
+	rowsAffected, err := s.db.DeleteEvent(ctx, ds.DeleteEventParams{
 		ID:             req.EntityId.Int64(),
 		EventCreatorID: req.RequesterId.Int64(),
 	})
@@ -98,13 +98,13 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 		return ErrNotAllowed
 	}
 
-	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
+	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		// convert date
 		eventDate := pgtype.Date{
 			Time:  req.EventDate.Time(),
 			Valid: true,
 		}
-		rowsAffected, err := q.EditEvent(ctx, sqlc.EditEventParams{
+		rowsAffected, err := q.EditEvent(ctx, ds.EditEventParams{
 			EventTitle:     req.Title.String(),
 			EventBody:      req.Body.String(),
 			EventDate:      eventDate,
@@ -118,7 +118,7 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 			return ErrNotFound
 		}
 		if req.Image > 0 {
-			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err := q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.Image.Int64(),
 				ParentID: req.EventId.Int64(),
 			})
@@ -157,7 +157,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 	if !hasAccess {
 		return nil, ErrNotAllowed
 	}
-	rows, err := s.db.GetEventsByGroupId(ctx, sqlc.GetEventsByGroupIdParams{
+	rows, err := s.db.GetEventsByGroupId(ctx, ds.GetEventsByGroupIdParams{
 		GroupID: req.EntityId.Int64(),
 		Offset:  req.Offset.Int32(),
 		Limit:   req.Limit.Int32(),
@@ -239,7 +239,7 @@ func (s *Application) RespondToEvent(ctx context.Context, req models.RespondToEv
 		return ErrNotAllowed
 	}
 
-	rowsAffected, err := s.db.UpsertEventResponse(ctx, sqlc.UpsertEventResponseParams{
+	rowsAffected, err := s.db.UpsertEventResponse(ctx, ds.UpsertEventResponseParams{
 		EventID: req.EventId.Int64(),
 		UserID:  req.ResponderId.Int64(),
 		Going:   req.Going,
@@ -272,7 +272,7 @@ func (s *Application) RemoveEventResponse(ctx context.Context, req models.Generi
 		return ErrNotAllowed
 	}
 
-	rowsAffected, err := s.db.DeleteEventResponse(ctx, sqlc.DeleteEventResponseParams{
+	rowsAffected, err := s.db.DeleteEventResponse(ctx, ds.DeleteEventResponseParams{
 		EventID: req.EntityId.Int64(),
 		UserID:  req.RequesterId.Int64(),
 	})

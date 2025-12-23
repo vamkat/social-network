@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 
@@ -24,7 +24,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 		groupId.Valid = false
 	}
 
-	audience := sqlc.IntendedAudience(req.Audience.String())
+	audience := ds.IntendedAudience(req.Audience.String())
 
 	if !groupId.Valid && audience == "group" {
 		return ErrNoGroupIdGiven
@@ -39,9 +39,9 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 			return ErrNotAllowed
 		}
 	}
-	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
+	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 
-		postId, err := q.CreatePost(ctx, sqlc.CreatePostParams{
+		postId, err := q.CreatePost(ctx, ds.CreatePostParams{
 			PostBody:  req.Body.String(),
 			CreatorID: req.CreatorId.Int64(),
 			GroupID:   groupId,
@@ -55,7 +55,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 			if len(req.AudienceIds) < 1 {
 				return ErrNoAudienceSelected
 			}
-			rowsAffected, err := q.InsertPostAudience(ctx, sqlc.InsertPostAudienceParams{
+			rowsAffected, err := q.InsertPostAudience(ctx, ds.InsertPostAudienceParams{
 				PostID:         postId,
 				AllowedUserIds: req.AudienceIds.Int64(), //does nil work here? TODO test
 			})
@@ -68,7 +68,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 		}
 
 		if req.ImageId != 0 {
-			err = q.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err = q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
 				ParentID: postId,
 			})
@@ -87,7 +87,7 @@ func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) err
 		return err
 	}
 
-	rowsAffected, err := s.db.DeletePost(ctx, sqlc.DeletePostParams{
+	rowsAffected, err := s.db.DeletePost(ctx, ds.DeletePostParams{
 		ID:        int64(req.EntityId),
 		CreatorID: req.RequesterId.Int64(),
 	})
@@ -118,10 +118,10 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 		return ErrNotAllowed
 	}
 
-	return s.txRunner.RunTx(ctx, func(q *sqlc.Queries) error {
+	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		//edit content
 		if len(req.NewBody) > 0 {
-			rowsAffected, err := q.EditPostContent(ctx, sqlc.EditPostContentParams{
+			rowsAffected, err := q.EditPostContent(ctx, ds.EditPostContentParams{
 				PostBody:  req.NewBody.String(),
 				ID:        req.PostId.Int64(),
 				CreatorID: req.RequesterId.Int64(),
@@ -135,7 +135,7 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 		}
 		//edit image //does this also delete the image?
 		if req.ImageId > 0 {
-			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
+			err := q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
 				ParentID: req.PostId.Int64(),
 			})
@@ -152,10 +152,10 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 			}
 		}
 		// edit audience
-		rowsAffected, err := q.UpdatePostAudience(ctx, sqlc.UpdatePostAudienceParams{
+		rowsAffected, err := q.UpdatePostAudience(ctx, ds.UpdatePostAudienceParams{
 			ID:        req.PostId.Int64(),
 			CreatorID: req.RequesterId.Int64(),
-			Audience:  sqlc.IntendedAudience(req.Audience),
+			Audience:  ds.IntendedAudience(req.Audience),
 		})
 		if err != nil {
 			return err
@@ -175,7 +175,7 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 				return err
 			}
 			//insert new ids
-			rowsAffected, err := q.InsertPostAudience(ctx, sqlc.InsertPostAudienceParams{
+			rowsAffected, err := q.InsertPostAudience(ctx, ds.InsertPostAudienceParams{
 				PostID:         req.PostId.Int64(),
 				AllowedUserIds: req.AudienceIds.Int64(),
 			})
@@ -254,7 +254,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 		return models.Post{}, ErrNotAllowed
 	}
 
-	p, err := s.db.GetPostByID(ctx, sqlc.GetPostByIDParams{
+	p, err := s.db.GetPostByID(ctx, ds.GetPostByIDParams{
 		UserID: req.RequesterId.Int64(),
 		ID:     req.EntityId.Int64(),
 	})

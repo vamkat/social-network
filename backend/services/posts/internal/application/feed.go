@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 
@@ -21,7 +21,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 		return nil, err
 	}
 
-	rows, err := s.db.GetPersonalizedFeed(ctx, sqlc.GetPersonalizedFeedParams{
+	rows, err := s.db.GetPersonalizedFeed(ctx, ds.GetPersonalizedFeedParams{
 		UserID:  req.RequesterId.Int64(),
 		Column2: idsRequesterFollows,
 		Offset:  req.Offset.Int32(),
@@ -89,7 +89,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 	if err := ct.ValidateStruct(req); err != nil {
 		return nil, err
 	}
-	rows, err := s.db.GetPublicFeed(ctx, sqlc.GetPublicFeedParams{
+	rows, err := s.db.GetPublicFeed(ctx, ds.GetPublicFeedParams{
 		UserID: req.RequesterId.Int64(),
 		Offset: req.Offset.Int32(),
 		Limit:  req.Limit.Int32(),
@@ -162,7 +162,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 		return nil, err
 	}
 
-	rows, err := s.db.GetUserPostsPaginated(ctx, sqlc.GetUserPostsPaginatedParams{
+	rows, err := s.db.GetUserPostsPaginated(ctx, ds.GetUserPostsPaginatedParams{
 		CreatorID: req.CreatorId.Int64(),
 		UserID:    req.RequesterId.Int64(),
 		Column3:   isFollowing,
@@ -247,7 +247,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 		return nil, ErrNotAllowed
 	}
 
-	rows, err := s.db.GetGroupPostsPaginated(ctx, sqlc.GetGroupPostsPaginatedParams{
+	rows, err := s.db.GetGroupPostsPaginated(ctx, ds.GetGroupPostsPaginatedParams{
 		GroupID: groupId,
 	})
 	if err != nil {

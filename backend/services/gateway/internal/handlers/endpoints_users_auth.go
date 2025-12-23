@@ -265,8 +265,7 @@ func (h *Handlers) authStatus() http.HandlerFunc {
 	}
 }
 
-// OK
-func (s *Handlers) UpdateUserEmail() http.HandlerFunc {
+func (s *Handlers) updateUserEmail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
@@ -300,7 +299,7 @@ func (s *Handlers) UpdateUserEmail() http.HandlerFunc {
 }
 
 // TODO should probably be done using a specific link / needs extra validation
-func (s *Handlers) UpdateUserPassword() http.HandlerFunc {
+func (s *Handlers) updateUserPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)

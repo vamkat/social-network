@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"social-network/services/posts/internal/client"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
@@ -17,11 +17,11 @@ import (
 
 // TxRunner defines the interface for running database transactions
 type TxRunner interface {
-	RunTx(ctx context.Context, fn func(*sqlc.Queries) error) error
+	RunTx(ctx context.Context, fn func(*ds.Queries) error) error
 }
 
 type Application struct {
-	db            *sqlc.Queries
+	db            *ds.Queries
 	txRunner      TxRunner
 	clients       ClientsInterface
 	userRetriever UserRetriever
@@ -55,7 +55,7 @@ type ClientsInterface interface {
 }
 
 // NewApplication constructs a new Application with transaction support
-func NewApplication(db *sqlc.Queries, pool *pgxpool.Pool, clients *client.Clients) (*Application, error) {
+func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients) (*Application, error) {
 	var txRunner TxRunner
 	var err error
 	if pool != nil {
@@ -75,13 +75,13 @@ func NewApplication(db *sqlc.Queries, pool *pgxpool.Pool, clients *client.Client
 	}, nil
 }
 
-func NewApplicationWithMocks(db *sqlc.Queries, clients ClientsInterface) *Application {
+func NewApplicationWithMocks(db *ds.Queries, clients ClientsInterface) *Application {
 	return &Application{
 		db:      db,
 		clients: clients,
 	}
 }
-func NewApplicationWithMocksTx(db *sqlc.Queries, clients ClientsInterface, txRunner TxRunner) *Application {
+func NewApplicationWithMocksTx(db *ds.Queries, clients ClientsInterface, txRunner TxRunner) *Application {
 	return &Application{
 		db:       db,
 		clients:  clients,

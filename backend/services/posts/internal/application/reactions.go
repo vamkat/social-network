@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-	"social-network/services/posts/internal/db/sqlc"
+	ds "social-network/services/posts/internal/db/dbservice"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 )
@@ -26,7 +26,7 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 		return ErrNotAllowed
 	}
 
-	rowsAffected, err := s.db.ToggleOrInsertReaction(ctx, sqlc.ToggleOrInsertReactionParams{
+	rowsAffected, err := s.db.ToggleOrInsertReaction(ctx, ds.ToggleOrInsertReactionParams{
 		ContentID: req.EntityId.Int64(),
 		UserID:    req.RequesterId.Int64(),
 	})
