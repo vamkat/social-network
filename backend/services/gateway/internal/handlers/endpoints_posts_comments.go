@@ -1,13 +1,16 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
+	"time"
 )
 
 func (h *Handlers) createComment() http.HandlerFunc {
@@ -19,25 +22,73 @@ func (h *Handlers) createComment() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.CreateCommentReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+		type CreateCommentJSONRequest struct {
+			ParentId ct.Id          `json:"parent_id"`
+			Body     ct.CommentBody `json:"comment_body"`
+			ImageId  ct.Id          `json:"image" validate:"nullable"`
+
+			ImageName string `json:"image_name"`
+			ImageSize int64  `json:"image_size"`
+			ImageType string `json:"image_type"`
+		}
+
+		httpReq := CreateCommentJSONRequest{}
+
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		if err := decoder.Decode(&httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var ImageId ct.Id
+		var uploadURL string
+		if httpReq.ImageSize != 0 {
+			exp := time.Duration(10 * time.Minute).Seconds()
+			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+				Filename:          httpReq.ImageName,
+				MimeType:          httpReq.ImageType,
+				SizeBytes:         httpReq.ImageSize,
+				Visibility:        media.FileVisibility_PUBLIC,
+				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				ExpirationSeconds: int64(exp),
+			})
+			if err != nil {
+				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			ImageId = ct.Id(mediaRes.FileId)
+			uploadURL = mediaRes.GetUploadUrl()
 		}
 
 		grpcReq := posts.CreateCommentReq{
 			CreatorId: int64(claims.UserId),
-			ParentId:  body.ParentId.Int64(),
-			Body:      body.Body.String(),
-			Image:     int64(body.Image),
+			ParentId:  httpReq.ParentId.Int64(),
+			Body:      httpReq.Body.String(),
+			ImageId:   ImageId.Int64(),
 		}
 
-		_, err = h.PostsService.CreateComment(r.Context(), &grpcReq)
+		_, err := h.PostsService.CreateComment(r.Context(), &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
 			return
 		}
+		type httpResponse struct {
+			UserId    ct.Id
+			FileId    ct.Id
+			UploadUrl string
+		}
+		httpResp := httpResponse{
+			UserId:    ct.Id(claims.UserId),
+			FileId:    ImageId,
+			UploadUrl: uploadURL}
 
+		utils.WriteJSON(w, http.StatusOK, httpResp)
 	}
 }
 
@@ -88,7 +139,8 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 				CreatedAt:      ct.GenDateTime(c.CreatedAt.AsTime()),
 				UpdatedAt:      ct.GenDateTime(c.UpdatedAt.AsTime()),
 				LikedByUser:    c.LikedByUser,
-				Image:          ct.Id(c.Image),
+				ImageId:        ct.Id(c.ImageId),
+				ImageUrl:       c.ImageUrl,
 			}
 			commentsResponse = append(commentsResponse, comment)
 		}

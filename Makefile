@@ -12,12 +12,26 @@ build-services:
 # 	docker build -t social-network/api-gateway:dev -f gateway/Dockerfile .
 
 docker-up:
+	$(MAKE) create-network
 	$(MAKE) build-base
 	docker-compose up --build
 
 delete-volumes:
 	docker compose down
 	docker volume rm backend_users-db-data backend_posts-db-data backend_chat-db-data backend_notifications-db-data backend_media-db-data
+
+docker-test:
+	$(MAKE) create-network
+	docker compose -f docker-test.yml up -d --build
+
+docker-up-test:
+	$(MAKE) create-network
+	$(MAKE) docker-test
+
+# this network is used to let the tester connect to the rest of the containers
+# since the tester won't be part of the normal docker-compose, it will have it's own so that someone gotta go out of their way to test
+create-network:
+	@docker network inspect social-network >nul 2>&1 || docker network create social-network
 
 # ==== K8s ====
 

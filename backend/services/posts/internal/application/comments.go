@@ -37,9 +37,9 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 			return err
 		}
 
-		if req.Image != 0 {
+		if req.ImageId != 0 {
 			err = q.UpsertImage(ctx, sqlc.UpsertImageParams{
-				ID:       req.Image.Int64(),
+				ID:       req.ImageId.Int64(),
 				ParentID: req.ParentId.Int64(),
 			})
 			if err != nil {
@@ -82,16 +82,16 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 		if rowsAffected != 1 {
 			return ErrNotFound
 		}
-		if req.Image > 0 {
+		if req.ImageId > 0 {
 			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
-				ID:       req.Image.Int64(),
+				ID:       req.ImageId.Int64(),
 				ParentID: req.CommentId.Int64(),
 			})
 			if err != nil {
 				return err
 			}
 		} else {
-			rowsAffected, err := q.DeleteImage(ctx, req.Image.Int64())
+			rowsAffected, err := q.DeleteImage(ctx, req.ImageId.Int64())
 			if err != nil {
 				return err
 			}
@@ -166,6 +166,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 	}
 	comments := make([]models.Comment, 0, len(rows))
 	userIDs := make([]int64, 0, len(rows))
+	CommentImageIds := make([]int64, 0, len(rows))
 
 	for _, r := range rows {
 		uid := r.CommentCreatorID
@@ -182,8 +183,11 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 			CreatedAt:      ct.GenDateTime(r.CreatedAt.Time),
 			UpdatedAt:      ct.GenDateTime(r.UpdatedAt.Time),
 			LikedByUser:    r.LikedByUser,
-			Image:          ct.Id(r.Image),
+			ImageId:        ct.Id(r.Image),
 		})
+		if r.Image > 0 {
+			CommentImageIds = append(CommentImageIds, r.Image)
+		}
 	}
 
 	if len(comments) == 0 {
@@ -195,11 +199,17 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		return nil, err
 	}
 
+	var imageMap map[int64]string
+	if len(CommentImageIds) > 0 {
+		imageMap, _, err = s.clients.GetImages(ctx, CommentImageIds)
+	}
+
 	for i := range comments {
 		uid := comments[i].User.UserId.Int64()
 		if u, ok := userMap[uid]; ok {
 			comments[i].User = u
 		}
+		comments[i].ImageUrl = imageMap[comments[i].ImageId.Int64()]
 	}
 
 	return comments, nil

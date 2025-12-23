@@ -41,7 +41,8 @@ type Post struct {
 	CreatedAt       ct.GenDateTime `json:"created_at"`
 	UpdatedAt       ct.GenDateTime `json:"updated_at" validate:"nullable"`
 	LikedByUser     bool           `json:"liked_by_user"`
-	Image           ct.Id          `json:"image" validate:"nullable"`
+	ImageId         ct.Id          `json:"image" validate:"nullable"`
+	ImageUrl        string         `json:"image_url"`
 }
 
 type CreatePostReq struct {
@@ -50,14 +51,14 @@ type CreatePostReq struct {
 	GroupId     ct.Id       `json:"group_id" validate:"nullable"`
 	Audience    ct.Audience `json:"audience"`
 	AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
-	Image       ct.Id       `json:"image" validate:"nullable"`
+	ImageId     ct.Id       `json:"image" validate:"nullable"`
 }
 
 type EditPostReq struct {
 	RequesterId ct.Id
 	PostId      ct.Id
 	NewBody     ct.PostBody `validate:"nullable"`
-	Image       ct.Id       `validate:"nullable"`
+	ImageId     ct.Id       `validate:"nullable"`
 	Audience    ct.Audience
 	AudienceIds ct.Ids `validate:"nullable"`
 }
@@ -95,21 +96,23 @@ type Comment struct {
 	CreatedAt      ct.GenDateTime `json:"created_at"`
 	UpdatedAt      ct.GenDateTime `json:"updated_at"`
 	LikedByUser    bool           `json:"liked_by_user"`
-	Image          ct.Id          `json:"image" validate:"nullable"`
+	ImageId        ct.Id          `json:"image" validate:"nullable"`
+	ImageUrl       string         `json:"image_url"`
 }
 
 type CreateCommentReq struct {
 	CreatorId ct.Id
 	ParentId  ct.Id          `json:"parent_id"`
 	Body      ct.CommentBody `json:"comment_body"`
-	Image     ct.Id          `json:"image" validate:"nullable"`
+	ImageId   ct.Id          `json:"image" validate:"nullable"`
 }
 
 type EditCommentReq struct {
 	CreatorId ct.Id
 	CommentId ct.Id          `json:"comment_id"`
 	Body      ct.CommentBody `json:"comment_body" validate:"nullable"`
-	Image     ct.Id          `json:"image" validate:"nullable"`
+	ImageId   ct.Id          `json:"image" validate:"nullable"`
+	ImageUrl  string         `json:"image_url"`
 }
 
 //-------------------------------------------
@@ -125,7 +128,8 @@ type Event struct {
 	EventDate     ct.EventDateTime
 	GoingCount    int
 	NotGoingCount int
-	Image         ct.Id `validate:"nullable"`
+	ImageId       ct.Id  `validate:"nullable"`
+	ImageUrl      string `json:"image_url"`
 	CreatedAt     ct.GenDateTime
 	UpdatedAt     ct.GenDateTime
 	UserResponse  *bool
@@ -136,7 +140,7 @@ type CreateEventReq struct {
 	Body      ct.EventBody
 	CreatorId ct.Id
 	GroupId   ct.Id
-	Image     ct.Id `validate:"nullable"`
+	ImageId   ct.Id `validate:"nullable"`
 	EventDate ct.EventDateTime
 }
 

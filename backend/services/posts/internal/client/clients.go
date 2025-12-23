@@ -94,6 +94,18 @@ func (c *Clients) GetImages(ctx context.Context, imageIds []int64) (map[int64]st
 	return resp.DownloadUrls, imagesToDelete, nil
 }
 
+func (c *Clients) GetImage(ctx context.Context, imageId int64) (string, error) {
+	req := &mediapb.GetImageRequest{
+		ImageId: imageId,
+		Variant: 1,
+	}
+	resp, err := c.MediaClient.GetImage(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	return resp.DownloadUrl, nil
+}
+
 // func (c *Clients) GetFollowerIds(ctx context.Context, userId int64) ([]int64, error) {
 // 	//need to make this in users
 // 	return nil, nil
