@@ -18,8 +18,8 @@ CREATE TYPE user_status AS ENUM ('active', 'banned', 'deleted');
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     username CITEXT COLLATE case_insensitive_ai NOT NULL,
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) COLLATE "C" NOT NULL,
+    last_name VARCHAR(255) COLLATE "C" NOT NULL,
     date_of_birth DATE NOT NULL,
     avatar_id BIGINT NOT NULL,
     about_me TEXT NOT NULL, 
@@ -33,6 +33,18 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX idx_users_id ON users(id);
 CREATE INDEX idx_users_status ON users(current_status);
+
+CREATE INDEX users_username_trgm_idx
+    ON users USING GIN (username gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX users_first_name_trgm_idx
+    ON users USING GIN (first_name gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX users_last_name_trgm_idx
+    ON users USING GIN (last_name gin_trgm_ops)
+    WHERE deleted_at IS NULL;
 
 
 
@@ -97,6 +109,10 @@ CREATE TABLE IF NOT EXISTS groups (
     deleted_at TIMESTAMPTZ
 );
 
+-- CREATE UNIQUE INDEX groups_unique_title_active
+-- ON groups (LOWER(group_title))
+-- WHERE deleted_at IS NULL;
+
 CREATE INDEX idx_groups_owner ON groups(group_owner);
 
 CREATE INDEX idx_groups_title_trgm
@@ -104,6 +120,7 @@ CREATE INDEX idx_groups_title_trgm
 
 CREATE INDEX idx_groups_description_trgm
     ON groups USING gin (group_description gin_trgm_ops);
+
 
 -----------------------------------------
 -- Group members

@@ -63,13 +63,13 @@ ON CONFLICT (requester_id, target_id) DO NOTHING;
 -------------------------------------------------------
 -- Groups
 -------------------------------------------------------
-INSERT INTO groups (group_owner, group_title, group_description, group_image_id)
+INSERT INTO groups (id,group_owner, group_title, group_description, group_image_id)
 OVERRIDING SYSTEM VALUE
 VALUES
-(1, 'Nature Lovers', 'A group for nature enthusiasts', 1),
-(3, 'Gamers Unite', 'All about gaming', 2),
-(6, 'Music Fans', 'People who love music', 3)
-ON CONFLICT (id) DO NOTHING;
+(1,1, 'Nature Lovers', 'A group for nature enthusiasts', 1),
+(2,3, 'Gamers Unite', 'All about gaming', 2),
+(3,6, 'Music Fans', 'People who love music', 3)
+ON CONFLICT DO NOTHING;
 
 -------------------------------------------------------
 -- Group Members

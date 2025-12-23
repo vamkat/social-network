@@ -144,8 +144,8 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 	}
 
 	rows, err := s.db.SearchUsers(ctx, ds.SearchUsersParams{
-		Username: req.SearchTerm.String(),
-		Limit:    req.Limit.Int32(),
+		Query: req.SearchTerm.String(),
+		Limit: req.Limit.Int32(),
 	})
 
 	if err != nil {

@@ -122,19 +122,46 @@ SELECT
 FROM users
 WHERE deleted_at IS NULL
   AND (
-        username % $1 OR
-        first_name % $1 OR
-        last_name % $1
+        CASE
+            -- 3+ characters: fuzzy search (pg_trgm)
+            WHEN LENGTH($1) >= 3 THEN
+                username::text % $1
+                OR first_name % $1
+                OR last_name % $1
+
+            -- 1–2 characters: prefix match WITHOUT LIKE
+            ELSE
+                LEFT(username::text, LENGTH($1)) = LOWER($1)
+                OR LEFT(first_name, LENGTH($1)) = LOWER($1)
+                OR LEFT(last_name, LENGTH($1)) = LOWER($1)
+        END
       )
-ORDER BY similarity(username, $1) DESC,
-         similarity(first_name, $1) DESC,
-         similarity(last_name, $1) DESC
-LIMIT $2
+ORDER BY
+    CASE
+        -- 3+ characters: rank by similarity
+        WHEN LENGTH($1) >= 3 THEN
+            GREATEST(
+                similarity(username::text, $1),
+                similarity(first_name, $1),
+                similarity(last_name, $1)
+            )
+
+        -- 1–2 characters: deterministic prefix ranking
+        ELSE
+            CASE
+                WHEN LEFT(username::text, LENGTH($1)) = LOWER($1) THEN 3
+                WHEN LEFT(first_name, LENGTH($1)) = LOWER($1) THEN 2
+                WHEN LEFT(last_name, LENGTH($1)) = LOWER($1) THEN 1
+                ELSE 0
+            END
+    END DESC,
+    username ASC
+LIMIT $2;
 `
 
 type SearchUsersParams struct {
-	Username string
-	Limit    int32
+	Query string
+	Limit int32
 }
 
 type SearchUsersRow struct {
@@ -145,7 +172,7 @@ type SearchUsersRow struct {
 }
 
 func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error) {
-	rows, err := q.db.Query(ctx, searchUsers, arg.Username, arg.Limit)
+	rows, err := q.db.Query(ctx, searchUsers, arg.Query, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

@@ -134,7 +134,7 @@ type configs struct {
 
 func getConfigs() configs {
 	cfgs := configs{
-		DatabaseURL:           "",
+		DatabaseURL:           "postgres://postgres:secret@users-db:5432/social_users?sslmode=disable",
 		ChatGRPCAddr:          "chat:50051",
 		MediaGRPCAddr:         "media:50051",
 		NotificationsGRPCAddr: "notifications:50051",

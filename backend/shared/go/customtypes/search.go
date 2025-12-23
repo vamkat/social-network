@@ -41,10 +41,10 @@ func (s SearchTerm) IsValid() bool {
 
 // Validate returns a descriptive error if the value is invalid.
 func (s SearchTerm) Validate() error {
-	if len(s) < 2 {
+	if len(s) < 1 {
 		return errors.Join(
 			ErrValidation,
-			errors.New("search term must be at least 2 characters"),
+			errors.New("search term must be at least 1 character"),
 		)
 	}
 

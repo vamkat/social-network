@@ -223,11 +223,11 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 	}
 	//weighted (title more important than description)
 	//paginated (most members first)
-	rows, err := s.db.SearchGroupsFuzzy(ctx, ds.SearchGroupsFuzzyParams{
-		Similarity: req.SearchTerm.String(),
-		GroupOwner: req.UserId.Int64(),
-		Limit:      req.Limit.Int32(),
-		Offset:     req.Offset.Int32(),
+	rows, err := s.db.SearchGroups(ctx, ds.SearchGroupsParams{
+		Query:  req.SearchTerm.String(),
+		UserID: req.UserId.Int64(),
+		Limit:  req.Limit.Int32(),
+		Offset: req.Offset.Int32(),
 	})
 	if err != nil {
 		return []models.Group{}, err

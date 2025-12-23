@@ -499,50 +499,63 @@ func (q *Queries) RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoi
 	return err
 }
 
-const searchGroupsFuzzy = `-- name: SearchGroupsFuzzy :many
-SELECT
+const searchGroups = `-- name: SearchGroups :many
+SELECT DISTINCT ON (g.id)
     g.id,
     g.group_owner,
     g.group_title,
     g.group_description,
     g.group_image_id,
     g.members_count,
-    CASE WHEN gm.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_member,
-    CASE WHEN g.group_owner = $2 THEN TRUE ELSE FALSE END AS is_owner,
-    (
-        2 * similarity(g.group_title, $1) +
-        1 * similarity(g.group_description, $1)
-    ) AS weighted_score
+    (gm.user_id IS NOT NULL) AS is_member,
+    (g.group_owner = $2) AS is_owner,
+    CASE
+        -- 3+ characters: fuzzy weighted score
+        WHEN LENGTH($1) >= 3 THEN
+            similarity(g.group_title, $1) * 2.0 +
+            similarity(g.group_description, $1)
+        -- 1–2 characters: prefix ranking
+        ELSE
+            CASE
+                WHEN LOWER(LEFT(g.group_title, LENGTH($1))) = LOWER($1) THEN 3
+                WHEN LOWER(LEFT(g.group_description, LENGTH($1))) = LOWER($1) THEN 1
+                ELSE 0
+            END
+    END AS weighted_score
 FROM groups g
 LEFT JOIN group_members gm
     ON gm.group_id = g.id
-    AND gm.user_id = $2
-    AND gm.deleted_at IS NULL
+   AND gm.user_id = $2
+   AND gm.deleted_at IS NULL
 WHERE g.deleted_at IS NULL
   AND (
-        similarity(g.group_title, $1) > 0.2
-        OR similarity(g.group_description, $1) > 0.2
+        CASE
+            WHEN LENGTH($1) >= 3 THEN
+                g.group_title % $1
+                OR g.group_description % $1
+            ELSE
+                LOWER(LEFT(g.group_title, LENGTH($1))) = LOWER($1)
+                OR LOWER(LEFT(g.group_description, LENGTH($1))) = LOWER($1)
+        END
       )
 ORDER BY
-    -- 1. Weighted fuzzy match score
-    weighted_score DESC,
-    -- 2. Prioritize groups the user belongs to
-    CASE WHEN gm.user_id IS NOT NULL THEN 1 ELSE 0 END DESC,
-    -- 3. Prioritize groups with more members
-    g.members_count DESC,
-    -- 4. Stable pagination
-    g.id DESC
-LIMIT $3 OFFSET $4
+    g.id,                  -- required for DISTINCT ON
+    weighted_score DESC,    -- first sort by score
+    (gm.user_id IS NOT NULL) DESC, -- prioritize groups user belongs to
+    g.members_count DESC,   -- then by members
+    g.id DESC               -- stable tie-breaker
+LIMIT $3 OFFSET $4;
+
 `
 
-type SearchGroupsFuzzyParams struct {
-	Similarity string
-	GroupOwner int64
-	Limit      int32
-	Offset     int32
+type SearchGroupsParams struct {
+	Query  string
+	UserID int64
+	Limit  int32
+	Offset int32
 }
 
-type SearchGroupsFuzzyRow struct {
+type SearchGroupsRow struct {
 	ID               int64
 	GroupOwner       int64
 	GroupTitle       string
@@ -551,13 +564,18 @@ type SearchGroupsFuzzyRow struct {
 	MembersCount     int32
 	IsMember         bool
 	IsOwner          bool
-	WeightedScore    int32
+	WeightedScore    float64
 }
 
-func (q *Queries) SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyParams) ([]SearchGroupsFuzzyRow, error) {
-	rows, err := q.db.Query(ctx, searchGroupsFuzzy,
-		arg.Similarity,
-		arg.GroupOwner,
+func (q *Queries) SearchGroups(
+	ctx context.Context,
+	arg SearchGroupsParams,
+) ([]SearchGroupsRow, error) {
+
+	rows, err := q.db.Query(ctx,
+		searchGroups,
+		arg.Query,
+		arg.UserID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -565,9 +583,10 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyPa
 		return nil, err
 	}
 	defer rows.Close()
-	items := []SearchGroupsFuzzyRow{}
+
+	items := []SearchGroupsRow{}
 	for rows.Next() {
-		var i SearchGroupsFuzzyRow
+		var i SearchGroupsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.GroupOwner,
@@ -583,9 +602,11 @@ func (q *Queries) SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyPa
 		}
 		items = append(items, i)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return items, nil
 }
 

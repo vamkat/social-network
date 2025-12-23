@@ -49,7 +49,7 @@ type Querier interface {
 	LeaveGroup(ctx context.Context, arg LeaveGroupParams) error
 	RejectFollowRequest(ctx context.Context, arg RejectFollowRequestParams) error
 	RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoinRequestParams) error
-	SearchGroupsFuzzy(ctx context.Context, arg SearchGroupsFuzzyParams) ([]SearchGroupsFuzzyRow, error)
+	SearchGroups(ctx context.Context, arg SearchGroupsParams) ([]SearchGroupsRow, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
 	SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error
 	SendGroupJoinRequest(ctx context.Context, arg SendGroupJoinRequestParams) error
