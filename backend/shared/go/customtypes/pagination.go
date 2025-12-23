@@ -89,7 +89,8 @@ func (l Limit) Int32() int32 {
 // Offset
 // ------------------------------------------------------------
 
-// Non negative type. Validation returns error if below zero or above limit
+// Non negative type, included on 'alwaysAllowZero' map when validating inside a struct.
+// Validation returns error if below zero or above limit
 type Offset int32
 
 func (o Offset) MarshalJSON() ([]byte, error) {

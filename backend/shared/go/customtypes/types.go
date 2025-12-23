@@ -11,6 +11,7 @@ type Validator interface {
 
 type Configs struct {
 	PassSecret string
+	Salt       string
 }
 
 var Cfgs Configs

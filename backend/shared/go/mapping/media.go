@@ -1,3 +1,4 @@
+// Provides functions to convert from proto buf types to customtypes and vice versa
 package mapping
 
 import (
@@ -78,5 +79,22 @@ func CtToPbUploadStatus(v ct.UploadStatus) pb.UploadStatus {
 		return pb.UploadStatus_UPLOAD_STATUS_FAILED
 	default:
 		return pb.UploadStatus_UPLOAD_STATUS_UNSPECIFIED
+	}
+}
+
+// ctToPbUploadStatus converts protobuf UploadStatus to customtypes UploadStatus
+func PbToCtUploadStatus(v pb.UploadStatus) ct.UploadStatus {
+	switch v {
+	case pb.UploadStatus_UPLOAD_STATUS_PENDING:
+		return ct.Pending
+	case pb.UploadStatus_UPLOAD_STATUS_PROCESSING:
+		return ct.Processing
+	case pb.UploadStatus_UPLOAD_STATUS_COMPLETE:
+		return ct.Complete
+	case pb.UploadStatus_UPLOAD_STATUS_FAILED:
+		return ct.Failed
+	default:
+		return ct.UploadStatus("") // invalid
+
 	}
 }

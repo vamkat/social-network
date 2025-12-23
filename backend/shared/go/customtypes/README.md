@@ -24,6 +24,7 @@ Validates structs by iterating over exported fields and checking those that impl
 - Nullable fields skip validation if empty.
 - Primitives are excluded except slices of custom types.
 - If a field is a slice of a custom type, if a null value is found in that slice validation error is returned.
+- Allows zero values in type that are included in 'alwaysAllowZero' map.
 
 **Tags**:
 - `validate:"nullable"`: Marks the field as optional; zero values are allowed and skip validation.
@@ -49,6 +50,7 @@ if err != nil {
 
 ## Types
 
+
 ### Id
 
 **Description**: Represents an encrypted ID (int64). Allows null values in JSON but encrypts to a hash using hashids.
@@ -58,6 +60,7 @@ if err != nil {
 **Marshal/Unmarshal**: Marshals to encrypted string using hashids (requires `ENC_KEY` env var). Unmarshals from hash back to int64.
 
 **Usage**: For secure ID transmission in APIs. Implements `Scan()` and `Value()` methods for use in postgress database calls.
+
 
 ### UnsafeId
 
@@ -69,6 +72,7 @@ if err != nil {
 
 **Usage**: For internal use where encryption is not needed. Implements `Scan()` and `Value()` methods for use in postgress database calls.
 
+
 ### Ids
 
 **Description**: Slice of `Id`.
@@ -79,7 +83,8 @@ if err != nil {
 
 **Usage**: For lists of IDs. Implements `Scan()` and `Value()` methods for use in postgress database calls.
 
-**Extra Features**: Implements `Unique()` method that returns a copy of type 'Ids' with only the unique entries of the given instance.
+**Extra Features**: Implements `Unique()` method that returns a copy of type 'Ids' only containing the unique entries of the given instance.
+
 
 ### About
 
@@ -91,6 +96,7 @@ if err != nil {
 
 **Usage**: User bios.
 
+
 ### Audience
 
 **Description**: Visibility level for posts/comments/events.
@@ -100,6 +106,7 @@ if err != nil {
 **Marshal/Unmarshal**: Standard string.
 
 **Usage**: Content visibility.
+
 
 ### PostBody
 
@@ -111,6 +118,7 @@ if err != nil {
 
 **Usage**: Post content.
 
+
 ### CommentBody
 
 **Description**: Body text for comments.
@@ -120,6 +128,7 @@ if err != nil {
 **Marshal/Unmarshal**: Standard string.
 
 **Usage**: Comment content.
+
 
 ### EventBody
 
@@ -131,6 +140,7 @@ if err != nil {
 
 **Usage**: Event descriptions.
 
+
 ### MsgBody
 
 **Description**: Body text for messages.
@@ -140,6 +150,7 @@ if err != nil {
 **Marshal/Unmarshal**: Standard string.
 
 **Usage**: Chat messages. Implements `Scan()` and `Value()` methods for use in postgress database calls.
+
 
 ### CtxKey
 
@@ -151,6 +162,7 @@ if err != nil {
 
 **Usage**: Context keys like `ClaimsKey`, `UserId`, etc.
 
+
 ### DateOfBirth
 
 **Description**: User's date of birth.
@@ -160,6 +172,7 @@ if err != nil {
 **Marshal/Unmarshal**: "2006-01-02" format.
 
 **Usage**: User profiles.
+
 
 ### EventDateTime
 
@@ -171,6 +184,7 @@ if err != nil {
 
 **Usage**: Event scheduling.
 
+
 ### GenDateTime
 
 **Description**: Generic nullable datetime.
@@ -180,6 +194,7 @@ if err != nil {
 **Marshal/Unmarshal**: RFC3339.
 
 **Usage**: Timestamps like created_at. Implements `Scan()` and `Value()` methods for use in postgress database calls.
+
 
 ### Email
 
@@ -191,6 +206,7 @@ if err != nil {
 
 **Usage**: User emails.
 
+
 ### Username
 
 **Description**: Username.
@@ -200,6 +216,7 @@ if err != nil {
 **Marshal/Unmarshal**: Standard string.
 
 **Usage**: Usernames.
+
 
 ### Identifier
 
@@ -211,6 +228,7 @@ if err != nil {
 
 **Usage**: Login identifiers.
 
+
 ### Name
 
 **Description**: First or last name.
@@ -220,6 +238,7 @@ if err != nil {
 **Marshal/Unmarshal**: Standard string.
 
 **Usage**: User names.
+
 
 ### Limit
 
@@ -231,6 +250,7 @@ if err != nil {
 
 **Usage**: API pagination. Implements `Scan()` and `Value()` methods for use in postgress database calls.
 
+
 ### Offset
 
 **Description**: Pagination offset.
@@ -240,6 +260,7 @@ if err != nil {
 **Marshal/Unmarshal**: As int32.
 
 **Usage**: API pagination. Implements `Scan()` and `Value()` methods for use in postgress database calls.
+
 
 ### Password
 
@@ -251,6 +272,7 @@ if err != nil {
 
 **Usage**: Password input.
 
+
 ### HashedPassword
 
 **Description**: Hashed password.
@@ -261,6 +283,7 @@ if err != nil {
 
 **Usage**: Stored passwords.
 
+
 ### SearchTerm
 
 **Description**: Search query term.
@@ -270,6 +293,7 @@ if err != nil {
 **Marshal/Unmarshal**: Standard string.
 
 **Usage**: Search inputs.
+
 
 ### Title
 
