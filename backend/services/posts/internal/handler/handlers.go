@@ -50,7 +50,8 @@ func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb
 		CreatedAt:       post.CreatedAt.ToProto(),
 		UpdatedAt:       post.UpdatedAt.ToProto(),
 		LikedByUser:     post.LikedByUser,
-		Image:           int64(post.Image),
+		ImageId:         int64(post.ImageId),
+		ImageUrl:        post.ImageUrl,
 	}, nil
 }
 
@@ -65,7 +66,7 @@ func (s *PostsHandler) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*
 		GroupId:     ct.Id(req.GroupId),
 		Audience:    ct.Audience(req.Audience),
 		AudienceIds: ct.FromInt64s(req.AudienceIds.Values),
-		Image:       ct.Id(req.Image),
+		ImageId:     ct.Id(req.ImageId),
 	})
 	if err != nil {
 		fmt.Println("Error in CreatePost:", err)
@@ -99,7 +100,7 @@ func (s *PostsHandler) EditPost(ctx context.Context, req *pb.EditPostReq) (*empt
 		RequesterId: ct.Id(req.RequesterId),
 		PostId:      ct.Id(req.PostId),
 		NewBody:     ct.PostBody(req.Body),
-		Image:       ct.Id(req.Image),
+		ImageId:     ct.Id(req.ImageId),
 		Audience:    ct.Audience(req.Audience),
 		AudienceIds: ct.FromInt64s(req.AudienceIds.Values),
 	})
@@ -140,7 +141,8 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 		CreatedAt:       post.CreatedAt.ToProto(),
 		UpdatedAt:       post.UpdatedAt.ToProto(),
 		LikedByUser:     post.LikedByUser,
-		Image:           int64(post.Image),
+		ImageId:         int64(post.ImageId),
+		ImageUrl:        post.ImageUrl,
 	}, nil
 }
 
@@ -177,7 +179,8 @@ func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPerso
 			CreatedAt:       p.CreatedAt.ToProto(),
 			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
-			Image:           int64(p.Image),
+			ImageId:         int64(p.ImageId),
+			ImageUrl:        p.ImageUrl,
 		})
 	}
 	return &pb.ListPosts{Posts: pbPosts}, nil
@@ -216,7 +219,8 @@ func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginat
 			CreatedAt:       p.CreatedAt.ToProto(),
 			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
-			Image:           int64(p.Image),
+			ImageId:         int64(p.ImageId),
+			ImageUrl:        p.ImageUrl,
 		})
 	}
 	return &pb.ListPosts{Posts: pbPosts}, nil
@@ -256,7 +260,8 @@ func (s *PostsHandler) GetUserPostsPaginated(ctx context.Context, req *pb.GetUse
 			CreatedAt:       p.CreatedAt.ToProto(),
 			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
-			Image:           int64(p.Image),
+			ImageId:         int64(p.ImageId),
+			ImageUrl:        p.ImageUrl,
 		})
 	}
 	return &pb.ListPosts{Posts: pbPosts}, nil
@@ -296,7 +301,8 @@ func (s *PostsHandler) GetGroupPostsPaginated(ctx context.Context, req *pb.GetGr
 			CreatedAt:       p.CreatedAt.ToProto(),
 			UpdatedAt:       p.UpdatedAt.ToProto(),
 			LikedByUser:     p.LikedByUser,
-			Image:           int64(p.Image),
+			ImageId:         int64(p.ImageId),
+			ImageUrl:        p.ImageUrl,
 		})
 	}
 	return &pb.ListPosts{Posts: pbPosts}, nil
@@ -311,7 +317,7 @@ func (s *PostsHandler) CreateComment(ctx context.Context, req *pb.CreateCommentR
 		CreatorId: ct.Id(req.CreatorId),
 		ParentId:  ct.Id(req.ParentId),
 		Body:      ct.CommentBody(req.Body),
-		Image:     ct.Id(req.Image),
+		ImageId:   ct.Id(req.ImageId),
 	})
 	if err != nil {
 		fmt.Println("Error in CreateComment:", err)
@@ -329,7 +335,7 @@ func (s *PostsHandler) EditComment(ctx context.Context, req *pb.EditCommentReq) 
 		CreatorId: ct.Id(req.CreatorId),
 		CommentId: ct.Id(req.CommentId),
 		Body:      ct.CommentBody(req.Body),
-		Image:     ct.Id(req.Image),
+		ImageId:   ct.Id(req.ImageId),
 	})
 	if err != nil {
 		fmt.Println("Error in EditComment:", err)
@@ -385,7 +391,8 @@ func (s *PostsHandler) GetCommentsByParentId(ctx context.Context, req *pb.Entity
 			CreatedAt:      c.CreatedAt.ToProto(),
 			UpdatedAt:      c.UpdatedAt.ToProto(),
 			LikedByUser:    c.LikedByUser,
-			Image:          int64(c.Image),
+			ImageId:        int64(c.ImageId),
+			ImageUrl:       c.ImageUrl,
 		})
 	}
 	return &pb.ListComments{Comments: pbComments}, nil
@@ -401,7 +408,7 @@ func (s *PostsHandler) CreateEvent(ctx context.Context, req *pb.CreateEventReq) 
 		Body:      ct.EventBody(req.Body),
 		CreatorId: ct.Id(req.CreatorId),
 		GroupId:   ct.Id(req.GroupId),
-		Image:     ct.Id(req.Image),
+		ImageId:   ct.Id(req.ImageId),
 		EventDate: ct.EventDateTime(req.EventDate.AsTime()),
 	})
 	if err != nil {
@@ -437,7 +444,7 @@ func (s *PostsHandler) EditEvent(ctx context.Context, req *pb.EditEventReq) (*em
 		RequesterId: ct.Id(req.RequesterId),
 		Title:       ct.Title(req.Title),
 		Body:        ct.EventBody(req.Body),
-		Image:       ct.Id(req.Image),
+		Image:       ct.Id(req.ImageId),
 		EventDate:   ct.EventDateTime(req.EventDate.AsTime()),
 	})
 	if err != nil {
@@ -483,7 +490,8 @@ func (s *PostsHandler) GetEventsByGroupId(ctx context.Context, req *pb.EntityIdP
 			EventDate:     e.EventDate.ToProto(),
 			GoingCount:    int32(e.GoingCount),
 			NotGoingCount: int32(e.NotGoingCount),
-			Image:         int64(e.Image),
+			ImageId:       int64(e.ImageId),
+			ImageUrl:      e.ImageUrl,
 			CreatedAt:     e.CreatedAt.ToProto(),
 			UpdatedAt:     e.UpdatedAt.ToProto(),
 			UserResponse:  ur,

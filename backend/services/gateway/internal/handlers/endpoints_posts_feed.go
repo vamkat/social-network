@@ -59,7 +59,8 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 				CreatedAt:       ct.GenDateTime(p.CreatedAt.AsTime()),
 				UpdatedAt:       ct.GenDateTime(p.UpdatedAt.AsTime()),
 				LikedByUser:     p.LikedByUser,
-				Image:           ct.Id(p.Image),
+				ImageId:         ct.Id(p.ImageId),
+				ImageUrl:        p.ImageUrl,
 			}
 			postsResponse = append(postsResponse, post)
 		}
@@ -122,7 +123,8 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 				CreatedAt:       ct.GenDateTime(p.CreatedAt.AsTime()),
 				UpdatedAt:       ct.GenDateTime(p.UpdatedAt.AsTime()),
 				LikedByUser:     p.LikedByUser,
-				Image:           ct.Id(p.Image),
+				ImageId:         ct.Id(p.ImageId),
+				ImageUrl:        p.ImageUrl,
 			}
 			postsResponse = append(postsResponse, post)
 		}
@@ -186,7 +188,8 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 				CreatedAt:       ct.GenDateTime(p.CreatedAt.AsTime()),
 				UpdatedAt:       ct.GenDateTime(p.UpdatedAt.AsTime()),
 				LikedByUser:     p.LikedByUser,
-				Image:           ct.Id(p.Image),
+				ImageId:         ct.Id(p.ImageId),
+				ImageUrl:        p.ImageUrl,
 			}
 			postsResponse = append(postsResponse, post)
 		}

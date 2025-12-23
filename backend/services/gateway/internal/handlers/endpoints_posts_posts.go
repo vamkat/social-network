@@ -1,14 +1,17 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/common"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
+	"time"
 )
 
 func (h *Handlers) getPostById() http.HandlerFunc {
@@ -56,7 +59,8 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 			CreatedAt:       ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
 			UpdatedAt:       ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
 			LikedByUser:     grpcResp.LikedByUser,
-			Image:           ct.Id(grpcResp.Image),
+			ImageId:         ct.Id(grpcResp.ImageId),
+			ImageUrl:        grpcResp.ImageUrl,
 		}
 
 		err = utils.WriteJSON(w, http.StatusOK, post)
@@ -77,36 +81,79 @@ func (h *Handlers) createPost() http.HandlerFunc {
 			panic(1)
 		}
 
-		type createPostReq struct {
-			Body        string  `json:"post_body"`
-			GroupId     int64   `json:"group_id"`
-			Audience    string  `json:"audience"`
-			AudienceIds []int64 `json:"audience_ids"`
-			Image       int64   `json:"image"`
+		type CreatePostJSONRequest struct {
+			Body        ct.PostBody `json:"post_body"`
+			GroupId     ct.Id       `json:"group_id" validate:"nullable"`
+			Audience    ct.Audience `json:"audience"`
+			AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
+			ImageId     ct.Id       `json:"image" validate:"nullable"`
+
+			ImageName string `json:"image_name"`
+			ImageSize int64  `json:"image_size"`
+			ImageType string `json:"image_type"`
 		}
 
-		body, err := utils.JSON2Struct(&createPostReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+		httpReq := CreatePostJSONRequest{}
+
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		if err := decoder.Decode(&httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var ImageId ct.Id
+		var uploadURL string
+		if httpReq.ImageSize != 0 {
+			exp := time.Duration(10 * time.Minute).Seconds()
+			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+				Filename:          httpReq.ImageName,
+				MimeType:          httpReq.ImageType,
+				SizeBytes:         httpReq.ImageSize,
+				Visibility:        media.FileVisibility_PUBLIC,
+				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				ExpirationSeconds: int64(exp),
+			})
+			if err != nil {
+				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			ImageId = ct.Id(mediaRes.FileId)
+			uploadURL = mediaRes.GetUploadUrl()
 		}
 
 		grpcReq := posts.CreatePostReq{
 			CreatorId: int64(claims.UserId),
-			Body:      body.Body,
-			GroupId:   body.GroupId,
-			Audience:  body.Audience,
+			Body:      httpReq.Body.String(),
+			GroupId:   httpReq.GroupId.Int64(),
+			Audience:  httpReq.Audience.String(),
 			AudienceIds: &common.UserIds{
-				Values: body.AudienceIds,
+				Values: httpReq.AudienceIds.Int64(),
 			},
-			Image: body.Image,
+			ImageId: ImageId.Int64(),
 		}
 
-		_, err = h.PostsService.CreatePost(r.Context(), &grpcReq)
+		_, err := h.PostsService.CreatePost(r.Context(), &grpcReq)
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
+		type httpResponse struct {
+			UserId    ct.Id
+			FileId    ct.Id
+			UploadUrl string
+		}
+		httpResp := httpResponse{
+			UserId:    ct.Id(claims.UserId),
+			FileId:    ImageId,
+			UploadUrl: uploadURL}
+
+		utils.WriteJSON(w, http.StatusOK, httpResp)
 
 	}
 }

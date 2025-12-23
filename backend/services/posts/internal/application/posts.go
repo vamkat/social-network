@@ -67,9 +67,9 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 			}
 		}
 
-		if req.Image != 0 {
+		if req.ImageId != 0 {
 			err = q.UpsertImage(ctx, sqlc.UpsertImageParams{
-				ID:       req.Image.Int64(),
+				ID:       req.ImageId.Int64(),
 				ParentID: postId,
 			})
 			if err != nil {
@@ -134,16 +134,16 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 			}
 		}
 		//edit image //does this also delete the image?
-		if req.Image > 0 {
+		if req.ImageId > 0 {
 			err := q.UpsertImage(ctx, sqlc.UpsertImageParams{
-				ID:       req.Image.Int64(),
+				ID:       req.ImageId.Int64(),
 				ParentID: req.PostId.Int64(),
 			})
 			if err != nil {
 				return err
 			}
 		} else {
-			rowsAffected, err := q.DeleteImage(ctx, req.Image.Int64())
+			rowsAffected, err := q.DeleteImage(ctx, req.ImageId.Int64())
 			if err != nil {
 				return err
 			}
@@ -224,7 +224,16 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 		LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.Time),
 		CreatedAt:       ct.GenDateTime(p.CreatedAt.Time),
 		UpdatedAt:       ct.GenDateTime(p.UpdatedAt.Time),
-		Image:           ct.Id(p.Image),
+		ImageId:         ct.Id(p.Image),
+	}
+
+	if post.ImageId > 0 {
+		imageUrl, err := s.clients.GetImage(ctx, p.Image)
+		if err != nil {
+			return models.Post{}, err
+		}
+
+		post.ImageUrl = imageUrl
 	}
 
 	return post, nil
@@ -273,7 +282,16 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 		CreatedAt:       ct.GenDateTime(p.CreatedAt.Time),
 		UpdatedAt:       ct.GenDateTime(p.UpdatedAt.Time),
 		LikedByUser:     p.LikedByUser,
-		Image:           ct.Id(p.Image),
+		ImageId:         ct.Id(p.Image),
+	}
+
+	if post.ImageId > 0 {
+		imageUrl, err := s.clients.GetImage(ctx, p.Image)
+		if err != nil {
+			return models.Post{}, err
+		}
+
+		post.ImageUrl = imageUrl
 	}
 
 	return post, nil

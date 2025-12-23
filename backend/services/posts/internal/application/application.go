@@ -50,6 +50,8 @@ type ClientsInterface interface {
 	IsFollowing(ctx context.Context, userId, targetUserId int64) (bool, error)
 	IsGroupMember(ctx context.Context, userId, groupId int64) (bool, error)
 	GetFollowingIds(ctx context.Context, userId int64) ([]int64, error)
+	GetImage(ctx context.Context, imageId int64) (string, error)
+	GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error)
 }
 
 // NewApplication constructs a new Application with transaction support
