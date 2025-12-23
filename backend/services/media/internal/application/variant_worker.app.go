@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"log"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -47,12 +46,17 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 	log.Printf("Running variant worker for num of variants: %v", len(variants))
 
 	for _, v := range variants {
-		// Compute source bucket and object key from the original file
-		sourceBucket := m.Cfgs.FileService.Buckets.Originals
-		sourceObjectKey := strings.TrimSuffix(v.ObjectKey, "/"+v.Variant.String())
+		// // Compute source bucket and object key from the original file
+		// sourceBucket := m.Cfgs.FileService.Buckets.Originals
+		// sourceObjectKey := strings.TrimSuffix(v.ObjectKey, "/"+v.Variant.String())
 
 		// Call GenerateVariant
-		size, err := m.Clients.GenerateVariant(ctx, sourceBucket, sourceObjectKey, v.Variant)
+		size, err := m.Clients.GenerateVariant(ctx,
+			v.SrcBucket,
+			v.SrcObjectKey,
+			v.Bucket,
+			v.ObjectKey,
+			v.Variant)
 		if err != nil {
 			log.Printf("Failed to generate variant for file %d variant %s: %v", v.Id, v.Variant, err)
 			// Update status to failed

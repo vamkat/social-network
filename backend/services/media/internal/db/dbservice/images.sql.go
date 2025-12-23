@@ -6,6 +6,7 @@ import (
 	ct "social-network/shared/go/customtypes"
 )
 
+// No rows is error
 func (q *Queries) CreateFile(
 	ctx context.Context,
 	fm File,
@@ -40,6 +41,7 @@ func (q *Queries) CreateFile(
 	return fileId, err
 }
 
+// No rows is error
 func (q *Queries) GetFileById(
 	ctx context.Context,
 	fileId ct.Id,
@@ -75,6 +77,7 @@ func (q *Queries) GetFileById(
 	return fm, err
 }
 
+// Missing row is not an error
 func (q *Queries) GetFiles(
 	ctx context.Context,
 	ids ct.Ids,
@@ -130,6 +133,7 @@ func (q *Queries) GetFiles(
 	return files, nil
 }
 
+// no row is error
 func (q *Queries) CreateVariant(
 	ctx context.Context,
 	fm File,
@@ -164,6 +168,7 @@ func (q *Queries) CreateVariant(
 	return variantId, err
 }
 
+// No row is error
 func (q *Queries) GetVariant(
 	ctx context.Context,
 	fileId ct.Id,
@@ -202,6 +207,7 @@ func (q *Queries) GetVariant(
 	return fm, err
 }
 
+// Missing rows is no error
 func (q *Queries) GetVariants(
 	ctx context.Context,
 	fileIds ct.Ids,
@@ -264,6 +270,7 @@ func (q *Queries) GetVariants(
 	return fms, notComplete, nil
 }
 
+// No rows is error explicitly
 func (q *Queries) UpdateVariantStatusAndSize(
 	ctx context.Context,
 	fileId ct.Id,
@@ -291,6 +298,7 @@ func (q *Queries) UpdateVariantStatusAndSize(
 	return nil
 }
 
+// No rows is error explicitly
 func (q *Queries) UpdateFileStatus(
 	ctx context.Context,
 	fileId ct.Id,
@@ -315,6 +323,7 @@ func (q *Queries) UpdateFileStatus(
 	return nil
 }
 
+// Missing rows is no error
 func (q *Queries) GetPendingVariants(
 	ctx context.Context) (pending []Variant, err error) {
 	const query = `
@@ -326,6 +335,8 @@ func (q *Queries) GetPendingVariants(
 			f.size_bytes, 
 			fv.bucket, 
 			fv.object_key, 
+			f.bucket, 
+			f.object_key, 
 			f.visibility, 
 			fv.variant
 		FROM file_variants fv
@@ -350,6 +361,8 @@ func (q *Queries) GetPendingVariants(
 			&fm.SizeBytes,
 			&fm.Bucket,
 			&fm.ObjectKey,
+			&fm.SrcBucket,
+			&fm.SrcObjectKey,
 			&fm.Visibility,
 			&fm.Variant)
 		if err != nil {

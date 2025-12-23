@@ -159,13 +159,15 @@ func (c *Clients) DeleteFile(ctx context.Context,
 // TODO: Generate many variants for the same file
 func (c *Clients) GenerateVariant(
 	ctx context.Context,
-	bucket string,
-	objectKey string,
+	srcBucket string,
+	srcObjectKey string,
+	trgBucket string,
+	trgObjectKey string,
 	variant ct.FileVariant,
 ) (size int64, err error) {
 
 	obj, err := c.MinIOClient.GetObject(ctx,
-		bucket, objectKey, minio.GetObjectOptions{})
+		srcBucket, srcObjectKey, minio.GetObjectOptions{})
 	if err != nil {
 		return 0, errors.Join(ErrMinIO, err)
 	}
@@ -175,8 +177,8 @@ func (c *Clients) GenerateVariant(
 
 	info, err := c.MinIOClient.PutObject(
 		ctx,
-		c.Configs.Buckets.Variants,
-		objectKey+"/"+variant.String(),
+		trgBucket,
+		trgObjectKey,
 		&outBuf,
 		int64(outBuf.Len()),
 		minio.PutObjectOptions{

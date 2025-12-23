@@ -37,7 +37,15 @@ func (p *Password) UnmarshalJSON(data []byte) error {
 }
 
 func (p Password) Hash() (Password, error) {
-	secret := os.Getenv("PASSWORD_SECRET")
+	// TODO: Change this to configs when in place
+	secret := func() string {
+		s := Cfgs.PassSecret
+		if s == "" {
+			s = os.Getenv("PASSWORD_SECRET")
+		}
+		return s
+	}()
+
 	if secret == "" {
 		return "", errors.Join(ErrValidation, errors.New("missing env var PASSWORD_SECRET"))
 	}

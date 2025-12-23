@@ -30,8 +30,10 @@ type Clients interface {
 
 	GenerateVariant(
 		ctx context.Context,
-		bucket string,
-		objectKey string,
+		srcBucket string,
+		srcObjectKey string,
+		trgBucket string,
+		trgObjectKey string,
 		variant ct.FileVariant,
 	) (size int64, err error)
 

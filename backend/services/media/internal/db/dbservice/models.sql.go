@@ -25,6 +25,9 @@ type Variant struct {
 	Bucket    string `validation:"nullable"` // images, videos etc
 	ObjectKey string `validation:"nullable"` // the name given to file in fileservice
 
+	SrcBucket    string // the variants origin bucket
+	SrcObjectKey string // the variants origin key
+
 	Visibility ct.FileVisibility
 	Status     ct.UploadStatus `validation:"nullable"` // pending, processing, complete, failed
 	Variant    ct.FileVariant  `validation:"nullable"` // thumb, small, medium, large, original
