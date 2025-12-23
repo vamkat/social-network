@@ -510,15 +510,13 @@ SELECT DISTINCT ON (g.id)
     (gm.user_id IS NOT NULL) AS is_member,
     (g.group_owner = $2) AS is_owner,
     CASE
-        -- 3+ characters: fuzzy weighted score
         WHEN LENGTH($1) >= 3 THEN
             similarity(g.group_title, $1) * 2.0 +
             similarity(g.group_description, $1)
-        -- 1–2 characters: prefix ranking
         ELSE
             CASE
-                WHEN LOWER(LEFT(g.group_title, LENGTH($1))) = LOWER($1) THEN 3
-                WHEN LOWER(LEFT(g.group_description, LENGTH($1))) = LOWER($1) THEN 1
+                WHEN g.group_title ILIKE '%' || $1 || '%' THEN 3
+                WHEN g.group_description ILIKE '%' || $1 || '%' THEN 1
                 ELSE 0
             END
     END AS weighted_score
@@ -529,23 +527,19 @@ LEFT JOIN group_members gm
    AND gm.deleted_at IS NULL
 WHERE g.deleted_at IS NULL
   AND (
-        CASE
-            WHEN LENGTH($1) >= 3 THEN
-                g.group_title % $1
-                OR g.group_description % $1
-            ELSE
-                LOWER(LEFT(g.group_title, LENGTH($1))) = LOWER($1)
-                OR LOWER(LEFT(g.group_description, LENGTH($1))) = LOWER($1)
-        END
+        -- Always allow substring match for any length
+        g.group_title ILIKE '%' || $1 || '%'
+     OR g.group_description ILIKE '%' || $1 || '%'
+     -- For longer queries, also use fuzzy % match
+     OR (LENGTH($1) >= 3 AND (g.group_title % $1 OR g.group_description % $1))
       )
 ORDER BY
-    g.id,                  -- required for DISTINCT ON
-    weighted_score DESC,    -- first sort by score
-    (gm.user_id IS NOT NULL) DESC, -- prioritize groups user belongs to
-    g.members_count DESC,   -- then by members
-    g.id DESC               -- stable tie-breaker
+    g.id,                    -- required for DISTINCT ON
+    weighted_score DESC,      -- sort by relevance
+    (gm.user_id IS NOT NULL) DESC, -- prioritize groups the user belongs to
+    g.members_count DESC,     -- then by members count
+    g.id DESC                -- stable tie-breaker
 LIMIT $3 OFFSET $4;
-
 `
 
 type SearchGroupsParams struct {
