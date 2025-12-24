@@ -22,7 +22,15 @@ export async function updateProfileInfo(data) {
             body: JSON.stringify(data),
             forwardCookies: true
         });
-        return response;
+
+        // Backend returns { UserId, FileId, UploadUrl } if avatar is provided
+        // or just { UserId } if no avatar
+        return {
+            success: true,
+            UserId: response.UserId,
+            FileId: response.FileId,
+            UploadUrl: response.UploadUrl
+        };
     } catch (error) {
         console.error("Error updating profile info:", error);
         return { success: false, error: error.message };
