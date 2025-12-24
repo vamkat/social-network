@@ -209,7 +209,7 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 		return models.Post{}, err
 	}
 
-	userMap, err := s.userRetriever.GetUsers(ctx, []int64{p.CreatorID})
+	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{ct.Id(p.CreatorID)})
 	if err != nil {
 		return models.Post{}, err
 	}
@@ -217,7 +217,7 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 	post := models.Post{
 		PostId:          ct.Id(p.ID),
 		Body:            ct.PostBody(p.PostBody),
-		User:            userMap[p.CreatorID],
+		User:            userMap[ct.Id(p.CreatorID)],
 		GroupId:         ct.Id(req.Id.Int64()),
 		Audience:        ct.Audience(p.Audience),
 		CommentsCount:   int(p.CommentsCount),
@@ -266,7 +266,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 		return models.Post{}, err
 	}
 
-	userMap, err := s.userRetriever.GetUsers(ctx, []int64{p.CreatorID})
+	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{ct.Id(p.CreatorID)})
 	if err != nil {
 		return models.Post{}, err
 	}
@@ -274,7 +274,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 	post := models.Post{
 		PostId:          ct.Id(p.ID),
 		Body:            ct.PostBody(p.PostBody),
-		User:            userMap[p.CreatorID],
+		User:            userMap[ct.Id(p.CreatorID)],
 		GroupId:         ct.Id(p.GroupID),
 		Audience:        ct.Audience(p.Audience),
 		CommentsCount:   int(p.CommentsCount),

@@ -23,22 +23,14 @@ func NewUserRetriever(clients UsersBatchClient, cache *redis_connector.RedisClie
 }
 
 // GetUsers returns a map[userID]User, using cache + batch RPC.
-func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int64]models.User, error) {
+func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id]models.User, error) {
 
 	//========================== STEP 1 : get user info from users ===============================================
 
-	idSet := make(map[int64]struct{}, len(userIDs))
-	for _, id := range userIDs {
-		idSet[id] = struct{}{}
-	}
+	ids := userIDs.Unique()
 
-	ids := make([]int64, 0, len(idSet))
-	for id := range idSet {
-		ids = append(ids, id)
-	}
-
-	users := make(map[int64]models.User, len(ids))
-	var missing []int64
+	users := make(map[ct.Id]models.User, len(ids))
+	var missing ct.Ids
 
 	// Redis lookup
 	for _, id := range ids {
@@ -63,7 +55,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 				Username: ct.Username(u.Username),
 				AvatarId: ct.Id(u.Avatar),
 			}
-			users[u.UserId] = user
+			users[user.UserId] = user
 			_ = h.cache.SetObj(ctx,
 				fmt.Sprintf("basic_user_info:%d", u.UserId),
 				user,
@@ -73,34 +65,25 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 	}
 	//========================== STEP 2 : get avatars from media ===============================================
 	// Get image urls for users
-	var imageIds []int64
+	var imageIds ct.Ids
 	for _, user := range users {
 		if user.AvatarId > 0 { //exclude 0 imageIds
-			imageIds = append(imageIds, user.AvatarId.Int64())
+			imageIds = append(imageIds, user.AvatarId)
 		}
 	}
 
-	//there shouldn't be duplicates but making sure
-	imageIdSet := make(map[int64]struct{}, len(imageIds))
-	for _, imageId := range imageIds {
-		imageIdSet[imageId] = struct{}{}
-	}
-
-	uniqueImageIds := make([]int64, 0, len(imageIdSet))
-	for imageId := range imageIdSet {
-		uniqueImageIds = append(uniqueImageIds, imageId)
-	}
+	uniqueImageIds := imageIds.Unique()
 
 	//fmt.Println("Unique image ids", uniqueImageIds)
 
 	images := make(map[int64]string, len(uniqueImageIds))
-	var missingImages []int64
+	var missingImages ct.Ids
 
 	// Redis lookup for images
 	for _, imageId := range uniqueImageIds {
 		var imageURL string
 		if err := h.cache.GetObj(ctx, fmt.Sprintf("img_thumbnail:%d", imageId), &imageURL); err == nil {
-			images[imageId] = imageURL
+			images[imageId.Int64()] = imageURL
 		} else {
 			missingImages = append(missingImages, imageId)
 		}
@@ -143,6 +126,6 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 	return users, nil
 }
 
-func (h *UserRetriever) GetImages(ctx context.Context, imageIds []int64, variant media.FileVariant) (map[int64]string, []int64, error) {
+func (h *UserRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
 	return h.clients.GetImages(ctx, imageIds, variant)
 }

@@ -166,11 +166,11 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		return nil, err
 	}
 	comments := make([]models.Comment, 0, len(rows))
-	userIDs := make([]int64, 0, len(rows))
-	CommentImageIds := make([]int64, 0, len(rows))
+	userIDs := make(ct.Ids, 0, len(rows))
+	CommentImageIds := make(ct.Ids, 0, len(rows))
 
 	for _, r := range rows {
-		uid := r.CommentCreatorID
+		uid := ct.Id(r.CommentCreatorID)
 		userIDs = append(userIDs, uid)
 
 		comments = append(comments, models.Comment{
@@ -187,7 +187,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 			ImageId:        ct.Id(r.Image),
 		})
 		if r.Image > 0 {
-			CommentImageIds = append(CommentImageIds, r.Image)
+			CommentImageIds = append(CommentImageIds, ct.Id(r.Image))
 		}
 	}
 
@@ -206,7 +206,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 	}
 
 	for i := range comments {
-		uid := comments[i].User.UserId.Int64()
+		uid := comments[i].User.UserId
 		if u, ok := userMap[uid]; ok {
 			comments[i].User = u
 		}

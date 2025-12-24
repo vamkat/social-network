@@ -168,12 +168,12 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		return nil, nil
 	}
 	events := make([]models.Event, 0, len(rows))
-	userIDs := make([]int64, 0, len(rows))
-	EventImageIds := make([]int64, 0, len(rows))
+	userIDs := make(ct.Ids, 0, len(rows))
+	EventImageIds := make(ct.Ids, 0, len(rows))
 
 	for _, r := range rows {
 		uid := r.EventCreatorID
-		userIDs = append(userIDs, uid)
+		userIDs = append(userIDs, ct.Id(uid))
 
 		events = append(events, models.Event{
 			EventId: ct.Id(r.ID),
@@ -192,7 +192,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 			UserResponse:  &r.UserResponse.Bool,
 		})
 		if r.Image > 0 {
-			EventImageIds = append(EventImageIds, r.Image)
+			EventImageIds = append(EventImageIds, ct.Id(r.Image))
 		}
 	}
 
@@ -211,7 +211,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 	}
 
 	for i := range events {
-		uid := events[i].User.UserId.Int64()
+		uid := events[i].User.UserId
 		if u, ok := userMap[uid]; ok {
 			events[i].User = u
 		}

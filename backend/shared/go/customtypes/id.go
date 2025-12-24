@@ -142,7 +142,7 @@ func (i UnsafeId) Validate() error {
 func (i *UnsafeId) Scan(src any) error {
 	if src == nil {
 		// SQL NULL reached
-		*i = 0 // or whatever "invalid" means in your domain
+		*i = 0 
 		return nil
 	}
 

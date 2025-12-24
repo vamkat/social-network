@@ -26,13 +26,13 @@ func (s *Application) SuggestUsersByPostActivity(ctx context.Context, req models
 		return nil, err
 	}
 
-	userMap, err := s.userRetriever.GetUsers(ctx, ids)
+	userMap, err := s.userRetriever.GetUsers(ctx, ct.FromInt64s(ids))
 	if err != nil {
 		return nil, err
 	}
 
 	users := make([]models.User, 0, len(ids))
-	for _, id := range ids {
+	for _, id := range ct.FromInt64s(ids) {
 		if u, ok := userMap[id]; ok {
 			users = append(users, u)
 		}
