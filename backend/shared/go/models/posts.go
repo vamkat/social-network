@@ -33,7 +33,7 @@ type Post struct {
 	PostId          ct.Id          `json:"post_id"`
 	Body            ct.PostBody    `json:"post_body"`
 	User            User           `json:"post_user"`
-	GroupId         ct.Id          `json:"group_id" validate:"nullable"`
+	GroupId         ct.Id          `json:"group_id,omitempty" validate:"nullable"`
 	Audience        ct.Audience    `json:"audience"`
 	CommentsCount   int            `json:"comments_count"`
 	ReactionsCount  int            `json:"reactions_count"`

@@ -430,26 +430,25 @@ EXECUTE FUNCTION update_event_response_counts();
 ------------------------------------------
 -- Images sort_order trigger
 ------------------------------------------
-CREATE OR REPLACE FUNCTION set_next_sort_order()
-RETURNS TRIGGER AS $$
-DECLARE
-    max_order INT;
-BEGIN
-    IF NEW.sort_order IS NULL THEN
-        SELECT COALESCE(MAX(sort_order),0) 
-        INTO max_order
-        FROM images
-        WHERE parent_id = NEW.parent_id
-        FOR UPDATE;
+-- CREATE OR REPLACE FUNCTION set_next_sort_order()
+-- RETURNS TRIGGER AS $$
+-- DECLARE
+--     max_order INT;
+-- BEGIN
+--     IF NEW.sort_order IS NULL THEN
+--         SELECT COALESCE(MAX(sort_order),0) 
+--         INTO max_order
+--         FROM images
+--         WHERE parent_id = NEW.parent_id;
 
-        NEW.sort_order := max_order + 1;
-    END IF;
+--         NEW.sort_order := max_order + 1;
+--     END IF;
 
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+--     RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_set_sort_order
-BEFORE INSERT ON images
-FOR EACH ROW
-EXECUTE FUNCTION set_next_sort_order();
+-- CREATE TRIGGER trg_set_sort_order
+-- BEFORE INSERT ON images
+-- FOR EACH ROW
+-- EXECUTE FUNCTION set_next_sort_order();

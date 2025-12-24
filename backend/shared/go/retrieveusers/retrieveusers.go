@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 
+	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
@@ -110,7 +111,8 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 
 	// // Batch RPC for missing images
 	if len(missingImages) > 0 {
-		imageMap, failedImages, err := h.clients.GetImages(ctx, missingImages)
+		fmt.Println("asking media for these avatars", missingImages)
+		imageMap, failedImages, err := h.clients.GetImages(ctx, missingImages, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			return nil, err
 		}
@@ -141,6 +143,6 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 	return users, nil
 }
 
-func (h *UserRetriever) GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error) {
-	return h.clients.GetImages(ctx, imageIds)
+func (h *UserRetriever) GetImages(ctx context.Context, imageIds []int64, variant media.FileVariant) (map[int64]string, []int64, error) {
+	return h.clients.GetImages(ctx, imageIds, variant)
 }

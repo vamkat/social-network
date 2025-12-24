@@ -244,55 +244,55 @@ END $$;
 ------------------------------------------
 -- IMAGES
 ------------------------------------------
-DO $$
-DECLARE
-    post_ids BIGINT[];
-    comment_ids BIGINT[];
-    event_ids BIGINT[];
-BEGIN
-    -- Get all IDs in order
-    SELECT ARRAY_AGG(id ORDER BY created_at) INTO post_ids FROM posts;
-    SELECT ARRAY_AGG(id ORDER BY created_at) INTO comment_ids FROM comments;
-    SELECT ARRAY_AGG(id ORDER BY created_at) INTO event_ids FROM events;
+-- DO $$
+-- DECLARE
+--     post_ids BIGINT[];
+--     comment_ids BIGINT[];
+--     event_ids BIGINT[];
+-- BEGIN
+--     -- Get all IDs in order
+--     SELECT ARRAY_AGG(id ORDER BY created_at) INTO post_ids FROM posts;
+--     SELECT ARRAY_AGG(id ORDER BY created_at) INTO comment_ids FROM comments;
+--     SELECT ARRAY_AGG(id ORDER BY created_at) INTO event_ids FROM events;
     
-    -- Images for posts
-    -- Post 2 (sunset) - multiple images
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1001, post_ids[2], 1),
-    (1002, post_ids[2], 2),
-    (1003, post_ids[2], 3);
+--     -- Images for posts
+--     -- Post 2 (sunset) - multiple images
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1001, post_ids[2], 1),
+--     (1002, post_ids[2], 2),
+--     (1003, post_ids[2], 3);
 
-    -- Post 4 (coding project) - screenshot
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1004, post_ids[4], 1),
-    (1005, post_ids[4], 2);
+--     -- Post 4 (coding project) - screenshot
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1004, post_ids[4], 1),
+--     (1005, post_ids[4], 2);
 
-    -- Post 5 (coffee and code)
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1006, post_ids[5], 1);
+--     -- Post 5 (coffee and code)
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1006, post_ids[5], 1);
 
-    -- Post 16 (first production app) - app screenshots
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1007, post_ids[16], 1),
-    (1008, post_ids[16], 2),
-    (1009, post_ids[16], 3),
-    (1010, post_ids[16], 4);
+--     -- Post 16 (first production app) - app screenshots
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1007, post_ids[16], 1),
+--     (1008, post_ids[16], 2),
+--     (1009, post_ids[16], 3),
+--     (1010, post_ids[16], 4);
 
-    -- Group post images
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1011, post_ids[8], 1), -- Book club post
-    (1012, post_ids[12], 1); -- Hiking trip post
+--     -- Group post images
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1011, post_ids[8], 1), -- Book club post
+--     (1012, post_ids[12], 1); -- Hiking trip post
 
-    -- Event images
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1013, event_ids[4], 1), -- Hiking event
-    (1014, event_ids[4], 2),
-    (1015, event_ids[6], 1); -- Company picnic
+--     -- Event images
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1013, event_ids[4], 1), -- Hiking event
+--     (1014, event_ids[4], 2),
+--     (1015, event_ids[6], 1); -- Company picnic
 
-    -- Comment with image
-    INSERT INTO images (id, parent_id, sort_order) VALUES
-    (1016, comment_ids[4], 1); -- Image on "Which beach?" comment
-END $$;
+--     -- Comment with image
+--     INSERT INTO images (id, parent_id, sort_order) VALUES
+--     (1016, comment_ids[4], 1); -- Image on "Which beach?" comment
+-- END $$;
 
 COMMIT;
 

@@ -115,7 +115,7 @@ func (h *Handlers) createPost() http.HandlerFunc {
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
 				Visibility:        media.FileVisibility_PUBLIC,
-				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				Variants:          []media.FileVariant{media.FileVariant_MEDIUM},
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
@@ -200,7 +200,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
 				Visibility:        media.FileVisibility_PUBLIC,
-				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				Variants:          []media.FileVariant{media.FileVariant_MEDIUM},
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {

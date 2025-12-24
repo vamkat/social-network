@@ -148,32 +148,36 @@ func (m *MediaService) GetImages(ctx context.Context,
 ) (downUrls map[ct.Id]string, failedIds []FailedId, err error) {
 
 	fmt.Println("received ids", imgIds)
+	fmt.Println("variant requested", variant)
 	// fmt.Println(imgIds.IsValid())
 	// fmt.Println(variant.IsValid())
 	// fmt.Println(variant == ct.Original)
 
 	if !imgIds.IsValid() || !variant.IsValid() || variant == ct.Original {
-		//fmt.Println("validation error", ct.ErrValidation)
+		fmt.Println("validation error", ct.ErrValidation)
 		return nil, nil, ct.ErrValidation
 	}
 	var na ct.Ids
 	var fms []dbservice.File
 
 	errTx := m.txRunner.RunTx(ctx, func(tx *dbservice.Queries) error {
-
+		fmt.Println("HERE")
 		fms, na, err = tx.GetVariants(ctx, imgIds.Unique(), variant)
 		if err != nil {
+			fmt.Println(err)
 			return err
 		}
-		//fmt.Println("variants", fms)
+		fmt.Println("variants", fms)
 		if len(na) != 0 {
 			originals, err := tx.GetFiles(ctx, na)
 			if err != nil {
+				fmt.Println(err)
 				return err
 			}
 			fms = append(fms, originals...)
-			//fmt.Println("fms", fms)
+			fmt.Println("fms", fms)
 		}
+		fmt.Println("NOW HERE")
 		return nil
 	})
 

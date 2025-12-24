@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
+	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/customtypes"
 	"social-network/shared/go/models"
 )
@@ -201,7 +202,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 
 	var imageMap map[int64]string
 	if len(CommentImageIds) > 0 {
-		imageMap, _, err = s.clients.GetImages(ctx, CommentImageIds)
+		imageMap, _, err = s.clients.GetImages(ctx, CommentImageIds, media.FileVariant_MEDIUM)
 	}
 
 	for i := range comments {

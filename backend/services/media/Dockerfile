@@ -17,15 +17,15 @@ WORKDIR /app
 COPY --from=build /app/media_service .
 COPY --from=build /app/migrate .
 COPY --from=build /app/services/media/internal/db/migrations ./migrations
-COPY --from=build /app/services/media/internal/db/seeds ./seeds
+# COPY --from=build /app/services/media/internal/db/seeds ./seeds
 
 COPY services/media/entrypoint.sh /app/entrypoint.sh
 
 # RUN chmod +x /app/seeds/seed.sh 
 RUN chmod +x /app/entrypoint.sh
 
-# ENTRYPOINT ["/app/entrypoint.sh"]
-# CMD ["./media_service"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["./media_service"]
 
-CMD ["sh", "-c", "set -e; echo 'Running migrations...' && ./migrate; echo 'Running seeds...' && ./seeds/seed.sh || true; echo 'Starting service...' && exec ./media_service"]
+# CMD ["sh", "-c", "set -e; echo 'Running migrations...' && ./migrate; echo 'Running seeds...' && ./seeds/seed.sh || true; echo 'Starting service...' && exec ./media_service"]
 
