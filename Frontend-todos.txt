@@ -1,13 +1,16 @@
-- User Profile to get image
+======== This week TODOs ========
 
-- Fix logout bug (rerenders page after logout)
+- Create Post component - in process (creating posts without image done, validations semi done ) need to create post with image
+- Update/ Delete post - should be easy once post creation is done
 
-- Create Post component (wait for createPost backend completion)
-
-- Comments in Post Card (create comment - get comments)
+- Comments in Post Card (create comment with/without image - get comments - update comment - delete comment)
+- reaction process
 
 - Single post component
 
-- create Group
+POSTS MUST BE DONE BY NEW YEAR!
 
+======== LATER TODOs ========
+- create/ update groups
 - group/{id} page with all fucks needed (REAL MAN DONT CRY)
+- search groups
