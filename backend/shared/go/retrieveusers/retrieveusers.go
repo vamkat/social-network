@@ -74,7 +74,9 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs []int64) (map[int6
 	// Get image urls for users
 	var imageIds []int64
 	for _, user := range users {
-		imageIds = append(imageIds, user.AvatarId.Int64())
+		if user.AvatarId > 0 { //exclude 0 imageIds
+			imageIds = append(imageIds, user.AvatarId.Int64())
+		}
 	}
 
 	//there shouldn't be duplicates but making sure
