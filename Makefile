@@ -25,7 +25,7 @@ docker-test:
 	docker compose -f docker-test.yml up --build
 
 docker-up-test:
-	$(MAKE) create-network
+	$(MAKE) docker-up
 	$(MAKE) docker-test
 
 # this network is used to let the tester connect to the rest of the containers

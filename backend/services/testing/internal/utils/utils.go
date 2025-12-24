@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"math/rand/v2"
 )
 
@@ -10,7 +9,7 @@ func RandomString(length int, withSpecialChars bool) string {
 	for i := range length {
 		runes[i] = RandomRune(withSpecialChars)
 	}
-	fmt.Println("created word:", string(runes))
+	// fmt.Println("created word:", string(runes))
 	return string(runes)
 }
 
