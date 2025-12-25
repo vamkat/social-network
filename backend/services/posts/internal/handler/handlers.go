@@ -9,7 +9,7 @@ import (
 	"fmt"
 	cm "social-network/shared/gen-go/common"
 	pb "social-network/shared/gen-go/posts"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
 	"google.golang.org/grpc/codes"

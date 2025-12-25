@@ -7,7 +7,7 @@ import (
 	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"

@@ -1,7 +1,7 @@
 package models
 
 import (
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 )
 
 //-------------------------------------------

@@ -1,6 +1,6 @@
 package handlers
 
-import "social-network/shared/go/ct"
+import ct "social-network/shared/go/ct"
 
 type GroupT struct {
 	GroupId          ct.Id  `json:"group_id"`

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	"time"
 

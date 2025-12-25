@@ -10,7 +10,7 @@ import (
 	"runtime"
 	cm "social-network/shared/gen-go/common"
 	pb "social-network/shared/gen-go/users"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
 	"google.golang.org/grpc/codes"

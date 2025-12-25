@@ -3,7 +3,7 @@ package mapping
 
 import (
 	pb "social-network/shared/gen-go/media"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 )
 
 // pbToCtFileVariant converts protobuf ImgVariant to customtypes ImgVariant

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"social-network/services/chat/internal/db/dbservice"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
 

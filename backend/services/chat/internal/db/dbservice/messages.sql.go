@@ -2,7 +2,7 @@ package dbservice
 
 import (
 	"context"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
 

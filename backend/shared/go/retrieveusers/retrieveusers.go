@@ -6,7 +6,7 @@ import (
 	"maps"
 
 	"social-network/shared/gen-go/media"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
 	"time"

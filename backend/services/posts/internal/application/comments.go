@@ -5,7 +5,7 @@ import (
 	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
 

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"social-network/services/media/internal/db/dbservice"
 	"social-network/services/media/internal/mapping"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 	"time"
 
 	"github.com/google/uuid"

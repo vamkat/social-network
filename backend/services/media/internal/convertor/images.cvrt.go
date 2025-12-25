@@ -13,7 +13,7 @@ import (
 	"io"
 	"math"
 	"social-network/services/media/internal/configs"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 
 	"github.com/chai2010/webp"
 	"golang.org/x/image/draw"

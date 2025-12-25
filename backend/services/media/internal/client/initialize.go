@@ -5,7 +5,7 @@ import (
 	"context"
 	"io"
 	"social-network/services/media/internal/configs"
-	"social-network/shared/go/ct"
+	ct "social-network/shared/go/ct"
 
 	"github.com/minio/minio-go/v7"
 )

@@ -1,6 +1,6 @@
 package models
 
-import "social-network/shared/go/ct"
+import ct "social-network/shared/go/ct"
 
 type FileMeta struct {
 	Id        ct.Id  // db row Id
