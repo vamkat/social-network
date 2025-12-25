@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"social-network/services/gateway/internal/utils"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 )
 
 func (h *Handlers) testHandler() http.HandlerFunc {

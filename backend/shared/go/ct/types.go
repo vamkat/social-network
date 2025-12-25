@@ -1,4 +1,4 @@
-package customtypes
+package ct
 
 import (
 	"errors"

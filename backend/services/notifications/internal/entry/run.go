@@ -15,7 +15,8 @@ import (
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
+
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
 	"syscall"
@@ -37,7 +38,7 @@ func Run() error {
 	postsService, err := gorpc.GetGRpcClient(
 		posts.NewPostsServiceClient,
 		cfgs.PostsGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to posts service: %v", err)
@@ -46,7 +47,7 @@ func Run() error {
 	chatService, err := gorpc.GetGRpcClient(
 		chat.NewChatServiceClient,
 		cfgs.ChatGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to chat service: %v", err)
@@ -55,7 +56,7 @@ func Run() error {
 	usersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfgs.UsersGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to media service: %v", err)
@@ -72,7 +73,7 @@ func Run() error {
 	service := handler.NewNotificationsHandler(app)
 
 	log.Println("Running gRpc service...")
-	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](notifications.RegisterNotificationServiceServer, service, ":50051", contextkeys.CommonKeys())
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](notifications.RegisterNotificationServiceServer, service, ":50051", ct.CommonKeys())
 	if err != nil {
 		return err
 	}

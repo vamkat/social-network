@@ -10,7 +10,7 @@ import (
 	"social-network/services/testing/internal/configs"
 	"social-network/services/testing/internal/utils"
 	"social-network/shared/gen-go/users"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	"time"
 
@@ -24,7 +24,7 @@ func StartTest(ctx context.Context, cfgs configs.Configs) {
 	UsersService, err = gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfgs.UsersGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		panic("failed to connect to users service: %v" + err.Error())
@@ -42,7 +42,7 @@ var fail = "FAIL TEST: err ->"
 
 func randomRegister(ctx context.Context) {
 	fmt.Println("starting register test")
-	for range 20 {
+	for range 100 {
 		req := newRegisterReq()
 		resp, err := UsersService.RegisterUser(ctx, req)
 		if err != nil {
@@ -60,7 +60,7 @@ func randomRegister(ctx context.Context) {
 
 func randomLogin(ctx context.Context) {
 	fmt.Println("starting Login test")
-	for range 20 {
+	for range 100 {
 		req := newLoginReq()
 		_, err := UsersService.LoginUser(ctx, req)
 		if err != nil && !strings.Contains(err.Error(), "invalid identifier or password") {

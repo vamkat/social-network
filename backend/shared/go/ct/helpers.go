@@ -1,4 +1,4 @@
-package customtypes
+package ct
 
 // Returns false if control chars are present on 's'.
 func controlCharsFree(s string) bool {

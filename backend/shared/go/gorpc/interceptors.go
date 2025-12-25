@@ -10,11 +10,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-//TODO convert string keys back to stringable interface keys
+//TODO convert string keys back to context interface keys
 
 // this interface exists to enforce usage of typed context keys instead of just strings
-type StringableKey interface {
-	String() string
+type contextKeys interface {
+	GetKeys() []string
 }
 
 var ErrBadContextValues = errors.New("bad context keys passed to interceptor creator, at least a key doesn't follow the validation requirements")
@@ -39,16 +39,15 @@ var ErrBadContextValues = errors.New("bad context keys passed to interceptor cre
 // UnaryServerInterceptorWithContextKeys returns a server interceptor that adds specified metadata values to context.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func UnaryServerInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.UnaryServerInterceptor, error) {
-	keys := stringableKey2String(stringableKeys...)
-	if !validateContextKeys(keys...) {
+func UnaryServerInterceptorWithContextKeys(contextKeys contextKeys) (grpc.UnaryServerInterceptor, error) {
+	if !validateContextKeys(contextKeys.GetKeys()...) {
 		return nil, ErrBadContextValues
 	}
 
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		md, _ := metadata.FromIncomingContext(ctx)
 		fmt.Println("[DEBUG] metadata:", md)
-		ctx = addMetadataToContext(ctx, md, keys...)
+		ctx = addMetadataToContext(ctx, md, contextKeys.GetKeys()...)
 		m, err := handler(ctx, req)
 		return m, err
 	}, nil
@@ -82,15 +81,14 @@ func (w *wrappedServerStream) SendMsg(m any) error {
 // StreamServerInterceptorWithContextKeys returns a server interceptor that adds specified metadata values to context.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func StreamServerInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.StreamServerInterceptor, error) {
-	keys := stringableKey2String(stringableKeys...)
-	if !validateContextKeys(keys...) {
+func StreamServerInterceptorWithContextKeys(contextKeys contextKeys) (grpc.StreamServerInterceptor, error) {
+	if !validateContextKeys(contextKeys.GetKeys()...) {
 		return nil, ErrBadContextValues
 	}
 
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		md, _ := metadata.FromIncomingContext(ss.Context())
-		ctx := addMetadataToContext(ss.Context(), md, keys...)
+		ctx := addMetadataToContext(ss.Context(), md, contextKeys.GetKeys()...)
 		wrapped := newWrappedServerStream(ctx, ss)
 		return handler(srv, wrapped)
 	}, nil
@@ -111,15 +109,14 @@ func StreamServerInterceptorWithContextKeys(stringableKeys ...StringableKey) (gr
 // UnaryClientInterceptorWithContextKeys returns a client interceptor that adds specified context values to outgoing metadata.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func UnaryClientInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.UnaryClientInterceptor, error) {
-	keys := stringableKey2String(stringableKeys...)
-	if !validateContextKeys(keys...) {
+func UnaryClientInterceptorWithContextKeys(contextKeys contextKeys) (grpc.UnaryClientInterceptor, error) {
+	if !validateContextKeys(contextKeys.GetKeys()...) {
 		return nil, ErrBadContextValues
 	}
 
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// creating pairs of key values, ex. ["key1", "val1", "key2", "val2"]
-		pairs := createPairs(ctx, keys...)
+		pairs := createPairs(ctx, contextKeys.GetKeys()...)
 		ctx = metadata.AppendToOutgoingContext(ctx, pairs...)
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		return err
@@ -145,15 +142,15 @@ func (w *wrappedClientStream) SendMsg(m any) error {
 // StreamClientInterceptorWithContextKeys returns a client interceptor that adds specified context values to outgoing metadata.
 //
 // IMPORTANT: Only "a-z", "0-9", and "-_." characters allowed for keys
-func StreamClientInterceptorWithContextKeys(stringableKeys ...StringableKey) (grpc.StreamClientInterceptor, error) {
-	keys := stringableKey2String(stringableKeys...)
-	if !validateContextKeys(keys...) {
+func StreamClientInterceptorWithContextKeys(contextKeys contextKeys) (grpc.StreamClientInterceptor, error) {
+
+	if !validateContextKeys(contextKeys.GetKeys()...) {
 		return nil, ErrBadContextValues
 	}
 
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		// creating pairs of key values, ex. ["key1", "val1", "key2", "val2"]
-		pairs := createPairs(ctx, keys...)
+		pairs := createPairs(ctx, contextKeys.GetKeys()...)
 		ctx = metadata.AppendToOutgoingContext(ctx, pairs...)
 		clientStream, err := streamer(ctx, desc, cc, method, opts...)
 		return newWrappedClientStream(clientStream), err
@@ -216,7 +213,7 @@ func addMetadataToContext(ctx context.Context, md metadata.MD, keys ...string) c
 	return ctx
 }
 
-// createPairs creates pairs values alternating between stringableKey and string, meant to be used to append metadata to existing context
+// createPairs creates pairs values alternating between contextKey and string, meant to be used to append metadata to existing context
 func createPairs(ctx context.Context, keys ...string) []string {
 	pairs := make([]string, 0, len(keys)*2)
 	for _, key := range keys {
@@ -228,12 +225,4 @@ func createPairs(ctx context.Context, keys ...string) []string {
 		pairs = append(pairs, val)
 	}
 	return pairs
-}
-
-func stringableKey2String(stringableKeys ...StringableKey) []string {
-	keys := make([]string, 0, len(stringableKeys))
-	for _, stringableKey := range stringableKeys {
-		keys = append(keys, stringableKey.String())
-	}
-	return keys
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	pb "social-network/shared/gen-go/chat"
-	"social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
 	"google.golang.org/grpc/codes"
@@ -17,8 +17,8 @@ import (
 // Returns NULL ConvId if a duplicate DM exists (sqlc will error if RETURNING finds no rows).
 func (h *ChatHandler) CreatePrivateConversation(ctx context.Context, params *pb.CreatePrivateConvParams) (*pb.ConvId, error) {
 	convId, err := h.Application.CreatePrivateConversation(ctx, models.CreatePrivateConvParams{
-		UserA: customtypes.Id(params.UserA),
-		UserB: customtypes.Id(params.UserB),
+		UserA: ct.Id(params.UserA),
+		UserB: ct.Id(params.UserB),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create private conversation %v", err)
@@ -28,8 +28,8 @@ func (h *ChatHandler) CreatePrivateConversation(ctx context.Context, params *pb.
 
 func (h *ChatHandler) CreateGroupConversation(ctx context.Context, params *pb.CreateGroupConvParams) (*pb.ConvId, error) {
 	convId, err := h.Application.CreateGroupConversation(ctx, models.CreateGroupConvParams{
-		GroupId: customtypes.Id(params.GroupId),
-		UserIds: customtypes.FromInt64s(params.UserIds),
+		GroupId: ct.Id(params.GroupId),
+		UserIds: ct.FromInt64s(params.UserIds),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create private conversation %v", err)
@@ -40,7 +40,7 @@ func (h *ChatHandler) CreateGroupConversation(ctx context.Context, params *pb.Cr
 // Delete a conversation only if its members exactly match the provided list.
 // Returns 0 rows if conversation doesn't exist, members don’t match exactly, conversation has extra or missing members.
 func (h *ChatHandler) DeleteConversationByExactMembers(ctx context.Context, userIds *pb.UserIds) (*pb.Conversation, error) {
-	resp, err := h.Application.DeleteConversationByExactMembers(ctx, customtypes.FromInt64s(userIds.UserIds))
+	resp, err := h.Application.DeleteConversationByExactMembers(ctx, ct.FromInt64s(userIds.UserIds))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete conversation %v", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/media"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/mapping"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/url"
 	md "social-network/services/media/internal/models"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"time"
 )
 

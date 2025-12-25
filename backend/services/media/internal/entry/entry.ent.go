@@ -16,7 +16,7 @@ import (
 	"social-network/services/media/internal/handler"
 	"social-network/services/media/internal/validator"
 	"social-network/shared/gen-go/media"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
 
@@ -91,7 +91,7 @@ func Run() error {
 		media.RegisterMediaServiceServer,
 		service,
 		cfgs.Server.Port,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		return err

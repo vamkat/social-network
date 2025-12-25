@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/db"
 	"testing"
 

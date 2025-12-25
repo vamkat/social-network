@@ -1,7 +1,7 @@
 package models
 
 import (
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 )
 
 type SimpleIdReq struct {

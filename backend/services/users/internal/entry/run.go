@@ -15,7 +15,8 @@ import (
 	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
+
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
 	"syscall"
@@ -35,7 +36,7 @@ func Run() error {
 	chatClient, err := gorpc.GetGRpcClient(
 		chat.NewChatServiceClient,
 		cfgs.ChatGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatal("failed to create chat client")
@@ -43,7 +44,7 @@ func Run() error {
 	mediaClient, err := gorpc.GetGRpcClient(
 		media.NewMediaServiceClient,
 		cfgs.MediaGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatal("failed to create media client")
@@ -51,7 +52,7 @@ func Run() error {
 	notificationsClient, err := gorpc.GetGRpcClient(
 		notifications.NewNotificationServiceClient,
 		cfgs.NotificationsGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatal("failed to create chat client")
@@ -91,7 +92,7 @@ func Run() error {
 		users.RegisterUserServiceServer,
 		&service,
 		port,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("couldn't create gRpc Server: %s", err.Error())

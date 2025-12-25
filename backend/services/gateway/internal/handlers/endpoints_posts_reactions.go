@@ -6,7 +6,7 @@ import (
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/posts"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
 

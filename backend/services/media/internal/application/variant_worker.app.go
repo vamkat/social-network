@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 )
 
 var processingVariants atomic.Bool

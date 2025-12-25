@@ -13,18 +13,18 @@ import (
 //
 // Usage:
 //
-//	usersServiceClient, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", []customtypes.CtxKey{customtypes.Key1, customtypes.Key2})
+//	usersServiceClient, err = gorpc.GetGRpcClient(users.NewUserServiceClient, "users:50051", []ct.CtxKey{ct.Key1, ct.Key2})
 //
 // Parameters:
 //   - constructor: gRPC-generated constructor function for the client service.
 //   - fullAddress: Full address of the service (host:port).
 //   - contextKeys: Keys to propagate from outgoing context into the gRPC metadata.
-func GetGRpcClient[T any](constructor func(grpc.ClientConnInterface) T, fullAddress string, contextKeys []StringableKey) (T, error) {
-	customUnaryInterceptor, err := UnaryClientInterceptorWithContextKeys(contextKeys...)
+func GetGRpcClient[T any](constructor func(grpc.ClientConnInterface) T, fullAddress string, contextKeys contextKeys) (T, error) {
+	customUnaryInterceptor, err := UnaryClientInterceptorWithContextKeys(contextKeys)
 	if err != nil {
 		return *new(T), err
 	}
-	customStreamInterceptor, err := StreamClientInterceptorWithContextKeys(contextKeys...)
+	customStreamInterceptor, err := StreamClientInterceptorWithContextKeys(contextKeys)
 	if err != nil {
 		return *new(T), err
 	}

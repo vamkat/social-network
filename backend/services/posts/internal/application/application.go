@@ -7,7 +7,7 @@ import (
 	ds "social-network/services/posts/internal/db/dbservice"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
 	redis_connector "social-network/shared/go/redis"

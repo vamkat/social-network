@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	cm "social-network/shared/gen-go/common"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
 

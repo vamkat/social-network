@@ -9,7 +9,7 @@ import (
 	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	"time"
 )

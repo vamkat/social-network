@@ -15,9 +15,10 @@ import (
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	redis_connector "social-network/shared/go/redis"
+	tele "social-network/shared/go/telemetry"
 	"syscall"
 	"time"
 )
@@ -26,6 +27,8 @@ func Run() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
 	cfgs := getConfigs()
+
+	tele.InitTelemetry(ctx, "gateway", ct.CommonKeys(), cfgs.EnableDebugLogs)
 
 	// Cache
 	CacheService := redis_connector.NewRedisClient(
@@ -46,7 +49,7 @@ func Run() {
 	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfgs.UsersGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to users service: %v", err)
@@ -55,7 +58,7 @@ func Run() {
 	PostsService, err := gorpc.GetGRpcClient(
 		posts.NewPostsServiceClient,
 		cfgs.PostsGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to posts service: %v", err)
@@ -64,7 +67,7 @@ func Run() {
 	ChatService, err := gorpc.GetGRpcClient(
 		chat.NewChatServiceClient,
 		cfgs.ChatGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to chat service: %v", err)
@@ -73,7 +76,7 @@ func Run() {
 	MediaService, err := gorpc.GetGRpcClient(
 		media.NewMediaServiceClient,
 		cfgs.MediaGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to media service: %v", err)
@@ -147,6 +150,7 @@ type configs struct {
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+	EnableDebugLogs bool   `env:"ENABLE_DEBUG_LOGS"`
 }
 
 func getConfigs() configs { // sensible defaults
@@ -160,6 +164,7 @@ func getConfigs() configs { // sensible defaults
 		MediaGRPCAddr:   "media:50051",
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
+		EnableDebugLogs: true,
 	}
 
 	// load environment variables if present

@@ -1,10 +1,10 @@
-package customtypes_test
+package ct_test
 
 import (
 	"encoding/json"
 	"os"
 	"reflect"
-	"social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 
 	"strings"
 	"testing"
@@ -25,13 +25,13 @@ func mustSetEnv(t *testing.T, key, value string) {
 func TestIdJSON(t *testing.T) {
 	mustSetEnv(t, "ENC_KEY", "test-salt")
 
-	id := customtypes.Id(123)
+	id := ct.Id(123)
 	b, err := json.Marshal(id)
 	if err != nil {
 		t.Fatalf("marshal error: %v", err)
 	}
 
-	var decoded customtypes.Id
+	var decoded ct.Id
 	err = json.Unmarshal(b, &decoded)
 	if err != nil {
 		t.Fatalf("unmarshal error: %v", err)
@@ -43,7 +43,7 @@ func TestIdJSON(t *testing.T) {
 }
 
 func TestIdValidate(t *testing.T) {
-	if err := customtypes.Id(-5).Validate(); err == nil {
+	if err := ct.Id(-5).Validate(); err == nil {
 		t.Fatal("expected validation error for negative Id")
 	}
 }
@@ -52,10 +52,10 @@ func TestIdValidate(t *testing.T) {
 // Id
 // ------------------------------------------------------------
 func TestIdValidation(t *testing.T) {
-	if err := customtypes.Id(-1).Validate(); err == nil {
+	if err := ct.Id(-1).Validate(); err == nil {
 		t.Fatal("expected error for invalid id")
 	}
-	if err := customtypes.Id(5).Validate(); err != nil {
+	if err := ct.Id(5).Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
@@ -64,10 +64,10 @@ func TestIdValidation(t *testing.T) {
 // Name
 // ------------------------------------------------------------
 func TestNameValidation(t *testing.T) {
-	if err := customtypes.Name("A").Validate(); err == nil {
+	if err := ct.Name("A").Validate(); err == nil {
 		t.Fatal("expected name length error")
 	}
-	if err := customtypes.Name("John").Validate(); err != nil {
+	if err := ct.Name("John").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
@@ -76,10 +76,10 @@ func TestNameValidation(t *testing.T) {
 // Username
 // ------------------------------------------------------------
 func TestUsernameValidation(t *testing.T) {
-	if err := customtypes.Username("ab").Validate(); err == nil {
+	if err := ct.Username("ab").Validate(); err == nil {
 		t.Fatal("should fail: too short")
 	}
-	if err := customtypes.Username("valid_user123").Validate(); err != nil {
+	if err := ct.Username("valid_user123").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
@@ -88,10 +88,10 @@ func TestUsernameValidation(t *testing.T) {
 // Email
 // ------------------------------------------------------------
 func TestEmailValidation(t *testing.T) {
-	if err := customtypes.Email("not-an-email").Validate(); err == nil {
+	if err := ct.Email("not-an-email").Validate(); err == nil {
 		t.Fatal("expected invalid email error")
 	}
-	if err := customtypes.Email("test@example.com").Validate(); err != nil {
+	if err := ct.Email("test@example.com").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
@@ -100,13 +100,13 @@ func TestEmailValidation(t *testing.T) {
 // Limit
 // ------------------------------------------------------------
 func TestLimitValidation(t *testing.T) {
-	if err := customtypes.Limit(0).Validate(); err == nil {
+	if err := ct.Limit(0).Validate(); err == nil {
 		t.Fatal("expected error")
 	}
-	if err := customtypes.Limit(500).Validate(); err != nil {
+	if err := ct.Limit(500).Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
-	if err := customtypes.Limit(501).Validate(); err == nil {
+	if err := ct.Limit(501).Validate(); err == nil {
 		t.Fatal("expected upper bound error")
 	}
 }
@@ -115,10 +115,10 @@ func TestLimitValidation(t *testing.T) {
 // Offset
 // ------------------------------------------------------------
 func TestOffsetValidation(t *testing.T) {
-	if err := customtypes.Offset(-1).Validate(); err == nil {
+	if err := ct.Offset(-1).Validate(); err == nil {
 		t.Fatal("expected error for negative offset")
 	}
-	if err := customtypes.Offset(10).Validate(); err != nil {
+	if err := ct.Offset(10).Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
@@ -132,7 +132,7 @@ func TestPasswordJSON(t *testing.T) {
 	// raw password JSON
 	body := []byte(`"mySecretPass"`)
 
-	var p customtypes.Password
+	var p ct.Password
 	if err := json.Unmarshal(body, &p); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestPasswordJSON(t *testing.T) {
 func TestPasswordValidation(t *testing.T) {
 	mustSetEnv(t, "PASSWORD_SECRET", "supersecret")
 
-	var p customtypes.Password
+	var p ct.Password
 	_ = json.Unmarshal([]byte(`"Password!123"`), &p)
 
 	if err := p.Validate(); err != nil {
@@ -167,17 +167,17 @@ func TestDOBValidation(t *testing.T) {
 	valid := now.AddDate(-20, 0, 0)
 	future := now.AddDate(1, 0, 0)
 
-	d := customtypes.DateOfBirth(valid)
+	d := ct.DateOfBirth(valid)
 	if err := d.Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 
-	d = customtypes.DateOfBirth(under13)
+	d = ct.DateOfBirth(under13)
 	if err := d.Validate(); err == nil {
 		t.Fatal("expected min-age error")
 	}
 
-	d = customtypes.DateOfBirth(future)
+	d = ct.DateOfBirth(future)
 	if err := d.Validate(); err == nil {
 		t.Fatal("expected future-date error")
 	}
@@ -187,13 +187,13 @@ func TestDOBValidation(t *testing.T) {
 // Identifier
 // ------------------------------------------------------------
 func TestIdentifierValidation(t *testing.T) {
-	if err := customtypes.Identifier("bad@format@x").Validate(); err == nil {
+	if err := ct.Identifier("bad@format@x").Validate(); err == nil {
 		t.Fatal("expected invalid identifier")
 	}
-	if err := customtypes.Identifier("validUser_123").Validate(); err != nil {
+	if err := ct.Identifier("validUser_123").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
-	if err := customtypes.Identifier("email@test.com").Validate(); err != nil {
+	if err := ct.Identifier("email@test.com").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
@@ -202,13 +202,13 @@ func TestIdentifierValidation(t *testing.T) {
 // About
 // ------------------------------------------------------------
 func TestAboutValidation(t *testing.T) {
-	if err := customtypes.About("ok!").Validate(); err != nil {
+	if err := ct.About("ok!").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
-	if err := customtypes.About("\x01bad").Validate(); err == nil {
+	if err := ct.About("\x01bad").Validate(); err == nil {
 		t.Fatal("expected control char error")
 	}
-	if err := customtypes.About("ab").Validate(); err == nil {
+	if err := ct.About("ab").Validate(); err == nil {
 		t.Fatal("expected min length error")
 	}
 }
@@ -217,10 +217,10 @@ func TestAboutValidation(t *testing.T) {
 // Title
 // ------------------------------------------------------------
 func TestTitleValidation(t *testing.T) {
-	if err := customtypes.Title("A title").Validate(); err != nil {
+	if err := ct.Title("A title").Validate(); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
-	if err := customtypes.Title(" ").Validate(); err == nil {
+	if err := ct.Title(" ").Validate(); err == nil {
 		t.Fatal("expected trimmed length error")
 	}
 }
@@ -230,10 +230,10 @@ func TestTitleValidation(t *testing.T) {
 // ------------------------------------------------------------
 func TestValidateStruct(t *testing.T) {
 	type TestReq struct {
-		Name     customtypes.Name     `validate:"nullable"`
-		Email    customtypes.Email    // required
-		About    customtypes.About    `validate:"nullable"`
-		Username customtypes.Username `validate:"nullable"`
+		Name     ct.Name     `validate:"nullable"`
+		Email    ct.Email    // required
+		About    ct.About    `validate:"nullable"`
+		Username ct.Username `validate:"nullable"`
 	}
 
 	ok := TestReq{
@@ -243,13 +243,13 @@ func TestValidateStruct(t *testing.T) {
 		Username: "user_1",
 	}
 
-	if err := customtypes.ValidateStruct(ok); err != nil {
+	if err := ct.ValidateStruct(ok); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 
 	// Missing required Email
 	bad := TestReq{}
-	err := customtypes.ValidateStruct(bad)
+	err := ct.ValidateStruct(bad)
 	if err == nil {
 		t.Fatal("expected missing required field error")
 	}
@@ -283,9 +283,9 @@ func stringsAfter(s, sep string) string {
 
 func TestValidateStruct_BoolAndOffsetExempt(t *testing.T) {
 	type TestStruct struct {
-		Flag   bool               `validate:""` // bool = false should NOT trigger required
-		Number customtypes.Offset `validate:""` // Offset = 0 should NOT trigger required
-		Name   customtypes.Name   `validate:""` // string = "" SHOULD trigger required
+		Flag   bool      `validate:""` // bool = false should NOT trigger required
+		Number ct.Offset `validate:""` // Offset = 0 should NOT trigger required
+		Name   ct.Name   `validate:""` // string = "" SHOULD trigger required
 	}
 	s := TestStruct{
 		Flag:   false, // should NOT fail
@@ -293,7 +293,7 @@ func TestValidateStruct_BoolAndOffsetExempt(t *testing.T) {
 		Name:   "",    // should fail
 	}
 
-	err := customtypes.ValidateStruct(s)
+	err := ct.ValidateStruct(s)
 	if err == nil {
 		t.Fatalf("expected validation error but got none")
 	}
@@ -316,18 +316,18 @@ func TestValidateStruct_BoolAndOffsetExempt(t *testing.T) {
 func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 	type TestStruct struct {
 		// Slice of custom types - nullable
-		NullableIDs customtypes.Ids `validate:"nullable"`
+		NullableIDs ct.Ids `validate:"nullable"`
 
 		// Required field to satisfy other validations
-		Email customtypes.Email
+		Email ct.Email
 	}
 
 	type TestStructRequired struct {
 		// Slice of custom types - not nullable
-		RequiredIDs customtypes.Ids
+		RequiredIDs ct.Ids
 
 		// Required field to satisfy other validations
-		Email customtypes.Email
+		Email ct.Email
 	}
 
 	tests := []struct {
@@ -339,7 +339,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		{
 			name: "valid required IDs",
 			input: TestStructRequired{
-				RequiredIDs: customtypes.Ids{1, 2},
+				RequiredIDs: ct.Ids{1, 2},
 				Email:       "test@example.com",
 			},
 			wantError: false,
@@ -356,7 +356,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		{
 			name: "empty required IDs - should fail",
 			input: TestStructRequired{
-				RequiredIDs: customtypes.Ids{},
+				RequiredIDs: ct.Ids{},
 				Email:       "test@example.com",
 			},
 			wantError: true,
@@ -365,7 +365,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		{
 			name: "required IDs with zero element - should fail",
 			input: TestStructRequired{
-				RequiredIDs: customtypes.Ids{1, 0},
+				RequiredIDs: ct.Ids{1, 0},
 				Email:       "test@example.com",
 			},
 			wantError: true,
@@ -374,7 +374,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		{
 			name: "required IDs with negative element - should fail on validation",
 			input: TestStructRequired{
-				RequiredIDs: customtypes.Ids{1, -1},
+				RequiredIDs: ct.Ids{1, -1},
 				Email:       "test@example.com",
 			},
 			wantError: true,
@@ -391,7 +391,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		{
 			name: "nullable IDs with empty slice - should pass",
 			input: TestStruct{
-				NullableIDs: customtypes.Ids{},
+				NullableIDs: ct.Ids{},
 				Email:       "test@example.com",
 			},
 			wantError: false,
@@ -399,7 +399,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		{
 			name: "nullable IDs with zero element - should fail (elements still validated)",
 			input: TestStruct{
-				NullableIDs: customtypes.Ids{1, 0},
+				NullableIDs: ct.Ids{1, 0},
 				Email:       "test@example.com",
 			},
 			wantError: true,
@@ -409,7 +409,7 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := customtypes.ValidateStruct(tt.input)
+			err := ct.ValidateStruct(tt.input)
 			if tt.wantError {
 				if err == nil {
 					t.Errorf("expected error on %v but got none", tt)

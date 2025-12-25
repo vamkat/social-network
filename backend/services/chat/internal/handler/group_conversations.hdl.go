@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"social-network/shared/gen-go/chat"
-	"social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
 	"google.golang.org/grpc/codes"
@@ -14,8 +14,8 @@ import (
 // Existing members are ignored, new members are added.
 func (h *ChatHandler) AddMembersToGroupConversation(ctx context.Context, params *chat.AddMembersToGroupConversationParams) (*chat.ConvId, error) {
 	resp, err := h.Application.AddMembersToGroupConversation(ctx, models.AddMembersToGroupConversationParams{
-		GroupId: customtypes.Id(params.GroupId),
-		UserIds: customtypes.FromInt64s(params.UserIds),
+		GroupId: ct.Id(params.GroupId),
+		UserIds: ct.FromInt64s(params.UserIds),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to add members %v", err)

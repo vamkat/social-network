@@ -33,14 +33,14 @@ Validates structs by iterating over exported fields and checking those that impl
 
 ```go
 type RegisterRequest struct {
-    Username  customtypes.Username  `json:"username,omitempty" validate:"nullable"` // optional
-    FirstName customtypes.Name      `json:"first_name,omitempty" validate:"nullable"` // optional
-    LastName  customtypes.Name      `json:"last_name"` // required
-    About     customtypes.About     `json:"about"`     // required
-    Email     customtypes.Email     `json:"email,omitempty" validate:"nullable"` // optional
+    Username  ct.Username  `json:"username,omitempty" validate:"nullable"` // optional
+    FirstName ct.Name      `json:"first_name,omitempty" validate:"nullable"` // optional
+    LastName  ct.Name      `json:"last_name"` // required
+    About     ct.About     `json:"about"`     // required
+    Email     ct.Email     `json:"email,omitempty" validate:"nullable"` // optional
 }
 
-err := customtypes.ValidateStruct(req)
+err := ct.ValidateStruct(req)
 if err != nil {
     // handle validation errors
 }

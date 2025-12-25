@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	ds "social-network/services/users/internal/db/dbservice"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgtype"

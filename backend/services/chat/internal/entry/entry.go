@@ -14,7 +14,7 @@ import (
 	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
 
@@ -44,11 +44,11 @@ func Run() error {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopSignal() //TODO check if this is ok
 
-	notifClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, cfgs.NotificationsAdress, contextkeys.CommonKeys())
+	notifClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, cfgs.NotificationsAdress, ct.CommonKeys())
 	if err != nil {
 		log.Fatal("failed to create notification client: ", err)
 	}
-	userClient, err := gorpc.GetGRpcClient(users.NewUserServiceClient, cfgs.UsersAdress, contextkeys.CommonKeys())
+	userClient, err := gorpc.GetGRpcClient(users.NewUserServiceClient, cfgs.UsersAdress, ct.CommonKeys())
 	if err != nil {
 		log.Fatal("failed to create user client: ", err)
 	}
@@ -76,7 +76,7 @@ func Run() error {
 		chat.RegisterChatServiceServer,
 		handler,
 		cfgs.GrpcServerPort,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatal("failed to create server:", err.Error())

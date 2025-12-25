@@ -6,7 +6,7 @@ import (
 	"social-network/shared/gen-go/media"
 	mediapb "social-network/shared/gen-go/media"
 	userpb "social-network/shared/gen-go/users"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

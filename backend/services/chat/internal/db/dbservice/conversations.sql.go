@@ -3,7 +3,7 @@ package dbservice
 import (
 	"context"
 	"fmt"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"

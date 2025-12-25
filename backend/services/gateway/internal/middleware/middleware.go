@@ -8,7 +8,7 @@ import (
 	"slices"
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 
 	"strings"
 )

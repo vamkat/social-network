@@ -14,7 +14,8 @@ import (
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
-	contextkeys "social-network/shared/go/context-keys"
+	"social-network/shared/go/ct"
+
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
 	"syscall"
@@ -37,7 +38,7 @@ func Run() error {
 	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfgs.UsersGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to users service: %v", err)
@@ -46,7 +47,7 @@ func Run() error {
 	MediaService, err := gorpc.GetGRpcClient(
 		media.NewMediaServiceClient,
 		cfgs.MediaGRPCAddr,
-		contextkeys.CommonKeys(),
+		ct.CommonKeys(),
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to media service: %v", err)
@@ -61,7 +62,7 @@ func Run() error {
 	service := handler.NewPostsHandler(app)
 
 	log.Println("Running gRpc service...")
-	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[posts.PostsServiceServer](posts.RegisterPostsServiceServer, service, ":50051", contextkeys.CommonKeys())
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[posts.PostsServiceServer](posts.RegisterPostsServiceServer, service, ":50051", ct.CommonKeys())
 	if err != nil {
 		return err
 	}

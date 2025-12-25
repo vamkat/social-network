@@ -4,7 +4,7 @@ import (
 	"context"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"time"
 )
 

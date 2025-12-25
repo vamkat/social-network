@@ -3,7 +3,7 @@ package dbservice
 import (
 	"context"
 	"database/sql"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 )
 
 // No rows is error

@@ -8,7 +8,7 @@ import (
 	"social-network/services/gateway/internal/utils"
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/users"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	"strings"
 	"time"

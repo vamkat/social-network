@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
 

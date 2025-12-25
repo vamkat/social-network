@@ -1,6 +1,6 @@
 package dbservice
 
-import ct "social-network/shared/go/customtypes"
+import "social-network/shared/go/ct"
 
 // General file meta struct mirroring the files table. In some cases it refers to a file's variant
 // when the Variant field is not missing or marked as Original.
