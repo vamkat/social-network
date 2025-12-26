@@ -65,7 +65,7 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 		variants,
 	)
 	if err != nil {
-		if errors.Is(err, application.ErrValidation) {
+		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to generate upload url: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "failed to generate upload url: %v", err)
@@ -99,7 +99,7 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	// Call application
 	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
-		if errors.Is(err, application.ErrValidation) {
+		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to get generate download url: %v", err)
 		}
 		if errors.Is(err, application.ErrFailed) {
@@ -132,10 +132,13 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	// Call application
 	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
-		if errors.Is(err, application.ErrValidation) {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to get images: %v", err)
+		if errors.Is(err, application.ErrReqValidation) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to generate download urls: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get images: %v", err)
+		if errors.Is(err, application.ErrNotFound) {
+			return nil, status.Errorf(codes.NotFound, "failed to generated download urls: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to generated download urls: %v", err)
 	}
 
 	// Build response
@@ -160,6 +163,8 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 
 // Checks if the upload matches the pre defined file metadata and configs FileService file constraints.
 // If validation fails file cannot be retrived and will be deleted from file service after 24 hours
+// As an exemption returns a FailedPrecondition upon ErrFailed return thus giving a chance for the file to be validated
+// in the future.
 func (m *MediaHandler) ValidateUpload(ctx context.Context,
 	req *pb.ValidateUploadRequest) (*pb.ValidateUploadResponse, error) {
 	if req == nil || req.FileId < 1 {
@@ -169,7 +174,7 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 	// Call application
 	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
-		if errors.Is(err, application.ErrValidation) {
+		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to validate upload: %v", err)
 		}
 
