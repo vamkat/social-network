@@ -19,7 +19,6 @@ import (
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
-	tele "social-network/shared/go/telemetry"
 
 	"syscall"
 
@@ -36,7 +35,7 @@ func Run() error {
 	// close := tele.InitTelemetry(ctx, "media", ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
 	// defer close()
 
-	tele.Info(ctx, "initialized telemetry")
+	// tele.Info(ctx, "initialized telemetry")
 
 	pool, err := postgresql.NewPool(ctx, cfgs.DB.URL)
 	if err != nil {
@@ -183,10 +182,12 @@ func Run() error {
 func getConfigs() configs.Config {
 	return configs.Config{
 		Server: configs.Server{
-			Port: os.Getenv("SERVICE_PORT"),
+			Port: ":50051",
+			// Port: os.Getenv("SERVICE_PORT"),
 		},
 		DB: configs.Db{
-			URL:                      os.Getenv("DATABASE_URL"),
+			// URL:                      os.Getenv("DATABASE_URL"),
+			URL:                      "postgres://postgres:secret@localhost:5437/social_media?sslmode=disable",
 			StaleFilesWorkerInterval: 1 * time.Hour,
 		},
 		FileService: configs.FileService{
@@ -214,10 +215,13 @@ func getConfigs() configs.Config {
 					".webp": true,
 				},
 			},
-			Endpoint:       os.Getenv("MINIO_ENDPOINT"),
-			PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
-			AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
-			Secret:         os.Getenv("MINIO_SECRET_KEY"),
+			// Endpoint:       os.Getenv("MINIO_ENDPOINT"),
+			// PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
+			// AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
+			// Secret:         os.Getenv("MINIO_SECRET_KEY"),
+			Endpoint:  "localhost:9000",
+			AccessKey: "minioadmin",
+			Secret:    "minioadmin",
 		},
 		EnableDebugLogs: true,
 		SimplePrint:     true,
