@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"social-network/services/media/internal/application"
@@ -64,7 +65,10 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 		variants,
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to upload image: %v", err)
+		if errors.Is(err, application.ErrValidation) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to generate upload url: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to generate upload url: %v", err)
 	}
 
 	return &pb.UploadImageResponse{
@@ -76,7 +80,7 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 // GetImage handles the gRPC request for retrieving an image download URL.
 // Expiration time of link is set according to image visibility settings set on upload and
 // is defined withing the methods of custom type 'FileVisibility'.
-// Unvalidated uploads wont be fetched.
+// Unvalidated uploads wont be fetched. In this case most likelly you will get a codes.NotFound error.
 // If variant requested is not yet created the handler returns original
 //
 // Usage:
@@ -95,7 +99,16 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	// Call application
 	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get image: %v", err)
+		if errors.Is(err, application.ErrValidation) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to get generate download url: %v", err)
+		}
+		if errors.Is(err, application.ErrFailed) {
+			return nil, status.Errorf(codes.NotFound, "failed to get generate download url: %v", err)
+		}
+		if errors.Is(err, application.ErrNotValidated) {
+			return nil, status.Errorf(codes.FailedPrecondition, "failed to get generate download url: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get generate download url: %v", err)
 	}
 
 	return &pb.GetImageResponse{
@@ -103,6 +116,7 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	}, nil
 }
 
+// TODO: Implement error codes
 func (m *MediaHandler) GetImages(ctx context.Context,
 	req *pb.GetImagesRequest) (*pb.GetImagesResponse, error) {
 	if req == nil || req.ImgIds == nil {
@@ -118,6 +132,9 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	// Call application
 	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
+		if errors.Is(err, application.ErrValidation) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to get images: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get images: %v", err)
 	}
 
@@ -152,6 +169,18 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 	// Call application
 	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
+		if errors.Is(err, application.ErrValidation) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to validate upload: %v", err)
+		}
+
+		if errors.Is(err, application.ErrNotFound) {
+			return nil, status.Errorf(codes.NotFound, "failed to validate upload: %v", err)
+		}
+
+		if errors.Is(err, application.ErrFailed) {
+			return nil, status.Errorf(codes.FailedPrecondition, "file is invalid: %v", err)
+		}
+
 		return nil, status.Errorf(codes.Internal, "failed to validate upload: %v", err)
 	}
 

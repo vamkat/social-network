@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -20,6 +22,14 @@ type UploadImageReq struct {
 	Visibility ct.FileVisibility
 }
 
+var (
+	ErrValidation   = errors.New("validation error")
+	ErrNotValidated = errors.New("file not validated")
+	ErrFailed       = errors.New("file has failed validation")
+	ErrInternal     = errors.New("internal error")
+	ErrNotFound     = errors.New("not found")
+)
+
 // Provides a fileId and an upload url targeted on bucket Originals defined on configs.
 // Creates all variant entries provided in []variants for workers to later
 // create asynchronously the compressed files.
@@ -29,14 +39,19 @@ func (m *MediaService) UploadImage(ctx context.Context,
 	variants []ct.FileVariant,
 ) (fileId ct.Id, upUrl string, err error) {
 
-	if req.Filename == "" || req.MimeType == "" ||
-		req.SizeBytes < 1 || !req.Visibility.IsValid() ||
-		exp < 1 {
-		return 0, "", ct.ErrValidation
+	if err := m.validateUploadRequest(
+		req,
+		exp,
+		variants,
+	); err != nil {
+		return 0, "", errors.Join(ErrValidation, fmt.Errorf("upload image: validation error %w", err))
 	}
+
 	objectKey := uuid.NewString()
-	bucket := m.Cfgs.FileService.Buckets.Originals
+	orignalsBucket := m.Cfgs.FileService.Buckets.Originals
+	variantsBucket := m.Cfgs.FileService.Buckets.Variants
 	var url *url.URL
+
 	errTx := m.txRunner.RunTx(ctx,
 		func(tx *dbservice.Queries) error {
 			fileId, err = tx.CreateFile(ctx, dbservice.File{
@@ -44,25 +59,28 @@ func (m *MediaService) UploadImage(ctx context.Context,
 				MimeType:   req.MimeType,
 				SizeBytes:  req.SizeBytes,
 				Visibility: req.Visibility,
-				Bucket:     m.Cfgs.FileService.Buckets.Originals,
+				Bucket:     orignalsBucket,
 				ObjectKey:  objectKey,
 				Status:     ct.Pending,
 				Variant:    ct.Original,
 			})
 
 			if err != nil {
-				return err
+				return fmt.Errorf("upload image: creating original file db entry error for file %v: %w", req.Filename, err)
 			}
 
-			fmt.Printf("Creating variants %v for file %v\n", variants, fileId)
+			fmt.Printf("Creating variant db entries %v for file %v\n", variants, fileId)
 
 			for _, v := range variants {
+				if !v.IsValid() || v == ct.Original {
+					continue
+				}
 				_, err := tx.CreateVariant(ctx, dbservice.File{
 					Id:         fileId,
 					Filename:   req.Filename,
 					MimeType:   "image/webp",
 					SizeBytes:  req.SizeBytes,
-					Bucket:     m.Cfgs.FileService.Buckets.Variants,
+					Bucket:     variantsBucket,
 					ObjectKey:  objectKey + "/" + v.String(),
 					Visibility: req.Visibility,
 					Status:     ct.Pending,
@@ -70,14 +88,16 @@ func (m *MediaService) UploadImage(ctx context.Context,
 				})
 				if err != nil {
 					return fmt.Errorf(
-						"internal database error: %v failed to create variant %v for file with id: %v",
-						err, v, fileId)
+						"upload image: internal database error: failed to create variant %v for file with id %v: %w",
+						v, fileId, err)
 				}
 			}
 
-			url, err = m.Clients.GenerateUploadURL(ctx, bucket, objectKey, exp)
+			url, err = m.Clients.GenerateUploadURL(ctx, orignalsBucket, objectKey, exp)
 			if err != nil {
-				return err
+				return fmt.Errorf(
+					"upload image: S3 error: failed to create upload url for file with id %v: %w",
+					fileId, err)
 			}
 			return nil
 		},
@@ -95,7 +115,7 @@ func (m *MediaService) GetImage(ctx context.Context,
 	imgId ct.Id, variant ct.FileVariant,
 ) (downUrl string, err error) {
 	if !imgId.IsValid() || !variant.IsValid() {
-		return "", ct.ErrValidation
+		return "", ErrValidation
 	}
 
 	var req dbservice.File
@@ -106,12 +126,24 @@ func (m *MediaService) GetImage(ctx context.Context,
 			switch variant {
 			case ct.Original:
 				req, err = tx.GetFileById(ctx, imgId)
+				if req.Status != ct.Complete {
+					return errors.Join(
+						ErrNotValidated,
+						fmt.Errorf("file validation status is %v", req.Status))
+				}
 			default:
 				req, err = tx.GetVariant(ctx, imgId, variant)
 				if req.Status != ct.Complete {
 					req, err = tx.GetFileById(ctx, imgId)
 					if req.Status != ct.Complete {
-						return fmt.Errorf("file validation status is %v", req.Status)
+						if req.Status == ct.Failed {
+							return errors.Join(
+								ErrFailed,
+								fmt.Errorf("file validation status is %v", req.Status))
+						}
+						return errors.Join(
+							ErrNotValidated,
+							fmt.Errorf("file validation status is %v", req.Status))
 					}
 				}
 			}
@@ -154,7 +186,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 
 	if !imgIds.IsValid() || !variant.IsValid() || variant == ct.Original {
 		//fmt.Println("validation error", ct.ErrValidation)
-		return nil, nil, ct.ErrValidation
+		return nil, nil, ErrValidation
 	}
 	var na ct.Ids
 	var fms []dbservice.File
@@ -207,29 +239,38 @@ func (m *MediaService) GetImages(ctx context.Context,
 func (m *MediaService) ValidateUpload(ctx context.Context,
 	fileId ct.Id, returnURL bool) (url string, err error) {
 	if !fileId.IsValid() {
-		return url, fmt.Errorf("fileId invalid, is not above 0: %w", ct.ErrValidation)
+		return url, fmt.Errorf("fileId invalid, is not above 0: %w", ErrValidation)
 	}
 
 	fileMeta, err := m.Queries.GetFileById(ctx, fileId)
 	if err != nil {
-		return url, err
-	}
-
-	if err := m.Clients.ValidateUpload(ctx, mapping.DbToModel(fileMeta)); err != nil {
-		if err := m.Clients.DeleteFile(ctx, fileMeta.Bucket, fileMeta.ObjectKey); err != nil {
-			return url, err
-		}
-		if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Failed); err != nil {
-			return url, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return url, ErrNotFound
 		}
 		return url, err
 	}
 
-	if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Complete); err != nil {
-		return url, err
+	if fileMeta.Status == ct.Failed {
+		return url, ErrFailed
 	}
 
-	log.Printf("Media Service: FileId %v successfully validated and marked as Complete", fileId)
+	if fileMeta.Status != ct.Complete {
+		if errOuter := m.Clients.ValidateUpload(ctx, mapping.DbToModel(fileMeta)); errOuter != nil {
+			if err := m.Clients.DeleteFile(ctx, fileMeta.Bucket, fileMeta.ObjectKey); err != nil {
+				return url, errors.Join(ErrFailed, errOuter, err)
+			}
+			if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Failed); err != nil {
+				return url, errors.Join(ErrFailed, errOuter, err)
+			}
+			return url, errors.Join(ErrFailed, errOuter)
+		}
+
+		if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Complete); err != nil {
+			return url, err
+		}
+
+		log.Printf("Media Service: FileId %v successfully validated and marked as Complete", fileId)
+	}
 
 	if returnURL {
 		u, err := m.Clients.GenerateDownloadURL(ctx,
@@ -245,16 +286,3 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 	}
 	return url, nil
 }
-
-// TODO: Make this part of ct.Ids methods
-// func uniqueIds(ids ct.Ids) ct.Ids {
-// 	uniq := make(map[ct.Id]struct{}, len(ids))
-// 	cleaned := make([]ct.Id, 0, len(ids))
-// 	for _, id := range ids {
-// 		if _, ok := uniq[id]; !ok {
-// 			uniq[id] = struct{}{}
-// 			cleaned = append(cleaned, id)
-// 		}
-// 	}
-// 	return ct.Ids(cleaned)
-// }
