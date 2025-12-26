@@ -7,6 +7,9 @@ type Config struct {
 	DB          Db
 	FileService FileService
 	Clients     Clients
+	// Tele
+	EnableDebugLogs bool
+	SimplePrint     bool
 }
 
 type FileService struct {

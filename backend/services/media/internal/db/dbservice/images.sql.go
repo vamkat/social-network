@@ -126,6 +126,10 @@ func (q *Queries) GetFiles(
 		files = append(files, fm)
 	}
 
+	// if len(files) == 0 {
+	// 	return nil, sql.ErrNoRows
+	// }
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}

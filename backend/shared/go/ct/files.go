@@ -216,7 +216,7 @@ func (v UploadStatus) String() string {
 	return string(v)
 }
 
-func (v UploadStatus) isValid() bool {
+func (v UploadStatus) IsValid() bool {
 	switch v {
 	case Pending, Complete, Failed, Processing:
 		return true
@@ -226,7 +226,7 @@ func (v UploadStatus) isValid() bool {
 }
 
 func (v UploadStatus) Validate() error {
-	if !v.isValid() {
+	if !v.IsValid() {
 		return fmt.Errorf("invalid ImgVariant: %q", v)
 	}
 	return nil
@@ -246,7 +246,7 @@ func (v *UploadStatus) UnmarshalJSON(data []byte) error {
 	}
 
 	val := UploadStatus(s)
-	if !val.isValid() {
+	if !val.IsValid() {
 		return fmt.Errorf("invalid ImgVariant: %q", s)
 	}
 
@@ -263,14 +263,14 @@ func (v *UploadStatus) Scan(src any) error {
 	switch s := src.(type) {
 	case string:
 		val := UploadStatus(s)
-		if !val.isValid() {
+		if !val.IsValid() {
 			return fmt.Errorf("invalid ImgStatus: %q", s)
 		}
 		*v = val
 		return nil
 	case []byte:
 		val := UploadStatus(string(s))
-		if !val.isValid() {
+		if !val.IsValid() {
 			return fmt.Errorf("invalid ImgStatus: %q", s)
 		}
 		*v = val

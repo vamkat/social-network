@@ -19,6 +19,7 @@ import (
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
+	tele "social-network/shared/go/telemetry"
 
 	"syscall"
 
@@ -30,6 +31,12 @@ func Run() error {
 
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopSignal()
+
+	// Todo: Check ctx functionality on shut down
+	// close := tele.InitTelemetry(ctx, "media", ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
+	// defer close()
+
+	tele.Info(ctx, "initialized telemetry")
 
 	pool, err := postgresql.NewPool(ctx, cfgs.DB.URL)
 	if err != nil {
@@ -212,5 +219,7 @@ func getConfigs() configs.Config {
 			AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
 			Secret:         os.Getenv("MINIO_SECRET_KEY"),
 		},
+		EnableDebugLogs: true,
+		SimplePrint:     true,
 	}
 }
