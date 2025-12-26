@@ -2,7 +2,7 @@ package application
 
 import (
 	"fmt"
-	ct "social-network/shared/go/customtypes"
+	"social-network/shared/go/ct"
 	"time"
 )
 
