@@ -28,7 +28,7 @@ func Run() error {
 
 	cfgs := getConfigs()
 
-	pool, err := postgresql.NewPool(ctx, "postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable")
+	pool, err := postgresql.NewPool(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
@@ -73,7 +73,10 @@ func Run() error {
 	service := handler.NewNotificationsHandler(app)
 
 	log.Println("Running gRpc service...")
-	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](notifications.RegisterNotificationServiceServer, service, ":50051", ct.CommonKeys())
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](
+		notifications.RegisterNotificationServiceServer,
+		service, os.Getenv("GRPC_SERVER_PORT"),
+		ct.CommonKeys())
 	if err != nil {
 		return err
 	}
@@ -101,23 +104,24 @@ func Run() error {
 }
 
 type configs struct {
-	RedisAddr     string `env:"REDIS_ADDR"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-	RedisDB       int    `env:"REDIS_DB"`
-
-	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
-	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
-	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
+	RedisAddr      string `env:"REDIS_ADDR"`
+	RedisPassword  string `env:"REDIS_PASSWORD"`
+	RedisDB        int    `env:"REDIS_DB"`
+	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
+	UsersGRPCAddr  string `env:"USERS_GRPC_ADDR"`
+	PostsGRPCAddr  string `env:"POSTS_GRPC_ADDR"`
+	ChatGRPCAddr   string `env:"CHAT_GRPC_ADDR"`
 }
 
 func getConfigs() configs { // sensible defaults
 	cfgs := configs{
-		RedisAddr:     "redis:6379",
-		RedisPassword: "",
-		RedisDB:       0,
-		UsersGRPCAddr: "users:50051",
-		PostsGRPCAddr: "posts:50051",
-		ChatGRPCAddr:  "chat:50051",
+		RedisAddr:      "redis:6379",
+		RedisPassword:  "",
+		RedisDB:        0,
+		UsersGRPCAddr:  "users:50051",
+		PostsGRPCAddr:  "posts:50051",
+		ChatGRPCAddr:   "chat:50051",
+		GrpcServerPort: ":50051",
 	}
 
 	// load environment variables if present
