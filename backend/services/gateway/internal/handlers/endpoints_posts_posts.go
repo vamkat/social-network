@@ -171,6 +171,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 			NewBody     ct.PostBody `json:"post_body"`
 			Audience    ct.Audience `json:"audience"`
 			AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
+			DeleteImage bool        `json:"delete_image"`
 
 			ImageName string `json:"image_name"`
 			ImageSize int64  `json:"image_size"`

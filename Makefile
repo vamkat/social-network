@@ -72,7 +72,7 @@ apply-ingress:
 
 
 build-proto:
-	$(MAKE) -f shared/proto/protoMakefile generate
+	$(MAKE) -f backend/shared/proto/protoMakefile generate
 
 logs-users:
 	kubectl logs -l app=users -n users -f

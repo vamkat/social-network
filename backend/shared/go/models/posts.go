@@ -61,6 +61,7 @@ type EditPostReq struct {
 	ImageId     ct.Id       `json:"image" validate:"nullable"`
 	Audience    ct.Audience `json:"audience"`
 	AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
+	DeleteImage bool        `json:"delete_image"`
 }
 
 type GetUserPostsReq struct {

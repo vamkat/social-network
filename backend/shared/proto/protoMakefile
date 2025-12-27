@@ -4,27 +4,32 @@
 #you need protoc installed before you can generate from the proto files
 
 generate:
-	protoc --proto_path=shared/proto \
-		--go_out=paths=source_relative:shared/gen-go/common \
-		--go-grpc_out=paths=source_relative:shared/gen-go/common \
-		shared/proto/common.proto
-	protoc --proto_path=shared/proto \
-		--go_out=paths=source_relative:shared/gen-go/users \
-		--go-grpc_out=paths=source_relative:shared/gen-go/users \
-		shared/proto/users.proto
-	protoc --proto_path=shared/proto \
-		--go_out=paths=source_relative:shared/gen-go/posts \
-		--go-grpc_out=paths=source_relative:shared/gen-go/posts \
-		shared/proto/posts.proto
-	protoc --proto_path=shared/proto \
-		--go_out=paths=source_relative:shared/gen-go/notifications \
-		--go-grpc_out=paths=source_relative:shared/gen-go/notifications \
-		shared/proto/notifications.proto
-	protoc --proto_path=shared/proto \
-		--go_out=paths=source_relative:shared/gen-go/chat \
-		--go-grpc_out=paths=source_relative:shared/gen-go/chat \
-		shared/proto/chat.proto
-	protoc --proto_path=shared/proto \
-		--go_out=paths=source_relative:shared/gen-go/media \
-		--go-grpc_out=paths=source_relative:shared/gen-go/media \
-		shared/proto/media.proto
+	protoc --proto_path=backend/shared/proto \
+		--go_out=paths=source_relative:backend/shared/gen-go/common \
+		--go-grpc_out=paths=source_relative:backend/shared/gen-go/common \
+		common.proto
+
+	protoc --proto_path=backend/shared/proto \
+		--go_out=paths=source_relative:backend/shared/gen-go/users \
+		--go-grpc_out=paths=source_relative:backend/shared/gen-go/users \
+		users.proto
+
+	protoc --proto_path=backend/shared/proto \
+		--go_out=paths=source_relative:backend/shared/gen-go/posts \
+		--go-grpc_out=paths=source_relative:backend/shared/gen-go/posts \
+		posts.proto
+
+	protoc --proto_path=backend/shared/proto \
+		--go_out=paths=source_relative:backend/shared/gen-go/notifications \
+		--go-grpc_out=paths=source_relative:backend/shared/gen-go/notifications \
+		notifications.proto
+
+	protoc --proto_path=backend/shared/proto \
+		--go_out=paths=source_relative:backend/shared/gen-go/chat \
+		--go-grpc_out=paths=source_relative:backend/shared/gen-go/chat \
+		chat.proto
+
+	protoc --proto_path=backend/shared/proto \
+		--go_out=paths=source_relative:backend/shared/gen-go/media \
+		--go-grpc_out=paths=source_relative:backend/shared/gen-go/media \
+		media.proto

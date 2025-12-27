@@ -134,6 +134,7 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 				return ErrNotFound
 			}
 		}
+
 		//edit image //does this also delete the image?
 		if req.ImageId > 0 {
 			err := q.UpsertImage(ctx, ds.UpsertImageParams{
@@ -143,7 +144,8 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 			if err != nil {
 				return err
 			}
-		} else {
+		}
+		if req.DeleteImage {
 			rowsAffected, err := q.DeleteImage(ctx, req.ImageId.Int64())
 			if err != nil {
 				return err

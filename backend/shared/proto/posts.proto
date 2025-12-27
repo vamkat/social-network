@@ -162,6 +162,7 @@ message EditPostReq {
     int64 image_id = 4;
     string audience = 5;
     common.UserIds audience_ids = 6;
+    bool delete_image=7;
 }
 
 message GetUserPostsReq {

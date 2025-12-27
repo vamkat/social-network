@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS reactions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ,
-    CONSTRAINT unique_user_reaction_per_content UNIQUE (user_id, content_id)
+    --CONSTRAINT unique_user_reaction_per_content UNIQUE (user_id, content_id)
 );
 
 

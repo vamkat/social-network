@@ -525,6 +525,7 @@ type EditPostReq struct {
 	ImageId       int64                  `protobuf:"varint,4,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
 	Audience      string                 `protobuf:"bytes,5,opt,name=audience,proto3" json:"audience,omitempty"`
 	AudienceIds   *common.UserIds        `protobuf:"bytes,6,opt,name=audience_ids,json=audienceIds,proto3" json:"audience_ids,omitempty"`
+	DeleteImage   bool                   `protobuf:"varint,7,opt,name=delete_image,json=deleteImage,proto3" json:"delete_image,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -599,6 +600,13 @@ func (x *EditPostReq) GetAudienceIds() *common.UserIds {
 		return x.AudienceIds
 	}
 	return nil
+}
+
+func (x *EditPostReq) GetDeleteImage() bool {
+	if x != nil {
+		return x.DeleteImage
+	}
+	return false
 }
 
 type GetUserPostsReq struct {
@@ -1553,14 +1561,15 @@ const file_posts_proto_rawDesc = "" +
 	"\bgroup_id\x18\x03 \x01(\x03R\agroupId\x12\x1a\n" +
 	"\baudience\x18\x04 \x01(\tR\baudience\x122\n" +
 	"\faudience_ids\x18\x05 \x01(\v2\x0f.common.UserIdsR\vaudienceIds\x12\x19\n" +
-	"\bimage_id\x18\x06 \x01(\x03R\aimageId\"\xc8\x01\n" +
+	"\bimage_id\x18\x06 \x01(\x03R\aimageId\"\xeb\x01\n" +
 	"\vEditPostReq\x12!\n" +
 	"\frequester_id\x18\x01 \x01(\x03R\vrequesterId\x12\x17\n" +
 	"\apost_id\x18\x02 \x01(\x03R\x06postId\x12\x12\n" +
 	"\x04body\x18\x03 \x01(\tR\x04body\x12\x19\n" +
 	"\bimage_id\x18\x04 \x01(\x03R\aimageId\x12\x1a\n" +
 	"\baudience\x18\x05 \x01(\tR\baudience\x122\n" +
-	"\faudience_ids\x18\x06 \x01(\v2\x0f.common.UserIdsR\vaudienceIds\"\x81\x01\n" +
+	"\faudience_ids\x18\x06 \x01(\v2\x0f.common.UserIdsR\vaudienceIds\x12!\n" +
+	"\fdelete_image\x18\a \x01(\bR\vdeleteImage\"\x81\x01\n" +
 	"\x0fGetUserPostsReq\x12\x1d\n" +
 	"\n" +
 	"creator_id\x18\x01 \x01(\x03R\tcreatorId\x12!\n" +
