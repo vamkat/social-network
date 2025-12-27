@@ -430,7 +430,7 @@ export default function RegisterForm() {
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-3"
+                className="w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-12"
             >
                 {isLoading ? "Creating Account..." : "Create Account"}
             </button>

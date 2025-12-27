@@ -140,7 +140,7 @@ export default function LoginForm() {
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-1/2 mx-auto flex justify-center btn btn-primary pt-12"
+                className="w-1/2 mx-auto flex justify-center btn btn-primary mt-12"
             >
                 {isLoading ? "Signing in..." : "Sign In"}
             </button>
