@@ -6,7 +6,7 @@
 	run-services run-all \
 	run-api run-media run-chat run-posts run-users run-notifications\
 	run-migrations \
-	migrate-media migrate-users migrate-posts migrate-chat \
+	migrate-media migrate-users migrate-posts migrate-chat migrate-notifications\
 	create-network
 
 ######################################
@@ -153,6 +153,11 @@ migrate-notifications:
 ######################################
 # Docker helpers
 ######################################
+docker-up:
+	docker compose -f docker-compose.infra.yml up -d
+
+docker-down:
+	docker compose -f docker-compose.infra.yml down
 
 create-network:
 	@docker network inspect social-network >/dev/null 2>&1 || \
