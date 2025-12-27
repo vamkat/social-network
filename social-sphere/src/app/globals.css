@@ -1,9 +1,15 @@
 @import "tailwindcss";
 
+
 :root {
+  --accent: #a855f7;
+  --accent-hover: #9333ea; 
+  --foreground: #0a0a0a;
+  --muted: #6b7280;
   --background: #ffffff;
-  --foreground: #171717;
-}
+  --border: #e5e5e5; 
+ } 
+
 
 @theme inline {
   --color-background: var(--background);
@@ -17,19 +23,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-}
-
-@import "tailwindcss";
-
-:root {
-  --accent: #a855f7;
-  /* Electric purple */
-  --accent-hover: #9333ea;
-  /* Deeper purple */
-  --foreground: #0a0a0a;
-  --muted: #6b7280;
-  --background: #ffffff;
-  --border: #e5e5e5;
 }
 
 body {

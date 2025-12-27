@@ -19,7 +19,7 @@ export default function LoginPage() {
                 <LoginForm />
 
                 {/* Footer */}
-                <p className="mt-8 text-sm text-neutral-600 text-center">
+                <p className="mt-2 text-sm text-neutral-600 text-center">
                     Don't have an account?{" "}
                     <Link href="/register" className="link-primary">
                         Sign up

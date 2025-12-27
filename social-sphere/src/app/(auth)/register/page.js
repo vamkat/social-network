@@ -19,7 +19,7 @@ export default function RegisterPage() {
                 <RegisterForm />
 
                 {/* Footer */}
-                <p className="mt-8 text-sm text-center text-muted">
+                <p className="mt-2 text-sm text-center text-muted">
                     Already have an account?{" "}
                     <Link href="/login" className="link-primary">
                         Sign in
