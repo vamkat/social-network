@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Link as Lock, Globe, UserPlus, UserCheck, UserMinus, Clock } from "lucide-react";
-import ProfileStats from "./ProfileStats";
+import { Calendar, Globe, UserPlus, UserCheck, UserMinus, Clock, Lock } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import Container from "@/components/layout/Container";
 import { followUser } from "@/actions/requests/follow-user";
 import { unfollowUser } from "@/actions/requests/unfollow-user";
 import { updatePrivacyAction } from "@/actions/profile/settings";
+import Tooltip from "../ui/Tooltip";
 
 export function ProfileHeader({ user }) {
     const [isFollowing, setIsFollowing] = useState(user.viewer_is_following);
     const [isPublic, setIsPublic] = useState(user.public);
     const [isHovering, setIsHovering] = useState(false);
     const [isPending, setIsPending] = useState(user.is_pending);
-    const [isPrivacyHovering, setIsPrivacyHovering] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
@@ -102,98 +102,80 @@ export function ProfileHeader({ user }) {
 
     return (
         <>
-            <div className="bg-background overflow-hidden mt-3">
-                <div className="prof-divider mt-6" />
-                <div className="p-6 md:p-8">
-                    <div className="flex flex-col md:flex-row gap-8">
-                        {/* Avatar */}
-                        <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background shadow-sm shrink-0">
-                            <div className="w-full h-full rounded-full overflow-hidden bg-(--muted)/10 relative">
-                                {user.avatar_url ? (
-                                    <img
-                                        src={user.avatar_url}
-                                        alt={user.username}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 text-5xl font-bold text-(--muted)">
-                                        {user.first_name?.[0]}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Main Content Column */}
-                        <div className="flex-1 min-w-0 flex flex-col pt-2">
-                            {/* Top Row: Info & Stats */}
-                            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                                <div>
-                                    <h1 className="text-2xl font-bold text-foreground tracking-tight mb-1">
-                                        {user.first_name} {user.last_name}
-                                    </h1>
-                                    <p className="text-(--muted) font-medium text-base">@{user.username}</p>
-                                </div>
-                                {canViewProfile && (
-                                    <ProfileStats stats={{
-                                        followers: user.followers_count,
-                                        following: user.following_count,
-                                        groups: user.groups_count
-                                    }} />
-                                )}
-                            </div>
-
-                            {/* Middle: Bio - Only show if allowed */}
-                            {canViewProfile && user.about && (
-                                <div className="mb-8 max-w-2xl">
-                                    <p className="text-(--foreground)/80 leading-relaxed whitespace-pre-wrap text-[15px]">
-                                        {user.about}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Bottom Row: Meta & Actions */}
-                            <div className="flex flex-col md:flex-row justify-between items-end gap-6 mt-auto">
-                                {/* Meta Info - Only show if allowed */}
-                                <div className="flex flex-wrap items-center gap-6 text-sm text-(--muted)">
-                                    {canViewProfile && (
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4" />
-                                            <span>Joined {new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+            <div className="w-full border-b border-(--border)">
+                <Container>
+                    <div className="py-8">
+                        {/* Top Section: Avatar, Name, Actions */}
+                        <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center mb-6">
+                            {/* Avatar */}
+                            <div className="relative">
+                                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-(--muted)/10 border-2 border-(--border) ring-4 ring-background shadow-lg">
+                                    {user.avatar_url ? (
+                                        <img
+                                            src={user.avatar_url}
+                                            alt={user.username}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 text-4xl font-bold text-(--muted)">
+                                            {user.first_name?.[0]?.toUpperCase()}
                                         </div>
                                     )}
                                 </div>
+                            </div>
 
-                                {/* Actions */}
-                                <div className="flex items-center gap-3">
+                            {/* Name & Actions */}
+                            <div className="flex-1 min-w-0 flex flex-col sm:flex-row justify-between items-start gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-1">
+                                        {user.first_name} {user.last_name}
+                                    </h1>
+                                    <p className="text-(--muted) text-base">@{user.username}</p>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2 shrink-0">
                                     {user.own_profile ? (
-                                        <button
-                                            onClick={handlePrivacyToggle}
-                                            onMouseEnter={() => setIsPrivacyHovering(true)}
-                                            onMouseLeave={() => setIsPrivacyHovering(false)}
-                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 overflow-hidden cursor-pointer border ${isPublic
-                                                ? "bg-(--accent)/5 text-(--accent) border-(--accent-hover)/20 hover:bg-(--accent)/5"
-                                                : "bg-(--muted)/5 text-(--muted) border-(--border) hover:bg-(--muted)/10"
+                                        <>
+                                            {/* Privacy Toggle */}
+                                            <Tooltip content="Privacy">
+                                            <button
+                                                onClick={handlePrivacyToggle}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                                                    isPublic
+                                                        ? "border-(--accent)/30 bg-(--accent)/5 text-(--accent) hover:bg-(--accent)/10"
+                                                        : "border-(--border) text-(--muted) hover:bg-(--muted)/5"
                                                 }`}
-                                            style={{ maxWidth: isPrivacyHovering ? '200px' : '48px' }}
-                                        >
-                                            {isPublic ? <Globe className="w-4 h-4 shrink-0" /> : <Lock className="w-4 h-4 shrink-0" />}
-                                            <span className={`whitespace-nowrap transition-opacity duration-300 ${isPrivacyHovering ? 'opacity-100' : 'opacity-0 w-0'}`}>
-                                                {isPublic ? "Public Profile" : "Private Profile"}
-                                            </span>
-                                        </button>
+                                            >
+                                                {isPublic ? (
+                                                    <>
+                                                        <Globe className="w-4 h-4" />
+                                                        <span className="hidden sm:inline">Public</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Lock className="w-4 h-4" />
+                                                        <span className="hidden sm:inline">Private</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                            </Tooltip>
+                                        </>
                                     ) : (
                                         <button
                                             onClick={handleFollow}
                                             disabled={isLoading}
                                             onMouseEnter={() => setIsHovering(true)}
                                             onMouseLeave={() => setIsHovering(false)}
-                                            className={`flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${isLoading ? "opacity-70 cursor-wait" : ""
-                                                } ${isFollowing
-                                                    ? "bg-(--muted)/10 text-foreground hover:bg-red-500/10 hover:text-red-500 border border-transparent"
+                                            className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                                                isLoading
+                                                    ? "opacity-70 cursor-wait"
+                                                    : isFollowing
+                                                    ? "bg-(--muted)/10 text-foreground border border-(--border) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
                                                     : isPending
-                                                        ? "bg-(--muted)/10 text-(--muted) border border-transparent"
-                                                        : "bg-foreground text-background hover:opacity-90 shadow-lg shadow-black/5"
-                                                }`}
+                                                    ? "bg-(--muted)/10 text-(--muted) border border-(--border)"
+                                                    : "bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20"
+                                            }`}
                                         >
                                             {isFollowing ? (
                                                 isHovering ? (
@@ -223,37 +205,64 @@ export function ProfileHeader({ user }) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Bio Section */}
+                        {canViewProfile && user.about && (
+                            <div className="mb-6">
+                                <p className="text-(--foreground)/90 leading-relaxed whitespace-pre-wrap text-[15px]">
+                                    {user.about}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Stats & Meta Row */}
+                        {canViewProfile && (
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                                {/* Stats - Inline */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-semibold text-foreground">{user.followers_count || 0}</span>
+                                        <span className="text-(--muted)">Followers</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-semibold text-foreground">{user.following_count || 0}</span>
+                                        <span className="text-(--muted)">Following</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-semibold text-foreground">{user.groups_count || 0}</span>
+                                        <span className="text-(--muted)">Groups</span>
+                                    </div>
+                                </div>
+
+                                {/* Separator */}
+                                <div className="hidden sm:block w-px h-4 bg-(--border)" />
+
+                                {/* Joined Date */}
+                                <div className="flex items-center gap-2 text-(--muted)">
+                                    <Calendar className="w-4 h-4" />
+                                    <span>Joined {new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
-                <div className="prof-divider mt-6" />
+                </Container>
             </div>
 
+            {/* Privacy Modal */}
             <Modal
                 isOpen={showPrivacyModal}
                 onClose={() => setShowPrivacyModal(false)}
                 title={isPublic ? "Switch to Private Profile?" : "Switch to Public Profile?"}
-                description={isPublic
-                    ? "Switching to a private profile means only your followers will be able to see your content and profile details. You will need to review and approve all new follow requests."
-                    : "Switching to a public profile allows anyone to view your content and profile details. New users can follow you immediately without requiring approval."
+                description={
+                    isPublic
+                        ? "Switching to a private profile means only your followers will be able to see your content and profile details. You will need to review and approve all new follow requests."
+                        : "Switching to a public profile allows anyone to view your content and profile details. New users can follow you immediately without requiring approval."
                 }
-                footer={
-                    <>
-                        <button
-                            onClick={() => setShowPrivacyModal(false)}
-                            disabled={isLoading}
-                            className="px-4 py-2 rounded-full text-sm font-medium text-(--muted) hover:bg-(--muted)/10 transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmPrivacyToggle}
-                            disabled={isLoading}
-                            className="px-4 py-2 rounded-full text-sm font-medium bg-(--accent) text-background hover:bg-(--accent-hover) transition-opacity cursor-pointer disabled:opacity-50"
-                        >
-                            {isLoading ? "Updating..." : (isPublic ? "Switch to Private" : "Switch to Public")}
-                        </button>
-                    </>
-                }
+                onConfirm={confirmPrivacyToggle}
+                confirmText={isPublic ? "Switch to Private" : "Switch to Public"}
+                cancelText="Cancel"
+                isLoading={isLoading}
+                loadingText="Updating..."
             />
         </>
     );
