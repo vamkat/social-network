@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
 	mediapb "social-network/shared/gen-go/media"
@@ -79,6 +80,8 @@ func (c *Clients) GetFollowingIds(ctx context.Context, userId int64) ([]int64, e
 }
 
 func (c *Clients) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
+	fmt.Println("POSTS GET IMAGES - variant requested:", variant)
+	fmt.Println("POSTS GET IMAGES - images requested:", imageIds)
 	req := &mediapb.GetImagesRequest{
 		ImgIds:  &mediapb.ImageIds{ImgIds: imageIds.Int64()},
 		Variant: variant,
@@ -93,6 +96,8 @@ func (c *Clients) GetImages(ctx context.Context, imageIds ct.Ids, variant media.
 			imagesToDelete = append(imagesToDelete, failedImage.FileId)
 		}
 	}
+	fmt.Println("POSTS GET IMAGES - failed images:", resp.FailedIds)
+	fmt.Println("POSTS GET IMAGES - images fetched:", resp.DownloadUrls)
 	return resp.DownloadUrls, imagesToDelete, nil
 }
 

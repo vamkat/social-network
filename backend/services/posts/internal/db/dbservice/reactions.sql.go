@@ -30,14 +30,16 @@ func (q *Queries) GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]i
 	return items, nil
 }
 
-const toggleOrInsertReaction = `-- name: ToggleOrInsertReaction :execrows
+const toggleOrInsertReaction = `-- name: ToggleReaction :execrows
+WITH deleted AS (
+    DELETE FROM reactions
+    WHERE content_id = $1
+      AND user_id = $2
+    RETURNING 1
+)
 INSERT INTO reactions (content_id, user_id)
-VALUES ($1, $2)
-ON CONFLICT (content_id, user_id) DO UPDATE
-SET deleted_at = CASE
-                     WHEN reactions.deleted_at IS NULL THEN NOW()
-                     ELSE NULL
-                 END
+SELECT $1, $2
+WHERE NOT EXISTS (SELECT 1 FROM deleted);
 `
 
 type ToggleOrInsertReactionParams struct {

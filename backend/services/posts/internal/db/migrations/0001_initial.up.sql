@@ -148,7 +148,6 @@ CREATE TABLE IF NOT EXISTS reactions (
 
 
 CREATE INDEX idx_reactions_user ON reactions(user_id);
-CREATE UNIQUE INDEX idx_reactions_unique ON reactions(content_id, user_id);
 CREATE INDEX idx_reactions_content_id ON reactions(content_id);
 CREATE INDEX idx_reactions_active ON reactions(content_id) WHERE deleted_at IS NULL;
 
@@ -275,35 +274,41 @@ EXECUTE FUNCTION update_post_comments_count();
 ------------------------------------------
 CREATE OR REPLACE FUNCTION update_reactions_count()
 RETURNS TRIGGER AS $$
+DECLARE
+    cid BIGINT;
+    ctype content_type;
+    delta INT;
 BEGIN
-    -- Update posts reactions_count
-    IF EXISTS (SELECT 1 FROM posts WHERE id = NEW.content_id) THEN
-        IF TG_OP = 'INSERT' THEN
-            UPDATE posts
-            SET reactions_count = reactions_count + 1
-            WHERE id = NEW.content_id;
-        ELSIF TG_OP = 'DELETE' THEN
-            UPDATE posts
-            SET reactions_count = reactions_count - 1
-            WHERE id = OLD.content_id;
-        END IF;
+    IF TG_OP = 'INSERT' THEN
+        cid := NEW.content_id;
+        delta := 1;
+    ELSIF TG_OP = 'DELETE' THEN
+        cid := OLD.content_id;
+        delta := -1;
+    ELSE
+        RETURN NULL;
+    END IF;
 
-    -- Update comments reactions_count
-    ELSIF EXISTS (SELECT 1 FROM comments WHERE id = NEW.content_id) THEN
-        IF TG_OP = 'INSERT' THEN
-            UPDATE comments
-            SET reactions_count = reactions_count + 1
-            WHERE id = NEW.content_id;
-        ELSIF TG_OP = 'DELETE' THEN
-            UPDATE comments
-            SET reactions_count = reactions_count - 1
-            WHERE id = OLD.content_id;
-        END IF;
+    SELECT content_type
+    INTO ctype
+    FROM master_index
+    WHERE id = cid;
+
+    IF ctype = 'post' THEN
+        UPDATE posts
+        SET reactions_count = GREATEST(reactions_count + delta, 0)
+        WHERE id = cid;
+
+    ELSIF ctype = 'comment' THEN
+        UPDATE comments
+        SET reactions_count = GREATEST(reactions_count + delta, 0)
+        WHERE id = cid;
     END IF;
 
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Attach the triggers
 CREATE TRIGGER trg_reactions_insert

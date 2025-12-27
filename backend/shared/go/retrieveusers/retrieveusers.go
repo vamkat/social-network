@@ -37,6 +37,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 		var u models.User
 		if err := h.cache.GetObj(ctx, fmt.Sprintf("basic_user_info:%d", id), &u); err == nil {
 			users[id] = u
+			fmt.Println("RETRIEVE USERS - found user on redis:", u)
 		} else {
 			missing = append(missing, id)
 		}
@@ -84,6 +85,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 		var imageURL string
 		if err := h.cache.GetObj(ctx, fmt.Sprintf("img_thumbnail:%d", imageId), &imageURL); err == nil {
 			images[imageId.Int64()] = imageURL
+			fmt.Println("RETRIEVE USERS - found image on redis:", imageURL)
 		} else {
 			missingImages = append(missingImages, imageId)
 		}
@@ -91,37 +93,38 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 
 	//fmt.Println("found on redis", images)
 	//fmt.Println("users before image urls", users)
-
+	imageMap := make(map[int64]string)
+	failedImages := []int64{}
+	var err error
 	// // Batch RPC for missing images
 	if len(missingImages) > 0 {
 		fmt.Println("asking media for these avatars", missingImages)
-		imageMap, failedImages, err := h.clients.GetImages(ctx, missingImages, media.FileVariant_THUMBNAIL)
+		imageMap, failedImages, err = h.clients.GetImages(ctx, missingImages, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			return nil, err
 		}
-
-		//merge with redis map
-		maps.Copy(images, imageMap)
-
-		for id, u := range users {
-
-			if url, ok := images[u.AvatarId.Int64()]; ok {
-				u.AvatarURL = url
-				users[id] = u
-
-				_ = h.cache.SetObj(ctx,
-					fmt.Sprintf("img_thumbnail:%d", u.AvatarId.Int64()),
-					url,
-					h.ttl,
-				)
-			}
-		}
-		//fmt.Println("users after image urls", users)
-
-		//TODO batch call to delete missing image ids
-		fmt.Println("failed", failedImages)
-		//fmt.Println("map", images)
 	}
+	//merge with redis map
+	maps.Copy(images, imageMap)
+
+	for id, u := range users {
+
+		if url, ok := images[u.AvatarId.Int64()]; ok {
+			u.AvatarURL = url
+			users[id] = u
+
+			_ = h.cache.SetObj(ctx,
+				fmt.Sprintf("img_thumbnail:%d", u.AvatarId.Int64()),
+				url,
+				h.ttl,
+			)
+		}
+	}
+	//fmt.Println("users after image urls", users)
+
+	//TODO batch call to delete missing image ids
+	fmt.Println("RETRIEVE USERS - failed avatars:", failedImages)
+	fmt.Println("RETRIEVE USERS - found avatars:", images)
 
 	return users, nil
 }
