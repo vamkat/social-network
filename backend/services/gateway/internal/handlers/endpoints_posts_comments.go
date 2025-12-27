@@ -122,7 +122,7 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 		fmt.Println("retrieved comments: ", grpcResp)
 
-		var commentsResponse []models.Comment
+		commentsResponse := []models.Comment{}
 		for _, c := range grpcResp.Comments {
 			comment := models.Comment{
 				CommentId: ct.Id(c.CommentId),

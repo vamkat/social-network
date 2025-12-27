@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS images (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ,
-    CONSTRAINT unique_image_sort_order UNIQUE(parent_id, sort_order)
+    --CONSTRAINT unique_image_sort_order UNIQUE(parent_id, sort_order)
 );
 
 CREATE INDEX idx_images_parent_id ON images(parent_id);

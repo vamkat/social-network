@@ -83,7 +83,7 @@ func Run() error {
 	app := application.NewApplication(ds.New(pool), pgxTxRunner, pool, clients)
 	service := *handler.NewUsersHanlder(app)
 
-	port := ":50051"
+	// port := ":50051"
 
 	//
 	//
@@ -91,7 +91,7 @@ func Run() error {
 	startServerFunc, stopServerFunc, err := gorpc.CreateGRpcServer[users.UserServiceServer](
 		users.RegisterUserServiceServer,
 		&service,
-		port,
+		cfgs.GrpcServerPort,
 		ct.CommonKeys(),
 	)
 	if err != nil {
@@ -110,7 +110,7 @@ func Run() error {
 	//
 	//
 	// SHUTDOWN
-	log.Printf("gRPC server listening on %s", port)
+	log.Printf("gRPC server listening on %s", cfgs.GrpcServerPort)
 
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -129,8 +129,8 @@ type configs struct {
 	ChatGRPCAddr          string `env:"CHAT_GRPC_ADDR"`
 	MediaGRPCAddr         string `env:"MEDIA_GRPC_ADDR"`
 	NotificationsGRPCAddr string `env:"NOTIFICATIONS_GRPC_ADDR"`
-	UsersGRPCAddr         string `env:"USERS_GRPC_ADDR"`
 	ShutdownTimeout       int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+	GrpcServerPort        string `env:"GRPC_SERVER_PORT"`
 }
 
 func getConfigs() configs {
@@ -139,7 +139,6 @@ func getConfigs() configs {
 		ChatGRPCAddr:          "chat:50051",
 		MediaGRPCAddr:         "media:50051",
 		NotificationsGRPCAddr: "notifications:50051",
-		UsersGRPCAddr:         ":50051",
 		ShutdownTimeout:       5,
 	}
 

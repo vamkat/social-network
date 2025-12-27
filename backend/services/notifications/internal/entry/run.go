@@ -73,7 +73,11 @@ func Run() error {
 	service := handler.NewNotificationsHandler(app)
 
 	log.Println("Running gRpc service...")
-	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](notifications.RegisterNotificationServiceServer, service, ":50051", ct.CommonKeys())
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](
+		notifications.RegisterNotificationServiceServer,
+		service,
+		cfgs.GrpcServerPort,
+		ct.CommonKeys())
 	if err != nil {
 		return err
 	}
@@ -105,9 +109,10 @@ type configs struct {
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	RedisDB       int    `env:"REDIS_DB"`
 
-	UsersGRPCAddr string `env:"USERS_GRPC_ADDR"`
-	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
-	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
+	UsersGRPCAddr  string `env:"USERS_GRPC_ADDR"`
+	PostsGRPCAddr  string `env:"POSTS_GRPC_ADDR"`
+	ChatGRPCAddr   string `env:"CHAT_GRPC_ADDR"`
+	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
 }
 
 func getConfigs() configs { // sensible defaults

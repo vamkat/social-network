@@ -37,7 +37,7 @@ type FileConstraints struct {
 }
 
 type Server struct {
-	Port string
+	GrpcServerPort string
 }
 
 type Clients struct {

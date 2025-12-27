@@ -40,7 +40,7 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 		fmt.Println("retrieved public feed: ", grpcResp)
 
-		var postsResponse []models.Post
+		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
 			post := models.Post{
 				PostId: ct.Id(p.PostId),
@@ -104,7 +104,7 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 
 		fmt.Println("retrieved personalized feed: ", grpcResp)
 
-		var postsResponse []models.Post
+		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
 			post := models.Post{
 				PostId: ct.Id(p.PostId),
@@ -169,7 +169,7 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 
 		fmt.Println("retrieved personalized feed: ", grpcResp)
 
-		var postsResponse []models.Post
+		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
 			post := models.Post{
 				PostId: ct.Id(p.PostId),

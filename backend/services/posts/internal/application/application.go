@@ -10,7 +10,7 @@ import (
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
-	redis_connector "social-network/shared/go/redis"
+	rds "social-network/shared/go/redis"
 	ur "social-network/shared/go/retrieveusers"
 	"time"
 
@@ -57,7 +57,7 @@ type ClientsInterface interface {
 }
 
 // NewApplication constructs a new Application with transaction support
-func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients) (*Application, error) {
+func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients, redisConnector *rds.RedisClient) (*Application, error) {
 	var txRunner TxRunner
 	var err error
 	if pool != nil {
@@ -67,13 +67,13 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients)
 		}
 	}
 
-	cache := redis_connector.NewRedisClient("redis:6379", "", 0)
+	// cache := redis_connector.NewRedisClient("redis:6379", "", 0)
 
 	return &Application{
 		db:            db,
 		txRunner:      txRunner,
 		clients:       clients,
-		userRetriever: ur.NewUserRetriever(clients, cache, 3*time.Minute),
+		userRetriever: ur.NewUserRetriever(clients, redisConnector, 3*time.Minute),
 	}, nil
 }
 

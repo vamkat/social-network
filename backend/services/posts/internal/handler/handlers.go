@@ -103,6 +103,7 @@ func (s *PostsHandler) EditPost(ctx context.Context, req *pb.EditPostReq) (*empt
 		ImageId:     ct.Id(req.ImageId),
 		Audience:    ct.Audience(req.Audience),
 		AudienceIds: ct.FromInt64s(req.AudienceIds.Values),
+		DeleteImage: req.GetDeleteImage(),
 	})
 	if err != nil {
 		fmt.Println("Error in EditPost:", err)

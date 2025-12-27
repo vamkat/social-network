@@ -10,7 +10,7 @@ import (
 func main() {
 	log.Println("Running database migrations...")
 
-	if err := db.RunMigrations(os.Getenv("DATABASE_URL"), "./migrations"); err != nil {
+	if err := db.RunMigrations(os.Getenv("DATABASE_URL"), os.Getenv("MIGRATE_PATH")); err != nil {
 		log.Fatal("migration failed", err)
 	}
 

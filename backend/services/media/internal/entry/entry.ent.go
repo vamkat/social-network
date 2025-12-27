@@ -19,7 +19,6 @@ import (
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
-	tele "social-network/shared/go/telemetry"
 
 	"syscall"
 
@@ -36,7 +35,7 @@ func Run() error {
 	// close := tele.InitTelemetry(ctx, "media", ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
 	// defer close()
 
-	tele.Info(ctx, "initialized telemetry")
+	// tele.Info(ctx, "initialized telemetry")
 
 	pool, err := postgresql.NewPool(ctx, cfgs.DB.URL)
 	if err != nil {
@@ -97,7 +96,7 @@ func Run() error {
 	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[media.MediaServiceServer](
 		media.RegisterMediaServiceServer,
 		service,
-		cfgs.Server.Port,
+		cfgs.Server.GrpcServerPort,
 		ct.CommonKeys(),
 	)
 	if err != nil {
@@ -183,7 +182,7 @@ func Run() error {
 func getConfigs() configs.Config {
 	return configs.Config{
 		Server: configs.Server{
-			Port: os.Getenv("SERVICE_PORT"),
+			GrpcServerPort: os.Getenv("GRPC_SERVER_PORT"),
 		},
 		DB: configs.Db{
 			URL:                      os.Getenv("DATABASE_URL"),

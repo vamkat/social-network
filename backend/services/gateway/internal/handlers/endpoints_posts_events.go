@@ -237,7 +237,7 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 			return
 		}
 
-		var eventsResponse []models.Event
+		eventsResponse := []models.Event{}
 		for _, e := range grpcResp.Events {
 			event := models.Event{
 				EventId: ct.Id(e.EventId),

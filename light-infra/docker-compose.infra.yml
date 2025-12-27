@@ -1,0 +1,105 @@
+networks:
+  social-network:
+    external: true
+
+volumes:
+  users-db-data:
+  posts-db-data:
+  chat-db-data:
+  notifications-db-data:
+  media-db-data:
+  minio_data:
+
+services:
+  users-db:
+    image: postgres:16
+    container_name: users-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_users
+    ports:
+      - "5433:5432"
+    volumes:
+      - users-db-data:/var/lib/postgresql/data
+    networks: 
+      - social-network
+
+  posts-db:
+    image: postgres:16
+    container_name: posts-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_posts
+    ports:
+      - "5434:5432"
+    volumes:
+      - posts-db-data:/var/lib/postgresql/data
+    networks: 
+      - social-network
+
+  chat-db:
+    image: postgres:16
+    container_name: chat-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_chat
+    ports:
+      - "5435:5432"
+    volumes:
+      - chat-db-data:/var/lib/postgresql/data
+    networks: 
+      - social-network
+
+  notifications-db:
+    image: postgres:16
+    container_name: notifications-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_notifications
+    ports:
+      - "5436:5432"
+    volumes:
+      - notifications-db-data:/var/lib/postgresql/data
+    networks: 
+      - social-network
+
+  media-db:
+    image: postgres:16
+    container_name: media-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: social_media
+    ports:
+      - "5437:5432"
+    volumes:
+      - media-db-data:/var/lib/postgresql/data
+    networks: 
+      - social-network
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks: 
+      - social-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks: 
+      - social-network
