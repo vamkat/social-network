@@ -8,15 +8,15 @@ type Config struct {
 	FileService FileService
 	Clients     Clients
 	// Tele
-	EnableDebugLogs bool
-	SimplePrint     bool
+	EnableDebugLogs bool `env:"ENABLE_DEBUG_LOGS"`
+	SimplePrint     bool `env:"ENABLE_SIMPLE_PRINT"`
 }
 
 type FileService struct {
-	Endpoint              string
-	PublicEndpoint        string // used only for dev. Should be empty for production
-	AccessKey             string
-	Secret                string
+	Endpoint              string `env:"MINIO_ENDPOINT"`
+	PublicEndpoint        string `env:"MINIO_PUBLIC_ENDPOINT"` // used only for dev. Should be empty for production
+	AccessKey             string `env:"MINIO_ACCESS_KEY"`
+	Secret                string `env:"MINIO_SECRET_KEY"`
 	Buckets               Buckets
 	FileConstraints       FileConstraints
 	VariantWorkerInterval time.Duration
@@ -37,13 +37,13 @@ type FileConstraints struct {
 }
 
 type Server struct {
-	GrpcServerPort string
+	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
 }
 
 type Clients struct {
 }
 
 type Db struct {
-	URL                      string
+	URL                      string `env:"DATABASE_URL"`
 	StaleFilesWorkerInterval time.Duration
 }

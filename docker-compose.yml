@@ -1,7 +1,7 @@
 
 # Redundand on Kube deployment
 x-env: &common-env
-  PASSWORD_SECRET: habblablablabla
+  # PASSWORD_SECRET: habblablablabla
   MIGRATE_PATH: ./migrations
   USERS_GRPC_ADDR: users:50051
   POSTS_GRPC_ADDR: posts:50051
@@ -324,6 +324,9 @@ services:
     container_name: api-gateway
     environment:
       <<: *common-env
+      ENC_KEY: a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=
+      JWT_KEY: a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=
+      PASSWORD_SECRET: a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= 
     ports:
       - "8081:8081"
     depends_on:

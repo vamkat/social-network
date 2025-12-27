@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/lib/pq"
@@ -17,11 +16,11 @@ import (
 // Relies on enviromental variable "ENC_KEY" to be present.
 type Id int64
 
-var salt string = os.Getenv("ENC_KEY")
+// var salt string = os.Getenv("ENC_KEY")
 
 var hd = func() *hashids.HashID {
 	h := hashids.NewData()
-	h.Salt = salt
+	h.Salt = Cfgs.Salt
 	h.MinLength = 12
 	encoder, _ := hashids.NewWithData(h)
 	return encoder

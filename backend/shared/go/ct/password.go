@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"os"
+	"fmt"
 	"regexp"
 )
 
@@ -37,14 +37,16 @@ func (p *Password) UnmarshalJSON(data []byte) error {
 }
 
 func (p Password) Hash() (Password, error) {
+	fmt.Println(Cfgs.PassSecret)
 	// TODO: Change this to configs when in place
-	secret := func() string {
-		s := Cfgs.PassSecret
-		if s == "" {
-			s = os.Getenv("PASSWORD_SECRET")
-		}
-		return s
-	}()
+	// secret := func() string {
+	// 	s := Cfgs.PassSecret
+	// 	if s == "" {
+	// 		s = os.Getenv("PASSWORD_SECRET")
+	// 	}
+	// 	return s
+	// }()
+	secret := Cfgs.PassSecret
 
 	if secret == "" {
 		return "", errors.Join(ErrValidation, errors.New("missing env var PASSWORD_SECRET"))
