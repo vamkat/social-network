@@ -37,9 +37,11 @@ func (q *Queries) GetImages(ctx context.Context, parentID int64) (int64, error) 
 // hardcoded sort order =1 for now that we only have one image per entity id
 const upsertImage = `-- name: UpsertImage :exec
 INSERT INTO images (id, parent_id, sort_order)
-VALUES ($1::BIGINT, $2::BIGINT,1)
-ON CONFLICT (id) DO UPDATE
-SET parent_id = EXCLUDED.parent_id
+VALUES ($1::BIGINT, $2::BIGINT, 1)
+ON CONFLICT (parent_id) DO UPDATE
+SET
+  id = EXCLUDED.id,
+  updated_at = CURRENT_TIMESTAMP;
 `
 
 type UpsertImageParams struct {

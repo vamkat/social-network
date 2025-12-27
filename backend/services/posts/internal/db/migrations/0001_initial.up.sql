@@ -128,6 +128,9 @@ CREATE TABLE IF NOT EXISTS images (
 
 CREATE INDEX idx_images_parent_id ON images(parent_id);
 CREATE INDEX idx_images_entity_active ON images(parent_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX unique_active_image_per_parent
+ON images(parent_id)
+WHERE deleted_at IS NULL;
 
 
 ------------------------------------------
