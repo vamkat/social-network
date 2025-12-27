@@ -116,19 +116,19 @@ CREATE INDEX idx_event_responses_event ON event_responses(event_id);
 ------------------------------------------
 -- Images
 ------------------------------------------
-CREATE TABLE IF NOT EXISTS images (
-    id BIGINT PRIMARY KEY,
-    parent_id BIGINT NOT NULL REFERENCES master_index(id) ON DELETE CASCADE,
-    sort_order INT NOT NULL,
+CREATE TABLE images (
+    parent_id BIGINT PRIMARY KEY
+        REFERENCES master_index(id) ON DELETE CASCADE,
+
+    id  BIGINT NOT NULL,  
+    sort_order INT NOT NULL DEFAULT 1,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
-    --CONSTRAINT unique_image_sort_order UNIQUE(parent_id, sort_order)
 );
 
-CREATE INDEX idx_images_parent_id ON images(parent_id);
-CREATE INDEX idx_images_entity_active ON images(parent_id) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX unique_active_image_per_parent
+CREATE INDEX idx_images_active
 ON images(parent_id)
 WHERE deleted_at IS NULL;
 
