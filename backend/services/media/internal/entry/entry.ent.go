@@ -182,12 +182,10 @@ func Run() error {
 func getConfigs() configs.Config {
 	return configs.Config{
 		Server: configs.Server{
-			Port: ":50051",
-			// Port: os.Getenv("SERVICE_PORT"),
+			Port: os.Getenv("SERVICE_PORT"),
 		},
 		DB: configs.Db{
-			// URL:                      os.Getenv("DATABASE_URL"),
-			URL:                      "postgres://postgres:secret@localhost:5437/social_media?sslmode=disable",
+			URL:                      os.Getenv("DATABASE_URL"),
 			StaleFilesWorkerInterval: 1 * time.Hour,
 		},
 		FileService: configs.FileService{
@@ -215,13 +213,10 @@ func getConfigs() configs.Config {
 					".webp": true,
 				},
 			},
-			// Endpoint:       os.Getenv("MINIO_ENDPOINT"),
-			// PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
-			// AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
-			// Secret:         os.Getenv("MINIO_SECRET_KEY"),
-			Endpoint:  "localhost:9000",
-			AccessKey: "minioadmin",
-			Secret:    "minioadmin",
+			Endpoint:       os.Getenv("MINIO_ENDPOINT"),
+			PublicEndpoint: os.Getenv("MINIO_PUBLIC_ENDPOINT"),
+			AccessKey:      os.Getenv("MINIO_ACCESS_KEY"),
+			Secret:         os.Getenv("MINIO_SECRET_KEY"),
 		},
 		EnableDebugLogs: true,
 		SimplePrint:     true,

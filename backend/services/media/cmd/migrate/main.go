@@ -10,8 +10,8 @@ import (
 func main() {
 	log.Println("Running database migrations...")
 
-	// if err := db.RunMigrations(os.Getenv("DATABASE_URL"), "./migrations"); err != nil {
-	if err := db.RunMigrations("postgres://postgres:secret@localhost:5437/social_media?sslmode=disable", "services/media/internal/db/migrations"); err != nil {
+	if err := db.RunMigrations(os.Getenv("DATABASE_URL"), os.Getenv("MIGRATE_PATH")); err != nil {
+		// if err := db.RunMigrations("postgres://postgres:secret@localhost:5437/social_media?sslmode=disable", "services/media/internal/db/migrations"); err != nil {
 		log.Fatal("migration failed", err)
 	}
 

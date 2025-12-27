@@ -28,10 +28,11 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		defer r.Body.Close()
 		err := decoder.Decode(&httpReq)
 		if err != nil {
+			fmt.Println("HERE DECODER")
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
+		fmt.Println("HERE")
 		httpReq.Password, err = httpReq.Password.Hash()
 		if err != nil {
 			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
@@ -141,6 +142,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		fmt.Println(httpReq)
 
 		hashedPass, err := httpReq.Password.Hash()
 		if err != nil {
