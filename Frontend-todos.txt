@@ -1,11 +1,6 @@
 ======== This week TODOs ========
 
-- Create Post component - in process (creating posts without image done, validations semi done ) need to create post with image
-- Update/ Delete post - should be easy once post creation is done
-
 - Comments in Post Card (create comment with/without image - get comments - update comment - delete comment)
-- reaction process
-
 - Single post component
 
 POSTS MUST BE DONE BY NEW YEAR!
