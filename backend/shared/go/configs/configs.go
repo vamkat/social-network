@@ -16,15 +16,20 @@ var (
 	ErrNoTaggedFields  = errors.New("no env-tagged fields found")
 )
 
-func LoadConfigs(localConfig any) error {
+// LoadConfigs loads configuration values from environment variables into the provided struct.
+// It returns a boolean indicating whether any struct fields were not replaced using environment variables.
+// Useful for ensuring default values do not accidentally end up in production.
+func LoadConfigs(localConfig any) (bool, error) {
 	fmt.Println("before:", localConfig)
 	reflectVal := reflect.ValueOf(localConfig)
 	if reflectVal.Kind() != reflect.Ptr || reflectVal.Elem().Kind() != reflect.Struct {
-		return ErrBadArgument
+		return false, ErrBadArgument
 	}
 
 	strctVal := reflectVal.Elem()
 	strctType := strctVal.Type()
+
+	notSwapped := false
 
 	for i := 0; i < strctVal.NumField(); i++ {
 		valField := strctVal.Field(i)
@@ -36,11 +41,12 @@ func LoadConfigs(localConfig any) error {
 		}
 
 		if !valField.CanSet() {
-			return fmt.Errorf("%w: %s", ErrUnsettableField, typeField.Name)
+			return false, fmt.Errorf("%w: %s", ErrUnsettableField, typeField.Name)
 		}
 
 		envVal, ok := os.LookupEnv(tagVal)
 		if !ok {
+			notSwapped = true
 			continue
 		}
 
@@ -48,7 +54,7 @@ func LoadConfigs(localConfig any) error {
 		case reflect.Int:
 			v, err := strconv.ParseInt(envVal, 10, 64)
 			if err != nil {
-				return fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
+				return false, fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
 			}
 			valField.SetInt(v)
 
@@ -58,20 +64,20 @@ func LoadConfigs(localConfig any) error {
 		case reflect.Float64:
 			v, err := strconv.ParseFloat(envVal, 64)
 			if err != nil {
-				return fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
+				return false, fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
 			}
 			valField.SetFloat(v)
 		case reflect.Bool:
 			v, err := strconv.ParseBool(envVal)
 			if err != nil {
-				return fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
+				return false, fmt.Errorf("%w (%s): %v", ErrBadConversion, tagVal, err)
 			}
 			valField.SetBool(v)
 		default:
-			return fmt.Errorf("unsupported kind %s on field %s", valField.Kind(), typeField.Name)
+			return false, fmt.Errorf("unsupported kind %s on field %s", valField.Kind(), typeField.Name)
 		}
 
 	}
 	fmt.Println("after:", localConfig)
-	return nil
+	return notSwapped, nil
 }

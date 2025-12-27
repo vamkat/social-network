@@ -14,6 +14,13 @@ type Configs struct {
 	Salt       string
 }
 
+func InitCustomTypes(PassSecret, Salt string) {
+	Cfgs = Configs{
+		PassSecret: PassSecret,
+		Salt:       Salt,
+	}
+}
+
 var Cfgs Configs
 
 const (

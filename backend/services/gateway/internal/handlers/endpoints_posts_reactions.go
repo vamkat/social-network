@@ -20,7 +20,7 @@ func (s *Handlers) toggleOrInsertReaction() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -31,10 +31,10 @@ func (s *Handlers) toggleOrInsertReaction() http.HandlerFunc {
 
 		_, err = s.PostsService.ToggleOrInsertReaction(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("Could not toggle or insert reaction to entity with id %v: %v ", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not toggle or insert reaction to entity with id %v: %v ", body.EntityId, err.Error()))
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }

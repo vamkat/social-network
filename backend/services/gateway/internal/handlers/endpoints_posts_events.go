@@ -10,12 +10,14 @@ import (
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 	"time"
 )
 
 func (h *Handlers) createEvent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("createEvent handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "createEvent handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -38,12 +40,12 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -51,7 +53,7 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
-			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+			mediaRes, err := h.MediaService.UploadImage(ctx, &media.UploadImageRequest{
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
@@ -60,7 +62,7 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)
@@ -76,9 +78,9 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 			EventDate: httpReq.EventDate.ToProto(),
 		}
 
-		_, err := h.PostsService.CreateEvent(r.Context(), &grpcReq)
+		_, err := h.PostsService.CreateEvent(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -91,14 +93,15 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 			FileId:    ImageId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 
 	}
 }
 
 func (h *Handlers) editEvent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("editEvent handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "editEvent handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -122,12 +125,12 @@ func (h *Handlers) editEvent() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -135,7 +138,7 @@ func (h *Handlers) editEvent() http.HandlerFunc {
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
-			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+			mediaRes, err := h.MediaService.UploadImage(ctx, &media.UploadImageRequest{
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
@@ -144,7 +147,7 @@ func (h *Handlers) editEvent() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)
@@ -161,9 +164,9 @@ func (h *Handlers) editEvent() http.HandlerFunc {
 			DeleteImage: httpReq.DeleteImage,
 		}
 
-		_, err := h.PostsService.EditEvent(r.Context(), &grpcReq)
+		_, err := h.PostsService.EditEvent(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -176,14 +179,15 @@ func (h *Handlers) editEvent() http.HandlerFunc {
 			FileId:    ImageId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 
 	}
 }
 
 func (h *Handlers) deleteEvent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("deleteEvent handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "deleteEvent handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -192,7 +196,7 @@ func (h *Handlers) deleteEvent() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -201,9 +205,9 @@ func (h *Handlers) deleteEvent() http.HandlerFunc {
 			EntityId:    body.EntityId.Int64(),
 		}
 
-		_, err = h.PostsService.DeleteEvent(r.Context(), &grpcReq)
+		_, err = h.PostsService.DeleteEvent(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 
@@ -212,9 +216,9 @@ func (h *Handlers) deleteEvent() http.HandlerFunc {
 
 func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getEventsByGroupId handler called")
-
 		ctx := r.Context()
+		tele.Info(ctx, "getEventsByGroupId handler called")
+
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
@@ -222,7 +226,7 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.EntityIdPaginatedReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -235,7 +239,7 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetEventsByGroupId(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to get events for group %v: %v ", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get events for group %v: %v ", body.EntityId, err.Error()))
 			return
 		}
 
@@ -264,9 +268,9 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 			eventsResponse = append(eventsResponse, event)
 		}
 
-		err = utils.WriteJSON(w, http.StatusOK, eventsResponse)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, eventsResponse)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to get events for group %v: %v ", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get events for group %v: %v ", body.EntityId, err.Error()))
 			return
 		}
 
@@ -283,7 +287,7 @@ func (s *Handlers) respondToEvent() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.RespondToEventReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -295,11 +299,11 @@ func (s *Handlers) respondToEvent() http.HandlerFunc {
 
 		_, err = s.PostsService.RespondToEvent(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("Could not respond to event with id %v: %v ", body.EventId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not respond to event with id %v: %v ", body.EventId, err.Error()))
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -313,7 +317,7 @@ func (s *Handlers) RemoveEventResponse() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.RespondToEventReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -324,10 +328,10 @@ func (s *Handlers) RemoveEventResponse() http.HandlerFunc {
 
 		_, err = s.PostsService.RemoveEventResponse(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("Could not remove response from event with id %v: %v ", body.EventId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not remove response from event with id %v: %v ", body.EventId, err.Error()))
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }

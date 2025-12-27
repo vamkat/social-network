@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"slices"
 	"social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/google/uuid"
 )
@@ -23,9 +24,10 @@ func RequestWithValue(r *http.Request, key ct.CtxKey, val any) *http.Request {
 
 // Get value T from request context with key 'key'
 func GetValue[T any](r *http.Request, key ct.CtxKey) (T, bool) {
-	v := r.Context().Value(key)
+	ctx := r.Context()
+	v := ctx.Value(key)
 	if v == nil {
-		fmt.Println("v is nil")
+		tele.Info(ctx, "v is nil")
 		var zero T
 		return zero, false
 	}
@@ -48,20 +50,20 @@ func JSON2Struct[T any](dataStruct *T, request *http.Request) (*T, error) {
 	return dataStruct, nil
 }
 
-func WriteJSON(w http.ResponseWriter, code int, v any) error {
+func WriteJSON(ctx context.Context, w http.ResponseWriter, code int, v any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if code == http.StatusNoContent {
 		return nil
 	}
-	fmt.Printf("writejson v:%v", v)
+	tele.Info(ctx, "responding with json", "content", v)
 	b, err := json.Marshal(v)
 	if err != nil {
-		fmt.Println("ERROR WHILE WRITING JSON:", err.Error())
+		tele.Error(ctx, "ERROR WHILE WRITING JSON:", "error", err.Error())
 		return err
 	}
 
-	fmt.Printf("sending this: %s, bytes:%v", string(b), b)
+	tele.Info(ctx, fmt.Sprintf("sending this: %s", string(b)))
 
 	_, err = w.Write(b)
 	return err
@@ -80,16 +82,17 @@ func WriteJSON(w http.ResponseWriter, code int, v any) error {
 // 		return err
 // 	}
 
-// 	fmt.Println("sending this:", string(b))
+// 	tele.Info(ctx, "sending this:", string(b))
 
 // 	_, err = w.Write(b)
 // 	return err
 // }
 
-func ErrorJSON(w http.ResponseWriter, code int, msg string) {
-	err := WriteJSON(w, code, map[string]string{"error": msg})
+func ErrorJSON(ctx context.Context, w http.ResponseWriter, code int, msg string) {
+	tele.Warn(ctx, "Sending error response", "code", code, "message", msg)
+	err := WriteJSON(ctx, w, code, map[string]string{"error": msg})
 	if err != nil {
-		fmt.Printf("Failed to send error message: %s, code: %d, %s\n", msg, code, err)
+		tele.Warn(ctx, fmt.Sprintf("Failed to send error message: %s, code: %d, %s\n", msg, code, err))
 	}
 }
 

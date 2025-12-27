@@ -11,12 +11,14 @@ import (
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 	"time"
 )
 
 func (h *Handlers) getPostById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getPostById handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "getPostById handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -25,7 +27,7 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -34,13 +36,13 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 			EntityId:    body.EntityId.Int64(),
 		}
 
-		grpcResp, err := h.PostsService.GetPostById(r.Context(), &grpcReq)
+		grpcResp, err := h.PostsService.GetPostById(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
 			return
 		}
 
-		fmt.Println("retrieved post by id: ", grpcResp)
+		tele.Info(ctx, "retrieved post by id: ", "grpcResp", grpcResp)
 
 		post := models.Post{
 			PostId: ct.Id(grpcResp.PostId),
@@ -63,9 +65,9 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 			ImageUrl:        grpcResp.ImageUrl,
 		}
 
-		err = utils.WriteJSON(w, http.StatusOK, post)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, post)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send post by id")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send post by id")
 			return
 		}
 
@@ -74,7 +76,8 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 
 func (h *Handlers) createPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("createPost handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "createPost handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -97,12 +100,12 @@ func (h *Handlers) createPost() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -110,7 +113,7 @@ func (h *Handlers) createPost() http.HandlerFunc {
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
-			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+			mediaRes, err := h.MediaService.UploadImage(ctx, &media.UploadImageRequest{
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
@@ -119,7 +122,7 @@ func (h *Handlers) createPost() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)
@@ -137,9 +140,9 @@ func (h *Handlers) createPost() http.HandlerFunc {
 			ImageId: ImageId.Int64(),
 		}
 
-		_, err := h.PostsService.CreatePost(r.Context(), &grpcReq)
+		_, err := h.PostsService.CreatePost(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -152,14 +155,15 @@ func (h *Handlers) createPost() http.HandlerFunc {
 			FileId:    ImageId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 
 	}
 }
 
 func (h *Handlers) editPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("editPost handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "editPost handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -183,12 +187,12 @@ func (h *Handlers) editPost() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -196,7 +200,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
-			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+			mediaRes, err := h.MediaService.UploadImage(ctx, &media.UploadImageRequest{
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
@@ -205,7 +209,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)
@@ -224,9 +228,9 @@ func (h *Handlers) editPost() http.HandlerFunc {
 			DeleteImage: httpReq.DeleteImage,
 		}
 
-		_, err := h.PostsService.EditPost(r.Context(), &grpcReq)
+		_, err := h.PostsService.EditPost(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -239,14 +243,15 @@ func (h *Handlers) editPost() http.HandlerFunc {
 			FileId:    ImageId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 
 	}
 }
 
 func (h *Handlers) deletePost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("deletePost handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "deletePost handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -255,7 +260,7 @@ func (h *Handlers) deletePost() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -264,9 +269,9 @@ func (h *Handlers) deletePost() http.HandlerFunc {
 			EntityId:    body.EntityId.Int64(),
 		}
 
-		_, err = h.PostsService.DeletePost(r.Context(), &grpcReq)
+		_, err = h.PostsService.DeletePost(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 

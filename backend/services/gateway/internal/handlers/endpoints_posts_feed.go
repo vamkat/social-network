@@ -8,13 +8,14 @@ import (
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 )
 
 func (h *Handlers) getPublicFeed() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getPublicFeed handler called")
-
 		ctx := r.Context()
+		tele.Info(ctx, "getPublicFeed handler called")
+
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
@@ -22,7 +23,7 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GenericPaginatedReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -34,11 +35,11 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPublicFeed(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
 			return
 		}
 
-		fmt.Println("retrieved public feed: ", grpcResp)
+		tele.Info(ctx, "retrieved public feed: ", "grpcResp", grpcResp)
 
 		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
@@ -65,9 +66,9 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 			postsResponse = append(postsResponse, post)
 		}
 
-		err = utils.WriteJSON(w, http.StatusOK, postsResponse)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send public feed")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send public feed")
 			return
 		}
 
@@ -76,9 +77,9 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getPersonalizedFeed handler called")
-
 		ctx := r.Context()
+		tele.Info(ctx, "getPersonalizedFeed handler called")
+
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
@@ -86,7 +87,7 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GetPersonalizedFeedReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -98,11 +99,11 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPersonalizedFeed(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 
-		fmt.Println("retrieved personalized feed: ", grpcResp)
+		tele.Info(ctx, "retrieved personalized feed: ", "grpcResp", grpcResp)
 
 		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
@@ -129,9 +130,9 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 			postsResponse = append(postsResponse, post)
 		}
 
-		err = utils.WriteJSON(w, http.StatusOK, postsResponse)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send public feed")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send public feed")
 			return
 		}
 
@@ -140,9 +141,9 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 
 func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getUserPostsPaginated handler called")
-
 		ctx := r.Context()
+		tele.Info(ctx, "getUserPostsPaginated handler called")
+
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
@@ -150,7 +151,7 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GetUserPostsReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -163,11 +164,11 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetUserPostsPaginated(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 
-		fmt.Println("retrieved personalized feed: ", grpcResp)
+		tele.Info(ctx, "retrieved personalized feed: ", "grpcResp", grpcResp)
 
 		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
@@ -194,9 +195,9 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 			postsResponse = append(postsResponse, post)
 		}
 
-		err = utils.WriteJSON(w, http.StatusOK, postsResponse)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to send user %v posts: %v", body.CreatorId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send user %v posts: %v", body.CreatorId, err.Error()))
 			return
 		}
 

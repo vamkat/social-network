@@ -138,19 +138,7 @@ func NewMeterProvider() (*metric.MeterProvider, error) {
 
 func NewLoggerProvider(ctx context.Context, collectorAddress string) (*log.LoggerProvider, error) {
 
-	// exporter, err := otlploggrpc.New(ctx)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to create OTLP log exporter: %w", err)
-	// }
-
-	// processor := log.NewBatchProcessor(exporter)
-	// lp := log.NewLoggerProvider(
-	// 	log.WithProcessor(processor),
-	// 	log.WithResource(res),
-	// )
-
-	// return lp, nil
-
+	//TODO add service name and set up versioning?
 	resource := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceName("my_serviceName"),

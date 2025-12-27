@@ -16,6 +16,7 @@ import (
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
@@ -126,8 +127,9 @@ func getConfigs() configs { // sensible defaults
 	}
 
 	// load environment variables if present
-	if err := configutil.LoadConfigs(&cfgs); err != nil {
-		log.Fatalf("failed to load env variables into config struct: %v", err)
+	_, err := configutil.LoadConfigs(&cfgs)
+	if err != nil {
+		tele.Fatalf("failed to load env variables into config struct: %v", err)
 	}
 
 	return cfgs

@@ -10,12 +10,14 @@ import (
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 	"time"
 )
 
 func (h *Handlers) createComment() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("createComment handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "createComment handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -36,12 +38,12 @@ func (h *Handlers) createComment() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -49,7 +51,7 @@ func (h *Handlers) createComment() http.HandlerFunc {
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
-			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+			mediaRes, err := h.MediaService.UploadImage(ctx, &media.UploadImageRequest{
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
@@ -58,7 +60,7 @@ func (h *Handlers) createComment() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)
@@ -72,9 +74,9 @@ func (h *Handlers) createComment() http.HandlerFunc {
 			ImageId:   ImageId.Int64(),
 		}
 
-		_, err := h.PostsService.CreateComment(r.Context(), &grpcReq)
+		_, err := h.PostsService.CreateComment(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -87,15 +89,15 @@ func (h *Handlers) createComment() http.HandlerFunc {
 			FileId:    ImageId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 	}
 }
 
 func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getCommentsByParentId handler called")
-
 		ctx := r.Context()
+		tele.Info(ctx, "getCommentsByParentId handler called")
+
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
@@ -103,7 +105,7 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.EntityIdPaginatedReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -116,11 +118,11 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetCommentsByParentId(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to get comments for post id %v: %v: ", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get comments for post id %v: %v: ", body.EntityId, err.Error()))
 			return
 		}
 
-		fmt.Println("retrieved comments: ", grpcResp)
+		tele.Info(ctx, "retrieved comments: ", "grpcResp", grpcResp)
 
 		commentsResponse := []models.Comment{}
 		for _, c := range grpcResp.Comments {
@@ -144,9 +146,9 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 			commentsResponse = append(commentsResponse, comment)
 		}
 
-		err = utils.WriteJSON(w, http.StatusOK, commentsResponse)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, commentsResponse)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to send comments for post %v : %v", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send comments for post %v : %v", body.EntityId, err.Error()))
 			return
 		}
 
@@ -155,7 +157,9 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 func (h *Handlers) editComment() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("editComment handler called")
+		ctx := r.Context()
+
+		tele.Info(ctx, "editComment handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -177,12 +181,12 @@ func (h *Handlers) editComment() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -190,7 +194,7 @@ func (h *Handlers) editComment() http.HandlerFunc {
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
-			mediaRes, err := h.MediaService.UploadImage(r.Context(), &media.UploadImageRequest{
+			mediaRes, err := h.MediaService.UploadImage(ctx, &media.UploadImageRequest{
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
@@ -199,7 +203,7 @@ func (h *Handlers) editComment() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)
@@ -214,9 +218,9 @@ func (h *Handlers) editComment() http.HandlerFunc {
 			DeleteImage: httpReq.DeleteImage,
 		}
 
-		_, err := h.PostsService.EditComment(r.Context(), &grpcReq)
+		_, err := h.PostsService.EditComment(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -229,13 +233,14 @@ func (h *Handlers) editComment() http.HandlerFunc {
 			FileId:    ImageId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 	}
 }
 
 func (h *Handlers) deleteComment() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("deleteComment handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "deleteComment handler called")
 
 		claims, ok := utils.GetValue[security.Claims](r, ct.ClaimsKey)
 		if !ok {
@@ -244,7 +249,7 @@ func (h *Handlers) deleteComment() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -253,9 +258,9 @@ func (h *Handlers) deleteComment() http.HandlerFunc {
 			EntityId:    body.EntityId.Int64(),
 		}
 
-		_, err = h.PostsService.DeleteComment(r.Context(), &grpcReq)
+		_, err = h.PostsService.DeleteComment(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("failed to delete comment with id %v: %v", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete comment with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 

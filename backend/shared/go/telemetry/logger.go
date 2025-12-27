@@ -21,6 +21,7 @@ type LogLevel struct {
 // TODO
 //get stack info
 //extra context info
+//log the 3 functions that called the log
 
 type logging struct {
 	serviceName string
@@ -65,21 +66,25 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 		return
 	}
 
-	ctxArgs := l.context2Args(ctx)
-	for _, ctxArg := range ctxArgs {
-		args = append(args, ctxArg)
+	if ctx == nil {
+		ctx = context.Background()
+	} else {
+		ctxArgs := l.context2Args(ctx)
+		for _, ctxArg := range ctxArgs {
+			args = append(args, ctxArg)
+		}
 	}
 
 	if !l.simplePrint {
 		args = []any{}
 	}
 
-	//maybe not use context
 	if l.hasPrefix {
-		fmt.Printf("[%s]: %s - %s\n", l.prefix, level.String(), msg)
+		fmt.Printf("[%s]: %s - %s - args: %s\n", l.prefix, level.String(), msg, fmt.Sprint(args))
 	} else {
-		fmt.Printf("[%s]: %s - %s\n", l.serviceName, level.String(), msg)
+		fmt.Printf("[%s]: %s - %s - args: %s\n", l.serviceName, level.String(), msg, fmt.Sprint(args))
 	}
+
 	l.slog.Log(ctx, level, msg, args...)
 }
 

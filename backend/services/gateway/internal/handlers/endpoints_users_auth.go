@@ -10,12 +10,15 @@ import (
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 	"time"
 )
 
 func (h *Handlers) loginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("login handler called with request_id:", r.Context().Value(ct.ReqID), " userid:", r.Context().Value(ct.UserId), " tracerId:", r.Context().Value(ct.TraceId))
+		ctx := r.Context()
+		tele.Info(ctx, "login handler called with request_id:", r.Context().Value(ct.ReqID), " userid:", r.Context().Value(ct.UserId), " tracerId:", r.Context().Value(ct.TraceId))
+
 		//READ REQUEST BODY
 		type loginHttpRequest struct {
 			Identifier ct.Identifier `json:"identifier"`
@@ -28,33 +31,34 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		defer r.Body.Close()
 		err := decoder.Decode(&httpReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		httpReq.Password, err = httpReq.Password.Hash()
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			tele.Error(ctx, "failed to hash password", "error", err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "could not hash password")
 			return
 		}
 
 		//VALIDATE INPUT
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
-		fmt.Println("password", httpReq.Password.String())
+		tele.Debug(ctx, "login password", "password", httpReq.Password.String())
 		//MAKE GRPC REQUEST
 		gRpcReq := users.LoginRequest{
 			Identifier: httpReq.Identifier.String(),
 			Password:   httpReq.Password.String(),
 		}
 
-		fmt.Println(httpReq.Password.String())
+		tele.Debug(ctx, "login password request:", httpReq.Password.String())
 
 		resp, err := h.UsersService.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -70,7 +74,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 		token, err := security.CreateToken(claims)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "token generation failed")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "token generation failed")
 			return
 		}
 
@@ -96,9 +100,9 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		}
 
 		//SEND RESPONSE
-		err = utils.WriteJSON(w, http.StatusCreated, httpResp)
+		err = utils.WriteJSON(ctx, w, http.StatusCreated, httpResp)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusUnauthorized, "failed to send login ACK")
+			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, "failed to send login ACK")
 			return
 		}
 	}
@@ -106,17 +110,18 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 func (h *Handlers) registerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		// Check if user already logged in
 		cookie, _ := r.Cookie("jwt")
 		if cookie != nil {
 			_, err := security.ParseAndValidate(cookie.Value)
 			if err == nil {
-				utils.ErrorJSON(w, http.StatusForbidden, "Already logged in. Log out to register.")
+				utils.ErrorJSON(ctx, w, http.StatusForbidden, "Already logged in. Log out to register.")
 				return
 			}
 		}
 
-		fmt.Println("register handler called, with: ", r.Body)
+		tele.Info(ctx, "register handler called, with: ", "body", r.Body)
 		//READ REQUEST BODY
 		type registerHttpRequest struct {
 			Username    ct.Username    `json:"username,omitempty" validate:"nullable"`
@@ -138,18 +143,19 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		hashedPass, err := httpReq.Password.Hash()
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			tele.Error(ctx, "failed to hash password", "error", err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "could not hash password")
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -166,7 +172,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			AvatarId = ct.Id(mediaRes.FileId)
@@ -188,7 +194,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 		resp, err := h.UsersService.RegisterUser(r.Context(), &gRpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -204,7 +210,7 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 		token, err := security.CreateToken(claims)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "token generation failed")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "token generation failed")
 			return
 		}
 
@@ -229,8 +235,8 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			UploadUrl: uploadURL}
 
 		//SEND RESPONSE
-		if err := utils.WriteJSON(w, http.StatusCreated, httpResp); err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send registration ACK")
+		if err := utils.WriteJSON(ctx, w, http.StatusCreated, httpResp); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send registration ACK")
 			return
 		}
 	}
@@ -238,7 +244,8 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 func (h *Handlers) logoutHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("logout handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "logout handler called")
 		//CLEAR COOKIE
 		http.SetCookie(w, &http.Cookie{
 			Name:     "jwt",
@@ -251,8 +258,8 @@ func (h *Handlers) logoutHandler() http.HandlerFunc {
 		})
 
 		//SEND RESPONSE
-		if err := utils.WriteJSON(w, http.StatusOK, "logged out successfully"); err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send logout ACK")
+		if err := utils.WriteJSON(ctx, w, http.StatusOK, "logged out successfully"); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send logout ACK")
 			return
 		}
 	}
@@ -261,7 +268,7 @@ func (h *Handlers) logoutHandler() http.HandlerFunc {
 // Returns status ok if passed Auth
 func (h *Handlers) authStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utils.WriteJSON(w, http.StatusOK, "user is logged in")
+		utils.WriteJSON(r.Context(), w, http.StatusOK, "user is logged in")
 	}
 }
 
@@ -279,7 +286,7 @@ func (s *Handlers) updateUserEmail() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -290,11 +297,11 @@ func (s *Handlers) updateUserEmail() http.HandlerFunc {
 
 		_, err = s.UsersService.UpdateUserEmail(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update email: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update email: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -314,26 +321,28 @@ func (s *Handlers) updateUserPassword() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 		_ = body
 
-		fmt.Println("old password:", body.OldPassword, " new password:", body.NewPassword)
+		tele.Info(ctx, fmt.Sprint("old password:", body.OldPassword, " new password:", body.NewPassword))
 
 		oldPassword, err := ct.Password(body.OldPassword).Hash()
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			tele.Error(ctx, "failed to hash password", "error", err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "could not hash password")
 			return
 		}
 
 		newPassword, err := ct.Password(body.NewPassword).Hash()
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "could not hash password")
+			tele.Error(ctx, "failed to hash password", "error", err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "could not hash password")
 			return
 		}
 
-		fmt.Println("hashed old password:", oldPassword.String(), " hashed new password:", newPassword.String())
+		tele.Info(ctx, fmt.Sprint("hashed old password:", oldPassword.String(), " hashed new password:", newPassword.String()))
 
 		req := &users.UpdatePasswordRequest{
 			UserId:      claims.UserId,
@@ -343,10 +352,10 @@ func (s *Handlers) updateUserPassword() http.HandlerFunc {
 
 		_, err = s.UsersService.UpdateUserPassword(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update password: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update password: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }

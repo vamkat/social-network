@@ -9,6 +9,7 @@ import (
 	"social-network/services/gateway/internal/security"
 	"social-network/services/gateway/internal/utils"
 	ct "social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 
 	"strings"
 )
@@ -54,7 +55,8 @@ func (m *MiddleSystem) add(f func(http.ResponseWriter, *http.Request) (bool, *ht
 // AllowedMethod sets allowed HTTP methods and handles CORS preflight requests
 func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		fmt.Println("[DEBUG] endpoint called:", r.URL.Path, " with method: ", r.Method)
+		ctx := r.Context()
+		tele.Debug(ctx, "endpoint called:", r.URL.Path, " with method: ", r.Method)
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", ")+", OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Timestamp, Authorization")
@@ -67,7 +69,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 		// w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		if r.Method == http.MethodOptions {
-			fmt.Println("[DEBUG] Method in options")
+			tele.Debug(ctx, "Method in options")
 			w.WriteHeader(http.StatusNoContent) // 204
 			return false, nil
 		}
@@ -78,7 +80,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 
 		// method not allowed
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		fmt.Println("[DEBUG] method not allowed")
+		tele.Debug(ctx, "method not allowed")
 		return false, nil
 	})
 	return m
@@ -97,26 +99,28 @@ func (m *MiddleSystem) EnrichContext() *MiddleSystem {
 // Auth middleware to validate JWT and enrich context with claims
 func (m *MiddleSystem) Auth() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
-		fmt.Println("[DEBUG] in auth")
-		// fmt.Println("Cookies received:", r.Cookies())
+		ctx := r.Context()
+
+		tele.Debug(ctx, "in auth")
+		// tele.Info(ctx, "Cookies received:", r.Cookies())
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
-			fmt.Println("[WARNING] no cookie")
-			utils.ErrorJSON(w, http.StatusUnauthorized, "missing auth cookie")
+			tele.Warn(ctx, "no cookie")
+			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, "missing auth cookie")
 			return false, nil
 		}
-		// fmt.Println("JWT cookie value:", cookie.Value)
+		// tele.Info(ctx, "JWT cookie value:", cookie.Value)
 		claims, err := security.ParseAndValidate(cookie.Value)
 		if err != nil {
-			fmt.Println("[WARNING] unauthorized")
-			utils.ErrorJSON(w, http.StatusUnauthorized, err.Error())
+			tele.Warn(ctx, "unauthorized")
+			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, err.Error())
 			return false, nil
 		}
 		// enrich request with claims
-		fmt.Println("[DEBUG] auth ok")
+		tele.Debug(ctx, "auth ok")
 		r = utils.RequestWithValue(r, ct.ClaimsKey, claims)
 		r = utils.RequestWithValue(r, ct.UserId, claims.UserId)
-		fmt.Println("[DEBUG] adding these to context -> claims:", claims, ", userid: ", claims.UserId)
+		tele.Debug(ctx, "adding these to context -> claims:", claims, ", userid: ", claims.UserId)
 		return true, r
 	})
 	return m
@@ -142,25 +146,25 @@ const (
 func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, durationSeconds int64) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		ctx := r.Context()
-		fmt.Println("[DEBUG] in ratelimit, type: ", rateLimitType)
+		tele.Debug(ctx, "in ratelimit, type: ", rateLimitType)
 		rateLimitKey := ""
 		switch rateLimitType {
 		case IPLimit:
 			remoteIp, err := getRemoteIpKey(r)
 			if err != nil {
-				fmt.Println("[DEBUG] rate limited remoteIp:", remoteIp)
-				utils.ErrorJSON(w, http.StatusNotAcceptable, "your IP is absolutely WACK")
+				tele.Debug(ctx, "rate limited remoteIp:", remoteIp)
+				utils.ErrorJSON(ctx, w, http.StatusNotAcceptable, "your IP is absolutely WACK")
 				return false, nil
 			}
 			rateLimitKey = fmt.Sprintf("%s:%s:ip:%s", m.serviceName, m.endpoint, remoteIp)
 		case UserLimit:
 			userId, ok := ctx.Value(ct.UserId).(int64)
 			if !ok {
-				fmt.Println("[WARNING], err or no userId:", userId, " ok:", ok)
-				utils.ErrorJSON(w, http.StatusNotAcceptable, "how the hell did you end up here without a user id?")
+				tele.Warn(ctx, "err or no userId:", userId, " ok:", ok)
+				utils.ErrorJSON(ctx, w, http.StatusNotAcceptable, "how the hell did you end up here without a user id?")
 				return false, nil
 			}
-			fmt.Println("[DEBUG] rate limited userId:", userId)
+			tele.Debug(ctx, "rate limited userId:", userId)
 			rateLimitKey = fmt.Sprintf("%s:%s:id:%d", m.serviceName, m.endpoint, userId)
 		default:
 			panic("bad rate limit type argument!")
@@ -168,13 +172,13 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 
 		ok, err := m.ratelimiter.Allow(ctx, rateLimitKey, limit, durationSeconds)
 		if err != nil {
-			fmt.Println("[DEBUG] rate limited userId:", rateLimitKey)
-			utils.ErrorJSON(w, http.StatusInternalServerError, "you broke the rate limiter")
+			tele.Debug(ctx, "rate limited userId:", rateLimitKey)
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "you broke the rate limiter")
 			return false, nil
 		}
 		if !ok {
-			fmt.Printf("[DEBUG] rate limited for key: %s, reached max: %d per %d sec \n", rateLimitKey, limit, durationSeconds)
-			utils.ErrorJSON(w, http.StatusTooManyRequests, "429: stop it, get some help")
+			tele.Debug(ctx, fmt.Sprintf("rate limited for key: %s, reached max: %d per %d sec \n", rateLimitKey, limit, durationSeconds), "rateLimitKey", rateLimitKey, "limit", limit, "durationSeconds", durationSeconds)
+			utils.ErrorJSON(ctx, w, http.StatusTooManyRequests, "429: stop it, get some help")
 			return false, nil
 		}
 		return true, r

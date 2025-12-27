@@ -3,7 +3,6 @@ package entry
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -24,15 +23,10 @@ import (
 
 func Run() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-
 	cfgs := getConfigs()
+
 	// Inject envs to custom types
-	ct.Cfgs = ct.Configs{
-		PassSecret: os.Getenv("PASSWORD_SECRET"),
-		Salt:       os.Getenv("ENC_KEY"),
-	}
-	fmt.Println("Cfgs PASS", cfgs.PassSecret)
-	fmt.Println("ct Cfgs", ct.Cfgs)
+	ct.InitCustomTypes(cfgs.PassSecret, cfgs.EncrytpionKey)
 
 	//
 	//
@@ -197,10 +191,13 @@ func getConfigs() configs { // sensible defaults
 
 		OtelResourceAttributes:    "service.name=gateway,service.version=0.1.0",
 		TelemetryCollectorAddress: "alloy:4317",
+		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
+		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 	}
 
 	// load environment variables if present
-	if err := configutil.LoadConfigs(&cfgs); err != nil {
+	_, err := configutil.LoadConfigs(&cfgs)
+	if err != nil {
 		tele.Fatalf("failed to load env variables into config struct: %v", err)
 	}
 

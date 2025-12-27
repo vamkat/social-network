@@ -26,18 +26,18 @@ func (s *Handlers) getFollowSuggestions() http.HandlerFunc {
 
 		part1, err := s.UsersService.GetFollowSuggestions(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch suggestions from users: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch suggestions from users: "+err.Error())
 			return
 		}
 
 		part2, err := s.PostsService.SuggestUsersByPostActivity(ctx, &posts.SimpleIdReq{Id: requesterId})
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch suggestions from posts: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch suggestions from posts: "+err.Error())
 			return
 		}
 
-		// fmt.Println("from users", part1)
-		// fmt.Println("from posts", part2)
+		// tele.Info(ctx, "from users", part1)
+		// tele.Info(ctx, "from posts", part2)
 
 		myMap := make(map[int64]*common.User)
 		for _, user := range part1.Users {
@@ -59,7 +59,7 @@ func (s *Handlers) getFollowSuggestions() http.HandlerFunc {
 		resp := models.Users{
 			Users: dedupedUsers,
 		}
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -79,7 +79,7 @@ func (s *Handlers) getFollowersPaginated() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -91,7 +91,7 @@ func (s *Handlers) getFollowersPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetFollowersPaginated(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch followers: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch followers: "+err.Error())
 			return
 		}
 
@@ -106,7 +106,7 @@ func (s *Handlers) getFollowersPaginated() http.HandlerFunc {
 			resp = append(resp, newUser)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -126,7 +126,7 @@ func (s *Handlers) getFollowingPaginated() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -138,7 +138,7 @@ func (s *Handlers) getFollowingPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetFollowingPaginated(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch following users: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch following users: "+err.Error())
 			return
 		}
 
@@ -154,7 +154,7 @@ func (s *Handlers) getFollowingPaginated() http.HandlerFunc {
 			resp.Users = append(resp.Users, user)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -168,7 +168,7 @@ func (s *Handlers) followUser() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.FollowUserReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -179,11 +179,11 @@ func (s *Handlers) followUser() http.HandlerFunc {
 
 		resp, err := s.UsersService.FollowUser(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not follow user: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not follow user: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp) //TODO check if returned values need to be removed
+		utils.WriteJSON(ctx, w, http.StatusOK, resp) //TODO check if returned values need to be removed
 	}
 }
 
@@ -202,7 +202,7 @@ func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -214,11 +214,11 @@ func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 
 		_, err = s.UsersService.HandleFollowRequest(ctx, req)
 		if err != nil { //soft TODO better error?
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not handle follow request: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not handle follow request: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -232,7 +232,7 @@ func (s *Handlers) unFollowUser() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.FollowUserReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -243,10 +243,10 @@ func (s *Handlers) unFollowUser() http.HandlerFunc {
 
 		_, err = s.UsersService.UnFollowUser(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not unfollow user: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not unfollow user: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }

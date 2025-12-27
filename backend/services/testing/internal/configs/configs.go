@@ -1,8 +1,8 @@
 package configs
 
 import (
-	"log"
 	configutil "social-network/shared/go/configs"
+	tele "social-network/shared/go/telemetry"
 )
 
 type Configs struct {
@@ -33,8 +33,9 @@ func GetConfigs() Configs { // sensible defaults
 	}
 
 	// load environment variables if present
-	if err := configutil.LoadConfigs(&cfgs); err != nil {
-		log.Fatalf("failed to load env variables into config struct: %v", err)
+	_, err := configutil.LoadConfigs(&cfgs)
+	if err != nil {
+		tele.Fatalf("failed to load env variables into config struct: %v", err)
 	}
 
 	return cfgs

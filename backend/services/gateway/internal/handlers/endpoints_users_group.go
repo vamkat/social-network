@@ -35,12 +35,12 @@ func (s *Handlers) createGroup() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -58,7 +58,7 @@ func (s *Handlers) createGroup() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			GroupImageId = ct.Id(mediaRes.FileId)
@@ -74,7 +74,7 @@ func (s *Handlers) createGroup() http.HandlerFunc {
 
 		groupId, err := s.UsersService.CreateGroup(ctx, &createGroupRequest)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not create group: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not create group: "+err.Error())
 			return
 		}
 
@@ -90,7 +90,7 @@ func (s *Handlers) createGroup() http.HandlerFunc {
 			UploadUrl: uploadURL,
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -117,12 +117,12 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -140,7 +140,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			GroupImageId = ct.Id(mediaRes.FileId)
@@ -157,7 +157,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 
 		_, err := s.UsersService.UpdateGroup(ctx, &updateGroupRequest)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update group: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update group: "+err.Error())
 			return
 		}
 
@@ -173,7 +173,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			UploadUrl: uploadURL,
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -192,7 +192,7 @@ func (s *Handlers) getAllGroupsPaginated() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -204,7 +204,7 @@ func (s *Handlers) getAllGroupsPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetAllGroupsPaginated(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch groups: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch groups: "+err.Error())
 			return
 		}
 
@@ -225,7 +225,7 @@ func (s *Handlers) getAllGroupsPaginated() http.HandlerFunc {
 			resp = append(resp, newGroup)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -243,7 +243,7 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -254,7 +254,7 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetGroupInfo(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch group info: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group info: "+err.Error())
 			return
 		}
 
@@ -271,7 +271,7 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 			IsPending:        grpcResp.IsPending,
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -291,7 +291,7 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -304,7 +304,7 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetGroupMembers(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch group members: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group members: "+err.Error())
 			return
 		}
 
@@ -321,7 +321,7 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 			resp.GroupUsers = append(resp.GroupUsers, newGroup)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -340,7 +340,7 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -352,7 +352,7 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetUserGroupsPaginated(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not fetch user groups: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch user groups: "+err.Error())
 			return
 		}
 
@@ -373,7 +373,7 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 			resp = append(resp, newGroup)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -387,7 +387,7 @@ func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.HandleJoinRequest{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -400,11 +400,11 @@ func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 
 		_, err = s.UsersService.HandleGroupJoinRequest(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not handle group join request: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not handle group join request: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -418,7 +418,7 @@ func (s *Handlers) inviteToGroup() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.InviteToGroupReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -430,11 +430,11 @@ func (s *Handlers) inviteToGroup() http.HandlerFunc {
 
 		_, err = s.UsersService.InviteToGroup(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not invite user to group: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not invite user to group: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -448,7 +448,7 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GeneralGroupReq{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -459,11 +459,11 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 
 		_, err = s.UsersService.LeaveGroup(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not leave group: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not leave group: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -477,7 +477,7 @@ func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&models.GroupJoinRequest{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -488,11 +488,11 @@ func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
 
 		_, err = s.UsersService.RequestJoinGroup(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not process join request: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not process join request: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -511,7 +511,7 @@ func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -523,11 +523,11 @@ func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 
 		_, err = s.UsersService.RespondToGroupInvite(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not respond to invite: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not respond to invite: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -547,7 +547,7 @@ func (s *Handlers) searchGroups() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -560,7 +560,7 @@ func (s *Handlers) searchGroups() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.SearchGroups(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not search groups: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not search groups: "+err.Error())
 			return
 		}
 
@@ -584,6 +584,6 @@ func (s *Handlers) searchGroups() http.HandlerFunc {
 			resp.Groups = append(resp.Groups, newGroup)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }

@@ -10,23 +10,25 @@ import (
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 	"strings"
 	"time"
 )
 
 func (h *Handlers) getUserProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("getUserProfile handler called")
+		ctx := r.Context()
+		tele.Info(ctx, "getUserProfile handler called")
 
 		pathParts := strings.Split(r.URL.Path, "/")
 		if pathParts[len(pathParts)-1] == "" {
-			utils.ErrorJSON(w, http.StatusBadRequest, "missing user_id in URL path")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "missing user_id in URL path")
 			return
 		}
 
 		userId, err := ct.DecryptId(pathParts[len(pathParts)-1])
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "invalid user_id query param")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "invalid user_id query param")
 			return
 		}
 
@@ -43,11 +45,11 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 
 		grpcResp, err := h.UsersService.GetUserProfile(r.Context(), &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to get user info: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get user info: "+err.Error())
 			return
 		}
 
-		fmt.Println("retrieved user profile: ", grpcResp)
+		tele.Info(ctx, "retrieved user profile: ", grpcResp)
 
 		type userProfile struct {
 			UserId            ct.Id          `json:"user_id"`
@@ -91,11 +93,11 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			IsPending:         grpcResp.IsPending,
 		}
 
-		fmt.Println("transformed profile struct: ", userProfileResponse)
+		tele.Info(ctx, "transformed profile struct: ", userProfileResponse)
 
-		err = utils.WriteJSON(w, http.StatusOK, userProfileResponse)
+		err = utils.WriteJSON(ctx, w, http.StatusOK, userProfileResponse)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "failed to send user info")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send user info")
 			return
 		}
 
@@ -113,7 +115,7 @@ func (s *Handlers) searchUsers() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -124,7 +126,7 @@ func (s *Handlers) searchUsers() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.SearchUsers(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not search users: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not search users: "+err.Error())
 			return
 		}
 
@@ -143,7 +145,7 @@ func (s *Handlers) searchUsers() http.HandlerFunc {
 			resp.Users = append(resp.Users, newUser)
 		}
 
-		utils.WriteJSON(w, http.StatusOK, resp)
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
 	}
 }
 
@@ -161,7 +163,7 @@ func (s *Handlers) updateProfilePrivacy() http.HandlerFunc {
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
 			return
 		}
 
@@ -172,11 +174,11 @@ func (s *Handlers) updateProfilePrivacy() http.HandlerFunc {
 
 		_, err = s.UsersService.UpdateProfilePrivacy(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update privacy: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update privacy: "+err.Error())
 			return
 		}
 
-		utils.WriteJSON(w, http.StatusOK, nil)
+		utils.WriteJSON(ctx, w, http.StatusOK, nil)
 	}
 }
 
@@ -205,12 +207,12 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -227,7 +229,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(w, http.StatusInternalServerError, err.Error())
+				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			AvatarId = ct.Id(mediaRes.FileId)
@@ -247,7 +249,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.UpdateUserProfile(ctx, grpcRequest)
 		if err != nil {
-			utils.ErrorJSON(w, http.StatusInternalServerError, "Could not update profile: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update profile: "+err.Error())
 			return
 		}
 
@@ -261,6 +263,6 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			FileId:    AvatarId,
 			UploadUrl: uploadURL}
 
-		utils.WriteJSON(w, http.StatusOK, httpResp)
+		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
 	}
 }
