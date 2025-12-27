@@ -1,0 +1,43 @@
+
+logging {
+  level  = "debug"
+  format = "logfmt"
+}
+
+otelcol.exporter.otlp "victoriaExporter" {
+  client {
+    endpoint = coalesce(sys.env("VICTORIA_ADDRESS"), "victoria-logs:9428")
+  }
+}
+
+otelcol.processor.batch "default" {
+  output {
+    logs    = [otelcol.exporter.otlp.victoriaExporter.input]
+    traces = []
+    metrics = []
+  }
+}
+
+otelcol.processor.memory_limiter "default" {
+  check_interval = "1s"
+  limit          = "1GiB"
+
+  output {
+    logs    = [otelcol.processor.batch.default.input]
+    traces = []
+    metrics = []
+  }
+}
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  output {
+    logs    = [otelcol.processor.batch.default.input]
+    traces = []
+    metrics = []
+  }
+}
+

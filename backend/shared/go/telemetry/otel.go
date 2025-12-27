@@ -3,10 +3,11 @@ package tele
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/log/global"
@@ -16,9 +17,14 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 )
 
+//This SDK sets up a bunch of boilerplate about otel stuff
+//It mostly creates providers and sets to be global
+//Those providers will then be used by the custom telemetry types
+
 // setupOTelSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
-func SetupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
+// It also sets the global providers, that will at a later step be used to initialize the logger, tracer and meterer
+func SetupOTelSDK(ctx context.Context, collectorAddress string) (func(context.Context) error, error) {
 	var shutdownFuncs []func(context.Context) error
 	var err error
 
@@ -62,11 +68,12 @@ func SetupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 	otel.SetMeterProvider(meterProvider)
 
 	// Set up logger provider.
-	loggerProvider, err := NewLoggerProvider()
+	loggerProvider, err := NewLoggerProvider(ctx, collectorAddress)
 	if err != nil {
 		handleErr(err)
 		return shutdown, err
 	}
+
 	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
 	global.SetLoggerProvider(loggerProvider)
 
@@ -90,7 +97,7 @@ func NewTracerProvider() (*trace.TracerProvider, error) {
 	tracerProvider := trace.NewTracerProvider(
 		trace.WithBatcher(traceExporter,
 			// Default is 5s. Set to 1s for demonstrative purposes.
-			trace.WithBatchTimeout(3*time.Minute)),
+			trace.WithBatchTimeout(5*time.Second)),
 	)
 	return tracerProvider, nil
 }
@@ -104,15 +111,20 @@ func NewMeterProvider() (*metric.MeterProvider, error) {
 	meterProvider := metric.NewMeterProvider(
 		metric.WithReader(metric.NewPeriodicReader(metricExporter,
 			// Default is 1m. Set to 3s for demonstrative purposes.
-			metric.WithInterval(time.Minute))),
+			metric.WithInterval(time.Minute*2))), //reduce once
 	)
 	return meterProvider, nil
 }
 
-func NewLoggerProvider() (*log.LoggerProvider, error) {
-	logExporter, err := stdoutlog.New()
+func NewLoggerProvider(ctx context.Context, collectorAddress string) (*log.LoggerProvider, error) {
+	logExporter, err := otlploggrpc.New(
+		ctx,
+		otlploggrpc.WithEndpointURL("dns:///"+collectorAddress),
+		otlploggrpc.WithInsecure(),
+		otlploggrpc.WithTimeout(5*time.Second),
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create log exporter: %w", err)
 	}
 
 	loggerProvider := log.NewLoggerProvider(

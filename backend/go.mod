@@ -12,8 +12,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.14.0
 	go.opentelemetry.io/otel v1.39.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.60.0
-	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.14.0
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.15.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.38.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.38.0
 	go.opentelemetry.io/otel/log v0.15.0
@@ -25,7 +24,6 @@ require (
 )
 
 require (
-	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -74,7 +72,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/redis/go-redis/v9 v9.17.2
-	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.15.0
 	golang.org/x/crypto v0.44.0
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect

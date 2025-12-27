@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-
-	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	"go.opentelemetry.io/otel/exporters/prometheus"
 )
 
 var (
@@ -16,7 +13,11 @@ var (
 
 func init() {
 	// we create an empty no op telemetry so that we don't panic if this packages logging is called without initalizing it properly
-	telemeter = &telemetry{}
+	telemeter = &telemetry{
+		logger: newBasicLogger(),
+	}
+
+	telemeter.logger.slog.Log(context.Background(), slog.LevelDebug, "this is a test message")
 }
 
 // this interface exists to enforce usage of typed context keys instead of just strings
@@ -26,7 +27,6 @@ type contextKeys interface {
 
 type telemetry struct {
 	logger      *logging
-	logExporter *otlploghttp.Exporter
 	tracer      *tracing
 	meterer     *metering
 	serviceName string
@@ -64,41 +64,27 @@ func Fatalf(format string, args ...any) {
 }
 
 // actually activates the functionality of open telemetry
-func InitTelemetry(ctx context.Context, serviceName string, contextKeys contextKeys, enableDebug bool, simplePrint bool) (func(), error) {
+func InitTelemetry(ctx context.Context, serviceName string, collectorAddress string, contextKeys contextKeys, enableDebug bool, simplePrint bool) (func(), error) {
 
-	logger := NewLogger(serviceName, contextKeys, enableDebug, simplePrint)
+	otelShutdown, err := SetupOTelSDK(ctx, collectorAddress)
+	if err != nil {
+		Fatalf("open telemetry sdk failed, ERROR: %s", err.Error())
+	}
+	Info(ctx, "open telemetry ready")
 
+	logger := newLogger(serviceName, contextKeys, enableDebug, simplePrint)
+	slog.SetDefault(logger.slog)
 	// rollCnt metric.Int64Counter
 
 	telemeter = &telemetry{
-		logger:      &logger,
+		logger:      logger,
 		tracer:      nil,
 		meterer:     nil,
 		serviceName: serviceName,
 		enableDebug: enableDebug,
 	}
 
-	close := initOpenTelemetrySDK(ctx)
-
-	logExporter, err := otlploghttp.New(ctx,
-		otlploghttp.WithEndpointURL("http://victorialogs:9428/insert/opentelemetry/v1/logs"),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create log exporter: %w", err)
-	}
-	telemeter.logExporter = logExporter
-
-	return close, nil
-}
-
-func initOpenTelemetrySDK(ctx context.Context) func() {
-	otelShutdown, err := SetupOTelSDK(ctx)
-	if err != nil {
-		Fatalf("open telemetry sdk failed, ERROR: %s", err.Error())
-	}
-	Info(ctx, "open telemetry ready")
-
-	return func() {
+	close := func() {
 		err := otelShutdown(context.Background())
 		if err != nil {
 			Info(ctx, "otel shutdown ungracefully! ERROR: "+err.Error())
@@ -106,9 +92,6 @@ func initOpenTelemetrySDK(ctx context.Context) func() {
 			Info(ctx, "otel shutdown gracefully")
 		}
 	}
-}
 
-func newPrometheus() *prometheus.Exporter {
-	x, _ := prometheus.New(nil)
-	return x
+	return close, nil
 }

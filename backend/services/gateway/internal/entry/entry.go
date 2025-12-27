@@ -3,6 +3,7 @@ package entry
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -26,12 +27,30 @@ func Run() {
 
 	cfgs := getConfigs()
 
-	close := tele.InitTelemetry(ctx, "gateway", ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
-	defer close()
+	//
+	//
+	//
+	// TELEMETRY
+	closeTelemetry, err := tele.InitTelemetry(ctx, "gateway", cfgs.TelemetryCollectorAddress, ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
+	if err != nil {
+		tele.Fatalf("failed to init telemetry: %s", err.Error())
+	}
+	defer closeTelemetry()
 
 	tele.Info(ctx, "initialized telemetry")
 
-	// Cache
+	go func() {
+		for i := range 10000 {
+			tele.Info(ctx, fmt.Sprint("This is a test? loop:", i), "loop", i)
+			fmt.Println("fmt print test")
+			time.Sleep(time.Second * 3)
+		}
+	}()
+
+	//
+	//
+	//
+	// CACHE
 	CacheService := redis_connector.NewRedisClient(
 		cfgs.RedisAddr,
 		cfgs.RedisPassword,
@@ -46,7 +65,6 @@ func Run() {
 	//
 	//
 	// GRPC CLIENTS
-	var err error
 	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfgs.UsersGRPCAddr,
@@ -149,27 +167,35 @@ type configs struct {
 	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
 	MediaGRPCAddr string `env:"MEDIA_GRPC_ADDR"`
 
-	HTTPAddr               string `env:"HTTP_ADDR"`
-	ShutdownTimeout        int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
-	EnableDebugLogs        bool   `env:"ENABLE_DEBUG_LOGS"`
-	SimplePrint            bool   `env:"ENABLE_SIMPLE_PRINT"`
-	OtelResourceAttributes string `env:"OTEL_RESOURCE_ATTRIBUTES"`
+	HTTPAddr        string `env:"HTTP_ADDR"`
+	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+
+	EnableDebugLogs bool `env:"ENABLE_DEBUG_LOGS"`
+	SimplePrint     bool `env:"ENABLE_SIMPLE_PRINT"`
+
+	OtelResourceAttributes    string `env:"OTEL_RESOURCE_ATTRIBUTES"`
+	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
 }
 
 func getConfigs() configs { // sensible defaults
 	cfgs := configs{
-		RedisAddr:              "redis:6379",
-		RedisPassword:          "",
-		RedisDB:                0,
-		UsersGRPCAddr:          "users:50051",
-		PostsGRPCAddr:          "posts:50051",
-		ChatGRPCAddr:           "chat:50051",
-		MediaGRPCAddr:          "media:50051",
-		HTTPAddr:               "0.0.0.0:8081",
-		ShutdownTimeout:        5,
-		EnableDebugLogs:        true,
-		SimplePrint:            true,
-		OtelResourceAttributes: "service.name=gateway,service.version=0.1.0",
+		RedisAddr:     "redis:6379",
+		RedisPassword: "",
+		RedisDB:       0,
+
+		UsersGRPCAddr: "users:50051",
+		PostsGRPCAddr: "posts:50051",
+		ChatGRPCAddr:  "chat:50051",
+		MediaGRPCAddr: "media:50051",
+
+		HTTPAddr:        "0.0.0.0:8081",
+		ShutdownTimeout: 5,
+
+		EnableDebugLogs: true,
+		SimplePrint:     true,
+
+		OtelResourceAttributes:    "service.name=gateway,service.version=0.1.0",
+		TelemetryCollectorAddress: "alloy:4317",
 	}
 
 	// load environment variables if present
