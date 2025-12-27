@@ -371,36 +371,35 @@ export default function CreatePost() {
                                 <div className="absolute top-full left-0 mt-1 w-32 bg-background border border-(--border) rounded-xl z-50 animate-fade-in">
 
                                     <div className="flex flex-col p-1">
-                                        <Tooltip content="Visible to everyone">
-                                            <button
-                                                type="button"
-                                                onClick={() => handlePrivacySelect("everyone")}
-                                                className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "everyone" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"
-                                                    }`}
-                                            >
-                                                Everyone
-                                            </button>
-                                        </Tooltip>
-                                        <Tooltip content="Visible to your followers only">
-                                            <button
-                                                type="button"
-                                                onClick={() => handlePrivacySelect("followers")}
-                                                className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "followers" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"
-                                                    }`}
-                                            >
-                                                Followers
-                                            </button>
-                                        </Tooltip>
-                                        <Tooltip content="Choose specific followers">
-                                            <button
-                                                type="button"
-                                                onClick={() => handlePrivacySelect("selected")}
-                                                className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "selected" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"
-                                                    }`}
-                                            >
-                                                Selected
-                                            </button>
-                                        </Tooltip>
+                                        <button
+                                            type="button"
+                                            onClick={() => handlePrivacySelect("everyone")}
+                                            className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "everyone" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"
+                                                }`}
+                                        >
+                                            Everyone
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handlePrivacySelect("followers")}
+                                            className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "followers" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"
+                                                }`}
+                                        >
+                                            Followers
+                                        </button>
+
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handlePrivacySelect("selected")}
+                                            className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "selected" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"
+                                                }`}
+                                        >
+                                            Selected
+                                        </button>
+
                                     </div>
                                 </div>
                             )}
@@ -418,7 +417,7 @@ export default function CreatePost() {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-(--muted) border hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
                             >
                                 <ImageIcon size={18} />
                                 <span>Image</span>

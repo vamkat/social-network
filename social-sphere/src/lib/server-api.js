@@ -34,9 +34,6 @@ export async function serverApiRequest(endpoint, options = {}) {
 
         if (setCookieHeaders.length > 0) {
             setCookieHeaders.forEach(cookieStr => {
-                // Simple parsing to extract name, value and path/httpOnly etc would be complex
-                // But cookies().set(name, value, options) requires parsed data.
-                // Alternative: Let's try to parse at least the name and value.
 
                 const parts = cookieStr.split(';');
                 const [nameValue, ...optionsParts] = parts;
@@ -68,5 +65,16 @@ export async function serverApiRequest(endpoint, options = {}) {
         }
     }
 
-    return res.json();
+    // Handle empty response bodies (like delete endpoints)
+    const text = await res.text();
+    if (!text || text.trim() === '') {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error('Failed to parse JSON response:', text);
+        throw new Error('Invalid JSON response from server');
+    }
 }
