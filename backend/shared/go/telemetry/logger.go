@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"time"
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel/log/global"
@@ -28,30 +27,20 @@ type logging struct {
 	enableDebug bool     //if debug prints will be shown or not
 	contextKeys []string //the context keys that will be added to logs as metadata
 	slog        *slog.Logger
-	simplePrint bool //if it should print logs in a simple way, or a super verbose way with all details
+	simplePrint bool   //if it should print logs in a simple way, or a super verbose way with all details
+	prefix      string //this will be added at the start of logs that appear in the local terminal only, suggestion: keep it 3 letters CAPITAL, ex: API, MED, SOC, NOT, POS, RED, USE, CHA
+	hasPrefix   bool
 }
 
 // newLogger returns a logger that actually logs, uses a handler that taken from a global provider created by the otel sdk
-func newLogger(serviceName string, contextKeys contextKeys, enableDebug bool, simplePrint bool) *logging {
+func newLogger(serviceName string, contextKeys contextKeys, enableDebug bool, simplePrint bool, prefix string) *logging {
 	handler := otelslog.NewHandler(
 		serviceName,
 		otelslog.WithLoggerProvider(global.GetLoggerProvider()),
 		otelslog.WithSource(true),
 	)
 
-	fmt.Println("handle record")
-	for range 4 {
-		err := handler.Handle(context.Background(), slog.NewRecord(time.Unix(1, 1), slog.LevelInfo, "HANLDE MESSAGE", uintptr(1)))
-		fmt.Println(err)
-		time.Sleep(time.Second * 1)
-	}
-
 	logger := slog.New(handler)
-	fmt.Println("logger.info")
-	for range 4 {
-		logger.Info("logger.Info(msg) A TEEEEEEEEEEST")
-		time.Sleep(time.Second * 1)
-	}
 
 	return &logging{
 		serviceName: serviceName,
@@ -59,6 +48,8 @@ func newLogger(serviceName string, contextKeys contextKeys, enableDebug bool, si
 		slog:        logger,
 		enableDebug: enableDebug,
 		simplePrint: simplePrint,
+		prefix:      prefix,
+		hasPrefix:   "" != prefix,
 	}
 }
 
@@ -84,6 +75,11 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 	}
 
 	//maybe not use context
+	if l.hasPrefix {
+		fmt.Printf("[%s]: %s - %s\n", l.prefix, level.String(), msg)
+	} else {
+		fmt.Printf("[%s]: %s - %s\n", l.serviceName, level.String(), msg)
+	}
 	l.slog.Log(ctx, level, msg, args...)
 }
 

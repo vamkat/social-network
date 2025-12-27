@@ -64,7 +64,7 @@ func Fatalf(format string, args ...any) {
 }
 
 // actually activates the functionality of open telemetry
-func InitTelemetry(ctx context.Context, serviceName string, collectorAddress string, contextKeys contextKeys, enableDebug bool, simplePrint bool) (func(), error) {
+func InitTelemetry(ctx context.Context, serviceName string, servicePrefix string, collectorAddress string, contextKeys contextKeys, enableDebug bool, simplePrint bool) (func(), error) {
 
 	otelShutdown, err := SetupOTelSDK(ctx, collectorAddress)
 	if err != nil {
@@ -72,7 +72,7 @@ func InitTelemetry(ctx context.Context, serviceName string, collectorAddress str
 	}
 	Info(ctx, "open telemetry ready")
 
-	logger := newLogger(serviceName, contextKeys, enableDebug, simplePrint)
+	logger := newLogger(serviceName, contextKeys, enableDebug, simplePrint, servicePrefix)
 	slog.SetDefault(logger.slog)
 	// rollCnt metric.Int64Counter
 

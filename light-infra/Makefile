@@ -157,6 +157,7 @@ migrate-notifications:
 ######################################
 
 docker-up:
+	$(MAKE) create-network
 	docker compose -f docker-compose.infra.yml up -d
 
 docker-down:

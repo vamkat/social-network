@@ -116,6 +116,24 @@ func NewMeterProvider() (*metric.MeterProvider, error) {
 	return meterProvider, nil
 }
 
+//fake obj for debugging the exporter, don't touch
+
+// type debug struct {
+// }
+
+// func (e *debug) Export(ctx context.Context, records []log.Record) error {
+// 	fmt.Println("Export called", ctx, records)
+// 	return nil
+// }
+// func (*debug) ForceFlush(ctx context.Context) error {
+// 	fmt.Println("force flush called", ctx)
+// 	return nil
+// }
+// func (e *debug) Shutdown(ctx context.Context) error {
+// 	fmt.Println("shutdown called", ctx)
+// 	return nil
+// }
+
 func NewLoggerProvider(ctx context.Context, collectorAddress string) (*log.LoggerProvider, error) {
 	logExporter, err := otlploggrpc.New(
 		ctx,

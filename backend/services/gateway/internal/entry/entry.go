@@ -18,8 +18,6 @@ import (
 	"social-network/shared/go/gorpc"
 	redis_connector "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
-
-	// tele "social-network/shared/go/telemetry"
 	"syscall"
 	"time"
 )
@@ -33,19 +31,19 @@ func Run() {
 	//
 	//
 	// TELEMETRY
-	closeTelemetry, err := tele.InitTelemetry(ctx, "gateway", cfgs.TelemetryCollectorAddress, ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
+	closeTelemetry, err := tele.InitTelemetry(ctx, "api-gateway", "API", cfgs.TelemetryCollectorAddress, ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
 	if err != nil {
 		tele.Fatalf("failed to init telemetry: %s", err.Error())
 	}
 	defer closeTelemetry()
 
-	// tele.Info(ctx, "initialized telemetry")
+	tele.Info(ctx, "initialized telemetry")
 
 	go func() {
 		for i := range 10000 {
 			tele.Info(ctx, fmt.Sprint("This is a test? loop:", i), "loop", i)
-			fmt.Println("fmt print test")
-			time.Sleep(time.Second * 3)
+			// fmt.Println("fmt print test")
+			time.Sleep(time.Second * 5)
 		}
 	}()
 
@@ -59,9 +57,9 @@ func Run() {
 		cfgs.RedisDB,
 	)
 	if err := CacheService.TestRedisConnection(); err != nil {
-		// tele.Fatalf("connection test failed, ERROR: %v", err)
+		tele.Fatalf("connection test failed, ERROR: %v", err)
 	}
-	// tele.Info(ctx, "Cache service connection started correctly")
+	tele.Info(ctx, "Cache service connection started correctly")
 
 	//
 	//
@@ -73,7 +71,7 @@ func Run() {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		// tele.Fatalf("failed to connect to users service: %v", err)
+		tele.Fatalf("failed to connect to users service: %v", err)
 	}
 
 	PostsService, err := gorpc.GetGRpcClient(
@@ -82,7 +80,7 @@ func Run() {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		// tele.Fatalf("failed to connect to posts service: %v", err)
+		tele.Fatalf("failed to connect to posts service: %v", err)
 	}
 
 	ChatService, err := gorpc.GetGRpcClient(
@@ -91,7 +89,7 @@ func Run() {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		// tele.Fatalf("failed to connect to chat service: %v", err)
+		tele.Fatalf("failed to connect to chat service: %v", err)
 	}
 
 	MediaService, err := gorpc.GetGRpcClient(
@@ -100,7 +98,7 @@ func Run() {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		// tele.Fatalf("failed to connect to media service: %v", err)
+		tele.Fatalf("failed to connect to media service: %v", err)
 	}
 
 	//
@@ -128,7 +126,7 @@ func Run() {
 
 	srvErr := make(chan error, 1)
 	go func() {
-		// tele.Info(ctx, "Starting server", "address", server.Addr)
+		tele.Info(ctx, "Starting server", "address", server.Addr)
 		srvErr <- server.ListenAndServe()
 	}()
 
@@ -139,13 +137,13 @@ func Run() {
 	select {
 	case err = <-srvErr:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			// tele.Fatalf("Failed to listen and serve: %v", err)
+			tele.Fatalf("Failed to listen and serve: %v", err)
 		}
 	case <-ctx.Done():
 		stopSignal()
 	}
 
-	// tele.Info(ctx, "Shutting down server...")
+	tele.Info(ctx, "Shutting down server...")
 	shutdownCtx, cancel := context.WithTimeout(
 		context.Background(),
 		time.Duration(cfgs.ShutdownTimeout)*time.Second,
@@ -153,10 +151,10 @@ func Run() {
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		// tele.Fatalf("Graceful server Shutdown Failed: %v", err)
+		tele.Fatalf("Graceful server Shutdown Failed: %v", err)
 	}
 
-	// tele.Info(ctx, "Server stopped")
+	tele.Info(ctx, "Server stopped")
 }
 
 type configs struct {
@@ -202,7 +200,7 @@ func getConfigs() configs { // sensible defaults
 
 	// load environment variables if present
 	if err := configutil.LoadConfigs(&cfgs); err != nil {
-		// tele.Fatalf("failed to load env variables into config struct: %v", err)
+		tele.Fatalf("failed to load env variables into config struct: %v", err)
 	}
 
 	return cfgs
