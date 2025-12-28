@@ -63,6 +63,8 @@ func Fatalf(format string, args ...any) {
 	os.Exit(1)
 }
 
+//TODO handle cancillation from ctx?
+
 // actually activates the functionality of open telemetry
 func InitTelemetry(ctx context.Context, serviceName string, servicePrefix string, collectorAddress string, contextKeys contextKeys, enableDebug bool, simplePrint bool) (func(), error) {
 

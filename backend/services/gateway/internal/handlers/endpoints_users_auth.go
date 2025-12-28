@@ -17,7 +17,7 @@ import (
 func (h *Handlers) loginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		tele.Info(ctx, "login handler called with request_id:", r.Context().Value(ct.ReqID), " userid:", r.Context().Value(ct.UserId), " tracerId:", r.Context().Value(ct.TraceId))
+		tele.Info(ctx, "login handler called")
 
 		//READ REQUEST BODY
 		type loginHttpRequest struct {
@@ -47,14 +47,14 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
-		tele.Debug(ctx, "login password", "password", httpReq.Password.String())
+		tele.Debug(ctx, "login password:", "password", httpReq.Password.String())
 		//MAKE GRPC REQUEST
 		gRpcReq := users.LoginRequest{
 			Identifier: httpReq.Identifier.String(),
 			Password:   httpReq.Password.String(),
 		}
 
-		tele.Debug(ctx, "login password request:", httpReq.Password.String())
+		tele.Debug(ctx, "login password request:", "password", httpReq.Password.String())
 
 		resp, err := h.UsersService.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
@@ -111,7 +111,7 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 func (h *Handlers) registerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		tele.Info(ctx, "register handler called, with: ")
+		tele.Info(ctx, "register handler called")
 
 		// Check if user already logged in
 		cookie, _ := r.Cookie("jwt")

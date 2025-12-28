@@ -108,6 +108,7 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 
 }
 
+// TODO think what to do here, not only context keys
 func (l *logging) context2Args(ctx context.Context) []string {
 	args := []string{}
 	for _, key := range l.contextKeys {

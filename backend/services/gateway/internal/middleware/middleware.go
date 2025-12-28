@@ -120,7 +120,7 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 		tele.Debug(ctx, "auth ok")
 		r = utils.RequestWithValue(r, ct.ClaimsKey, claims)
 		r = utils.RequestWithValue(r, ct.UserId, claims.UserId)
-		tele.Debug(ctx, "adding these to context -> claims:", claims, ", userid: ", claims.UserId)
+		tele.Debug(ctx, fmt.Sprint("adding these to context -> claims:", claims, ", userid: ", claims.UserId))
 		return true, r
 	})
 	return m

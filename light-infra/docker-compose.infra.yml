@@ -9,6 +9,8 @@ volumes:
   notifications-db-data:
   media-db-data:
   minio_data:
+  victoria-logs-data:
+  alloy-data:
 
 services:
   users-db:
@@ -103,3 +105,48 @@ services:
       - minio_data:/data
     networks: 
       - social-network
+
+
+  
+  #
+  #
+  #
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # VICTORIA LOGS SERVICE: for log aggregation and storage
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+  victoria-logs:
+    networks:
+        - social-network
+    image: victoriametrics/victoria-logs:v1.43.0
+    ports:
+      - "9428:9428"
+    volumes:
+      - victoria-logs-data:/victoria-logs-data
+    command:
+      - -storageDataPath=/victoria-logs-data
+
+  #
+  #
+  #
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # GRAFANA ALLOY: It collects, processes, and exports telemetry data (traces, metrics, logs) to Victoria Logs, Metrics and Traces
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  alloy:
+    networks:
+      - social-network
+    image: grafana/alloy:latest
+    container_name: alloy
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "12345:12345" # HTTP server (if you want the web API)
+    volumes:
+      - ../backend/services/monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
+      

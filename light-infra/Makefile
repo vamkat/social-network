@@ -30,6 +30,8 @@ export SHUTDOWN_TIMEOUT_SECONDS=5
 export ENABLE_DEBUG_LOGS=true
 export ENABLE_SIMPLE_PRINT=true
 
+
+
 ######################################
 # Top-level commands
 ######################################
@@ -47,6 +49,7 @@ run-all:
 	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
 	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
 	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
+	TELEMETRY_COLLECTOR_ADDR=localhost:4317 \
 	go run -C ../backend ./services/gateway/cmd/main.go 2>&1 | sed 's/^/[API] /' & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5437/social_media?sslmode=disable \
@@ -78,6 +81,62 @@ run-all:
 	\
 	wait
 
+
+build-all:
+	@echo "Starting building..."
+	@trap 'kill 0' INT TERM; \
+	OUTDIR="$(CURDIR)"; \
+	cd ../backend && \
+	go build -o "$$OUTDIR/gateway.social" ./services/gateway/cmd/main.go ; \
+	go build -o "$$OUTDIR/media.social" ./services/media/cmd/server/main.go ; \
+	go build -o "$$OUTDIR/chat.social" ./services/chat/cmd/server/main.go ; \
+	go build -o "$$OUTDIR/posts.social" ./services/posts/cmd/server/main.go ; \
+	go build -o "$$OUTDIR/users.social" ./services/users/cmd/server/main.go ; \
+# 	go build -o "$$OUTDIR/notifs.social" ./services/notifications/cmd/server/main.go ; \
+	@echo "Finished building!"
+	wait
+
+
+
+run-built:
+	@echo "Starting all services..."
+	@trap 'kill 0' INT TERM; \
+	\
+
+	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
+	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
+	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
+	TELEMETRY_COLLECTOR_ADDR=localhost:4317 \
+	./gateway.social 2>&1 | sed 's/^/[API] /' & \
+	\
+	DATABASE_URL=postgres://postgres:secret@localhost:5437/social_media?sslmode=disable \
+	MIGRATE_PATH=services/media/internal/db/migrations \
+	GRPC_SERVER_PORT=:50055 \
+	MINIO_ENDPOINT=localhost:9000 \
+	MINIO_ACCESS_KEY=minioadmin \
+	MINIO_SECRET_KEY=minioadmin \
+	./media.social 2>&1 | sed 's/^/[MEDIA] /' & \
+	\
+	DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable \
+	MIGRATE_PATH=services/chat/internal/db/migrations \
+	GRPC_SERVER_PORT=:50053 \
+	./chat.social 2>&1 | sed 's/^/[CHAT] /' & \
+	\
+	DATABASE_URL=postgres://postgres:secret@localhost:5434/social_posts?sslmode=disable \
+	GRPC_SERVER_PORT=:50052 \
+	./posts.social 2>&1 | sed 's/^/[POSTS] /' & \
+	\
+	DATABASE_URL=postgres://postgres:secret@localhost:5433/social_users?sslmode=disable \
+	MIGRATE_PATH=services/users/internal/db/migrations \
+	GRPC_SERVER_PORT=:50051 \
+	./users.social 2>&1 | sed 's/^/[USERS] /' & \
+	\
+# 	DATABASE_URL=postgres://postgres:secret@localhost:5436/social_notifications?sslmode=disable \
+# 	MIGRATE_PATH=services/notifications/internal/db/migrations \
+# 	GRPC_SERVER_PORT=:50054 \
+# 	./notifs.social 2>&1 | sed 's/^/[NOTIFICATIONS] /' & \
+	\
+	wait
 
 ######################################
 # Individual services

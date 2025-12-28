@@ -65,4 +65,9 @@ social-sphere/.env.*
 *.tsbuildinfo
 next-env.d.ts
 
+# light-infra executables
+*.social
+
+#makefile junk
+*.stackdump
 

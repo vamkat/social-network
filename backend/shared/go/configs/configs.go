@@ -16,6 +16,8 @@ var (
 	ErrNoTaggedFields  = errors.New("no env-tagged fields found")
 )
 
+//TODO alex, make it return which ones were failed
+
 // LoadConfigs loads configuration values from environment variables into the provided struct.
 // It returns a boolean indicating whether any struct fields were not replaced using environment variables.
 // Useful for ensuring default values do not accidentally end up in production.
