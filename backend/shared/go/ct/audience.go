@@ -2,7 +2,6 @@ package ct
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -27,7 +26,7 @@ func (au *Audience) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (au Audience) IsValid() bool {
+func (au Audience) isValid() bool {
 	if au == "" {
 		return false
 	}
@@ -36,15 +35,18 @@ func (au Audience) IsValid() bool {
 			return true
 		}
 	}
-	return controlCharsFree(au.String())
+	return false
 }
 
 func (au Audience) Validate() error {
-	if !au.IsValid() {
-		return errors.Join(ErrValidation,
-			fmt.Errorf("audience must be one of the following: %v",
-				permittedAudienceValues,
-			))
+	if !au.isValid() {
+		return fmt.Errorf("%w: audience must be one of the following: %v",
+			ErrValidation,
+			permittedAudienceValues,
+		)
+	}
+	if err := controlCharsFree(au.String()); err != nil {
+		return fmt.Errorf("%w: %v", ErrValidation, err)
 	}
 	return nil
 }

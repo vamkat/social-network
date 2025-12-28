@@ -80,23 +80,23 @@ func validateFileStatus(fm dbservice.File) error {
 		fm.Status,
 	)
 
-	switch {
-	case fm.Status == ct.Complete:
-		return nil
-
-	case !fm.Status.IsValid():
-		return Wrap(ErrFailed, nil, errMsg)
-
-	case fm.Status == ct.Failed:
-		return Wrap(ErrFailed, nil, errMsg)
-
-	case fm.Status == ct.Pending,
-		fm.Status == ct.Processing:
-		return Wrap(ErrNotValidated, nil, errMsg)
-
-	default:
+	if fm.Status == ct.Complete {
 		return nil
 	}
+
+	if err := fm.Status.Validate(); err != nil {
+		return Wrap(ErrFailed, err, errMsg)
+	}
+
+	if fm.Status == ct.Failed {
+		return Wrap(ErrFailed, nil, errMsg)
+	}
+
+	if fm.Status == ct.Pending || fm.Status == ct.Processing {
+		return Wrap(ErrNotValidated, nil, errMsg)
+	}
+
+	return nil
 }
 
 // Maps an db error to application custom error types
@@ -147,20 +147,23 @@ func (m *MediaService) validateUploadRequest(
 	}
 
 	if req.SizeBytes < 1 || req.SizeBytes > m.Cfgs.FileService.FileConstraints.MaxImageUpload {
-		return fmt.Errorf("upload image: invalid size %d  for file %v", req.SizeBytes, req.Filename)
+		return fmt.Errorf("upload image: invalid size %d for file %v", req.SizeBytes, req.Filename)
 	}
 
-	if !req.Visibility.IsValid() {
-		return fmt.Errorf("upload image: invalid visibility %v  for file %v", req.Visibility, req.Filename)
+	if err := req.Visibility.Validate(); err != nil {
+		return fmt.Errorf("upload image: invalid visibility %v for file %v", req.Visibility, req.Filename)
 	}
 
 	if exp < time.Minute || exp > 24*time.Hour {
-		return fmt.Errorf("upload image: invalid expiration %v  for file %v", exp, req.Filename)
+		return fmt.Errorf("upload image: invalid expiration %v for file %v", exp, req.Filename)
 	}
 
 	for _, v := range variants {
-		if !v.IsValid() || v == ct.Original {
+		if err := v.Validate(); err != nil {
 			return fmt.Errorf("invalid variant %v for file %v", v, req.Filename)
+		}
+		if v == ct.Original {
+			return fmt.Errorf("original is not a variant %v for file %v", v, req.Filename)
 		}
 	}
 

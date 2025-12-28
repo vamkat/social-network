@@ -24,7 +24,7 @@ func (v FileVisibility) String() string {
 	return string(v)
 }
 
-func (v FileVisibility) IsValid() bool {
+func (v FileVisibility) isValid() bool {
 	switch v {
 	case Private, Public:
 		return true
@@ -34,7 +34,7 @@ func (v FileVisibility) IsValid() bool {
 }
 
 func (v FileVisibility) Validate() error {
-	if !v.IsValid() {
+	if !v.isValid() {
 		return fmt.Errorf("invalid FileVisibility: %q", v)
 	}
 	return nil
@@ -54,7 +54,7 @@ func (v *FileVisibility) UnmarshalJSON(data []byte) error {
 	}
 
 	val := FileVisibility(s)
-	if !val.IsValid() {
+	if !val.isValid() {
 		return fmt.Errorf("invalid FileVisibility: %q", s)
 	}
 
@@ -71,14 +71,14 @@ func (v *FileVisibility) Scan(src any) error {
 	switch s := src.(type) {
 	case string:
 		val := FileVisibility(s)
-		if !val.IsValid() {
+		if !val.isValid() {
 			return fmt.Errorf("invalid FileVisibility: %q", s)
 		}
 		*v = val
 		return nil
 	case []byte:
 		val := FileVisibility(string(s))
-		if !val.IsValid() {
+		if !val.isValid() {
 			return fmt.Errorf("invalid FileVisibility: %q", s)
 		}
 		*v = val
@@ -126,7 +126,7 @@ func (v FileVariant) String() string {
 	return string(v)
 }
 
-func (v FileVariant) IsValid() bool {
+func (v FileVariant) isValid() bool {
 	switch v {
 	case ImgThumbnail, ImgSmall, ImgMedium, ImgLarge, Original:
 		return true
@@ -136,7 +136,7 @@ func (v FileVariant) IsValid() bool {
 }
 
 func (v FileVariant) Validate() error {
-	if !v.IsValid() {
+	if !v.isValid() {
 		return fmt.Errorf("invalid ImgVariant: %q", v)
 	}
 	return nil
@@ -156,7 +156,7 @@ func (v *FileVariant) UnmarshalJSON(data []byte) error {
 	}
 
 	val := FileVariant(s)
-	if !val.IsValid() {
+	if !val.isValid() {
 		return fmt.Errorf("invalid ImgVariant: %q", s)
 	}
 
@@ -173,14 +173,14 @@ func (v *FileVariant) Scan(src any) error {
 	switch s := src.(type) {
 	case string:
 		val := FileVariant(s)
-		if !val.IsValid() {
+		if !val.isValid() {
 			return fmt.Errorf("invalid ImgVariant: %q", s)
 		}
 		*v = val
 		return nil
 	case []byte:
 		val := FileVariant(string(s))
-		if !val.IsValid() {
+		if !val.isValid() {
 			return fmt.Errorf("invalid ImgVariant: %q", s)
 		}
 		*v = val
@@ -216,7 +216,7 @@ func (v UploadStatus) String() string {
 	return string(v)
 }
 
-func (v UploadStatus) IsValid() bool {
+func (v UploadStatus) isValid() bool {
 	switch v {
 	case Pending, Complete, Failed, Processing:
 		return true
@@ -226,8 +226,8 @@ func (v UploadStatus) IsValid() bool {
 }
 
 func (v UploadStatus) Validate() error {
-	if !v.IsValid() {
-		return fmt.Errorf("invalid ImgVariant: %q", v)
+	if !v.isValid() {
+		return fmt.Errorf("invalid UploadStatus: %q", v)
 	}
 	return nil
 }
@@ -246,8 +246,8 @@ func (v *UploadStatus) UnmarshalJSON(data []byte) error {
 	}
 
 	val := UploadStatus(s)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ImgVariant: %q", s)
+	if !val.isValid() {
+		return fmt.Errorf("invalid UploadStatus: %q", s)
 	}
 
 	*v = val
@@ -263,20 +263,20 @@ func (v *UploadStatus) Scan(src any) error {
 	switch s := src.(type) {
 	case string:
 		val := UploadStatus(s)
-		if !val.IsValid() {
-			return fmt.Errorf("invalid ImgStatus: %q", s)
+		if !val.isValid() {
+			return fmt.Errorf("invalid UploadStatus: %q", s)
 		}
 		*v = val
 		return nil
 	case []byte:
 		val := UploadStatus(string(s))
-		if !val.IsValid() {
-			return fmt.Errorf("invalid ImgStatus: %q", s)
+		if !val.isValid() {
+			return fmt.Errorf("invalid UploadStatus: %q", s)
 		}
 		*v = val
 		return nil
 	default:
-		return fmt.Errorf("cannot scan ImgStatus from %T", src)
+		return fmt.Errorf("cannot scan UploadStatus from %T", src)
 	}
 }
 

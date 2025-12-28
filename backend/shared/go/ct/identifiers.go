@@ -3,6 +3,7 @@ package ct
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // ------------------------------------------------------------
@@ -25,13 +26,13 @@ func (e *Email) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e Email) IsValid() bool {
-	return emailRegex.MatchString(string(e)) && controlCharsFree(e.String())
-}
-
 func (e Email) Validate() error {
-	if !e.IsValid() {
-		return errors.Join(ErrValidation, errors.New("invalid email format"))
+	if !emailRegex.MatchString(string(e)) {
+		return fmt.Errorf("email address must contain a single '@', have no spaces, and include a valid domain")
+	}
+
+	if err := controlCharsFree(e.String()); err != nil {
+		return fmt.Errorf("email validation error: %w", err)
 	}
 	return nil
 }
@@ -60,16 +61,12 @@ func (u *Username) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (u Username) IsValid() bool {
-	if u == "" {
-		return false
-	}
-	return usernameRegex.MatchString(string(u)) && controlCharsFree(u.String())
-}
-
 func (u Username) Validate() error {
-	if !u.IsValid() {
-		return errors.Join(ErrValidation, errors.New("invalid username format"))
+	if !usernameRegex.MatchString(string(u)) {
+		return fmt.Errorf("“username must be 3–32 characters long and contain only letters, numbers, or underscores”")
+	}
+	if err := controlCharsFree(u.String()); err != nil {
+		return fmt.Errorf("username validation error: %w", err)
 	}
 	return nil
 }
@@ -101,12 +98,15 @@ func (i *Identifier) UnmarshalJSON(data []byte) error {
 
 func (i Identifier) IsValid() bool {
 	s := string(i)
-	return (usernameRegex.MatchString(s) || emailRegex.MatchString(s)) && controlCharsFree(i.String())
+	return (usernameRegex.MatchString(s) || emailRegex.MatchString(s))
 }
 
 func (i Identifier) Validate() error {
 	if !i.IsValid() {
 		return errors.Join(ErrValidation, errors.New("identifier must be a valid username or email"))
+	}
+	if err := controlCharsFree(i.String()); err != nil {
+		return fmt.Errorf("identifier validation error: %w", err)
 	}
 	return nil
 }

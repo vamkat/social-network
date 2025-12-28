@@ -423,3 +423,20 @@ func TestValidateStruct_SliceOfCustomTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateBatch(t *testing.T) {
+	if err := ct.ValidateBatch(ct.Id(1), ct.Id(3), ct.ImgThumbnail); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	err1 := ct.ValidateBatch(ct.Id(-1), ct.Id(0), ct.Original)
+	if err1 == nil {
+		t.Fatal("expected error got nil")
+	}
+	// t.Fatal(err1)
+	err2 := ct.ValidateBatch(ct.Id(-1), ct.Id(1), ct.FileVariant("invalid"))
+	if err2 == nil {
+		t.Fatal("expected error got nil")
+	}
+	t.Fatal(err2)
+}

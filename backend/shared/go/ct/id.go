@@ -49,7 +49,7 @@ func (e *Id) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e Id) IsValid() bool {
+func (e Id) isValid() bool {
 	return e > 0
 }
 
@@ -90,15 +90,15 @@ func (i *Id) Scan(src any) error {
 }
 
 func (i Id) Value() (driver.Value, error) {
-	if !i.IsValid() {
+	if !i.isValid() {
 		return nil, nil
 	}
 	return i.Int64(), nil
 }
 
 func (e Id) Validate() error {
-	if !e.IsValid() {
-		return errors.Join(ErrValidation, errors.New("id must be positive"))
+	if !e.isValid() {
+		return errors.Join(ErrValidation, errors.New("id must be positive got: "+fmt.Sprint(e)))
 	}
 	return nil
 }
@@ -127,12 +127,12 @@ func (i *UnsafeId) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i UnsafeId) IsValid() bool {
+func (i UnsafeId) isValid() bool {
 	return i > 0
 }
 
 func (i UnsafeId) Validate() error {
-	if !i.IsValid() {
+	if !i.isValid() {
 		return errors.Join(ErrValidation, errors.New("id must be positive"))
 	}
 	return nil
@@ -163,7 +163,7 @@ func (i *UnsafeId) Scan(src any) error {
 }
 
 func (i UnsafeId) Value() (driver.Value, error) {
-	if !i.IsValid() {
+	if !i.isValid() {
 		return nil, nil
 	}
 	return i.Int64(), nil
@@ -199,12 +199,12 @@ func (ids *Ids) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (ids Ids) IsValid() bool {
+func (ids Ids) isValid() bool {
 	if len(ids) == 0 {
 		return false
 	}
 	for _, i := range ids {
-		if !i.IsValid() {
+		if !i.isValid() {
 			return false
 		}
 	}
@@ -212,7 +212,7 @@ func (ids Ids) IsValid() bool {
 }
 
 func (ids Ids) Validate() error {
-	if !ids.IsValid() {
+	if !ids.isValid() {
 		return errors.Join(ErrValidation, errors.New("all ids must be positive"))
 	}
 	return nil

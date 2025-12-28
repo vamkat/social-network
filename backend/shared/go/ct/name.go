@@ -3,6 +3,7 @@ package ct
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // ------------------------------------------------------------
@@ -45,12 +46,17 @@ func (n Name) IsValid() bool {
 	if len(n) < 2 {
 		return false
 	}
-	return nameRegex.MatchString(n.String()) && controlCharsFree(n.String())
+	return nameRegex.MatchString(n.String())
 }
 
 func (n Name) Validate() error {
 	if !n.IsValid() {
-		return errors.Join(ErrValidation, errors.New("name must be at least 2 characters, received: "+n.String()))
+		return errors.New("name must be at least 2 characters long, start and end with a letter, and may only include letters, spaces, hyphens, or apostrophes; received: " + n.String())
+
+	}
+
+	if err := controlCharsFree(n.String()); err != nil {
+		return fmt.Errorf("name type validation error: %w", err)
 	}
 	return nil
 }

@@ -42,18 +42,24 @@ func (d *DateOfBirth) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// TODO vaggelis this needs to return why its invalid instead of just a bool
-func (d DateOfBirth) IsValid() bool {
+var (
+	ErrDOBZero     = errors.New("date of birth is zero")
+	ErrDOBInFuture = errors.New("date of birth is in the future")
+	ErrDOBTooYoung = errors.New("age is below minimum allowed")
+	ErrDOBTooOld   = errors.New("age exceeds maximum allowed")
+)
+
+func (d DateOfBirth) Validate() error {
 	t := time.Time(d)
 	if t.IsZero() {
-		return false
+		return ErrDOBZero
 	}
 
 	now := time.Now().UTC()
 
 	// cannot be in the future
 	if t.After(now) {
-		return false
+		return ErrDOBInFuture
 	}
 
 	// compute age
@@ -62,22 +68,14 @@ func (d DateOfBirth) IsValid() bool {
 		age--
 	}
 
-	// must be at least minAge and not older than maxAge
 	if age < dobMinAgeInYears {
-		return false
+		return ErrDOBTooYoung
 	}
 
 	if age > dobMaxAgeInYears {
-		return false
+		return ErrDOBTooOld
 	}
 
-	return true
-}
-
-func (d DateOfBirth) Validate() error {
-	if !d.IsValid() {
-		return errors.Join(ErrValidation, errors.New("invalid date of birth"))
-	}
 	return nil
 }
 
@@ -149,32 +147,34 @@ func (edt *EventDateTime) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (edt EventDateTime) IsValid() bool {
+var (
+	ErrEventDateZero        = errors.New("event date/time is zero")
+	ErrEventDateInPast      = errors.New("event date/time is in the past")
+	ErrEventDateTooFarAhead = errors.New("event date/time exceeds maximum allowed range")
+)
+
+func (edt EventDateTime) Validate() error {
 	t := time.Time(edt)
 	if t.IsZero() {
-		return false
+		return ErrEventDateZero
 	}
 
 	now := time.Now().UTC()
 
-	// Normalize to the same location and remove time-of-day if needed
+	// normalize to same location
 	t = t.In(now.Location())
 
-	// Must be today or later
+	// must be now or later
 	if t.Before(now) {
-		return false
+		return ErrEventDateInPast
 	}
 
-	// Must not be more than N months ahead
+	// must not be more than N months ahead
 	limit := now.AddDate(0, eventDateMaxMonthsAhead, 0)
-
-	return !t.After(limit)
-}
-
-func (edt EventDateTime) Validate() error {
-	if !edt.IsValid() {
-		return errors.Join(ErrValidation, errors.New("invalid event date"))
+	if t.After(limit) {
+		return ErrEventDateTooFarAhead
 	}
+
 	return nil
 }
 
@@ -232,14 +232,10 @@ func (g *GenDateTime) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g GenDateTime) IsValid() bool {
-	t := time.Time(g)
-	return !t.IsZero()
-}
-
 func (g GenDateTime) Validate() error {
-	if !g.IsValid() {
-		return errors.Join(ErrValidation, errors.New("invalid event date"))
+	t := time.Time(g)
+	if t.IsZero() {
+		return fmt.Errorf("%w: zero date", ErrValidation)
 	}
 	return nil
 }
@@ -276,7 +272,7 @@ func (g *GenDateTime) Scan(src any) error {
 
 // Value implements the driver.Valuer interface
 func (g GenDateTime) Value() (driver.Value, error) {
-	if !g.IsValid() {
+	if err := g.Validate(); err != nil {
 		return nil, nil // SQL NULL for invalid timestamps
 	}
 	return time.Time(g), nil // store exactly as is

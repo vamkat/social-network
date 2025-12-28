@@ -2,7 +2,6 @@ package dbservice
 
 import (
 	"context"
-	"fmt"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
@@ -11,8 +10,8 @@ import (
 // Use as a preparation for adding members
 func (q *Queries) CreateGroupConv(ctx context.Context,
 	groupId ct.Id) (convId ct.Id, err error) {
-	if !groupId.IsValid() {
-		return convId, fmt.Errorf("null group Id")
+	if err := groupId.Validate(); err != nil {
+		return convId, err
 	}
 	row := q.db.QueryRow(ctx, createGroupConv, groupId)
 	err = row.Scan(&convId)

@@ -4,7 +4,6 @@ package ct
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 )
 
@@ -31,25 +30,20 @@ func (a *About) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a About) IsValid() bool {
-	if len(a) == 0 {
-		return false
-	}
-	if len(a) < aboutCharsMin || len(a) > aboutCharsMax {
-		return false
-	}
-
-	return controlCharsFree(a.String())
-}
-
 func (a About) Validate() error {
-	if !a.IsValid() {
-		return errors.Join(ErrValidation,
-			fmt.Errorf("about must be %d–%d chars and contain no control characters",
-				aboutCharsMin,
-				aboutCharsMax,
-			))
+	if len(a) < aboutCharsMin || len(a) > aboutCharsMax {
+		return fmt.Errorf("%w: about must be %d–%d chars and contain no control characters. about length %v",
+			ErrValidation,
+			aboutCharsMin,
+			aboutCharsMax,
+			len(a),
+		)
 	}
+
+	if err := controlCharsFree(a.String()); err != nil {
+		return fmt.Errorf("%w, %v", ErrValidation, err)
+	}
+
 	return nil
 }
 

@@ -37,15 +37,6 @@ func (p *Password) UnmarshalJSON(data []byte) error {
 }
 
 func (p Password) Hash() (Password, error) {
-	fmt.Println(Cfgs.PassSecret)
-	// TODO: Change this to configs when in place
-	// secret := func() string {
-	// 	s := Cfgs.PassSecret
-	// 	if s == "" {
-	// 		s = os.Getenv("PASSWORD_SECRET")
-	// 	}
-	// 	return s
-	// }()
 	secret := Cfgs.PassSecret
 
 	if secret == "" {
@@ -66,32 +57,41 @@ var (
 	symbol    = regexp.MustCompile(`[^A-Za-z0-9]`)
 )
 
-// Validates raw password for one symbol, one capital letter, one number, min 8 chars, max 64 chars
-func (p Password) IsValid() bool {
-	s := string(p)
-
-	if len(s) < 8 || len(s) > 64 {
-		return false
-	}
-	if !uppercase.MatchString(s) {
-		return false
-	}
-	if !lowercase.MatchString(s) {
-		return false
-	}
-	if !digit.MatchString(s) {
-		return false
-	}
-	if !symbol.MatchString(s) {
-		return false
-	}
-	return controlCharsFree(p.String())
-}
+var (
+	ErrPasswordTooShort     = errors.New("password is too short")
+	ErrPasswordTooLong      = errors.New("password is too long")
+	ErrPasswordNoUppercase  = errors.New("password must contain an uppercase letter")
+	ErrPasswordNoLowercase  = errors.New("password must contain a lowercase letter")
+	ErrPasswordNoDigit      = errors.New("password must contain a digit")
+	ErrPasswordNoSymbol     = errors.New("password must contain a symbol")
+	ErrPasswordControlChars = errors.New("password contains control characters")
+)
 
 func (p Password) Validate() error {
-	if !p.IsValid() {
-		return errors.Join(ErrValidation, errors.New("invalid password"))
+	s := string(p)
+
+	if len(s) < 8 {
+		return ErrPasswordTooShort
 	}
+	if len(s) > 64 {
+		return ErrPasswordTooLong
+	}
+	if !uppercase.MatchString(s) {
+		return ErrPasswordNoUppercase
+	}
+	if !lowercase.MatchString(s) {
+		return ErrPasswordNoLowercase
+	}
+	if !digit.MatchString(s) {
+		return ErrPasswordNoDigit
+	}
+	if !symbol.MatchString(s) {
+		return ErrPasswordNoSymbol
+	}
+	if err := controlCharsFree(p.String()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -125,13 +125,16 @@ func (hp *HashedPassword) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (hp HashedPassword) IsValid() bool {
-	return hp != "" && controlCharsFree(hp.String())
+func (hp HashedPassword) isValid() bool {
+	return hp != ""
 }
 
 func (hp HashedPassword) Validate() error {
-	if !hp.IsValid() {
+	if !hp.isValid() {
 		return errors.Join(ErrValidation, errors.New("invalid hashed password"))
+	}
+	if err := controlCharsFree(hp.String()); err != nil {
+		return fmt.Errorf("%w, %v", ErrValidation, err)
 	}
 	return nil
 }

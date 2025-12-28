@@ -1,9 +1,33 @@
 package ct
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
+
+// Calls Validate for all cts and wraps all errors.
+//
+// # Usage
+//
+//	if err := ct.ValidateBatch(ct.Id(-1), ct.Id(1), ct.FileVariant("invalid")); err != nil {
+//		return err
+//	}
+//
+// # Expected Output
+//
+// type validation error
+// id must be positive got: -1
+// invalid ImgVariant: "invalid"
+func ValidateBatch(cts ...Validator) error {
+	var errWrap error
+	for _, t := range cts {
+		if err := t.Validate(); err != nil {
+			errWrap = errors.Join(errWrap, err)
+		}
+	}
+	return errWrap
+}
 
 // ValidateStruct iterates over exported struct fields and validates them.
 //   - If a field implements Validator, its Validate() method is called.

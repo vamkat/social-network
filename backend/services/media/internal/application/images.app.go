@@ -124,8 +124,8 @@ func (m *MediaService) GetImage(
 ) (string, error) {
 	errMsg := fmt.Sprintf("get image err: id: %d variant: %s", imgId, variant)
 
-	if !imgId.IsValid() || !variant.IsValid() {
-		return "", Wrap(ErrReqValidation, ct.ErrValidation, errMsg)
+	if err := ct.ValidateBatch(imgId, variant); err != nil {
+		return "", Wrap(ErrReqValidation, err, errMsg)
 	}
 
 	var fm dbservice.File
@@ -180,8 +180,8 @@ func (m *MediaService) GetImages(ctx context.Context,
 
 	errMsg := fmt.Sprintf("get images: ids: %v variant: %s", imgIds, variant)
 
-	if !imgIds.IsValid() || !variant.IsValid() || variant == ct.Original {
-		return nil, nil, Wrap(ErrReqValidation, ct.ErrValidation, errMsg)
+	if err := ct.ValidateBatch(imgIds, variant); err != nil {
+		return nil, nil, Wrap(ErrReqValidation, err, errMsg)
 	}
 
 	var missingVariants ct.Ids
@@ -242,8 +242,8 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 
 	errMsg := fmt.Sprintf("validate upload: file id: %d", fileId)
 
-	if !fileId.IsValid() {
-		return url, Wrap(ErrReqValidation, ct.ErrValidation, errMsg)
+	if err := fileId.Validate(); err != nil {
+		return url, Wrap(ErrReqValidation, err, errMsg)
 	}
 
 	fileMeta, err := m.Queries.GetFileById(ctx, fileId)

@@ -3,6 +3,7 @@ package ct
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 )
 
@@ -26,19 +27,6 @@ func (s *SearchTerm) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// IsValid checks if the search term meets minimum validation rules.
-func (s SearchTerm) IsValid() bool {
-	// Basic length check
-	if len(s) < 2 {
-		return false
-	}
-
-	// Optional: enforce allowed characters (letters, numbers, spaces, hyphens)
-	// Adjust regex as needed.
-	re := regexp.MustCompile(`^[A-Za-z0-9\s\-]+$`)
-	return re.MatchString(string(s)) && controlCharsFree(s.String())
-}
-
 // Validate returns a descriptive error if the value is invalid.
 func (s SearchTerm) Validate() error {
 	if len(s) < 1 {
@@ -55,6 +43,10 @@ func (s SearchTerm) Validate() error {
 			ErrValidation,
 			errors.New("search term contains invalid characters"),
 		)
+	}
+
+	if err := controlCharsFree(s.String()); err != nil {
+		return fmt.Errorf("search term type validation error: %w", err)
 	}
 
 	return nil

@@ -27,7 +27,7 @@ func (t *Title) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (t Title) IsValid() bool {
+func (t Title) isValid() bool {
 	if t == "" {
 		return false
 	}
@@ -37,16 +37,20 @@ func (t Title) IsValid() bool {
 		return false
 	}
 
-	return controlCharsFree(t.String())
+	return true
 }
 
 func (t Title) Validate() error {
-	if !t.IsValid() {
+	if !t.isValid() {
 		return errors.Join(ErrValidation,
 			fmt.Errorf("title must be %d-%d chars and contain no control characters",
 				minTitleChars,
 				maxTitleChars,
 			))
+	}
+
+	if err := controlCharsFree(t.String()); err != nil {
+		return fmt.Errorf("title type validation error: %w", err)
 	}
 	return nil
 }

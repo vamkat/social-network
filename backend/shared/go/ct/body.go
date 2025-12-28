@@ -27,23 +27,27 @@ func (b *PostBody) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b PostBody) IsValid() bool {
+func (b PostBody) isValid() bool {
 	if len(b) == 0 {
 		return false
 	}
 	if len(b) < postBodyCharsMin || len(b) > postBodyCharsMax {
 		return false
 	}
-	return controlCharsFree(b.String())
+	return true
 }
 
 func (b PostBody) Validate() error {
-	if !b.IsValid() {
+	if !b.isValid() {
 		return errors.Join(ErrValidation,
 			fmt.Errorf("post body must be %d–%d chars and contain no control characters",
 				postBodyCharsMin,
 				postBodyCharsMax,
 			))
+	}
+
+	if err := controlCharsFree(b.String()); err != nil {
+		return fmt.Errorf("%w: %v", ErrValidation, err)
 	}
 	return nil
 }
@@ -80,16 +84,21 @@ func (c CommentBody) IsValid() bool {
 		return false
 	}
 
-	return controlCharsFree(c.String())
+	return true
 }
 
 func (c CommentBody) Validate() error {
 	if !c.IsValid() {
 		return errors.Join(ErrValidation,
-			fmt.Errorf("comment body must be %d–%d chars and contain no control characters",
+			fmt.Errorf("comment body must be %d–%d chars and contain no control characters. comment body length: %v",
 				commentBodyCharsMin,
 				commentBodyCharsMax,
+				len(c),
 			))
+	}
+
+	if err := controlCharsFree(c.String()); err != nil {
+		return fmt.Errorf("%w: %v", ErrValidation, err)
 	}
 	return nil
 }
@@ -125,16 +134,20 @@ func (eb EventBody) IsValid() bool {
 	if len(eb) < eventBodyCharsMin || len(eb) > eventBodyCharsMax {
 		return false
 	}
-	return controlCharsFree(eb.String())
+	return true
 }
 
 func (eb EventBody) Validate() error {
 	if !eb.IsValid() {
 		return errors.Join(ErrValidation,
-			fmt.Errorf("event body must be %d–%d chars and contain no control characters",
+			fmt.Errorf("event body must be %d–%d chars and contain no control characters. even body length %v",
 				eventBodyCharsMin,
 				eventBodyCharsMax,
+				len(eb),
 			))
+	}
+	if err := controlCharsFree(eb.String()); err != nil {
+		return fmt.Errorf("%w: %v", ErrValidation, err)
 	}
 	return nil
 }
@@ -166,16 +179,21 @@ func (m MsgBody) IsValid() bool {
 		return false
 	}
 
-	return controlCharsFree(m.String())
+	return true
 }
 
 func (m MsgBody) Validate() error {
 	if !m.IsValid() {
 		return errors.Join(ErrValidation,
-			fmt.Errorf("message body must be %d–%d chars and contain no control characters",
+			fmt.Errorf("message body must be %d–%d chars and contain no control characters. message body lenght: %v",
 				commentBodyCharsMin,
 				commentBodyCharsMax,
+				len(m),
 			))
+	}
+
+	if err := controlCharsFree(m.String()); err != nil {
+		return fmt.Errorf("%w: %v", ErrValidation, err)
 	}
 	return nil
 }

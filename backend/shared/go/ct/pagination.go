@@ -28,12 +28,12 @@ func (l *Limit) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l Limit) IsValid() bool {
+func (l Limit) isValid() bool {
 	return l >= 1 && l <= Limit(maxLimit)
 }
 
 func (l Limit) Validate() error {
-	if !l.IsValid() {
+	if !l.isValid() {
 		return errors.Join(ErrValidation, fmt.Errorf("limit must be between 1 and %d", maxLimit))
 	}
 	return nil
@@ -68,14 +68,14 @@ func (l *Limit) Scan(src any) error {
 	}
 
 	*l = Limit(v)
-	if !l.IsValid() {
+	if !l.isValid() {
 		return fmt.Errorf("invalid Limit value %d", v)
 	}
 	return nil
 }
 
 func (l Limit) Value() (driver.Value, error) {
-	if !l.IsValid() {
+	if !l.isValid() {
 		return nil, fmt.Errorf("invalid Limit value %d", l)
 	}
 	return int64(l), nil
@@ -106,12 +106,12 @@ func (o *Offset) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (o Offset) IsValid() bool {
+func (o Offset) isValid() bool {
 	return o >= 0
 }
 
 func (o Offset) Validate() error {
-	if !o.IsValid() {
+	if !o.isValid() {
 		return errors.Join(ErrValidation, errors.New("offset must be >= 0"))
 	}
 	return nil
@@ -146,14 +146,14 @@ func (o *Offset) Scan(src any) error {
 	}
 
 	*o = Offset(v)
-	if !o.IsValid() {
+	if !o.isValid() {
 		return fmt.Errorf("invalid Offset value %d", v)
 	}
 	return nil
 }
 
 func (o Offset) Value() (driver.Value, error) {
-	if !o.IsValid() {
+	if !o.isValid() {
 		return nil, fmt.Errorf("invalid Offset value %d", o)
 	}
 	return int64(o), nil
