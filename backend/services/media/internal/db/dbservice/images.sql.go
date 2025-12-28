@@ -272,7 +272,7 @@ func (q *Queries) GetVariants(
 		return nil, nil, err
 	}
 
-	if len(fms) == 0 {
+	if len(fms) == 0 && len(notComplete) == 0 {
 		return nil, nil, sql.ErrNoRows
 	}
 
