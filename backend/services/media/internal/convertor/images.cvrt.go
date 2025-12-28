@@ -16,7 +16,9 @@ import (
 	ct "social-network/shared/go/ct"
 
 	"github.com/chai2010/webp"
+	"github.com/rwcarlsen/goexif/exif"
 	"golang.org/x/image/draw"
+	"golang.org/x/image/math/f64"
 )
 
 type ImageConvertor struct {
@@ -57,6 +59,134 @@ func (i *ImageConvertor) ConvertImageToVariant(
 		return out, err
 	}
 	return out, nil
+}
+
+func decodeWithOrientation(buf []byte) (image.Image, error) {
+	img, _, err := image.Decode(bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+
+	ex, err := exif.Decode(bytes.NewReader(buf))
+	if err != nil {
+		return img, nil // no EXIF → assume correct
+	}
+
+	tag, err := ex.Get(exif.Orientation)
+	if err != nil {
+		return img, nil
+	}
+
+	orientation, err := tag.Int(0)
+	if err != nil {
+		return img, nil
+	}
+
+	return applyOrientation(img, orientation), nil
+}
+
+func applyOrientation(img image.Image, orientation int) image.Image {
+	b := img.Bounds()
+	w, h := float64(b.Dx()), float64(b.Dy())
+
+	var (
+		dstRect image.Rectangle
+		m       f64.Aff3
+	)
+
+	switch orientation {
+	case 1:
+		return img
+
+	case 2: // Flip horizontal
+		dstRect = image.Rect(0, 0, int(w), int(h))
+		m = f64.Aff3{
+			-1, 0, w,
+			0, 1, 0,
+		}
+
+	case 3: // Rotate 180
+		dstRect = image.Rect(0, 0, int(w), int(h))
+		m = f64.Aff3{
+			-1, 0, w,
+			0, -1, h,
+		}
+
+	case 4: // Flip vertical
+		dstRect = image.Rect(0, 0, int(w), int(h))
+		m = f64.Aff3{
+			1, 0, 0,
+			0, -1, h,
+		}
+
+	case 5: // Transpose
+		dstRect = image.Rect(0, 0, int(h), int(w))
+		m = f64.Aff3{
+			0, 1, 0,
+			1, 0, 0,
+		}
+
+	case 6: // Rotate 90 CW
+		dstRect = image.Rect(0, 0, int(h), int(w))
+		m = f64.Aff3{
+			0, -1, h,
+			1, 0, 0,
+		}
+
+	case 7: // Transverse
+		dstRect = image.Rect(0, 0, int(h), int(w))
+		m = f64.Aff3{
+			0, -1, h,
+			-1, 0, w,
+		}
+
+	case 8: // Rotate 90 CCW
+		dstRect = image.Rect(0, 0, int(h), int(w))
+		m = f64.Aff3{
+			0, 1, 0,
+			-1, 0, w,
+		}
+
+	default:
+		return img
+	}
+
+	return transformImage(img, dstRect, m)
+}
+
+func transformImage(
+	src image.Image,
+	dstRect image.Rectangle,
+	m f64.Aff3,
+) image.Image {
+	dst := image.NewRGBA(dstRect)
+
+	draw.ApproxBiLinear.Transform(
+		dst,
+		m,
+		src,
+		src.Bounds(),
+		draw.Over,
+		nil,
+	)
+
+	return dst
+}
+
+func rotate180(img image.Image) image.Image {
+	b := img.Bounds()
+	dst := image.NewRGBA(b)
+
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			dst.Set(
+				b.Max.X-(x-b.Min.X)-1,
+				b.Max.Y-(y-b.Min.Y)-1,
+				img.At(x, y),
+			)
+		}
+	}
+	return dst
 }
 
 func resizeForVariant(src image.Image, variant ct.FileVariant) image.Image {
