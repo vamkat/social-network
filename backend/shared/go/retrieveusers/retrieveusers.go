@@ -85,7 +85,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 		var imageURL string
 		if err := h.cache.GetObj(ctx, fmt.Sprintf("img_thumbnail:%d", imageId), &imageURL); err == nil {
 			images[imageId.Int64()] = imageURL
-			fmt.Println("RETRIEVE USERS - found image on redis:", imageURL)
+			fmt.Println("RETRIEVE USERS - found image for user on redis:", imageURL)
 		} else {
 			missingImages = append(missingImages, imageId)
 		}
@@ -104,6 +104,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 			return nil, err
 		}
 	}
+
 	//merge with redis map
 	maps.Copy(images, imageMap)
 
@@ -120,8 +121,9 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 			)
 		}
 	}
-	//fmt.Println("users after image urls", users)
 
+	fmt.Println("users after image urls", users)
+	//TODO urls from redis are not sent
 	//TODO batch call to delete missing image ids
 	fmt.Println("RETRIEVE USERS - failed avatars:", failedImages)
 	fmt.Println("RETRIEVE USERS - found avatars:", images)

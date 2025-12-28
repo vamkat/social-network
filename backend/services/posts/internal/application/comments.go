@@ -28,7 +28,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		return ErrNotAllowed
 	}
 	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
-		err = q.CreateComment(ctx, ds.CreateCommentParams{
+		commentId, err := q.CreateComment(ctx, ds.CreateCommentParams{
 			CommentCreatorID: req.CreatorId.Int64(),
 			ParentID:         req.ParentId.Int64(),
 			CommentBody:      req.Body.String(),
@@ -41,7 +41,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		if req.ImageId != 0 {
 			err = q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
-				ParentID: req.ParentId.Int64(),
+				ParentID: commentId,
 			})
 			if err != nil {
 				return err

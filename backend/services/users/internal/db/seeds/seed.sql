@@ -28,7 +28,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO auth_user (user_id, email, password_hash)
 SELECT u.id,
        LOWER(u.username) || '@example.com' AS email,
-       '07pwr5XwlwIBMF4gAgc4SZZnJiQkyvudPU8YeJaMkbs=' AS password_hash
+       '+uFqO/5z/4l7Rw/bVTkULcce9TLoVz5ciXpBQyqSb4Q=' AS password_hash
 FROM users u
 LEFT JOIN auth_user a ON a.user_id = u.id
 WHERE a.user_id IS NULL;

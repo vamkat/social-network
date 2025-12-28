@@ -17,6 +17,7 @@ services:
   users:
     networks:
       - social-network
+    container_name: users
     build:
       # Use repo root as build context so the Dockerfile can COPY files from
       # the repository root (shared/ and go.mod/go.sum). The Dockerfile path
@@ -70,6 +71,7 @@ services:
   posts:
     networks:
       - social-network
+    container_name: posts
     build:
       context: backend/.
       dockerfile: services/posts/Dockerfile

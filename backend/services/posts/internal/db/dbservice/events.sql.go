@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createEvent = `-- name: CreateEvent :exec
+const createEvent = `-- name: CreateEvent :one
 
 INSERT INTO events (
     event_title,
@@ -16,6 +16,7 @@ INSERT INTO events (
     event_date
 )
 VALUES ($1, $2, $3, $4, $5)
+RETURNING id
 `
 
 type CreateEventParams struct {
@@ -26,15 +27,17 @@ type CreateEventParams struct {
 	EventDate      pgtype.Date
 }
 
-func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error {
-	_, err := q.db.Exec(ctx, createEvent,
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createEvent,
 		arg.EventTitle,
 		arg.EventBody,
 		arg.EventCreatorID,
 		arg.GroupID,
 		arg.EventDate,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteEvent = `-- name: DeleteEvent :execrows

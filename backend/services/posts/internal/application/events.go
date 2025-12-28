@@ -30,21 +30,34 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 		Time:  req.EventDate.Time(),
 		Valid: true,
 	}
+	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 
-	err = s.db.CreateEvent(ctx, ds.CreateEventParams{
-		EventTitle:     req.Title.String(),
-		EventBody:      req.Body.String(),
-		EventCreatorID: req.CreatorId.Int64(),
-		GroupID:        req.GroupId.Int64(),
-		EventDate:      eventDate,
+		eventId, err := s.db.CreateEvent(ctx, ds.CreateEventParams{
+			EventTitle:     req.Title.String(),
+			EventBody:      req.Body.String(),
+			EventCreatorID: req.CreatorId.Int64(),
+			GroupID:        req.GroupId.Int64(),
+			EventDate:      eventDate,
+		})
+		if err != nil {
+			return err
+		}
+
+		if req.ImageId != 0 {
+			err = q.UpsertImage(ctx, ds.UpsertImageParams{
+				ID:       req.ImageId.Int64(),
+				ParentID: eventId,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
-	if err != nil {
-		return err
-	}
 
 	//TODO CREATE NOTIFICATION EVENT
 
-	return nil
 }
 
 func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) error {

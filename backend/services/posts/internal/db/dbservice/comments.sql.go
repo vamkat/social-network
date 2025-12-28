@@ -6,9 +6,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createComment = `-- name: CreateComment :exec
+const createComment = `-- name: CreateComment :one
 INSERT INTO comments (comment_creator_id, parent_id, comment_body)
 VALUES ($1, $2, $3)
+RETURNING id
 `
 
 type CreateCommentParams struct {
@@ -17,9 +18,11 @@ type CreateCommentParams struct {
 	CommentBody      string
 }
 
-func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) error {
-	_, err := q.db.Exec(ctx, createComment, arg.CommentCreatorID, arg.ParentID, arg.CommentBody)
-	return err
+func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createComment, arg.CommentCreatorID, arg.ParentID, arg.CommentBody)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteComment = `-- name: DeleteComment :execrows
