@@ -43,14 +43,8 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Running variant worker for num of variants: %v", len(variants))
 
 	for _, v := range variants {
-		// // Compute source bucket and object key from the original file
-		// sourceBucket := m.Cfgs.FileService.Buckets.Originals
-		// sourceObjectKey := strings.TrimSuffix(v.ObjectKey, "/"+v.Variant.String())
-
-		// Call GenerateVariant
 		size, err := m.Clients.GenerateVariant(ctx,
 			v.SrcBucket,
 			v.SrcObjectKey,
@@ -58,15 +52,15 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 			v.ObjectKey,
 			v.Variant)
 		if err != nil {
-			log.Printf("Failed to generate variant for file %d variant %s: %v", v.Id, v.Variant, err)
-			// Update status to failed
-			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id, ct.Failed, size); updateErr != nil {
+			log.Printf("Failed to generate variant for file id: %d variant: %s: %v", v.Id, v.Variant, err)
+			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
+				ct.Failed, size); updateErr != nil {
 				log.Printf("Failed to update status to failed: %v", updateErr)
 			}
 		} else {
-			log.Printf("Successfully generated variant for file %d variant %s", v.Id, v.Variant)
-			// Update status to complete
-			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id, ct.Complete, size); updateErr != nil {
+			log.Printf("Successfully generated variant for file id: %d variant: %s", v.Id, v.Variant)
+			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
+				ct.Complete, size); updateErr != nil {
 				log.Printf("Failed to update status to complete: %v", updateErr)
 			}
 		}

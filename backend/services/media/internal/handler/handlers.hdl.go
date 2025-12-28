@@ -9,6 +9,7 @@ import (
 	pb "social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/mapping"
+	tele "social-network/shared/go/telemetry"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,6 +46,7 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request or file_meta is nil")
 	}
+	tele.Info(ctx, "upload image called", req)
 
 	// Convert variants
 	variants := make([]ct.FileVariant, len(req.Variants))
@@ -65,16 +67,18 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 		variants,
 	)
 	if err != nil {
+		tele.Error(ctx, "failed to generate upload image url", "request:", req, "error:", err)
 		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to generate upload url: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "failed to generate upload url: %v", err)
 	}
-
-	return &pb.UploadImageResponse{
+	res := &pb.UploadImageResponse{
 		FileId:    int64(fileId),
 		UploadUrl: upUrl,
-	}, nil
+	}
+	tele.Info(ctx, "upload image url generation success", "request:", appReq, "response:", res)
+	return res, nil
 }
 
 // GetImage handles the gRPC request for retrieving an image download URL.
@@ -95,10 +99,12 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
+	tele.Info(ctx, "get image called", req)
 
 	// Call application
 	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
+		tele.Error(ctx, "get image error", req, err)
 		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to get generate download url: %v", err)
 		}
@@ -111,9 +117,11 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get generate download url: %v", err)
 	}
 
-	return &pb.GetImageResponse{
+	res := &pb.GetImageResponse{
 		DownloadUrl: downUrl,
-	}, nil
+	}
+	tele.Info(ctx, "get image success", req, res)
+	return res, nil
 }
 
 // TODO: Implement error codes
@@ -122,7 +130,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	if req == nil || req.ImgIds == nil {
 		return nil, status.Error(codes.InvalidArgument, "request or img_ids is nil")
 	}
-
+	tele.Info(ctx, "get images called", req)
 	// Convert img_ids to ct.Ids
 	ids := make(ct.Ids, len(req.ImgIds.ImgIds))
 	for i, id := range req.ImgIds.ImgIds {
@@ -132,6 +140,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	// Call application
 	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
+		tele.Error(ctx, "get images error", req, err)
 		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to generate download urls: %v", err)
 		}
@@ -154,11 +163,12 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 			Status: mapping.CtToPbUploadStatus(fid.Status),
 		}
 	}
-
-	return &pb.GetImagesResponse{
+	res := &pb.GetImagesResponse{
 		DownloadUrls: downloadUrls,
 		FailedIds:    pbFailedIds,
-	}, nil
+	}
+	tele.Info(ctx, "get images success", req, res)
+	return res, nil
 }
 
 // Checks if the upload matches the pre defined file metadata and configs FileService file constraints.
@@ -171,9 +181,12 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "request or upload is nil")
 	}
 
+	tele.Info(ctx, "validate image called", req)
+
 	// Call application
 	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
+		tele.Error(ctx, "validate image error", req, err)
 		if errors.Is(err, application.ErrReqValidation) {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to validate upload: %v", err)
 		}
@@ -188,6 +201,7 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 
 		return nil, status.Errorf(codes.Internal, "failed to validate upload: %v", err)
 	}
-
-	return &pb.ValidateUploadResponse{DownloadUrl: url}, nil
+	res := &pb.ValidateUploadResponse{DownloadUrl: url}
+	tele.Info(ctx, "validate image success", req, res)
+	return res, nil
 }

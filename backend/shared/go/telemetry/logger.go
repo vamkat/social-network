@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"reflect"
 	"time"
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
@@ -101,11 +102,31 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 
 	var argsPart string
 	if len(args) > 0 {
-		argsPart = fmt.Sprintf(" - args: %s", fmt.Sprint(args...))
+		argsPart = fmt.Sprintf(" - args: %s", formatArgs(args...))
 	}
 
 	fmt.Printf("%s [%s]: %s - %s%s\n", time, prefix, level.String(), msg, argsPart)
+}
 
+func formatArgs(args ...any) any {
+	parts := make([]any, 0, len(args))
+
+	for _, arg := range args {
+		v := reflect.ValueOf(arg)
+
+		// Handle pointers
+		if v.Kind() == reflect.Pointer && !v.IsNil() {
+			v = v.Elem()
+		}
+
+		if v.Kind() == reflect.Struct {
+			parts = append(parts, fmt.Sprintf("%#v", arg))
+		} else {
+			parts = append(parts, fmt.Sprint(arg))
+		}
+	}
+
+	return fmt.Sprint(parts...)
 }
 
 // TODO think what to do here, not only context keys

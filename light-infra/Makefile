@@ -18,6 +18,7 @@
 export REDIS_ADDR=localhost:6379
 export REDIS_PASSWORD=
 export REDIS_DB=0
+export TELEMETRY_COLLECTOR_ADDR=localhost:4317
 
 export USERS_GRPC_ADDR=localhost:50051
 export POSTS_GRPC_ADDR=localhost:50052
@@ -50,7 +51,7 @@ run-all:
 	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
 	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
 	TELEMETRY_COLLECTOR_ADDR=localhost:4317 \
-	go run -C ../backend ./services/gateway/cmd/main.go 2>&1 | sed 's/^/[API] /' & \
+	go run -C ../backend ./services/gateway/cmd/main.go & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5437/social_media?sslmode=disable \
 	MIGRATE_PATH=services/media/internal/db/migrations \
@@ -58,7 +59,7 @@ run-all:
 	MINIO_ENDPOINT=localhost:9000 \
 	MINIO_ACCESS_KEY=minioadmin \
 	MINIO_SECRET_KEY=minioadmin \
-	go run -C ../backend ./services/media/cmd/server/main.go 2>&1 | sed 's/^/[MEDIA] /' & \
+	go run -C ../backend ./services/media/cmd/server/main.go & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable \
 	MIGRATE_PATH=services/chat/internal/db/migrations \
@@ -115,7 +116,7 @@ run-built:
 	MINIO_ENDPOINT=localhost:9000 \
 	MINIO_ACCESS_KEY=minioadmin \
 	MINIO_SECRET_KEY=minioadmin \
-	./media.social 2>&1 | sed 's/^/[MEDIA] /' & \
+	./media.social & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable \
 	MIGRATE_PATH=services/chat/internal/db/migrations \
@@ -146,7 +147,7 @@ run-api:
 	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
 	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
 	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	go run -C ../backend ./services/gateway/cmd/main.go 2>&1 | sed 's/^/[API] /'
+	go run -C ../backend ./services/gateway/cmd/main.go
 
 run-users:
 	DATABASE_URL=postgres://postgres:secret@localhost:5433/social_users?sslmode=disable \
@@ -172,7 +173,7 @@ run-media:
 	MINIO_ENDPOINT=localhost:9000 \
 	MINIO_ACCESS_KEY=minioadmin \
 	MINIO_SECRET_KEY=minioadmin \
-	go run -C ../backend ./services/media/cmd/server/main.go 2>&1 | sed 's/^/[MEDIA] /'
+	go run -C ../backend ./services/media/cmd/server/main.go
 
 run-notifications:
 	DATABASE_URL=postgres://postgres:secret@localhost:5436/social_notifications?sslmode=disable \

@@ -67,8 +67,6 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients,
 		}
 	}
 
-	// cache := redis_connector.NewRedisClient("redis:6379", "", 0)
-
 	return &Application{
 		db:            db,
 		txRunner:      txRunner,

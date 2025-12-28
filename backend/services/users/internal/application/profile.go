@@ -204,6 +204,18 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 		return models.UserProfileResponse{}, err
 	}
 
+	//update redis basic user info
+	basicUserInfo := models.User{
+		UserId:   req.UserId,
+		Username: req.Username,
+		AvatarId: req.AvatarId,
+	}
+	_ = s.clients.SetObj(ctx,
+		fmt.Sprintf("basic_user_info:%d", req.UserId),
+		basicUserInfo,
+		3*time.Minute,
+	)
+
 	newDob := time.Time{}
 	if row.DateOfBirth.Valid {
 		newDob = row.DateOfBirth.Time

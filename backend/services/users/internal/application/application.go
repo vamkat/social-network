@@ -4,6 +4,7 @@ import (
 	"context"
 	"social-network/services/users/internal/client"
 	ds "social-network/services/users/internal/db/dbservice"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -32,6 +33,8 @@ func NewApplication(db ds.Querier, txRunner TxRunner, pool *pgxpool.Pool, client
 type ClientsInterface interface {
 	GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error)
 	GetImage(ctx context.Context, imageId int64) (string, error)
+	GetObj(ctx context.Context, key string, dest any) error
+	SetObj(ctx context.Context, key string, value any, exp time.Duration) error
 	// CreateGroupConversation(ctx context.Context, groupId int64, ownerId int64) error
 	// CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error
 	// AddMembersToGroupConversation(ctx context.Context, groupId int64, userIds []int64) error

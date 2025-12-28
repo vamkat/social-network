@@ -5,6 +5,8 @@ import (
 	chatpb "social-network/shared/gen-go/chat"
 	mediapb "social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/notifications"
+	rds "social-network/shared/go/redis"
+	"time"
 )
 
 // Holds connections to clients
@@ -12,13 +14,15 @@ type Clients struct {
 	ChatClient   chatpb.ChatServiceClient
 	NotifsClient notifications.NotificationServiceClient
 	MediaClient  mediapb.MediaServiceClient
+	RedisClient  *rds.RedisClient
 }
 
-func NewClients(chatClient chatpb.ChatServiceClient, notifClient notifications.NotificationServiceClient, mediaClient mediapb.MediaServiceClient) *Clients {
+func NewClients(chatClient chatpb.ChatServiceClient, notifClient notifications.NotificationServiceClient, mediaClient mediapb.MediaServiceClient, redisClient *rds.RedisClient) *Clients {
 	c := &Clients{
 		ChatClient:   chatClient,
 		NotifsClient: notifClient,
 		MediaClient:  mediaClient,
+		RedisClient:  redisClient,
 	}
 	return c
 }
@@ -51,6 +55,14 @@ func (c *Clients) GetImage(ctx context.Context, imageId int64) (string, error) {
 		return "", err
 	}
 	return resp.DownloadUrl, nil
+}
+
+func (c *Clients) GetObj(ctx context.Context, key string, dest any) error {
+	return c.RedisClient.GetObj(ctx, key, dest)
+}
+
+func (c *Clients) SetObj(ctx context.Context, key string, value any, exp time.Duration) error {
+	return c.RedisClient.SetObj(ctx, key, value, exp)
 }
 
 // // on successful follow (public profile or accept follow request)

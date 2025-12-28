@@ -53,6 +53,11 @@ func (i *ImageConvertor) ConvertImageToVariant(
 		return out, fmt.Errorf("failed to decode image: %w", err)
 	}
 
+	img, err = decodeWithOrientation(buf)
+	if err != nil {
+		return out, fmt.Errorf("failed to decode with orientation %w", err)
+	}
+
 	resized := resizeForVariant(img, variant)
 
 	if err := webp.Encode(&out, resized, &webp.Options{Quality: 80}); err != nil {
@@ -173,27 +178,15 @@ func transformImage(
 	return dst
 }
 
-func rotate180(img image.Image) image.Image {
-	b := img.Bounds()
-	dst := image.NewRGBA(b)
-
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
-			dst.Set(
-				b.Max.X-(x-b.Min.X)-1,
-				b.Max.Y-(y-b.Min.Y)-1,
-				img.At(x, y),
-			)
-		}
-	}
-	return dst
-}
-
 func resizeForVariant(src image.Image, variant ct.FileVariant) image.Image {
 	maxWidth, maxHeight := variantToSize(variant)
 	bounds := src.Bounds()
 	w := bounds.Dx()
 	h := bounds.Dy()
+
+	if w <= maxWidth && h <= maxHeight {
+		return src
+	}
 
 	ratioW := float64(maxWidth) / float64(w)
 	ratioH := float64(maxHeight) / float64(h)

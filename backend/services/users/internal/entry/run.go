@@ -16,6 +16,7 @@ import (
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
+	rds "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 
 	"social-network/shared/go/gorpc"
@@ -59,6 +60,7 @@ func Run() error {
 		log.Fatal("failed to create chat client")
 	}
 
+	redisConnector := rds.NewRedisClient(cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB)
 	//
 	//
 	// DATABASE
@@ -76,7 +78,9 @@ func Run() error {
 		chatClient,
 		notificationsClient,
 		mediaClient,
+		redisConnector,
 	)
+
 	pgxTxRunner, err := postgresql.NewPgxTxRunner(pool, ds.New(pool))
 	if err != nil {
 		log.Fatal("failed to create pgxTxRunner")
@@ -126,6 +130,10 @@ func Run() error {
 }
 
 type configs struct {
+	RedisAddr     string `env:"REDIS_ADDR"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
+	RedisDB       int    `env:"REDIS_DB"`
+
 	DatabaseURL           string `env:"DATABASE_URL"`
 	ChatGRPCAddr          string `env:"CHAT_GRPC_ADDR"`
 	MediaGRPCAddr         string `env:"MEDIA_GRPC_ADDR"`
@@ -136,6 +144,9 @@ type configs struct {
 
 func getConfigs() configs {
 	cfgs := configs{
+		RedisAddr:             "redis:6379",
+		RedisPassword:         "",
+		RedisDB:               0,
 		DatabaseURL:           "postgres://postgres:secret@users-db:5432/social_users?sslmode=disable",
 		ChatGRPCAddr:          "chat:50051",
 		MediaGRPCAddr:         "media:50051",

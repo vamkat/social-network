@@ -7,9 +7,7 @@ type Config struct {
 	DB          Db
 	FileService FileService
 	Clients     Clients
-	// Tele
-	EnableDebugLogs bool `env:"ENABLE_DEBUG_LOGS"`
-	SimplePrint     bool `env:"ENABLE_SIMPLE_PRINT"`
+	Tele        Tele
 }
 
 type FileService struct {
@@ -46,4 +44,10 @@ type Clients struct {
 type Db struct {
 	URL                      string `env:"DATABASE_URL"`
 	StaleFilesWorkerInterval time.Duration
+}
+
+type Tele struct {
+	EnableDebugLogs           bool   `env:"ENABLE_DEBUG_LOGS"`
+	SimplePrint               bool   `env:"ENABLE_SIMPLE_PRINT"`
+	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
 }
