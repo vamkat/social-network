@@ -3,7 +3,6 @@ package entry
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -35,7 +34,7 @@ func Run() error {
 	// Todo: Check ctx functionality on shut down
 	closeTele, err := tele.InitTelemetry(ctx,
 		"media",
-		"MEDIA",
+		"MED",
 		cfgs.Tele.TelemetryCollectorAddress,
 		ct.CommonKeys(),
 		cfgs.Tele.EnableDebugLogs,
@@ -54,10 +53,10 @@ func Run() error {
 	}
 	defer pool.Close()
 
-	log.Println("Connected to media database")
+	tele.Info(ctx, "Connected to media database")
 
 	// Internal client for backend operations
-	fileServiceClient, err := NewMinIOConn(cfgs.FileService, cfgs.FileService.Endpoint, false)
+	fileServiceClient, err := NewMinIOConn(ctx, cfgs.FileService, cfgs.FileService.Endpoint, false)
 	if err != nil {
 		return err
 	}
@@ -65,11 +64,11 @@ func Run() error {
 	// Optional public client for URL generation (e.g. localhost in dev)
 	var publicFileServiceClient *minio.Client
 	if cfgs.FileService.PublicEndpoint != "" {
-		publicFileServiceClient, err = NewMinIOConn(cfgs.FileService, cfgs.FileService.PublicEndpoint, true)
+		publicFileServiceClient, err = NewMinIOConn(ctx, cfgs.FileService, cfgs.FileService.PublicEndpoint, true)
 		if err != nil {
-			log.Printf("Warning: failed to initialize public MinIO client: %v", err)
+			tele.Info(ctx, fmt.Sprintf("Warning: failed to initialize public MinIO client: %v", err), "error", err.Error())
 		} else {
-			log.Println("Initialized public MinIO client for URL generation")
+			tele.Info(ctx, "Initialized public MinIO client for URL generation")
 		}
 	}
 
@@ -90,7 +89,7 @@ func Run() error {
 		cfgs,
 	)
 	if err != nil {
-		log.Fatalf("failed to initialize media application: %v", err)
+		tele.Fatalf("failed to initialize media application: %v", err)
 	}
 
 	w := dbservice.NewWorker(querier)
@@ -103,7 +102,7 @@ func Run() error {
 		// Configs:     cfgs.Server,
 	}
 
-	log.Println("Running gRpc service...")
+	tele.Info(ctx, "Running gRpc service...")
 	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[media.MediaServiceServer](
 		media.RegisterMediaServiceServer,
 		service,
@@ -118,7 +117,7 @@ func Run() error {
 	go func() {
 		err := startServerFunc()
 		if err != nil {
-			log.Fatal("server failed to start")
+			tele.Fatal("server failed to start")
 		}
 		tele.Info(ctx, "server finished")
 	}()
@@ -129,9 +128,9 @@ func Run() error {
 
 	<-quit
 
-	log.Println("Shutting down server...")
+	tele.Info(ctx, "Shutting down server...")
 	endServerFunc()
-	log.Println("Server stopped")
+	tele.Info(ctx, "Server stopped")
 	return nil
 }
 
@@ -185,7 +184,7 @@ func Run() error {
 // 	}
 
 // 	if err := configutil.LoadConfigs(&cfg); err != nil {
-// 		log.Fatalf("failed to load env variables into config struct: %v", err)
+// 		tele.Fatalf("failed to load env variables into config struct: %v", err)
 // 	}
 // 	return cfg
 // }

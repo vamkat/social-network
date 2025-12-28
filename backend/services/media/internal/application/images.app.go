@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"social-network/services/media/internal/db/dbservice"
 	"social-network/services/media/internal/mapping"
 	ct "social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 	"time"
 
 	"github.com/google/uuid"
@@ -212,7 +212,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 	for _, fm := range fms {
 		if err := validateFileStatus(fm); err != nil {
 			failedIds = append(failedIds, FailedId{Id: fm.Id, Status: fm.Status})
-			log.Println(err.Error())
+			tele.Warn(ctx, "failed to validate file status", "error", err.Error())
 			continue
 		}
 		url, err := m.Clients.GenerateDownloadURL(ctx, fm.Bucket, fm.ObjectKey, fm.Visibility.SetExp())
@@ -270,7 +270,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 			return url, err
 		}
 
-		log.Printf("Media Service: FileId %v successfully validated and marked as Complete", fileId)
+		tele.Info(ctx, fmt.Sprintf("Media Service: FileId %v successfully validated and marked as Complete", fileId), "fileId", fileId)
 	}
 
 	if returnURL {
@@ -280,7 +280,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 			fileMeta.Visibility.SetExp(),
 		)
 		if err != nil {
-			log.Printf("failed to fetch url for file %v\n", fileId)
+			tele.Info(ctx, fmt.Sprintf("failed to fetch url for file %v\n", fileId))
 			return "", nil
 		}
 		url = u.String()

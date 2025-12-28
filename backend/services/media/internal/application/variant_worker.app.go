@@ -2,18 +2,19 @@ package application
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"sync/atomic"
 	"time"
 
 	ct "social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 )
 
 var processingVariants atomic.Bool
 
 // StartVariantWorker starts a background worker that periodically processes pending file variants
 func (m *MediaService) StartVariantWorker(ctx context.Context, interval time.Duration) {
-	log.Printf("Initiating variant worker. Interval %s\n", interval.String())
+	tele.Info(ctx, fmt.Sprintf("Initiating variant worker. Interval %s\n", interval.String()))
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -25,10 +26,10 @@ func (m *MediaService) StartVariantWorker(ctx context.Context, interval time.Dur
 					continue
 				}
 				if err := m.processPendingVariants(ctx); err != nil {
-					log.Printf("Error processing pending variants: %v", err)
+					tele.Warn(ctx, fmt.Sprintf("Error processing pending variants: %v", err))
 				}
 			case <-ctx.Done():
-				log.Println("Variant worker stopped")
+				tele.Info(ctx, "Variant worker stopped")
 				return
 			}
 		}
@@ -52,16 +53,16 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 			v.ObjectKey,
 			v.Variant)
 		if err != nil {
-			log.Printf("Failed to generate variant for file id: %d variant: %s: %v", v.Id, v.Variant, err)
+			tele.Warn(ctx, fmt.Sprintf("Failed to generate variant for file id: %d variant: %s: %v", v.Id, v.Variant, err), "error", err.Error())
 			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
 				ct.Failed, size); updateErr != nil {
-				log.Printf("Failed to update status to failed: %v", updateErr)
+				tele.Warn(ctx, fmt.Sprintf("Failed to update status to failed: %v", updateErr))
 			}
 		} else {
-			log.Printf("Successfully generated variant for file id: %d variant: %s", v.Id, v.Variant)
+			tele.Info(ctx, fmt.Sprintf("Successfully generated variant for file id: %d variant: %s", v.Id, v.Variant))
 			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
 				ct.Complete, size); updateErr != nil {
-				log.Printf("Failed to update status to complete: %v", updateErr)
+				tele.Warn(ctx, fmt.Sprintf("Failed to update status to complete: %v", updateErr))
 			}
 		}
 	}

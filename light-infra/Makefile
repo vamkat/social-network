@@ -82,20 +82,18 @@ run-all:
 	\
 	wait
 
-
 build-all:
 	@echo "Starting building..."
-	@trap 'kill 0' INT TERM; \
+	trap 'kill 0' INT TERM; \
 	OUTDIR="$(CURDIR)"; \
 	cd ../backend && \
-	go build -o "$$OUTDIR/gateway.social" ./services/gateway/cmd/main.go ; \
-	go build -o "$$OUTDIR/media.social" ./services/media/cmd/server/main.go ; \
-	go build -o "$$OUTDIR/chat.social" ./services/chat/cmd/server/main.go ; \
-	go build -o "$$OUTDIR/posts.social" ./services/posts/cmd/server/main.go ; \
-	go build -o "$$OUTDIR/users.social" ./services/users/cmd/server/main.go ; \
-# 	go build -o "$$OUTDIR/notifs.social" ./services/notifications/cmd/server/main.go ; \
+	go build -o "$$OUTDIR/gateway.social" ./services/gateway/cmd/main.go; \
+	go build -o "$$OUTDIR/media.social" ./services/media/cmd/server/main.go; \
+	go build -o "$$OUTDIR/chat.social" ./services/chat/cmd/server/main.go; \
+	go build -o "$$OUTDIR/posts.social" ./services/posts/cmd/server/main.go; \
+	go build -o "$$OUTDIR/users.social" ./services/users/cmd/server/main.go; \
+# 	go build -o "$$OUTDIR/notifs.social" ./services/notifications/cmd/server/main.go
 	@echo "Finished building!"
-	wait
 
 
 

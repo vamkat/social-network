@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
+	tele "social-network/shared/go/telemetry"
 	"time"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -23,15 +24,15 @@ func main() {
 		if err == nil {
 			break
 		}
-		log.Printf("DB not ready yet (attempt %d): %v", i+1, err)
+		tele.Warn(ctx, fmt.Sprintf("DB not ready yet (attempt %d): %v", i+1, err), "error", err.Error())
 		time.Sleep(2 * time.Second)
 	}
 	if err != nil {
-		log.Fatalf("Failed to connect DB: %v", err)
+		tele.Fatalf("Failed to connect DB: %v", err)
 	}
 	defer pool.Close()
 
-	log.Println("Connected to users database")
+	tele.Info(ctx, "Connected to users database")
 
-	log.Println("Service ready!")
+	tele.Info(ctx, "Service ready!")
 }

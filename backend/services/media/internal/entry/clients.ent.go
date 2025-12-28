@@ -3,7 +3,6 @@ package entry
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 	"social-network/services/media/internal/configs"
 	tele "social-network/shared/go/telemetry"
@@ -14,7 +13,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
 
-func NewMinIOConn(cfgs configs.FileService, endpoint string, skipBucketCreation bool) (*minio.Client, error) {
+func NewMinIOConn(ctx context.Context, cfgs configs.FileService, endpoint string, skipBucketCreation bool) (*minio.Client, error) {
 	var minioClient *minio.Client
 	var err error
 
@@ -30,27 +29,27 @@ func NewMinIOConn(cfgs configs.FileService, endpoint string, skipBucketCreation 
 		if err == nil {
 			break
 		}
-		log.Println("MinIO not ready, retrying in 2s...")
+		tele.Warn(ctx, "MinIO not ready, retrying in 2s...")
 		time.Sleep(2 * time.Second)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	log.Println("Connected to minio client")
+	tele.Info(ctx, "Connected to minio client")
 
 	if skipBucketCreation {
 		return minioClient, nil
 	}
 
+	//TODO check if using ctx from entry is ok
 	// Ensure bucket exists
-	ctx := context.Background()
 	if err := EnsureBuckets(ctx,
 		minioClient, cfgs.Buckets); err != nil {
 		return nil, err
 	}
 
-	log.Println("Setting up lifecycle rules")
+	tele.Info(ctx, "Setting up lifecycle rules")
 
 	lcfg := lifecycle.NewConfiguration()
 
@@ -72,7 +71,7 @@ func NewMinIOConn(cfgs configs.FileService, endpoint string, skipBucketCreation 
 
 	err = minioClient.SetBucketLifecycle(ctx, cfgs.Buckets.Originals, lcfg)
 	if err != nil {
-		log.Println("Error setting lifecycle:", err)
+		tele.Error(ctx, "Error setting lifecycle: "+err.Error(), "error", err.Error())
 		// We might still continue
 	}
 
@@ -81,7 +80,7 @@ func NewMinIOConn(cfgs configs.FileService, endpoint string, skipBucketCreation 
 
 func EnsureBuckets(ctx context.Context, client *minio.Client, buckets configs.Buckets) error {
 	v := reflect.ValueOf(buckets)
-	log.Println("Creating buckets")
+	tele.Info(ctx, "Creating buckets")
 	for i := 0; i < v.NumField(); i++ {
 		bucketName := v.Field(i).String()
 
@@ -101,7 +100,7 @@ func EnsureBuckets(ctx context.Context, client *minio.Client, buckets configs.Bu
 			}
 		}
 	}
-	log.Println("Buckets created!")
+	tele.Info(ctx, "Buckets created!")
 
 	return nil
 }

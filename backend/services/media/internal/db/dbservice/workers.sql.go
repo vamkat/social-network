@@ -3,7 +3,6 @@ package dbservice
 import (
 	"context"
 	"fmt"
-	"log"
 	tele "social-network/shared/go/telemetry"
 	"time"
 )
@@ -17,10 +16,10 @@ func (w *Workers) StartStaleFilesWorker(ctx context.Context, period time.Duratio
 			select {
 			case <-ticker.C:
 				if err := w.db.MarkStaleFilesFailed(ctx); err != nil {
-					log.Printf("Error processing pending variants: %v", err)
+					tele.Error(ctx, fmt.Sprintf("Error processing pending variants: %v", err))
 				}
 			case <-ctx.Done():
-				log.Println("Stale files worker stopped")
+				tele.Warn(ctx, "Stale files worker stopped")
 				return
 			}
 		}

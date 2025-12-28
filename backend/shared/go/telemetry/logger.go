@@ -7,6 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"reflect"
+	"runtime"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
@@ -40,7 +42,6 @@ func newLogger(serviceName string, contextKeys contextKeys, enableDebug bool, si
 	handler := otelslog.NewHandler(
 		serviceName,
 		otelslog.WithLoggerProvider(global.GetLoggerProvider()),
-		otelslog.WithSource(true),
 	)
 
 	logger := slog.New(handler)
@@ -68,29 +69,13 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 		return
 	}
 
-	ctxArgs := []any{}
+	callerInfo := functionCallers()
+
+	ctxArgs := []slog.Attr{}
 	if ctx == nil {
 		ctx = context.Background()
 	} else {
-		for _, ctxArg := range l.context2Args(ctx) {
-			ctxArgs = append(ctxArgs, ctxArg)
-		}
-	}
-
-	l.slog.Log(ctx, level, msg, append(args, ctxArgs)...)
-
-	if !l.simplePrint {
-		args = append(args, ctxArgs)
-	}
-
-	time := fmt.Sprint(time.Now().Format("15:04:05.000"))
-	if len(args) == 0 {
-		if l.hasPrefix {
-			fmt.Printf("%s [%s]: %s - %s\n", time, l.prefix, level.String(), msg)
-		} else {
-			fmt.Printf("%s [%s]: %s - %s - args: %s\n", time, l.serviceName, level.String(), msg, fmt.Sprint(args...))
-		}
-		return
+		ctxArgs = l.context2Attributes(ctx)
 	}
 
 	var prefix string
@@ -100,12 +85,39 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 		prefix = l.serviceName
 	}
 
+	l.slog.Log(
+		ctx,
+		level,
+		msg,
+		slog.GroupAttrs("customArgs", kvPairsToAttrs(args)...),
+		slog.GroupAttrs("context", ctxArgs...),
+		slog.String("callers", callerInfo),
+		slog.String("prefix", prefix),
+	)
+
+	if !l.simplePrint {
+		args = append(args, ctxArgs)
+	}
+
 	var argsPart string
 	if len(args) > 0 {
 		argsPart = fmt.Sprintf(" - args: %s", formatArgs(args...))
 	}
 
+	time := fmt.Sprint(time.Now().Format("15:04:05.000"))
 	fmt.Printf("%s [%s]: %s - %s%s\n", time, prefix, level.String(), msg, argsPart)
+}
+
+func kvPairsToAttrs(pairs []any) []slog.Attr {
+	attrs := make([]slog.Attr, 0, len(pairs)/2)
+	for i := 0; i < len(pairs); i += 2 {
+		key, ok := pairs[i].(string)
+		if !ok {
+			key = "invalid_key"
+		}
+		attrs = append(attrs, slog.Any(key, pairs[i+1]))
+	}
+	return attrs
 }
 
 func formatArgs(args ...any) any {
@@ -129,16 +141,38 @@ func formatArgs(args ...any) any {
 	return fmt.Sprint(parts...)
 }
 
-// TODO think what to do here, not only context keys
-func (l *logging) context2Args(ctx context.Context) []string {
-	args := []string{}
+func (l *logging) context2Attributes(ctx context.Context) []slog.Attr {
+	args := []slog.Attr{}
 	for _, key := range l.contextKeys {
 		val, ok := ctx.Value(key).(string)
 		if !ok {
 			continue
 		}
-		args = append(args, key)
-		args = append(args, val)
+		args = append(args, slog.Any(key, val))
 	}
 	return args
+}
+
+func functionCallers() string {
+	var callers = []string{}
+	pc := make([]uintptr, 3)
+	n := runtime.Callers(4, pc)
+	if n == 0 {
+		return "(no caller data)"
+	}
+	pc = pc[:n] // pass only valid pcs to runtime.CallersFrames
+	frames := runtime.CallersFrames(pc)
+	for {
+		frame, more := frames.Next()
+		if strings.Contains(frame.Function, "runtime_test") {
+			break
+		}
+		start := strings.LastIndex(frame.Func.Name(), "/")
+		callers = append(callers, fmt.Sprintf("by %s at %d ", frame.Func.Name()[start+1:], frame.Line))
+		if !more {
+			break
+		}
+	}
+
+	return strings.Join(callers, "\n")
 }
