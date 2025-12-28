@@ -3,7 +3,6 @@ package ct
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"fmt"
 )
 
@@ -39,11 +38,12 @@ func (b PostBody) isValid() bool {
 
 func (b PostBody) Validate() error {
 	if !b.isValid() {
-		return errors.Join(ErrValidation,
-			fmt.Errorf("post body must be %d–%d chars and contain no control characters",
-				postBodyCharsMin,
-				postBodyCharsMax,
-			))
+		return fmt.Errorf("%w post body must be %d–%d chars and contain no control characters. post body length: %v",
+			ErrValidation,
+			postBodyCharsMin,
+			postBodyCharsMax,
+			len(b),
+		)
 	}
 
 	if err := controlCharsFree(b.String()); err != nil {
@@ -89,12 +89,12 @@ func (c CommentBody) IsValid() bool {
 
 func (c CommentBody) Validate() error {
 	if !c.IsValid() {
-		return errors.Join(ErrValidation,
-			fmt.Errorf("comment body must be %d–%d chars and contain no control characters. comment body length: %v",
-				commentBodyCharsMin,
-				commentBodyCharsMax,
-				len(c),
-			))
+		return fmt.Errorf("%w comment body must be %d–%d chars and contain no control characters. comment body length: %v",
+			ErrValidation,
+			commentBodyCharsMin,
+			commentBodyCharsMax,
+			len(c),
+		)
 	}
 
 	if err := controlCharsFree(c.String()); err != nil {
@@ -139,12 +139,12 @@ func (eb EventBody) IsValid() bool {
 
 func (eb EventBody) Validate() error {
 	if !eb.IsValid() {
-		return errors.Join(ErrValidation,
-			fmt.Errorf("event body must be %d–%d chars and contain no control characters. even body length %v",
-				eventBodyCharsMin,
-				eventBodyCharsMax,
-				len(eb),
-			))
+		return fmt.Errorf("%w event body must be %d–%d chars and contain no control characters. even body length %v",
+			ErrValidation,
+			eventBodyCharsMin,
+			eventBodyCharsMax,
+			len(eb),
+		)
 	}
 	if err := controlCharsFree(eb.String()); err != nil {
 		return fmt.Errorf("%w: %v", ErrValidation, err)
@@ -184,12 +184,12 @@ func (m MsgBody) IsValid() bool {
 
 func (m MsgBody) Validate() error {
 	if !m.IsValid() {
-		return errors.Join(ErrValidation,
-			fmt.Errorf("message body must be %d–%d chars and contain no control characters. message body lenght: %v",
-				commentBodyCharsMin,
-				commentBodyCharsMax,
-				len(m),
-			))
+		return fmt.Errorf("%w message body must be %d–%d chars and contain no control characters. message body lenght: %v",
+			ErrValidation,
+			commentBodyCharsMin,
+			commentBodyCharsMax,
+			len(m),
+		)
 	}
 
 	if err := controlCharsFree(m.String()); err != nil {
@@ -201,7 +201,7 @@ func (m MsgBody) Validate() error {
 func (i *MsgBody) Scan(src any) error {
 	if src == nil {
 		// SQL NULL reached
-		*i = "" // or whatever "invalid" means in your domain
+		*i = ""
 		return nil
 	}
 

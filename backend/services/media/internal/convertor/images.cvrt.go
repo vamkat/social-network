@@ -173,22 +173,6 @@ func transformImage(
 	return dst
 }
 
-func rotate180(img image.Image) image.Image {
-	b := img.Bounds()
-	dst := image.NewRGBA(b)
-
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
-			dst.Set(
-				b.Max.X-(x-b.Min.X)-1,
-				b.Max.Y-(y-b.Min.Y)-1,
-				img.At(x, y),
-			)
-		}
-	}
-	return dst
-}
-
 func resizeForVariant(src image.Image, variant ct.FileVariant) image.Image {
 	maxWidth, maxHeight := variantToSize(variant)
 	bounds := src.Bounds()

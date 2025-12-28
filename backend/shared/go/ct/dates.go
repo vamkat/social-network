@@ -273,7 +273,7 @@ func (g *GenDateTime) Scan(src any) error {
 // Value implements the driver.Valuer interface
 func (g GenDateTime) Value() (driver.Value, error) {
 	if err := g.Validate(); err != nil {
-		return nil, nil // SQL NULL for invalid timestamps
+		return nil, fmt.Errorf("invalid GenDateTime: %w", err) // SQL NULL for invalid timestamps
 	}
 	return time.Time(g), nil // store exactly as is
 }

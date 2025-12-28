@@ -438,5 +438,5 @@ func TestValidateBatch(t *testing.T) {
 	if err2 == nil {
 		t.Fatal("expected error got nil")
 	}
-	t.Fatal(err2)
+	// t.Fatal(err2)
 }
