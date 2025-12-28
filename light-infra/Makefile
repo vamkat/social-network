@@ -166,3 +166,8 @@ docker-down:
 create-network:
 	@docker network inspect social-network >/dev/null 2>&1 || \
 	docker network create social-network
+
+boom:
+	$(MAKE) docker-up
+	$(MAKE) run-migrations
+	$(MAKE) run-all
