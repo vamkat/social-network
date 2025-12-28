@@ -2,6 +2,7 @@ package users_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 	"strings"
@@ -19,7 +20,7 @@ import (
 
 var UsersService users.UserServiceClient
 
-func StartTest(ctx context.Context, cfgs configs.Configs) {
+func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	var err error
 	UsersService, err = gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
@@ -27,59 +28,61 @@ func StartTest(ctx context.Context, cfgs configs.Configs) {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		panic("failed to connect to users service: %v" + err.Error())
+		return fmt.Errorf("failed to connect to users service: %s", err.Error())
 	}
 
 	var wg sync.WaitGroup
-	wg.Go(func() { randomRegister(ctx) })
-	wg.Go(func() { randomLogin(ctx) })
-	wg.Go(func() { registerLogin(ctx) })
+	wg.Go(func() { utils.HandleErr("users", ctx, randomRegister) })
+	wg.Go(func() { utils.HandleErr("users", ctx, randomLogin) })
+	wg.Go(func() { utils.HandleErr("users", ctx, registerLogin) })
 	wg.Wait()
-
+	return nil
 }
 
 var fail = "FAIL TEST: err ->"
 
-func randomRegister(ctx context.Context) {
-	fmt.Println("starting register test")
+func randomRegister(ctx context.Context) error {
+	fmt.Println("users-service starting register test")
 	for range 100 {
 		req := newRegisterReq()
 		resp, err := UsersService.RegisterUser(ctx, req)
 		if err != nil {
-			panic(fail + err.Error())
+			return errors.New(fail + err.Error())
 		}
 
 		if resp.UserId < 1 {
-			panic(fail)
+			return errors.New(fail)
 		}
 
 	}
 
-	fmt.Println("random register test passed")
+	fmt.Println("users-service random register test passed")
+	return nil
 }
 
-func randomLogin(ctx context.Context) {
-	fmt.Println("starting Login test")
+func randomLogin(ctx context.Context) error {
+	fmt.Println("users-service starting Login test")
 	for range 100 {
 		req := newLoginReq()
 		_, err := UsersService.LoginUser(ctx, req)
 		if err != nil && !strings.Contains(err.Error(), "invalid identifier or password") {
-			panic(fail + "wrong type of error!")
+			return errors.New(fail + "wrong type of error!")
 		}
 		if err == nil {
-			panic(fail + "expected error! cause these random logins should all be failing!")
+			return errors.New(fail + "expected error! cause these random logins should all be failing!")
 		}
 	}
 
-	fmt.Println("random login test passed")
+	fmt.Println("users-service random login test passed")
+	return nil
 }
 
-func registerLogin(ctx context.Context) {
+func registerLogin(ctx context.Context) error {
 	reg := newRegisterReq()
 
 	_, err := UsersService.RegisterUser(ctx, reg)
 	if err != nil {
-		panic(fail + err.Error())
+		return errors.New(fail + err.Error())
 	}
 
 	log := newLoginReq()
@@ -88,23 +91,25 @@ func registerLogin(ctx context.Context) {
 
 	resp, err := UsersService.LoginUser(ctx, log)
 	if err != nil {
-		panic(fail + "should have worked! err should be nil:" + err.Error())
+		return errors.New(fail + "should have worked! err should be nil:" + err.Error())
 	}
 	if resp.Username != reg.Username {
-		panic(fail + "incorrect login, these two should be the same: `" + resp.Username + "` <-> `" + reg.Username + "`")
+		return errors.New(fail + "incorrect login, these two should be the same: `" + resp.Username + "` <-> `" + reg.Username + "`")
 	}
 
 	if resp.UserId == 0 || resp.Username == "" {
-		panic("found empty values")
+		return errors.New("found empty values")
 	}
-	fmt.Println("passed simple reg login test")
+
+	fmt.Println("users-service passed simple reg login test")
+	return nil
 }
 
 func newRegisterReq() *users.RegisterUserRequest {
 	req := users.RegisterUserRequest{
-		Username:    strings.Title(utils.RandomString(10, false)),
-		FirstName:   strings.Title(utils.RandomString(10, false)),
-		LastName:    strings.Title(utils.RandomString(10, false)),
+		Username:    utils.Title(utils.RandomString(10, false)),
+		FirstName:   utils.Title(utils.RandomString(10, false)),
+		LastName:    utils.Title(utils.RandomString(10, false)),
 		DateOfBirth: timestamppb.New(time.Unix(rand.Int64N(1000000), 0)),
 		Avatar:      0,
 		About:       utils.RandomString(300, true),
@@ -117,8 +122,8 @@ func newRegisterReq() *users.RegisterUserRequest {
 
 func newLoginReq() *users.LoginRequest {
 	req := users.LoginRequest{
-		Identifier: strings.Title(utils.RandomString(10, false)),
-		Password:   strings.Title(utils.RandomString(10, false)),
+		Identifier: utils.Title(utils.RandomString(10, false)),
+		Password:   utils.Title(utils.RandomString(10, false)),
 	}
 	return &req
 }

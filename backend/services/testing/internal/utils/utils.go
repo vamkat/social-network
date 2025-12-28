@@ -1,7 +1,12 @@
 package utils
 
 import (
+	"context"
+	"fmt"
 	"math/rand/v2"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func RandomString(length int, withSpecialChars bool) string {
@@ -9,7 +14,14 @@ func RandomString(length int, withSpecialChars bool) string {
 	for i := range length {
 		runes[i] = RandomRune(withSpecialChars)
 	}
-	// fmt.Println("created word:", string(runes))
+	return string(runes)
+}
+
+func RandomPassword() string {
+	runes := []rune{'!', 'A', 'b', '1'}
+	for range 15 {
+		runes = append(runes, RandomRune(true))
+	}
 	return string(runes)
 }
 
@@ -21,5 +33,16 @@ func RandomRune(withSpecialChars bool) rune {
 		return runes[rand.IntN(len(runes))]
 	}
 	return lettersOnly[rand.IntN(len(lettersOnly))]
+}
 
+func Title(str string) string {
+	caser := cases.Title(language.English)
+	return caser.String(str)
+}
+
+func HandleErr(testTarget string, ctx context.Context, f func(context.Context) error) {
+	err := f(ctx)
+	if err != nil {
+		fmt.Println("FAIL TEST: err ->", testTarget, "-> error:", err.Error())
+	}
 }

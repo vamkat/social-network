@@ -111,6 +111,8 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 func (h *Handlers) registerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		tele.Info(ctx, "register handler called, with: ")
+
 		// Check if user already logged in
 		cookie, _ := r.Cookie("jwt")
 		if cookie != nil {
@@ -121,7 +123,6 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			}
 		}
 
-		tele.Info(ctx, "register handler called, with: ", "body", r.Body)
 		//READ REQUEST BODY
 		type registerHttpRequest struct {
 			Username    ct.Username    `json:"username,omitempty" validate:"nullable"`
@@ -146,6 +147,8 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		tele.Debug(ctx, "register request contents: "+fmt.Sprint(httpReq))
 
 		hashedPass, err := httpReq.Password.Hash()
 		if err != nil {

@@ -42,6 +42,7 @@ func (d *DateOfBirth) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// TODO vaggelis this needs to return why its invalid instead of just a bool
 func (d DateOfBirth) IsValid() bool {
 	t := time.Time(d)
 	if t.IsZero() {

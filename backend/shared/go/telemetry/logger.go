@@ -66,26 +66,27 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 		return
 	}
 
+	ctxArgs := []any{}
 	if ctx == nil {
 		ctx = context.Background()
 	} else {
-		ctxArgs := l.context2Args(ctx)
-		for _, ctxArg := range ctxArgs {
-			args = append(args, ctxArg)
+		for _, ctxArg := range l.context2Args(ctx) {
+			ctxArgs = append(ctxArgs, ctxArg)
 		}
 	}
 
+	l.slog.Log(ctx, level, msg, append(args, ctxArgs)...)
+
 	if !l.simplePrint {
-		args = []any{}
+		args = append(args, ctxArgs)
 	}
 
 	if l.hasPrefix {
-		fmt.Printf("[%s]: %s - %s - args: %s\n", l.prefix, level.String(), msg, fmt.Sprint(args))
+		fmt.Printf("[%s]: %s - %s - args: %s\n", l.prefix, level.String(), msg, fmt.Sprint(args...))
 	} else {
-		fmt.Printf("[%s]: %s - %s - args: %s\n", l.serviceName, level.String(), msg, fmt.Sprint(args))
+		fmt.Printf("[%s]: %s - %s - args: %s\n", l.serviceName, level.String(), msg, fmt.Sprint(args...))
 	}
 
-	l.slog.Log(ctx, level, msg, args...)
 }
 
 func (l *logging) context2Args(ctx context.Context) []string {
