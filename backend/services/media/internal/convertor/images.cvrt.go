@@ -53,6 +53,11 @@ func (i *ImageConvertor) ConvertImageToVariant(
 		return out, fmt.Errorf("failed to decode image: %w", err)
 	}
 
+	img, err = decodeWithOrientation(buf)
+	if err != nil {
+		return out, fmt.Errorf("failed to decode with orientation %w", err)
+	}
+
 	resized := resizeForVariant(img, variant)
 
 	if err := webp.Encode(&out, resized, &webp.Options{Quality: 80}); err != nil {
@@ -178,6 +183,10 @@ func resizeForVariant(src image.Image, variant ct.FileVariant) image.Image {
 	bounds := src.Bounds()
 	w := bounds.Dx()
 	h := bounds.Dy()
+
+	if w <= maxWidth && h <= maxHeight {
+		return src
+	}
 
 	ratioW := float64(maxWidth) / float64(w)
 	ratioH := float64(maxHeight) / float64(h)
