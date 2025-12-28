@@ -2,12 +2,12 @@ package client
 
 import (
 	"context"
-	"fmt"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
 	mediapb "social-network/shared/gen-go/media"
 	userpb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -80,8 +80,7 @@ func (c *Clients) GetFollowingIds(ctx context.Context, userId int64) ([]int64, e
 }
 
 func (c *Clients) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
-	fmt.Println("POSTS GET IMAGES - variant requested:", variant)
-	fmt.Println("POSTS GET IMAGES - images requested:", imageIds)
+	tele.Info(ctx, "requesting images", "image ids", imageIds, "variant", variant)
 	req := &mediapb.GetImagesRequest{
 		ImgIds:  &mediapb.ImageIds{ImgIds: imageIds.Int64()},
 		Variant: variant,
@@ -96,8 +95,7 @@ func (c *Clients) GetImages(ctx context.Context, imageIds ct.Ids, variant media.
 			imagesToDelete = append(imagesToDelete, failedImage.FileId)
 		}
 	}
-	fmt.Println("POSTS GET IMAGES - failed images:", resp.FailedIds)
-	fmt.Println("POSTS GET IMAGES - images fetched:", resp.DownloadUrls)
+	tele.Info(ctx, "got images response", "image urls", resp.DownloadUrls, "failed images", resp.FailedIds)
 	return resp.DownloadUrls, imagesToDelete, nil
 }
 

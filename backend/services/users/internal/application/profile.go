@@ -8,6 +8,8 @@ import (
 	"social-network/shared/go/models"
 	"time"
 
+	"social-network/shared/gen-go/media"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -123,7 +125,7 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 	profile.OwnedGroupsCount = groupsRow.OwnerCount
 
 	if profile.AvatarId > 0 {
-		imageUrl, err := s.clients.GetImage(ctx, profile.AvatarId.Int64())
+		imageUrl, err := s.mediaRetriever.GetImage(ctx, profile.AvatarId.Int64(), media.FileVariant(1))
 		if err != nil {
 			return models.UserProfileResponse{}, err
 		}
@@ -153,7 +155,7 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 	}
 
 	users := make([]models.User, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
@@ -161,13 +163,13 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 			AvatarId: ct.Id(r.AvatarID),
 		})
 		if r.AvatarID > 0 {
-			imageIds = append(imageIds, r.AvatarID)
+			imageIds = append(imageIds, ct.Id(r.AvatarID))
 		}
 	}
 
 	//get avatar urls
 	if len(imageIds) > 0 {
-		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return []models.User{}, err
 		}

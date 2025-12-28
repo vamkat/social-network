@@ -3,7 +3,6 @@ package entry
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"social-network/services/posts/internal/application"
@@ -29,13 +28,22 @@ func Run() error {
 
 	cfgs := getConfigs()
 
+	// TELEMETRY
+	closeTelemetry, err := tele.InitTelemetry(ctx, "posts", "PST", cfgs.TelemetryCollectorAddress, ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
+	if err != nil {
+		tele.Fatalf("failed to init telemetry: %s", err.Error())
+	}
+	defer closeTelemetry()
+
+	tele.Info(ctx, "initialized telemetry")
+
 	dbUrl := os.Getenv("DATABASE_URL")
 	pool, err := postgresql.NewPool(ctx, dbUrl)
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
 	defer pool.Close()
-	log.Println("Connected to posts-db database")
+	tele.Info(ctx, "Connected to posts-db database")
 
 	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
@@ -43,7 +51,7 @@ func Run() error {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to users service: %v", err)
+		tele.Fatalf("failed to connect to users service: %v", err)
 	}
 
 	MediaService, err := gorpc.GetGRpcClient(
@@ -52,7 +60,7 @@ func Run() error {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to media service: %v", err)
+		tele.Fatalf("failed to connect to media service: %v", err)
 	}
 
 	redisConnector := rds.NewRedisClient(cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB)
@@ -66,7 +74,7 @@ func Run() error {
 
 	service := handler.NewPostsHandler(app)
 
-	log.Println("Running gRpc service...")
+	tele.Info(ctx, "Running gRpc service...")
 	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[posts.PostsServiceServer](
 		posts.RegisterPostsServiceServer,
 		service,
@@ -80,7 +88,7 @@ func Run() error {
 	go func() {
 		err := startServerFunc()
 		if err != nil {
-			log.Fatal("server failed to start")
+			tele.Fatal("server failed to start")
 		}
 		fmt.Println("server finished")
 	}()
@@ -91,9 +99,9 @@ func Run() error {
 
 	<-quit
 
-	log.Println("Shutting down server...")
+	tele.Info(ctx, "Shutting down server...")
 	endServerFunc()
-	log.Println("Server stopped")
+	tele.Info(ctx, "Server stopped")
 	return nil
 
 }
@@ -111,20 +119,38 @@ type configs struct {
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
+
+	EnableDebugLogs bool `env:"ENABLE_DEBUG_LOGS"`
+	SimplePrint     bool `env:"ENABLE_SIMPLE_PRINT"`
+
+	OtelResourceAttributes    string `env:"OTEL_RESOURCE_ATTRIBUTES"`
+	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
+	PassSecret                string `env:"PASSWORD_SECRET"`
+	EncrytpionKey             string `env:"ENC_KEY"`
 }
 
 func getConfigs() configs { // sensible defaults
 	cfgs := configs{
-		RedisAddr:       "redis:6379",
-		RedisPassword:   "",
-		RedisDB:         0,
-		UsersGRPCAddr:   "users:50051",
-		PostsGRPCAddr:   "posts:50051",
-		ChatGRPCAddr:    "chat:50051",
-		MediaGRPCAddr:   "media:50051",
+		RedisAddr:     "redis:6379",
+		RedisPassword: "",
+		RedisDB:       0,
+
+		UsersGRPCAddr: "users:50051",
+		PostsGRPCAddr: "posts:50051",
+		ChatGRPCAddr:  "chat:50051",
+		MediaGRPCAddr: "media:50051",
+
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
 		GrpcServerPort:  ":50051",
+
+		EnableDebugLogs: true,
+		SimplePrint:     true,
+
+		OtelResourceAttributes:    "service.name=gateway,service.version=0.1.0",
+		TelemetryCollectorAddress: "alloy:4317",
+		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
+		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 	}
 
 	// load environment variables if present

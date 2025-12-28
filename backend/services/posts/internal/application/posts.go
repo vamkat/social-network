@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -135,7 +135,7 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 			}
 		}
 
-		//edit image //does this also delete the image?
+		//edit image
 		if req.ImageId > 0 {
 			err := q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
@@ -145,14 +145,14 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 				return err
 			}
 		}
-		fmt.Println("delete image", req.DeleteImage)
+		//delete image
 		if req.DeleteImage {
 			rowsAffected, err := q.DeleteImage(ctx, req.PostId.Int64())
 			if err != nil {
 				return err
 			}
 			if rowsAffected != 1 {
-				fmt.Println("image not found")
+				tele.Warn(ctx, "EditPost: image to be deleted not found", "request", req)
 			}
 		}
 		// edit audience
@@ -165,7 +165,7 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 			return err
 		}
 		if rowsAffected != 1 {
-			fmt.Println("no audience change")
+			tele.Warn(ctx, "EditPost: no audience change", "request", req)
 		}
 
 		// edit audience ids

@@ -3,23 +3,24 @@ package retrieveusers
 import (
 	"context"
 	"fmt"
-	"maps"
 
 	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
+	"social-network/shared/go/retrievemedia"
 	"time"
 )
 
 type UserRetriever struct {
-	clients UsersBatchClient
-	cache   RedisCache
-	ttl     time.Duration
+	clients        UsersBatchClient
+	cache          RedisCache
+	mediaRetriever *retrievemedia.MediaRetriever
+	ttl            time.Duration
 }
 
-func NewUserRetriever(clients UsersBatchClient, cache *redis_connector.RedisClient, ttl time.Duration) *UserRetriever {
-	return &UserRetriever{clients: clients, cache: cache, ttl: ttl}
+func NewUserRetriever(clients UsersBatchClient, cache *redis_connector.RedisClient, mediaRetriever *retrievemedia.MediaRetriever, ttl time.Duration) *UserRetriever {
+	return &UserRetriever{clients: clients, cache: cache, mediaRetriever: mediaRetriever, ttl: ttl}
 }
 
 // GetUsers returns a map[userID]User, using cache + batch RPC.
@@ -72,65 +73,25 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 			imageIds = append(imageIds, user.AvatarId)
 		}
 	}
-
-	uniqueImageIds := imageIds.Unique()
-
-	//fmt.Println("Unique image ids", uniqueImageIds)
-
-	images := make(map[int64]string, len(uniqueImageIds))
-	var missingImages ct.Ids
-
-	// Redis lookup for images
-	for _, imageId := range uniqueImageIds {
-		var imageURL string
-		if err := h.cache.GetObj(ctx, fmt.Sprintf("img_thumbnail:%d", imageId), &imageURL); err == nil {
-			images[imageId.Int64()] = imageURL
-			fmt.Println("RETRIEVE USERS - found image for user on redis:", imageURL)
-		} else {
-			missingImages = append(missingImages, imageId)
-		}
-	}
-
-	//fmt.Println("found on redis", images)
-	//fmt.Println("users before image urls", users)
-	imageMap := make(map[int64]string)
-	failedImages := []int64{}
-	var err error
-	// // Batch RPC for missing images
-	if len(missingImages) > 0 {
-		fmt.Println("asking media for these avatars", missingImages)
-		imageMap, failedImages, err = h.clients.GetImages(ctx, missingImages, media.FileVariant_THUMBNAIL)
+	imageIds = imageIds.Unique()
+	if len(imageIds) > 0 {
+		// Use shared MediaRetriever for images (handles caching and fetching)
+		imageMap, _, err := h.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	//merge with redis map
-	maps.Copy(images, imageMap)
-
-	for id, u := range users {
-
-		if url, ok := images[u.AvatarId.Int64()]; ok {
-			u.AvatarURL = url
-			users[id] = u
-
-			_ = h.cache.SetObj(ctx,
-				fmt.Sprintf("img_thumbnail:%d", u.AvatarId.Int64()),
-				url,
-				h.ttl,
-			)
+		for id, u := range users {
+			if url, ok := imageMap[u.AvatarId.Int64()]; ok {
+				u.AvatarURL = url
+				users[id] = u
+			}
 		}
 	}
-
-	fmt.Println("users after image urls", users)
-	//TODO urls from redis are not sent
-	//TODO batch call to delete missing image ids
-	fmt.Println("RETRIEVE USERS - failed avatars:", failedImages)
-	fmt.Println("RETRIEVE USERS - found avatars:", images)
 
 	return users, nil
 }
 
 func (h *UserRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
-	return h.clients.GetImages(ctx, imageIds, variant)
+	return h.mediaRetriever.GetImages(ctx, imageIds, variant)
 }

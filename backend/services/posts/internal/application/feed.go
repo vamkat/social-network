@@ -2,11 +2,11 @@ package application
 
 import (
 	"context"
-	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -98,7 +98,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("public feed rows:", rows)
+
 	posts := make([]models.Post, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
 	postImageIds := make(ct.Ids, 0, len(rows))
@@ -127,7 +127,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 
 	}
 	if len(posts) == 0 {
-		fmt.Println("no posts")
+		tele.Warn(ctx, "GetPublicFeed: no posts in feed")
 		return posts, nil
 	}
 
@@ -137,11 +137,11 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 	}
 
 	var imageMap map[int64]string
-	fmt.Println("need these images", postImageIds)
+	tele.Info(ctx, "GetPublicFeed needs these images", "image ids", postImageIds)
 	if len(postImageIds) > 0 {
-		imageMap, _, err = s.clients.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
-	fmt.Println("image map", imageMap)
+
 	for i := range posts {
 		uid := posts[i].User.UserId
 		if u, ok := userMap[uid]; ok {
@@ -149,7 +149,6 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 		}
 		posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 	}
-	fmt.Println(posts)
 
 	return posts, nil
 }

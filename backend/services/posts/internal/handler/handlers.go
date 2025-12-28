@@ -6,11 +6,11 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	cm "social-network/shared/gen-go/common"
 	pb "social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,7 +21,7 @@ import (
 // POSTS
 
 func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb.Post, error) {
-	fmt.Println("GetPostById gRPC method called")
+	tele.Info(ctx, "GetPostById gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -30,12 +30,13 @@ func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb
 		EntityId:    ct.Id(req.EntityId),
 	})
 	if err != nil {
-		fmt.Println("Error in GetPostById:", err)
+		tele.Error(ctx, "Error in GetPostById", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get post: %v", err)
 	}
 	return &pb.Post{
 		PostId:   int64(post.PostId),
 		PostBody: string(post.Body),
+
 		User: &cm.User{
 			UserId:    post.User.UserId.Int64(),
 			Username:  post.User.Username.String(),
@@ -56,7 +57,7 @@ func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb
 }
 
 func (s *PostsHandler) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*emptypb.Empty, error) {
-	fmt.Println("CreatePost gRPC method called")
+	tele.Info(ctx, "CreatePost gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -69,14 +70,14 @@ func (s *PostsHandler) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*
 		ImageId:     ct.Id(req.ImageId),
 	})
 	if err != nil {
-		fmt.Println("Error in CreatePost:", err)
+		tele.Error(ctx, "Error in CreatePost", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to create post: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) DeletePost(ctx context.Context, req *pb.GenericReq) (*emptypb.Empty, error) {
-	fmt.Println("DeletePost gRPC method called")
+	tele.Info(ctx, "DeletePost gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -85,14 +86,14 @@ func (s *PostsHandler) DeletePost(ctx context.Context, req *pb.GenericReq) (*emp
 		EntityId:    ct.Id(req.EntityId),
 	})
 	if err != nil {
-		fmt.Println("Error in DeletePost:", err)
+		tele.Error(ctx, "Error in DeletePost", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to delete post: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) EditPost(ctx context.Context, req *pb.EditPostReq) (*emptypb.Empty, error) {
-	fmt.Println("EditPost gRPC method called")
+	tele.Info(ctx, "EditPost gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -106,14 +107,14 @@ func (s *PostsHandler) EditPost(ctx context.Context, req *pb.EditPostReq) (*empt
 		DeleteImage: req.GetDeleteImage(),
 	})
 	if err != nil {
-		fmt.Println("Error in EditPost:", err)
+		tele.Error(ctx, "Error in EditPost", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to edit post: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.SimpleIdReq) (*pb.Post, error) {
-	fmt.Println("GetMostPopularPostInGroup gRPC method called")
+	tele.Info(ctx, "GetMostPopularPostInGroup gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -122,7 +123,7 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 		Id: ct.Id(req.Id),
 	})
 	if err != nil {
-		fmt.Println("Error in GetMostPopularPostInGroup:", err)
+		tele.Error(ctx, "Error in GetMostPopularPostInGroup", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get post: %v", err)
 	}
 	return &pb.Post{
@@ -148,7 +149,7 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 }
 
 func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPersonalizedFeedReq) (*pb.ListPosts, error) {
-	fmt.Println("GetPersonalizedFeed gRPC method called")
+	tele.Info(ctx, "GetPersonalizedFeed gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -158,7 +159,7 @@ func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPerso
 		Offset:      ct.Offset(req.Offset),
 	})
 	if err != nil {
-		fmt.Println("Error in GetPersonalizedFeed:", err)
+		tele.Error(ctx, "Error in GetPersonalizedFeed", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get personalized feed: %v", err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
@@ -188,7 +189,7 @@ func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPerso
 }
 
 func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginatedReq) (*pb.ListPosts, error) {
-	fmt.Println("GetPublicFeed gRPC method called")
+	tele.Info(ctx, "GetPublicFeed gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -198,7 +199,7 @@ func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginat
 		Offset:      ct.Offset(req.Offset),
 	})
 	if err != nil {
-		fmt.Println("Error in GetPublicFeed:", err)
+		tele.Error(ctx, "Error in GetPublicFeed", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get public feed: %v", err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
@@ -228,7 +229,7 @@ func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginat
 }
 
 func (s *PostsHandler) GetUserPostsPaginated(ctx context.Context, req *pb.GetUserPostsReq) (*pb.ListPosts, error) {
-	fmt.Println("GetUserPostsPaginated gRPC method called")
+	tele.Info(ctx, "GetUserPostsPaginated gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -239,7 +240,7 @@ func (s *PostsHandler) GetUserPostsPaginated(ctx context.Context, req *pb.GetUse
 		Offset:      ct.Offset(req.Offset),
 	})
 	if err != nil {
-		fmt.Println("Error in GetUserPostsPaginated:", err)
+		tele.Error(ctx, "Error in GetUserPostsPaginated", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get user posts: %v", err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
@@ -269,7 +270,7 @@ func (s *PostsHandler) GetUserPostsPaginated(ctx context.Context, req *pb.GetUse
 }
 
 func (s *PostsHandler) GetGroupPostsPaginated(ctx context.Context, req *pb.GetGroupPostsReq) (*pb.ListPosts, error) {
-	fmt.Println("GetGroupPostsPaginated gRPC method called")
+	tele.Info(ctx, "GetGroupPostsPaginated gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -280,7 +281,7 @@ func (s *PostsHandler) GetGroupPostsPaginated(ctx context.Context, req *pb.GetGr
 		Offset:      ct.Offset(req.Offset),
 	})
 	if err != nil {
-		fmt.Println("Error in GetGroupPostsPaginated:", err)
+		tele.Error(ctx, "Error in GetGroupPostsPaginated", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get group posts: %v", err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
@@ -310,7 +311,7 @@ func (s *PostsHandler) GetGroupPostsPaginated(ctx context.Context, req *pb.GetGr
 }
 
 func (s *PostsHandler) CreateComment(ctx context.Context, req *pb.CreateCommentReq) (*emptypb.Empty, error) {
-	fmt.Println("CreateComment gRPC method called")
+	tele.Info(ctx, "CreateComment gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -321,14 +322,14 @@ func (s *PostsHandler) CreateComment(ctx context.Context, req *pb.CreateCommentR
 		ImageId:   ct.Id(req.ImageId),
 	})
 	if err != nil {
-		fmt.Println("Error in CreateComment:", err)
+		tele.Error(ctx, "Error in CreateComment", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to create comment: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) EditComment(ctx context.Context, req *pb.EditCommentReq) (*emptypb.Empty, error) {
-	fmt.Println("EditComment gRPC method called")
+	tele.Info(ctx, "EditComment gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -340,14 +341,14 @@ func (s *PostsHandler) EditComment(ctx context.Context, req *pb.EditCommentReq) 
 		DeleteImage: req.GetDeleteImage(),
 	})
 	if err != nil {
-		fmt.Println("Error in EditComment:", err)
+		tele.Error(ctx, "Error in EditComment", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to edit comment: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) DeleteComment(ctx context.Context, req *pb.GenericReq) (*emptypb.Empty, error) {
-	fmt.Println("DeleteComment gRPC method called")
+	tele.Info(ctx, "DeleteComment gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -356,14 +357,14 @@ func (s *PostsHandler) DeleteComment(ctx context.Context, req *pb.GenericReq) (*
 		EntityId:    ct.Id(req.EntityId),
 	})
 	if err != nil {
-		fmt.Println("Error in DeleteComment:", err)
+		tele.Error(ctx, "Error in DeleteComment", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to delete comment: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) GetCommentsByParentId(ctx context.Context, req *pb.EntityIdPaginatedReq) (*pb.ListComments, error) {
-	fmt.Println("GetCommentsByParentId gRPC method called")
+	tele.Info(ctx, "GetCommentsByParentId gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -374,7 +375,7 @@ func (s *PostsHandler) GetCommentsByParentId(ctx context.Context, req *pb.Entity
 		Offset:      ct.Offset(req.Offset),
 	})
 	if err != nil {
-		fmt.Println("Error in GetCommentsByParentId:", err)
+		tele.Error(ctx, "Error in GetCommentsByParentId", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get comments: %v", err)
 	}
 	pbComments := make([]*pb.Comment, 0, len(comments))
@@ -401,7 +402,7 @@ func (s *PostsHandler) GetCommentsByParentId(ctx context.Context, req *pb.Entity
 }
 
 func (s *PostsHandler) CreateEvent(ctx context.Context, req *pb.CreateEventReq) (*emptypb.Empty, error) {
-	fmt.Println("CreateEvent gRPC method called")
+	tele.Info(ctx, "CreateEvent gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -414,14 +415,14 @@ func (s *PostsHandler) CreateEvent(ctx context.Context, req *pb.CreateEventReq) 
 		EventDate: ct.EventDateTime(req.EventDate.AsTime()),
 	})
 	if err != nil {
-		fmt.Println("Error in CreateEvent:", err)
+		tele.Error(ctx, "Error in CreateEvent", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to create event: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) DeleteEvent(ctx context.Context, req *pb.GenericReq) (*emptypb.Empty, error) {
-	fmt.Println("DeleteEvent gRPC method called")
+	tele.Info(ctx, "DeleteEvent gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -430,14 +431,14 @@ func (s *PostsHandler) DeleteEvent(ctx context.Context, req *pb.GenericReq) (*em
 		EntityId:    ct.Id(req.EntityId),
 	})
 	if err != nil {
-		fmt.Println("Error in DeleteEvent:", err)
+		tele.Error(ctx, "Error in DeleteEvent", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to delete event: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) EditEvent(ctx context.Context, req *pb.EditEventReq) (*emptypb.Empty, error) {
-	fmt.Println("EditEvent gRPC method called")
+	tele.Info(ctx, "EditEvent gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -451,14 +452,14 @@ func (s *PostsHandler) EditEvent(ctx context.Context, req *pb.EditEventReq) (*em
 		DeleteImage: req.GetDeleteImage(),
 	})
 	if err != nil {
-		fmt.Println("Error in EditEvent:", err)
+		tele.Error(ctx, "Error in EditEvent", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to edit event: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) GetEventsByGroupId(ctx context.Context, req *pb.EntityIdPaginatedReq) (*pb.ListEvents, error) {
-	fmt.Println("GetEventsByGroupId gRPC method called")
+	tele.Info(ctx, "GetEventsByGroupId gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -469,7 +470,7 @@ func (s *PostsHandler) GetEventsByGroupId(ctx context.Context, req *pb.EntityIdP
 		Offset:      ct.Offset(req.Offset),
 	})
 	if err != nil {
-		fmt.Println("Error in GetEventsByGroupId:", err)
+		tele.Error(ctx, "Error in GetEventsByGroupId", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to get events: %v", err)
 	}
 	pbEvents := make([]*pb.Event, 0, len(events))
@@ -504,7 +505,7 @@ func (s *PostsHandler) GetEventsByGroupId(ctx context.Context, req *pb.EntityIdP
 }
 
 func (s *PostsHandler) RespondToEvent(ctx context.Context, req *pb.RespondToEventReq) (*emptypb.Empty, error) {
-	fmt.Println("RespondToEvent gRPC method called")
+	tele.Info(ctx, "RespondToEvent gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -515,14 +516,14 @@ func (s *PostsHandler) RespondToEvent(ctx context.Context, req *pb.RespondToEven
 		Going:       req.Going,
 	})
 	if err != nil {
-		fmt.Println("Error in RespondToEvent:", err)
+		tele.Error(ctx, "Error in RespondToEvent", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to respond to event: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) RemoveEventResponse(ctx context.Context, req *pb.GenericReq) (*emptypb.Empty, error) {
-	fmt.Println("RemoveEventResponse gRPC method called")
+	tele.Info(ctx, "RemoveEventResponse gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -532,14 +533,14 @@ func (s *PostsHandler) RemoveEventResponse(ctx context.Context, req *pb.GenericR
 		EntityId:    ct.Id(req.EntityId),
 	})
 	if err != nil {
-		fmt.Println("Error in RemoveEventResponse:", err)
+		tele.Error(ctx, "Error in RemoveEventResponse", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to remove event response: %v", err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *PostsHandler) SuggestUsersByPostActivity(ctx context.Context, req *pb.SimpleIdReq) (*cm.ListUsers, error) {
-	fmt.Println("SuggestUsersByPostActivity gRPC method called")
+	tele.Info(ctx, "SuggestUsersByPostActivity gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -547,7 +548,7 @@ func (s *PostsHandler) SuggestUsersByPostActivity(ctx context.Context, req *pb.S
 		Id: ct.Id(req.Id),
 	})
 	if err != nil {
-		fmt.Println("Error in SuggestUsersByPostActivity:", err)
+		tele.Error(ctx, "Error in SuggestUsersByPostActivity", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to suggest users: %v", err)
 	}
 	pbUsers := make([]*cm.User, 0, len(users))
@@ -563,7 +564,7 @@ func (s *PostsHandler) SuggestUsersByPostActivity(ctx context.Context, req *pb.S
 }
 
 func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.GenericReq) (*emptypb.Empty, error) {
-	fmt.Println("ToggleOrInsertReaction gRPC method called")
+	tele.Info(ctx, "ToggleOrInsertReaction gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -572,7 +573,7 @@ func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.Gener
 		EntityId:    ct.Id(req.EntityId),
 	})
 	if err != nil {
-		fmt.Println("Error in ToggleOrInsertReaction:", err)
+		tele.Error(ctx, "Error in ToggleOrInsertReaction", "request", req, "error", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to react to post: %v", err)
 	}
 	return &emptypb.Empty{}, nil

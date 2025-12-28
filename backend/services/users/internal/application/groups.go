@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	ds "social-network/services/users/internal/db/dbservice"
+	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
@@ -21,7 +22,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 	}
 
 	groups := make([]models.Group, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 
 	for _, r := range rows {
 		userInfo, err := s.userInRelationToGroup(ctx, models.GeneralGroupReq{
@@ -44,14 +45,14 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 			IsPending:        userInfo.isPending,
 		})
 		if r.GroupImageID > 0 {
-			imageIds = append(imageIds, r.GroupImageID)
+			imageIds = append(imageIds, ct.Id(r.GroupImageID))
 		}
 
 	}
 
 	//get image urls
 	if len(imageIds) > 0 {
-		imageMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +79,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 	}
 
 	groups := make([]models.Group, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 
 	for _, r := range rows {
 		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
@@ -100,13 +101,13 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 			IsPending:        isPending,
 		})
 		if r.GroupImageID > 0 {
-			imageIds = append(imageIds, r.GroupImageID)
+			imageIds = append(imageIds, ct.Id(r.GroupImageID))
 		}
 	}
 
 	//get image urls
 	if len(imageIds) > 0 {
-		imageMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +147,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	group.IsPending = userInfo.isPending
 
 	if group.GroupImage > 0 {
-		imageUrl, err := s.clients.GetImage(ctx, group.GroupImage.Int64())
+		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant(1))
 		if err != nil {
 			return models.Group{}, err
 		}
@@ -184,7 +185,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 		return nil, err
 	}
 	members := make([]models.GroupUser, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 
 	for _, r := range rows {
 		var role string
@@ -199,13 +200,13 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 			GroupRole: role,
 		})
 		if r.AvatarID > 0 {
-			imageIds = append(imageIds, r.AvatarID)
+			imageIds = append(imageIds, ct.Id(r.AvatarID))
 		}
 	}
 
 	//get avatar urls
 	if len(imageIds) > 0 {
-		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return []models.GroupUser{}, err
 		}
@@ -233,7 +234,7 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 		return []models.Group{}, err
 	}
 	groups := make([]models.Group, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 
 	for _, r := range rows {
 		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
@@ -255,13 +256,13 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 			IsPending:        isPending,
 		})
 		if r.GroupImageID > 0 {
-			imageIds = append(imageIds, r.GroupImageID)
+			imageIds = append(imageIds, ct.Id(r.GroupImageID))
 		}
 	}
 
 	//get image urls
 	if len(imageIds) > 0 {
-		imageMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return nil, err
 		}

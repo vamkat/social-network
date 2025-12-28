@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	ds "social-network/services/users/internal/db/dbservice"
+	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
@@ -22,7 +23,7 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 		return []models.User{}, err
 	}
 	users := make([]models.User, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
@@ -30,12 +31,12 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 			AvatarId: ct.Id(r.AvatarID),
 		})
 		if r.AvatarID > 0 {
-			imageIds = append(imageIds, r.AvatarID)
+			imageIds = append(imageIds, ct.Id(r.AvatarID))
 		}
 	}
 	//get avatar urls
 	if len(imageIds) > 0 {
-		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return []models.User{}, err
 		}
@@ -65,7 +66,7 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 		return []models.User{}, err
 	}
 	users := make([]models.User, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
@@ -73,13 +74,13 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 			AvatarId: ct.Id(r.AvatarID),
 		})
 		if r.AvatarID > 0 {
-			imageIds = append(imageIds, r.AvatarID)
+			imageIds = append(imageIds, ct.Id(r.AvatarID))
 		}
 	}
 
 	//get avatar urls
 	if len(imageIds) > 0 {
-		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return []models.User{}, err
 		}
@@ -207,7 +208,7 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 		return nil, err
 	}
 	users := make([]models.User, 0, len(rows))
-	imageIds := make([]int64, 0, len(rows))
+	var imageIds ct.Ids
 	for _, r := range rows {
 		users = append(users, models.User{
 			UserId:   ct.Id(r.ID),
@@ -215,13 +216,13 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 			AvatarId: ct.Id(r.AvatarID),
 		})
 		if r.AvatarID > 0 {
-			imageIds = append(imageIds, r.AvatarID)
+			imageIds = append(imageIds, ct.Id(r.AvatarID))
 		}
 	}
 
 	//get avatar urls
 	if len(imageIds) > 0 {
-		avatarMap, _, err := s.clients.GetImages(ctx, imageIds) //TODO delete failed
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
 			return []models.User{}, err
 		}

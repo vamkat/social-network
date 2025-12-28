@@ -2,11 +2,11 @@ package application
 
 import (
 	"context"
-	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -146,7 +146,7 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 				return err
 			}
 			if rowsAffected != 1 {
-				fmt.Println("image not found")
+				tele.Warn(ctx, "EditEvent: image to be deleted not found", "request", req)
 			}
 		}
 		return nil
@@ -221,7 +221,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 
 	var imageMap map[int64]string
 	if len(EventImageIds) > 0 {
-		imageMap, _, err = s.clients.GetImages(ctx, EventImageIds, media.FileVariant_MEDIUM)
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, EventImageIds, media.FileVariant_MEDIUM)
 	}
 
 	for i := range events {

@@ -1,4 +1,4 @@
-package retrieveusers
+package retrievemedia
 
 import (
 	"context"

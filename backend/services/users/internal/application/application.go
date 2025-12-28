@@ -4,6 +4,7 @@ import (
 	"context"
 	"social-network/services/users/internal/client"
 	ds "social-network/services/users/internal/db/dbservice"
+	"social-network/shared/go/retrievemedia"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,17 +16,20 @@ type TxRunner interface {
 }
 
 type Application struct {
-	db       ds.Querier
-	txRunner TxRunner
-	clients  ClientsInterface
+	db             ds.Querier
+	txRunner       TxRunner
+	clients        ClientsInterface
+	mediaRetriever *retrievemedia.MediaRetriever
 }
 
 // NewApplication constructs a new UserService
 func NewApplication(db ds.Querier, txRunner TxRunner, pool *pgxpool.Pool, clients *client.Clients) *Application {
+	mediaRetriever := retrievemedia.NewMediaRetriever(clients.MediaClient, clients.RedisClient, 3*time.Minute)
 	return &Application{
-		db:       db,
-		txRunner: txRunner,
-		clients:  clients,
+		db:             db,
+		txRunner:       txRunner,
+		clients:        clients,
+		mediaRetriever: mediaRetriever,
 	}
 }
 

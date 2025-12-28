@@ -11,6 +11,7 @@ import (
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
 	rds "social-network/shared/go/redis"
+	"social-network/shared/go/retrievemedia"
 	ur "social-network/shared/go/retrieveusers"
 	"time"
 
@@ -23,10 +24,11 @@ type TxRunner interface {
 }
 
 type Application struct {
-	db            *ds.Queries
-	txRunner      TxRunner
-	clients       ClientsInterface
-	userRetriever UserRetriever
+	db             *ds.Queries
+	txRunner       TxRunner
+	clients        ClientsInterface
+	userRetriever  UserRetriever
+	mediaRetriever *retrievemedia.MediaRetriever
 }
 
 // UsersBatchClient abstracts the single RPC used by the hydrator to fetch basic user info.
@@ -67,11 +69,14 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients,
 		}
 	}
 
+	cachedMedia := retrievemedia.NewMediaRetriever(clients.MediaClient, redisConnector, 3*time.Minute)
+
 	return &Application{
-		db:            db,
-		txRunner:      txRunner,
-		clients:       clients,
-		userRetriever: ur.NewUserRetriever(clients, redisConnector, 3*time.Minute),
+		db:             db,
+		txRunner:       txRunner,
+		clients:        clients,
+		mediaRetriever: cachedMedia,
+		userRetriever:  ur.NewUserRetriever(clients, redisConnector, cachedMedia, 3*time.Minute),
 	}, nil
 }
 
