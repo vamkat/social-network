@@ -16,7 +16,6 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		return false, err
 	}
 
-
 	isFollowing, err := s.clients.IsFollowing(ctx, req.requesterId, row.CreatorID)
 	if err != nil {
 		return false, err
@@ -30,9 +29,14 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		}
 	}
 
+	entityID := req.entityId //this is the event or post id - in case of a comment we take the parent post id
+	if row.ParentID > 0 {
+		entityID = row.ParentID
+	}
+
 	canSee, err := s.db.CanUserSeeEntity(ctx, ds.CanUserSeeEntityParams{
 		UserID:      req.requesterId,
-		EntityID:    req.entityId,
+		EntityID:    entityID,
 		IsFollowing: isFollowing,
 		IsMember:    isMember,
 	})

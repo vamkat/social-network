@@ -100,7 +100,12 @@ COALESCE(
         WHEN mi.content_type = 'comment' THEN p2.group_id
     END,
     0
-)::BIGINT AS group_id
+)::BIGINT AS group_id,
+
+    CASE
+        WHEN mi.content_type = 'comment' THEN c.parent_id
+        ELSE 0
+    END::BIGINT AS parent_id
 
 FROM master_index mi
 LEFT JOIN posts p ON p.id = mi.id
@@ -115,11 +120,12 @@ type GetEntityCreatorAndGroupRow struct {
 	ContentType ContentType
 	CreatorID   int64
 	GroupID     int64
+	ParentID    int64
 }
 
 func (q *Queries) GetEntityCreatorAndGroup(ctx context.Context, id int64) (GetEntityCreatorAndGroupRow, error) {
 	row := q.db.QueryRow(ctx, getEntityCreatorAndGroup, id)
 	var i GetEntityCreatorAndGroupRow
-	err := row.Scan(&i.ContentType, &i.CreatorID, &i.GroupID)
+	err := row.Scan(&i.ContentType, &i.CreatorID, &i.GroupID, &i.ParentID)
 	return i, err
 }

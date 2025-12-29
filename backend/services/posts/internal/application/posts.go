@@ -88,6 +88,19 @@ func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) err
 		return err
 	}
 
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
+	}
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
+	}
+
 	rowsAffected, err := s.db.DeletePost(ctx, ds.DeletePostParams{
 		ID:        int64(req.EntityId),
 		CreatorID: req.RequesterId.Int64(),
