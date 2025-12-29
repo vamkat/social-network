@@ -137,7 +137,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 	}
 
 	var imageMap map[int64]string
-	tele.Info(ctx, "GetPublicFeed needs these images", "image ids", postImageIds)
+	tele.Info(ctx, "GetPublicFeed needs these images. @1", "ids", postImageIds)
 	if len(postImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}

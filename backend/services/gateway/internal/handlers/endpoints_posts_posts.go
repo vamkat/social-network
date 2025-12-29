@@ -42,7 +42,7 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, "retrieved post by id: ", "grpcResp", grpcResp)
+		tele.Info(ctx, "retrieved post by id. @1", "grpcResp", grpcResp)
 
 		post := models.Post{
 			PostId: ct.Id(grpcResp.PostId),

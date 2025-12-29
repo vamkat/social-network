@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -14,7 +13,7 @@ var processingVariants atomic.Bool
 
 // StartVariantWorker starts a background worker that periodically processes pending file variants
 func (m *MediaService) StartVariantWorker(ctx context.Context, interval time.Duration) {
-	tele.Info(ctx, fmt.Sprintf("Initiating variant worker. Interval %s\n", interval.String()))
+	tele.Info(ctx, "Initiating variant worker. @1", "interval", interval.String())
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -59,7 +58,7 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 				tele.Warn(ctx, "Failed to update status to failed. @1", "error", updateErr)
 			}
 		} else {
-			tele.Info(ctx, fmt.Sprintf("Successfully generated variant for file id: %d variant: %s", v.Id, v.Variant))
+			tele.Info(ctx, "Successfully generated variant for @1  @2", "fileId", v.Id, "variant", v.Variant)
 			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
 				ct.Complete, size); updateErr != nil {
 				tele.Warn(ctx, "Failed to update status to complete. @1", "error", updateErr)

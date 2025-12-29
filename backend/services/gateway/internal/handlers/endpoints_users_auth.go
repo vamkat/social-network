@@ -329,7 +329,7 @@ func (s *Handlers) updateUserPassword() http.HandlerFunc {
 		}
 		_ = body
 
-		tele.Info(ctx, fmt.Sprint("old password:", body.OldPassword, " new password:", body.NewPassword))
+		tele.Info(ctx, "updating passwords. @1 @2", "old", body.OldPassword, "new", body.NewPassword)
 
 		oldPassword, err := ct.Password(body.OldPassword).Hash()
 		if err != nil {
@@ -345,7 +345,7 @@ func (s *Handlers) updateUserPassword() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, fmt.Sprint("hashed old password:", oldPassword.String(), " hashed new password:", newPassword.String()))
+		tele.Info(ctx, "hashed passwords. @1 @2", "old", oldPassword.String(), "new", newPassword.String())
 
 		req := &users.UpdatePasswordRequest{
 			UserId:      claims.UserId,

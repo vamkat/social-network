@@ -122,7 +122,7 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, "retrieved comments: ", "grpcResp", grpcResp)
+		tele.Debug(ctx, "retrieved comments. @1", "grpcResp", grpcResp)
 
 		commentsResponse := []models.Comment{}
 		for _, c := range grpcResp.Comments {

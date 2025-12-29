@@ -49,7 +49,7 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, "retrieved user profile: ", "grpcResp", grpcResp)
+		tele.Info(ctx, "retrieved user profile. @1", "grpcResp", grpcResp)
 
 		type userProfile struct {
 			UserId            ct.Id          `json:"user_id"`
@@ -93,7 +93,7 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 			IsPending:         grpcResp.IsPending,
 		}
 
-		tele.Info(ctx, "transformed profile struct: ", "response", userProfileResponse)
+		tele.Info(ctx, "transformed profile struct. @1", "response", userProfileResponse)
 
 		err = utils.WriteJSON(ctx, w, http.StatusOK, userProfileResponse)
 		if err != nil {

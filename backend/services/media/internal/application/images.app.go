@@ -266,7 +266,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 			return url, err
 		}
 
-		tele.Info(ctx, fmt.Sprintf("Media Service: FileId %v successfully validated and marked as Complete", fileId), "fileId", fileId)
+		tele.Info(ctx, "Media Service: @1 successfully validated and marked as Complete", "FileId", fileId)
 	}
 
 	if returnURL {
@@ -276,7 +276,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 			fileMeta.Visibility.SetExp(),
 		)
 		if err != nil {
-			tele.Info(ctx, fmt.Sprintf("failed to fetch url for file %v\n", fileId))
+			tele.Info(ctx, "failed to fetch url for @1", "FileId", fileId)
 			return "", nil
 		}
 		url = u.String()

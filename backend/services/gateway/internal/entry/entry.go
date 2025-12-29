@@ -119,7 +119,7 @@ func Run() {
 
 	srvErr := make(chan error, 1)
 	go func() {
-		tele.Info(ctx, "Starting server", "address", server.Addr)
+		tele.Info(ctx, "Starting server at @1", "address", server.Addr)
 		srvErr <- server.ListenAndServe()
 	}()
 

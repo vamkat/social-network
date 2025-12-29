@@ -103,14 +103,14 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 		ctx := r.Context()
 
 		tele.Debug(ctx, "in auth")
-		// tele.Info(ctx, "Cookies received:", r.Cookies())
+		tele.Debug(ctx, "Cookies received. @1", "cookies", r.Cookies())
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
 			tele.Warn(ctx, "no cookie found")
 			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, "missing auth cookie")
 			return false, nil
 		}
-		// tele.Info(ctx, "JWT cookie value:", cookie.Value)
+		tele.Debug(ctx, "JWT cookie. @1", "value", cookie.Value)
 		claims, err := security.ParseAndValidate(cookie.Value)
 		if err != nil {
 			tele.Warn(ctx, "unauthorized request at @1", "endpoint", r.URL)

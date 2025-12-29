@@ -39,7 +39,7 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, "retrieved public feed: ", "grpcResp", grpcResp)
+		tele.Info(ctx, "retrieved public feed. @1", "grpcResp", grpcResp)
 
 		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
@@ -103,7 +103,7 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, "retrieved personalized feed: ", "grpcResp", grpcResp)
+		tele.Info(ctx, "retrieved personalized feed. @1", "grpcResp", grpcResp)
 
 		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {
@@ -168,7 +168,7 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, "retrieved personalized feed: ", "grpcResp", grpcResp)
+		tele.Info(ctx, "retrieved personalized feed. @1", "grpcResp", grpcResp)
 
 		postsResponse := []models.Post{}
 		for _, p := range grpcResp.Posts {

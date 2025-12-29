@@ -38,7 +38,7 @@ func (h *Handlers) validateFileUpload() http.HandlerFunc {
 			return
 		}
 
-		tele.Info(ctx, fmt.Sprintf("Gateway: Successfully validated file upload for FileId: %v", httpReq.FileId), "FileId", httpReq.FileId)
+		tele.Info(ctx, "Gateway: Successfully validated file upload for @1", "fileId", httpReq.FileId)
 
 		type httpResp struct {
 			DownloadUrl string `json:"download_url"`
