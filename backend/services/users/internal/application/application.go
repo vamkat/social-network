@@ -41,6 +41,7 @@ type ClientsInterface interface {
 	GetObj(ctx context.Context, key string, dest any) error
 	SetObj(ctx context.Context, key string, value any, exp time.Duration) error
 	CreateNotification(ctx context.Context, req models.CreateNotificationRequest) error
+	CreateFollowRequestNotification(ctx context.Context, targetUserID, requesterUserID int64, requesterUsername string) error
 	// CreateGroupConversation(ctx context.Context, groupId int64, ownerId int64) error
 	// CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error
 	// AddMembersToGroupConversation(ctx context.Context, groupId int64, userIds []int64) error

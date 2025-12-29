@@ -82,6 +82,17 @@ func (c *Clients) CreateNotification(ctx context.Context, req models.CreateNotif
 	return err
 }
 
+// CreateFollowRequestNotification creates a follow request notification using the specific endpoint
+func (c *Clients) CreateFollowRequestNotification(ctx context.Context, targetUserID, requesterUserID int64, requesterUsername string) error {
+	req := &notifications.CreateFollowRequestRequest{
+		TargetUserId:      targetUserID,
+		RequesterUserId:   requesterUserID,
+		RequesterUsername: requesterUsername,
+	}
+	_, err := c.NotifsClient.CreateFollowRequest(ctx, req)
+	return err
+}
+
 // // on successful follow (public profile or accept follow request)
 // func (c *Clients) CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error {
 // 	_, err := c.ChatClient.CreatePrivateConversation(ctx, &chatpb.CreatePrivateConvParams{
