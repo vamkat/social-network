@@ -3,6 +3,8 @@
 - Comments in Post Card (create comment with/without image - get comments - update comment - delete comment)
 - Single post component
 
+- Create users and test privacy and audiences (from posts)
+
 POSTS MUST BE DONE BY NEW YEAR!
 
 ======== LATER TODOs ========

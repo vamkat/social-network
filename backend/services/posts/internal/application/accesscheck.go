@@ -16,6 +16,7 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		return false, err
 	}
 
+
 	isFollowing, err := s.clients.IsFollowing(ctx, req.requesterId, row.CreatorID)
 	if err != nil {
 		return false, err

@@ -9,6 +9,8 @@ import Modal from "./Modal";
 import { useStore } from "@/store/store";
 import { editPost } from "@/actions/posts/edit-post";
 import { deletePost } from "@/actions/posts/delete-post";
+import { editComment } from "@/actions/posts/edit-comment";
+import { deleteComment } from "@/actions/posts/delete-comment";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { getFollowers } from "@/actions/users/get-followers";
 import { getRelativeTime } from "@/lib/time";
@@ -49,10 +51,17 @@ export default function PostCard({ post }) {
     const [commentsCount, setCommentsCount] = useState(post.comments_count);
     const [commentImageFile, setCommentImageFile] = useState(null);
     const [commentImagePreview, setCommentImagePreview] = useState(null);
+    const [editingCommentImageFile, setEditingCommentImageFile] = useState(null);
+    const [editingCommentImagePreview, setEditingCommentImagePreview] = useState(null);
+    const [removeCommentExistingImage, setRemoveCommentExistingImage] = useState(false);
+    const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState(null);
+    const [isDeletingComment, setIsDeletingComment] = useState(false);
     const composerRef = useRef(null);
     const cardRef = useRef(null);
     const fileInputRef = useRef(null);
     const commentFileInputRef = useRef(null);
+    const editingCommentFileInputRef = useRef(null);
     const dropdownRef = useRef(null);
     const router = useRouter();
 
@@ -430,6 +439,7 @@ export default function PostCard({ post }) {
             // Increment comment count
             setCommentsCount((prev) => prev + 1);
             // Refresh to show the new comment
+            setError("");
             setComments([]);
             fetchLastComment();
         } catch (err) {
@@ -472,71 +482,164 @@ export default function PostCard({ post }) {
         }
     };
 
-    // const handleStartEdit = (comment) => {
-    //     setEditingCommentId(comment.CommentId);
-    //     setEditingText(comment.Body);
-    // };
+    const handleStartEditComment = (comment) => {
+        setEditingCommentId(comment.comment_id);
+        setEditingText(comment.comment_body);
+        setEditingCommentImageFile(null);
+        setEditingCommentImagePreview(null);
+        setRemoveCommentExistingImage(false);
+        setError("");
+    };
 
-    // const handleCancelEdit = () => {
-    //     setEditingCommentId(null);
-    //     setEditingText("");
-    // };
+    const handleCancelEditComment = () => {
+        setEditingCommentId(null);
+        setEditingText("");
+        setEditingCommentImageFile(null);
+        setEditingCommentImagePreview(null);
+        setRemoveCommentExistingImage(false);
+        setError("");
+        if (editingCommentFileInputRef.current) {
+            editingCommentFileInputRef.current.value = "";
+        }
+    };
 
-    // const handleSaveEdit = (commentId) => {
-    //     if (!editingText.trim()) {
-    //         handleCancelEdit();
-    //         return;
-    //     }
-    //     setComments((prev) =>
-    //         prev.map((c) =>
-    //             c.CommentId === commentId ? { ...c, Body: editingText } : c
-    //         )
-    //     );
-    //     handleCancelEdit();
-    // };
+    const handleEditingCommentImageSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-    // const handleLoadMore = async (e) => {
-    //     e.preventDefault();
-    //     e.stopPropagation();
-    //     if (loadingMore) return;
-    //     setLoadingMore(true);
+        setEditingCommentImageFile(file);
+        setError("");
 
-    //     try {
-    //         const currentCount = comments.length;
-    //         const limit = 2;
-    //         const newComments = await fetchComments(post.ID, currentCount, limit);
-    //         const existingIds = new Set(comments.map((c) => c.CommentId));
-    //         const uniqueNew = newComments.filter((c) => !existingIds.has(c.CommentId));
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setEditingCommentImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+    };
 
-    //         if (uniqueNew.length < limit) {
-    //             setHasMore(false);
-    //         }
+    const handleRemoveEditingCommentImage = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingCommentImageFile(null);
+        setEditingCommentImagePreview(null);
+        if (editingCommentFileInputRef.current) {
+            editingCommentFileInputRef.current.value = "";
+        }
+    };
 
-    //         if (uniqueNew.length > 0) {
-    //             setComments((prev) => [...uniqueNew.reverse(), ...prev]);
-    //         } else {
-    //             setHasMore(false);
-    //         }
-    //     } catch (error) {
-    //         console.error("Failed to load more comments", error);
-    //     } finally {
-    //         setLoadingMore(false);
-    //     }
-    // };
+    const handleRemoveCommentExistingImage = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setRemoveCommentExistingImage(true);
+    };
 
-    // const handleHeartClick = (e) => {
-    //     e.preventDefault();
-    //     e.stopPropagation();
-    //     console.log("Heart clicked");
-    //     // TODO: wire up heart reaction
-    // };
+    const handleSaveEditComment = async (comment) => {
+        if (!editingText.trim()) {
+            handleCancelEditComment();
+            return;
+        }
 
-    // const handleOpenPost = (e) => {
-    //     const interactive = e.target.closest("button, a, textarea, input, select, option");
-    //     if (interactive) return;
-    //     e.preventDefault();
-    //     router.push(`/posts/${post.ID}`);
-    // };
+        try {
+            setError("");
+
+            const editData = {
+                comment_id: comment.comment_id,
+                comment_body: editingText.trim()
+            };
+
+            // Handle new image upload
+            if (editingCommentImageFile) {
+                editData.image_name = editingCommentImageFile.name;
+                editData.image_size = editingCommentImageFile.size;
+                editData.image_type = editingCommentImageFile.type;
+            }
+            // Handle explicit image removal
+            else if (removeCommentExistingImage) {
+                editData.delete_image = true;
+            }
+
+            const resp = await editComment(editData);
+
+            if (!resp.success) {
+                setError(resp.error || "Failed to edit comment");
+                return;
+            }
+
+            // If there's a new image, upload it
+            if (editingCommentImageFile && resp.FileId && resp.UploadUrl) {
+                const uploadRes = await fetch(resp.UploadUrl, {
+                    method: "PUT",
+                    body: editingCommentImageFile,
+                });
+
+                if (!uploadRes.ok) {
+                    setError("Failed to upload comment image");
+                    return;
+                }
+
+                const validateResp = await validateUpload(resp.FileId);
+                if (!validateResp.success) {
+                    setError("Failed to validate comment image upload");
+                    return;
+                }
+            }
+
+            // Update the comment in local state
+            setComments((prev) =>
+                prev.map((c) =>
+                    c.comment_id === comment.comment_id
+                        ? { ...c, comment_body: editingText.trim() }
+                        : c
+                )
+            );
+            handleCancelEditComment();
+
+            // Refresh to show updated image if changed
+            if (editingCommentImageFile || removeCommentExistingImage) {
+                setComments([]);
+                fetchLastComment();
+            }
+        } catch (err) {
+            console.error("Failed to edit comment:", err);
+            setError("Failed to edit comment. Please try again.");
+        }
+    };
+
+    const handleDeleteCommentClick = (comment, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setCommentToDelete(comment);
+        setShowDeleteCommentModal(true);
+    };
+
+    const handleDeleteCommentConfirm = async () => {
+        if (!commentToDelete) return;
+
+        setIsDeletingComment(true);
+        setError("");
+
+        try {
+            const resp = await deleteComment(commentToDelete.comment_id);
+
+            if (!resp.success) {
+                setError(resp.error || "Failed to delete comment");
+                setIsDeletingComment(false);
+                setShowDeleteCommentModal(false);
+                return;
+            }
+
+            // Remove comment from local state
+            setComments((prev) => prev.filter((c) => c.comment_id !== commentToDelete.comment_id));
+            setCommentsCount((prev) => prev - 1);
+            setShowDeleteCommentModal(false);
+            setCommentToDelete(null);
+        } catch (err) {
+            console.error("Failed to delete comment:", err);
+            setError("Failed to delete comment. Please try again.");
+        } finally {
+            setIsDeletingComment(false);
+        }
+    };
 
     return (
         <div
@@ -825,6 +928,7 @@ export default function PostCard({ post }) {
                             <div className="flex flex-col gap-4">
                                 {comments.map((comment) => {
                                     const isOwner = user && String(comment.user?.id) === String(user.id);
+                                    const isEditing = editingCommentId === comment.comment_id;
                                     return (
                                         <div key={comment.comment_id} className="flex gap-3 group/comment-item">
                                             <Link href={`/profile/${comment.user.id}`} prefetch={false} className="shrink-0">
@@ -837,27 +941,131 @@ export default function PostCard({ post }) {
                                                 </div>
                                             </Link>
                                             <div className="flex-1 min-w-0">
-                                                <div className="bg-white dark:bg-black/20 rounded-2xl rounded-tl-none px-4 py-2 border border-(--border)">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <Link href={`/profile/${comment.user.id}`} prefetch={false}>
-                                                            <span className="text-xs font-bold hover:underline">@{comment.user.username}</span>
-                                                        </Link>
-                                                        <span className="text-[10px] text-(--muted)">{getRelativeTime(comment.created_at)}</span>
-                                                    </div>
-                                                    <p className="text-sm text-(--foreground)/90 leading-relaxed whitespace-pre-wrap">
-                                                        {comment.comment_body}
-                                                    </p>
-                                                    {/* Comment Image */}
-                                                    {comment.image_url && (
-                                                        <div className="mt-2">
-                                                            <img
-                                                                src={comment.image_url}
-                                                                alt="Comment attachment"
-                                                                className="max-w-full max-h-48 rounded-lg border border-(--border) object-cover"
+                                                {isEditing ? (
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
+                                                            rows={3}
+                                                            value={editingText}
+                                                            onChange={(e) => setEditingText(e.target.value)}
+                                                        />
+
+                                                        {/* Image Preview for Edit - New Image */}
+                                                        {editingCommentImagePreview && (
+                                                            <div className="relative inline-block">
+                                                                <img
+                                                                    src={editingCommentImagePreview}
+                                                                    alt="Upload preview"
+                                                                    className="max-w-full max-h-48 rounded-xl border border-(--border)"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleRemoveEditingCommentImage}
+                                                                    className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Existing Image in Edit Mode */}
+                                                        {!editingCommentImagePreview && comment?.image_url && !removeCommentExistingImage && (
+                                                            <div className="relative inline-block">
+                                                                <img
+                                                                    src={comment.image_url}
+                                                                    alt="Comment image"
+                                                                    className="max-w-full max-h-48 rounded-xl border border-(--border)"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleRemoveCommentExistingImage}
+                                                                    className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <input
+                                                                ref={editingCommentFileInputRef}
+                                                                type="file"
+                                                                accept="image/jpeg,image/png,image/gif"
+                                                                onChange={handleEditingCommentImageSelect}
+                                                                className="hidden"
                                                             />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => editingCommentFileInputRef.current?.click()}
+                                                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                                            >
+                                                                {editingCommentImagePreview || comment.image_url ? "Change Image" : "Add Image"}
+                                                            </button>
+
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                                                    onClick={handleCancelEditComment}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50"
+                                                                    disabled={!editingText.trim()}
+                                                                    onClick={() => handleSaveEditComment(comment)}
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-white dark:bg-black/20 rounded-2xl rounded-tl-none px-4 py-2 border border-(--border) relative">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <Link href={`/profile/${comment.user.id}`} prefetch={false}>
+                                                                <span className="text-xs font-bold hover:underline">@{comment.user.username}</span>
+                                                            </Link>
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="text-[10px] text-(--muted)">{getRelativeTime(comment.created_at)}</span>
+                                                                {isOwner && (
+                                                                    <div className="flex items-center gap-0.5 opacity-0 group-hover/comment-item:opacity-100 transition-opacity ml-2">
+                                                                        <Tooltip content="Edit Comment">
+                                                                            <button
+                                                                                onClick={() => handleStartEditComment(comment)}
+                                                                                className="p-1 text-(--muted) hover:text-(--accent) hover:bg-(--accent)/5 rounded-full transition-colors"
+                                                                            >
+                                                                                <Pencil className="w-3 h-3" />
+                                                                            </button>
+                                                                        </Tooltip>
+                                                                        <Tooltip content="Delete Comment">
+                                                                            <button
+                                                                                onClick={(e) => handleDeleteCommentClick(comment, e)}
+                                                                                className="p-1 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors"
+                                                                            >
+                                                                                <Trash2 className="w-3 h-3" />
+                                                                            </button>
+                                                                        </Tooltip>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-sm text-(--foreground)/90 leading-relaxed whitespace-pre-wrap">
+                                                            {comment.comment_body}
+                                                        </p>
+                                                        {/* Comment Image */}
+                                                        {comment.image_url && (
+                                                            <div className="mt-2">
+                                                                <img
+                                                                    src={comment.image_url}
+                                                                    alt="Comment attachment"
+                                                                    className="max-w-full max-h-48 rounded-lg border border-(--border) object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -948,7 +1156,7 @@ export default function PostCard({ post }) {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
+            {/* Delete Post Confirmation Modal */}
             <Modal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
@@ -958,6 +1166,22 @@ export default function PostCard({ post }) {
                 confirmText="Delete"
                 cancelText="Cancel"
                 isLoading={isDeleting}
+                loadingText="Deleting..."
+            />
+
+            {/* Delete Comment Confirmation Modal */}
+            <Modal
+                isOpen={showDeleteCommentModal}
+                onClose={() => {
+                    setShowDeleteCommentModal(false);
+                    setCommentToDelete(null);
+                }}
+                title="Delete Comment"
+                description="Are you sure you want to delete this comment? This action cannot be undone."
+                onConfirm={handleDeleteCommentConfirm}
+                confirmText="Delete"
+                cancelText="Cancel"
+                isLoading={isDeletingComment}
                 loadingText="Deleting..."
             />
         </div>

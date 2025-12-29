@@ -58,18 +58,18 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 		return err
 	}
 
-	accessCtx := accessContext{
-		requesterId: req.CreatorId.Int64(),
-		entityId:    req.CommentId.Int64(),
-	}
+	// accessCtx := accessContext{
+	// 	requesterId: req.CreatorId.Int64(),
+	// 	entityId:    req.CommentId.Int64(),
+	// }
 
-	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if err != nil {
-		return err
-	}
-	if !hasAccess {
-		return ErrNotAllowed
-	}
+	// hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	// if err != nil {
+	// 	return err
+	// }
+	// if !hasAccess {
+	// 	return ErrNotAllowed
+	// }
 
 	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		rowsAffected, err := q.EditComment(ctx, ds.EditCommentParams{
@@ -112,18 +112,18 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 		return err
 	}
 
-	accessCtx := accessContext{
-		requesterId: req.RequesterId.Int64(),
-		entityId:    req.EntityId.Int64(),
-	}
+	// accessCtx := accessContext{
+	// 	requesterId: req.RequesterId.Int64(),
+	// 	entityId:    req.EntityId.Int64(),
+	// }
 
-	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if err != nil {
-		return err
-	}
-	if !hasAccess {
-		return ErrNotAllowed
-	}
+	// hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	// if err != nil {
+	// 	return err
+	// }
+	// if !hasAccess {
+	// 	return ErrNotAllowed
+	// }
 
 	rowsAffected, err := s.db.DeleteComment(ctx, ds.DeleteCommentParams{
 		ID:               req.EntityId.Int64(),

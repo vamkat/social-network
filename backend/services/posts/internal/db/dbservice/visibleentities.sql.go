@@ -80,7 +80,7 @@ const getEntityCreatorAndGroup = `-- name: GetEntityCreatorAndGroup :one
 SELECT
     mi.content_type,
 
-    -- creator_id: post.creator_id, event.event_creator_id, or parent post creator for comments
+     -- Who created THIS content (comment author, post author, event creator)
     (
         CASE
             WHEN mi.content_type = 'post'
@@ -88,7 +88,7 @@ SELECT
             WHEN mi.content_type = 'event'
                 THEN e.event_creator_id
             WHEN mi.content_type = 'comment'
-                THEN p2.creator_id  -- comment's parent post
+                THEN c.comment_creator_id
         END
     )::BIGINT AS creator_id,
 
