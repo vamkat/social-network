@@ -12,6 +12,7 @@ import (
 	pb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,7 +23,7 @@ import (
 
 // AUTH
 func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
-	fmt.Println("RegisterUser gRPC method called with request_id:", ctx.Value(ct.ReqID))
+	tele.Info(ctx, "RegisterUser gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -39,7 +40,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		Public:      req.GetPublic(),
 	})
 	if err != nil {
-		fmt.Println("Error in RegisterUser:", err)
+		tele.Warn(ctx, "Error in RegisterUser. @1", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
 	}
 
@@ -49,7 +50,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 }
 
 func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm.User, error) {
-	fmt.Println("LoginUser gRPC method called with request_id:", ctx.Value(ct.ReqID))
+	tele.Info(ctx, "LoginUser gRPC method called with.")
 
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "LoginUser: request is nil")
@@ -70,7 +71,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 		Password:   ct.HashedPassword(Password),
 	})
 	if err != nil {
-		fmt.Println("Error in LoginUser:", err)
+		tele.Warn(ctx, "Error in LoginUser. @1", "error", err)
 		return nil, status.Errorf(codes.Internal, "LoginUser: failed to login user: %v", err)
 	}
 
@@ -83,6 +84,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 }
 
 func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePasswordRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "UpdateUserPassword gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UpdateUserPassword: request is nil")
 	}
@@ -128,7 +130,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 		Email:  ct.Email(newEmail),
 	})
 	if err != nil {
-		fmt.Println("Error in UpdateUserEmail:", err)
+		tele.Warn(ctx, "Error in UpdateUserEmail. @1", "error", err)
 		return nil, status.Errorf(codes.Internal, "UpdateUserEmail: %v", err)
 	}
 	return &emptypb.Empty{}, nil
@@ -780,7 +782,7 @@ func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserId
 }
 
 func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.UserProfileResponse, error) {
-	fmt.Println("GetUserProfile gRPC method called")
+	tele.Info(ctx, "GetUserProfile gRPC method called")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -801,11 +803,11 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 
 	profile, err := s.Application.GetUserProfile(ctx, userProfileRequest)
 	if err != nil {
-		fmt.Println("Error in GetUserProfile:", err)
+		tele.Warn(ctx, "Error in GetUserProfile. @1", "error", err)
 		return nil, status.Errorf(codes.Internal, "GetUserProfile: %v", err)
 	}
 
-	fmt.Println("get user profile", profile)
+	tele.Debug(ctx, "get user profile @1", "profile", profile)
 
 	return &pb.UserProfileResponse{
 		UserId:            profile.UserId.Int64(),

@@ -80,7 +80,7 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 
 		// method not allowed
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		tele.Debug(ctx, "method not allowed. received @1, @2", "method", r.Method, "required", methods)
+		tele.Warn(ctx, "method not allowed. received @1, @2", "method", r.Method, "required", methods)
 		return false, nil
 	})
 	return m
@@ -102,11 +102,10 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		ctx := r.Context()
 
-		tele.Debug(ctx, "in auth")
-		tele.Debug(ctx, "Cookies received. @1", "cookies", r.Cookies())
+		tele.Debug(ctx, "authenticating @1 with @2", "endpoint", r.URL, "cookies", r.Cookies())
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
-			tele.Warn(ctx, "no cookie found")
+			tele.Warn(ctx, "no cookie found @1", "endpoint", r.URL)
 			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, "missing auth cookie")
 			return false, nil
 		}
@@ -118,10 +117,10 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 			return false, nil
 		}
 		// enrich request with claims
-		tele.Debug(ctx, "auth ok")
+		tele.Debug(ctx, "authorization successfull @1", "endpoint", r.URL)
 		r = utils.RequestWithValue(r, ct.ClaimsKey, claims)
 		r = utils.RequestWithValue(r, ct.UserId, claims.UserId)
-		tele.Debug(ctx, fmt.Sprint("adding these to context -> claims:", claims, ", userid: ", claims.UserId))
+		tele.Debug(ctx, "adding these to context @1 at @2", "claims", claims, "endpoint", r.URL)
 		return true, r
 	})
 	return m
@@ -147,13 +146,13 @@ const (
 func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, durationSeconds int64) *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		ctx := r.Context()
-		tele.Debug(ctx, "in ratelimit, type: "+fmt.Sprint(rateLimitType))
+		tele.Debug(ctx, "in ratelimit of @1 for @2", "type", rateLimitType, "endpoint", r.URL)
 		rateLimitKey := ""
 		switch rateLimitType {
 		case IPLimit:
 			remoteIp, err := getRemoteIpKey(r)
 			if err != nil {
-				tele.Debug(ctx, "rate limited remoteIp:"+remoteIp)
+				tele.Warn(ctx, "malformed @1 found", "ip", remoteIp)
 				utils.ErrorJSON(ctx, w, http.StatusNotAcceptable, "your IP is absolutely WACK")
 				return false, nil
 			}
@@ -165,20 +164,20 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 				utils.ErrorJSON(ctx, w, http.StatusNotAcceptable, "how the hell did you end up here without a user id?")
 				return false, nil
 			}
-			tele.Debug(ctx, "rate limited userId:"+fmt.Sprint(userId))
 			rateLimitKey = fmt.Sprintf("%s:%s:id:%d", m.serviceName, m.endpoint, userId)
 		default:
+			tele.Error(ctx, "bad rate limit type used!!")
 			panic("bad rate limit type argument!")
 		}
 
 		ok, err := m.ratelimiter.Allow(ctx, rateLimitKey, limit, durationSeconds)
 		if err != nil {
-			tele.Debug(ctx, "rate limited userId:"+fmt.Sprint(rateLimitKey))
+			tele.Info(ctx, "ratelimiter @1 for @2", "error", err.Error(), "endpoint", r.URL)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "you broke the rate limiter")
 			return false, nil
 		}
 		if !ok {
-			tele.Debug(ctx, fmt.Sprintf("rate limited for key: %s, reached max: %d per %d sec \n", rateLimitKey, limit, durationSeconds), "rateLimitKey", rateLimitKey, "limit", limit, "durationSeconds", durationSeconds)
+			tele.Info(ctx, "rate limited for @1, reached @2 per @3", "key", rateLimitKey, "limit", limit, "seconds", durationSeconds)
 			utils.ErrorJSON(ctx, w, http.StatusTooManyRequests, "429: stop it, get some help")
 			return false, nil
 		}
@@ -202,6 +201,11 @@ func getRemoteIpKey(r *http.Request) (string, error) {
 // Finalize constructs the final http.HandlerFunc with all middleware applied
 func (m *MiddleSystem) Finalize(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				tele.Error(r.Context(), "panic occured in @1", r.URL)
+			}
+		}()
 		for _, mw := range m.middlewareChain {
 			proceed, newReq := mw(w, r)
 			r = newReq

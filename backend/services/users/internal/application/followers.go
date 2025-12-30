@@ -47,7 +47,7 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 		}
 	}
 
-	//fmt.Println(users)
+	//tele.Debug(ctx, "get followers paginated: @1", "users", users)
 
 	return users, nil
 

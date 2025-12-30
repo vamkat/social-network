@@ -1,6 +1,9 @@
 package application
 
-import "fmt"
+import (
+	"context"
+	tele "social-network/shared/go/telemetry"
+)
 
 // HashPassword hashes a password using bcrypt.
 // func hashPassword(password string) (string, error) {
@@ -11,6 +14,6 @@ import "fmt"
 func checkPassword(storedPassword, newHashedPassword string) bool {
 	// err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	// return err == nil
-	fmt.Println("Comparing passwords:", storedPassword, newHashedPassword)
+	tele.Debug(context.Background(), "Comparing passwords. @1 @2", "stored", storedPassword, "new", newHashedPassword)
 	return storedPassword == newHashedPassword
 }

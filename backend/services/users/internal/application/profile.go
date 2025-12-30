@@ -6,6 +6,7 @@ import (
 	ds "social-network/services/users/internal/db/dbservice"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 	"time"
 
 	"social-network/shared/gen-go/media"
@@ -63,7 +64,7 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 
 	row, err := s.db.GetUserProfile(ctx, req.UserId.Int64())
 	if err != nil {
-		fmt.Println(err)
+		tele.Warn(ctx, "error when getting user profile. @1", "error", err)
 		return models.UserProfileResponse{}, err
 	}
 	dob := time.Time{}
