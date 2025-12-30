@@ -1,19 +1,21 @@
 package main
 
 import (
-	"log"
+	"context"
 	"os"
 
 	"social-network/shared/go/db"
+	tele "social-network/shared/go/telemetry"
 )
 
 func main() {
-	log.Println("Running database migrations...")
+	ctx := context.Background()
+	tele.Info(ctx, "Running database migrations...")
 	dbUrl := os.Getenv("DATABASE_URL")
 	if err := db.RunMigrations(dbUrl, os.Getenv("MIGRATE_PATH")); err != nil {
-		log.Fatal("Migration failed", err)
+		tele.Fatalf("Migration failed %s", err.Error())
 	}
 
-	log.Println("Migrations completed successfully.")
+	tele.Info(ctx, "Migrations completed successfully.")
 	os.Exit(0)
 }

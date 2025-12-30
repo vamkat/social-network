@@ -3,7 +3,6 @@ package entry
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"social-network/services/users/internal/application"
@@ -41,7 +40,7 @@ func Run() error {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatal("failed to create chat client")
+		tele.Fatal("failed to create chat client")
 	}
 	mediaClient, err := gorpc.GetGRpcClient(
 		media.NewMediaServiceClient,
@@ -49,7 +48,7 @@ func Run() error {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatal("failed to create media client")
+		tele.Fatal("failed to create media client")
 	}
 	notificationsClient, err := gorpc.GetGRpcClient(
 		notifications.NewNotificationServiceClient,
@@ -57,7 +56,7 @@ func Run() error {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatal("failed to create chat client")
+		tele.Fatal("failed to create chat client")
 	}
 
 	redisConnector := rds.NewRedisClient(cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB)
@@ -69,7 +68,7 @@ func Run() error {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
 	defer pool.Close()
-	log.Println("Connected to users-db database")
+	tele.Info(ctx, "Connected to users-db database")
 
 	//
 	//
@@ -83,7 +82,7 @@ func Run() error {
 
 	pgxTxRunner, err := postgresql.NewPgxTxRunner(pool, ds.New(pool))
 	if err != nil {
-		log.Fatal("failed to create pgxTxRunner")
+		tele.Fatal("failed to create pgxTxRunner")
 	}
 	app := application.NewApplication(ds.New(pool), pgxTxRunner, pool, clients)
 	service := *handler.NewUsersHanlder(app)
@@ -100,22 +99,22 @@ func Run() error {
 		ct.CommonKeys(),
 	)
 	if err != nil {
-		log.Fatalf("couldn't create gRpc Server: %s", err.Error())
+		tele.Fatalf("couldn't create gRpc Server: %s", err.Error())
 	}
 
 	go func() {
 		err := startServerFunc()
 		if err != nil {
-			log.Fatal("server failed to start")
+			tele.Fatal("server failed to start")
 		}
-		fmt.Println("server finished")
+		tele.Info(ctx, "server finished")
 	}()
 
 	//
 	//
 	//
 	// SHUTDOWN
-	log.Printf("gRPC server listening on %s", cfgs.GrpcServerPort)
+	tele.Info(ctx, "gRPC server listening on @1", "port", cfgs.GrpcServerPort)
 
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -123,9 +122,9 @@ func Run() error {
 
 	<-quit
 
-	log.Println("Shutting down server...")
+	tele.Info(ctx, "Shutting down server...")
 	stopServerFunc()
-	log.Println("Server stopped")
+	tele.Info(ctx, "Server stopped")
 	return nil
 }
 

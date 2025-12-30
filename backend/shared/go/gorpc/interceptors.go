@@ -3,7 +3,7 @@ package gorpc
 import (
 	"context"
 	"errors"
-	"fmt"
+	tele "social-network/shared/go/telemetry"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -46,8 +46,8 @@ func UnaryServerInterceptorWithContextKeys(contextKeys contextKeys) (grpc.UnaryS
 
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		md, _ := metadata.FromIncomingContext(ctx)
-		fmt.Println("[DEBUG] metadata:", md)
 		ctx = addMetadataToContext(ctx, md, contextKeys.GetKeys()...)
+		tele.Debug(ctx, "unary server grpc interceptor intercepting @1", "method", info.FullMethod, "request", req)
 		m, err := handler(ctx, req)
 		return m, err
 	}, nil
@@ -89,6 +89,7 @@ func StreamServerInterceptorWithContextKeys(contextKeys contextKeys) (grpc.Strea
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		md, _ := metadata.FromIncomingContext(ss.Context())
 		ctx := addMetadataToContext(ss.Context(), md, contextKeys.GetKeys()...)
+		tele.Debug(ctx, "stream server grpc interceptor intercepting @1", "method", info.FullMethod)
 		wrapped := newWrappedServerStream(ctx, ss)
 		return handler(srv, wrapped)
 	}, nil
@@ -115,8 +116,8 @@ func UnaryClientInterceptorWithContextKeys(contextKeys contextKeys) (grpc.UnaryC
 	}
 
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// creating pairs of key values, ex. ["key1", "val1", "key2", "val2"]
 		pairs := createPairs(ctx, contextKeys.GetKeys()...)
+		tele.Debug(ctx, "unary client grpc interceptor intercepting @1 @2", "method", method, "target", cc.Target(), "request", req, "reply", reply)
 		ctx = metadata.AppendToOutgoingContext(ctx, pairs...)
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		return err
@@ -152,6 +153,7 @@ func StreamClientInterceptorWithContextKeys(contextKeys contextKeys) (grpc.Strea
 		// creating pairs of key values, ex. ["key1", "val1", "key2", "val2"]
 		pairs := createPairs(ctx, contextKeys.GetKeys()...)
 		ctx = metadata.AppendToOutgoingContext(ctx, pairs...)
+		tele.Debug(ctx, "stream client grpc interceptor intercepting @1 @2", "method", method, "target", cc.Target())
 		clientStream, err := streamer(ctx, desc, cc, method, opts...)
 		return newWrappedClientStream(clientStream), err
 	}, nil
@@ -214,6 +216,7 @@ func addMetadataToContext(ctx context.Context, md metadata.MD, keys ...string) c
 }
 
 // createPairs creates pairs values alternating between contextKey and string, meant to be used to append metadata to existing context
+// ex. ["key1", "val1", "key2", "val2"]
 func createPairs(ctx context.Context, keys ...string) []string {
 	pairs := make([]string, 0, len(keys)*2)
 	for _, key := range keys {
