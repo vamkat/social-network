@@ -232,6 +232,7 @@ func getConfigs() configs.Config {
 			EnableDebugLogs:           true,
 			SimplePrint:               true,
 			TelemetryCollectorAddress: os.Getenv("TELEMETRY_COLLECTOR_ADDR"),
+			OtelResourceAttributes:    "service.name=media,service.namespace=social-network,deployment.environment=dev",
 		},
 	}
 }

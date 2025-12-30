@@ -140,18 +140,23 @@ type configs struct {
 	NotificationsGRPCAddr string `env:"NOTIFICATIONS_GRPC_ADDR"`
 	ShutdownTimeout       int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
 	GrpcServerPort        string `env:"GRPC_SERVER_PORT"`
+
+	OtelResourceAttributes    string `end:"OTEL_RESOURCE_ATTRIBUTES"`
+	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
 }
 
 func getConfigs() configs {
 	cfgs := configs{
-		RedisAddr:             "redis:6379",
-		RedisPassword:         "",
-		RedisDB:               0,
-		DatabaseURL:           "postgres://postgres:secret@users-db:5432/social_users?sslmode=disable",
-		ChatGRPCAddr:          "chat:50051",
-		MediaGRPCAddr:         "media:50051",
-		NotificationsGRPCAddr: "notifications:50051",
-		ShutdownTimeout:       5,
+		RedisAddr:                 "redis:6379",
+		RedisPassword:             "",
+		RedisDB:                   0,
+		DatabaseURL:               "postgres://postgres:secret@users-db:5432/social_users?sslmode=disable",
+		ChatGRPCAddr:              "chat:50051",
+		MediaGRPCAddr:             "media:50051",
+		NotificationsGRPCAddr:     "notifications:50051",
+		ShutdownTimeout:           5,
+		OtelResourceAttributes:    "service.name=users,service.namespace=social-network,deployment.environment=dev",
+		TelemetryCollectorAddress: "alloy:4317",
 	}
 
 	_, err := configutil.LoadConfigs(&cfgs)

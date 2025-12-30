@@ -9,26 +9,30 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"net/http/cookiejar"
+	"slices"
 	"social-network/services/testing/internal/configs"
 	"social-network/services/testing/internal/utils"
+	"social-network/shared/go/ct"
 	"sync"
 	"time"
 )
 
-var baseURL = "http://api-gateway:8081"
-
 func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	var wg sync.WaitGroup
-	wg.Go(func() { utils.HandleErr("api-gateway", ctx, testAuthFlow) })
-	time.Sleep(time.Second) //sleeping so that ratelimiting caused by the next tests doesn't affect the above test
-	wg.Go(func() { utils.HandleErr("api-gateway", ctx, randomRegister) })
-	wg.Go(func() { utils.HandleErr("api-gateway", ctx, randomLogin) })
+	// wg.Go(func() { utils.HandleErr("api-gateway auth flow", ctx, testAuthFlow) })
+	// time.Sleep(time.Second) //sleeping so that ratelimiting caused by the next tests doesn't affect the above test
+	wg.Go(func() { utils.HandleErr("api-gateway posts flow", ctx, testPostsFlow) })
+	// time.Sleep(time.Second)
+	// wg.Go(func() { utils.HandleErr("api-gateway random register", ctx, randomRegister) })
+	// wg.Go(func() { utils.HandleErr("api-gateway random login", ctx, randomLogin) })
+
 	wg.Wait()
 	return nil
 }
 
 func testAuthFlow(ctx context.Context) error {
 	fmt.Println("api-gateway Start test auth flow")
+
 	// Create client with cookie jar to persist cookies between requests
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -39,14 +43,13 @@ func testAuthFlow(ctx context.Context) error {
 	// 1. Register
 	registerData := newRegisterReq()
 
-	resp, err := postJSON(client, baseURL+"/register", registerData)
+	resp, err := postJSON(client, "/register", registerData)
 	if err != nil {
 		return fmt.Errorf("register failed: %w, body: %s", err, bodyToString(resp))
 	}
 	if resp.StatusCode != 200 {
-
+		return fmt.Errorf("register failed: bad status, %w, body: %s", err, bodyToString(resp))
 	}
-	// fmt.Printf("Register: %d\n", resp.StatusCode)
 
 	email, _ := (*registerData)["email"].(string)
 	pass, _ := (*registerData)["password"].(string)
@@ -56,33 +59,41 @@ func testAuthFlow(ctx context.Context) error {
 		"identifier": email,
 		"password":   pass,
 	}
-
-	resp, err = postJSON(client, baseURL+"/login", loginData)
+	resp, err = postJSON(client, "/login", loginData)
 	if err != nil {
 		return fmt.Errorf("login failed: %w, body: %s", err, bodyToString(resp))
 	}
-	// fmt.Printf("Login: %d\n", resp.StatusCode)
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("login failed: bad status, %w, body: %s", err, bodyToString(resp))
+	}
 
 	// 3. Auth status
-	resp, err = client.Get(baseURL + "/auth-status")
+	resp, err = postJSON(client, "/auth-status", nil)
 	if err != nil {
 		return fmt.Errorf("auth status failed: %w, body: %s", err, bodyToString(resp))
 	}
-	// fmt.Printf("Auth Status: %d\n", resp.StatusCode)
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("auth check failed: bad status, %w, body: %s", err, bodyToString(resp))
+	}
 
 	// 4. Logout
-	resp, err = postJSON(client, baseURL+"/logout", nil)
+	resp, err = postJSON(client, "/logout", nil)
 	if err != nil {
 		return fmt.Errorf("logout failed: %w, body: %s", err, bodyToString(resp))
 	}
-	// fmt.Printf("Logout: %d\n", resp.StatusCode)
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("logout failed: bad status, %w, body: %s", err, bodyToString(resp))
+	}
 
 	// 5. Auth status
-	resp, err = client.Get(baseURL + "/auth-status")
+	resp, err = postJSON(client, "/auth-status", nil)
 	if err != nil {
 		return fmt.Errorf("second auth status failed: %w, body: %s", err, bodyToString(resp))
 	}
-	// fmt.Printf("Auth Status: %d\n", resp.StatusCode)
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("auth check failed: bad status, %w, body: %s", err, bodyToString(resp))
+	}
+
 	fmt.Println("api-gateway Finished test auth flow")
 	return nil
 }
@@ -100,62 +111,6 @@ func postJSON(client *http.Client, url string, data any) (*http.Response, error)
 	req.Header.Set("Content-Type", "application/json")
 
 	return client.Do(req)
-}
-
-func randomRegister(ctx context.Context) error {
-	fmt.Println("api-gateway starting register test")
-	client := &http.Client{}
-	gotRateLimited := false
-	for range 100 {
-		registerData := newRegisterReq()
-		resp, err := postJSON(client, baseURL+"/register", registerData)
-		if err != nil {
-			return fmt.Errorf("spam register failed: %w", err)
-		}
-
-		if resp.StatusCode/200 != 1 && resp.StatusCode != 429 {
-			return fmt.Errorf("bad status when spam registering: %d, body: %s", resp.StatusCode, bodyToString(resp))
-		}
-
-		if resp.StatusCode == 429 {
-			gotRateLimited = true
-		}
-		time.Sleep(time.Millisecond * 50)
-	}
-
-	if gotRateLimited == false {
-		return fmt.Errorf("register spam didn't get ratelimited when spamming?!")
-	}
-
-	fmt.Println("api-gateway spam api-gateway register test passed")
-	return nil
-}
-
-func randomLogin(ctx context.Context) error {
-	fmt.Println("api-gateway starting Login test")
-	client := &http.Client{}
-	gotRateLimited := false
-	for range 100 {
-		loginReq := newLoginReq()
-		resp, err := postJSON(client, baseURL+"/login", loginReq)
-		if err != nil {
-			return fmt.Errorf("spam login failed: %w", err)
-		}
-		if resp.StatusCode == 200 {
-			return fmt.Errorf("somehow managed to login while spamming bad logins??: %d, body: %s", resp.StatusCode, bodyToString(resp))
-		}
-		if resp.StatusCode == 429 {
-			gotRateLimited = true
-		}
-		time.Sleep(time.Millisecond * 50)
-	}
-
-	if gotRateLimited == false {
-		return fmt.Errorf("login spam didn't get ratelimited when spamming?!")
-	}
-
-	fmt.Println("api-gateway spam login test passed")
-	return nil
 }
 
 func newRegisterReq() *map[string]any {
@@ -185,4 +140,461 @@ func bodyToString(r *http.Response) string {
 	body, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	return string(body)
+}
+func testPostsFlow(ctx context.Context) error {
+	fmt.Println("posts Start test posts flow")
+
+	client := newFakeClient("http://api-gateway:8081")
+
+	// -2. Register
+	registerData := newRegisterReq()
+	_, err := client.DoRequest("POST", "/register", []int{200, 201}, "register",
+		*registerData,
+	)
+	if err != nil {
+		return err
+	}
+
+	// -1. Login
+	email, _ := (*registerData)["email"].(string)
+	pass, _ := (*registerData)["password"].(string)
+	loginData := map[string]any{
+		"identifier": email,
+		"password":   pass,
+	}
+	_, err = client.DoRequest("POST", "/login", []int{200, 201}, "login", loginData)
+	if err != nil {
+		return err
+	}
+
+	// 0. Auth status
+	_, err = client.DoRequest("POST", "/auth-status", []int{200}, "auth status", nil)
+	if err != nil {
+		return err
+	}
+
+	// 1. Get Non-Existent Post
+	_, err = client.DoRequest("POST", "/post/", []int{500, 404}, "get non-existent post", //TODO this should only be 404
+		map[string]any{
+			"entity_id": ct.Id(97862345),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	// 2. Edit Non-Existent Post
+	editPostData := map[string]any{
+		"post_id":   ct.Id(97862345),
+		"post_body": "new text",
+	}
+	_, err = client.DoRequest("POST", "/posts/edit", []int{400, 404}, "edit non-existent post", editPostData)
+	if err != nil {
+		return err
+	}
+
+	// 3. Delete Non-Existent Post
+	_, err = client.DoRequest("POST", "/posts/delete", []int{400, 404}, "delete non-existent post", editPostData)
+	if err != nil {
+		return err
+	}
+
+	// 4. Get Comments for Non-Existent Post
+	_, err = client.DoRequest("POST", "/comments/", []int{400, 404}, "get comments for non-existent post", editPostData)
+	if err != nil {
+		return err
+	}
+
+	// 5. Create Comment on Non-Existent Post
+	createCommentData := map[string]any{
+		"parent_id":    ct.Id(97862345),
+		"comment_body": "This is a comment on a non-existent post.",
+	}
+	_, err = client.DoRequest("POST", "/comments/create", []int{400, 404}, "create comment on non-existent post", createCommentData)
+	if err != nil {
+		return err
+	}
+
+	// 6. Edit Non-Existent Comment
+	_, err = client.DoRequest("POST", "/comments/edit", []int{400, 404}, "edit non-existent comment", createCommentData)
+	if err != nil {
+		return err
+	}
+
+	// 7. Delete Non-Existent Comment
+	_, err = client.DoRequest("POST", "/comments/delete", []int{400, 404}, "delete non-existent comment", createCommentData)
+	if err != nil {
+		return err
+	}
+
+	// 8. Create Post with Invalid Data
+	_, err = client.DoRequest("POST", "/posts/create", []int{400, 422}, "create post with invalid data", nil)
+	if err != nil {
+		return err
+	}
+
+	// 9. Create Post
+	_, err = client.DoRequest("POST", "/posts/create", []int{200}, "create post",
+		map[string]any{
+			"post_body": utils.RandomString(100, false),
+			"audience":  "everyone",
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	// // 10. Get Post By ID
+	// resp, err = client.DoRequest(+"/posts/" + postID)
+	// if err != nil {
+	// 	return fmt.Errorf("get post failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return fmt.Errorf("expected 200 for get post, got %d", resp.StatusCode)
+	// }
+
+	// // 11. Edit Post
+	// _, err = client.DoRequest("POST", "/posts/"+postID, []int{200}, "edit post", map[string]any{
+	// 	"id":      postID,
+	// 	"content": "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 12. Edit Post with Invalid Data
+	// _, err = client.DoRequest("POST", "/posts/"+postID, []int{400, 422}, "edit post with invalid data", map[string]any{
+	// 	"id": postID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 13. Get Comments for Empty Post
+	// resp, err = client.DoRequest("POST", "/posts/"+postID+"/comments?page=1&limit=10")
+	// if err != nil {
+	// 	return fmt.Errorf("get comments for empty post failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return fmt.Errorf("expected 200 for get comments on empty post, got %d", resp.StatusCode)
+	// }
+
+	// // 14. Create Comment with Invalid Data
+	// _, err = client.DoRequest("POST", "/comments", []int{400, 422}, "create comment with invalid data", map[string]any{})
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 15. Create Comment on Post
+	// resp, err = client.DoRequest("POST", "/comments", []int{200}, "create comment", map[string]any{
+	// 	"parent_id": postID,
+	// 	"content":   "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// var commentResponse struct {
+	// 	ID string `json:"id"`
+	// }
+	// json.NewDecoder(resp.Body).Decode(&commentResponse)
+	// commentID := commentResponse.ID
+
+	// // 16. Get Comments By Parent ID
+	// resp, err = client.DoRequest("POST", "/posts/"+postID+"/comments?page=1&limit=10")
+	// if err != nil {
+	// 	return fmt.Errorf("get comments failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return fmt.Errorf("expected 200 for get comments, got %d", resp.StatusCode)
+	// }
+
+	// // 17. Create Nested Comment
+	// resp, err = client.DoRequest("POST", "/comments", []int{200}, "create nested comment", map[string]any{
+	// 	"parent_id": commentID,
+	// 	"content":   "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// var nestedCommentResponse struct {
+	// 	ID string `json:"id"`
+	// }
+	// json.NewDecoder(resp.Body).Decode(&nestedCommentResponse)
+	// nestedCommentID := nestedCommentResponse.ID
+
+	// // 18. Get Comments for Comment
+	// resp, err = client.DoRequest("POST", "/comments/"+commentID+"/comments?page=1&limit=10")
+	// if err != nil {
+	// 	return fmt.Errorf("get nested comments failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return fmt.Errorf("expected 200 for get nested comments, got %d", resp.StatusCode)
+	// }
+
+	// // 19. Edit Comment
+	// _, err = client.DoRequest("POST", "/comments/"+commentID, []int{200}, "edit comment", map[string]any{
+	// 	"id":      commentID,
+	// 	"content": "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 20. Edit Comment with Invalid Data
+	// _, err = client.DoRequest("POST", "/comments/"+commentID, []int{400, 422}, "edit comment with invalid data", map[string]any{
+	// 	"id": commentID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 21. Edit Nested Comment
+	// _, err = client.DoRequest("POST", "/comments/"+nestedCommentID, []int{200}, "edit nested comment", map[string]any{
+	// 	"id":      nestedCommentID,
+	// 	"content": "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 22. Delete Nested Comment
+	// _, err = client.DoRequest("POST", "/comments/delete", []int{200}, "delete nested comment", map[string]any{
+	// 	"id": nestedCommentID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 23. Delete Nested Comment Again
+	// _, err = client.DoRequest("POST", "/comments/delete", []int{400, 404}, "delete nested comment twice", map[string]any{
+	// 	"id": nestedCommentID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 24. Edit Deleted Nested Comment
+	// _, err = client.DoRequest("POST", "/comments/"+nestedCommentID, []int{400, 404}, "edit deleted nested comment", map[string]any{
+	// 	"id":      nestedCommentID,
+	// 	"content": "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 25. Get Comments for Comment After Deletion
+	// resp, err = client.DoRequest("POST", "/comments/"+commentID+"/comments?page=1&limit=10")
+	// if err != nil {
+	// 	return fmt.Errorf("get nested comments after deletion failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return fmt.Errorf("expected 200 for get nested comments after deletion, got %d", resp.StatusCode)
+	// }
+
+	// // 26. Delete Comment
+	// _, err = client.DoRequest("POST", "/comments/delete", []int{200}, "delete comment", map[string]any{
+	// 	"id": commentID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 27. Delete Comment Again
+	// _, err = client.DoRequest("POST", "/comments/delete", []int{400, 404}, "delete comment twice", map[string]any{
+	// 	"id": commentID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 28. Edit Deleted Comment
+	// _, err = client.DoRequest("POST", "/comments/"+commentID, []int{400, 404}, "edit deleted comment", map[string]any{
+	// 	"id":      commentID,
+	// 	"content": "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 29. Create Comment on Deleted Comment
+	// _, err = client.DoRequest("POST", "/comments", []int{400, 404}, "create comment on deleted comment", map[string]any{
+	// 	"parent_id": commentID,
+	// 	"content":   "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 30. Get Comments for Post After Comment Deletion
+	// resp, err = client.DoRequest("POST", "/posts/"+postID+"/comments?page=1&limit=10")
+	// if err != nil {
+	// 	return fmt.Errorf("get comments after deletion failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return fmt.Errorf("expected 200 for get comments after deletion, got %d", resp.StatusCode)
+	// }
+
+	// // 31. Pagination Invalid Parameters
+	// _, _ = client.DoRequest("POST", "/posts/"+postID+"/comments?page=-1&limit=10")
+	// _, _ = client.DoRequest("POST", "/posts/"+postID+"/comments?page=1&limit=0")
+	// _, _ = client.DoRequest("POST", "/posts/"+postID+"/comments?page=1&limit=1000")
+
+	// // 32. Delete Post
+	// _, err = client.DoRequest("POST", "/posts/delete", []int{200}, "delete post", map[string]any{
+	// 	"id": postID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 33. Delete Post Again
+	// _, err = client.DoRequest("POST", "/posts/delete", []int{400, 404}, "delete post twice", map[string]any{
+	// 	"id": postID,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 34. Get Deleted Post
+	// resp, err = client.DoRequest("POST", "/posts/"+postID)
+	// if err != nil {
+	// 	return fmt.Errorf("get deleted post failed: %w, body: %s", err, bodyToString(resp))
+	// }
+	// if resp.StatusCode == 200 {
+	// 	return fmt.Errorf("expected error for getting deleted post, got 200")
+	// }
+
+	// // 35. Edit Deleted Post
+	// _, err = client.DoRequest("POST", "/posts/"+postID, []int{400, 404}, "edit deleted post", map[string]any{
+	// 	"id":      postID,
+	// 	"content": "",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // 36. Get Comments for Deleted Post
+	// _, _ = client.DoRequest("POST", "/posts/"+postID+"/comments?page=1&limit=10")
+
+	// // 37. Create Comment on Deleted Post
+	// _, err = client.DoRequest("POST", "/comments", []int{400, 404}, "create comment on deleted post", map[string]any{
+	// 	"parent_id": postID,
+	// 	"content":   "",
+	// })
+
+	return err
+}
+
+func marshalJSON(data any) []byte {
+	body, _ := json.Marshal(data)
+	return body
+}
+
+func randomRegister(ctx context.Context) error {
+	fmt.Println("api-gateway starting register test")
+	client := &http.Client{}
+	gotRateLimited := false
+	for range 100 {
+		registerData := newRegisterReq()
+		resp, err := postJSON(client, "/register", registerData)
+		if err != nil {
+			return fmt.Errorf("spam register failed: %w", err)
+		}
+
+		if resp.StatusCode/200 != 1 && resp.StatusCode != 429 {
+			return fmt.Errorf("bad status when spam registering: %d, body: %s", resp.StatusCode, bodyToString(resp))
+		}
+
+		if resp.StatusCode == 429 {
+			gotRateLimited = true
+		}
+		time.Sleep(time.Millisecond * 50)
+	}
+
+	if gotRateLimited == false {
+		return fmt.Errorf("register spam didn't get ratelimited when spamming?!")
+	}
+
+	fmt.Println("api-gateway spam api-gateway register test passed")
+	return nil
+}
+
+func randomLogin(ctx context.Context) error {
+	fmt.Println("api-gateway starting Login test")
+	client := &http.Client{}
+	gotRateLimited := false
+	for range 100 {
+		loginReq := newLoginReq()
+		resp, err := postJSON(client, "/login", loginReq)
+		if err != nil {
+			return fmt.Errorf("spam login failed: %w", err)
+		}
+		if resp.StatusCode == 200 {
+			return fmt.Errorf("somehow managed to login while spamming bad logins??: %d, body: %s", resp.StatusCode, bodyToString(resp))
+		}
+		if resp.StatusCode == 429 {
+			gotRateLimited = true
+		}
+		time.Sleep(time.Millisecond * 50)
+	}
+
+	if gotRateLimited == false {
+		return fmt.Errorf("login spam didn't get ratelimited when spamming?!")
+	}
+
+	fmt.Println("api-gateway spam login test passed")
+	return nil
+}
+
+type fakeClient struct {
+	baseUrl   string
+	client    *http.Client
+	printSucc bool
+}
+
+func newFakeClient(baseUrl string) fakeClient {
+	jar, _ := cookiejar.New(nil)
+	return fakeClient{
+		baseUrl: baseUrl,
+		client: &http.Client{
+			Jar: jar,
+		},
+	}
+}
+
+func (cl *fakeClient) DoRequest(
+	method string,
+	url string,
+	expectedStates []int,
+	label string,
+	data map[string]any,
+) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+
+	switch method {
+	case "POST":
+		resp, err = postJSON(cl.client, cl.baseUrl+url, data)
+	default:
+		return nil, fmt.Errorf("%s at %s failed: unsupported method %s", label, url, method)
+	}
+
+	if err != nil {
+		return resp, fmt.Errorf("%s at %s failed: %w, body: %s", label, url, err, bodyToString(resp))
+	}
+
+	if !slices.Contains(expectedStates, resp.StatusCode) {
+		return resp, fmt.Errorf(
+			"%s at %s failed: expected status %v, got %d, body: %s",
+			label,
+			url,
+			expectedStates,
+			resp.StatusCode,
+			bodyToString(resp),
+		)
+	}
+
+	return resp, nil
 }

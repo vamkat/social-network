@@ -29,7 +29,7 @@ var hd = func() *hashids.HashID {
 func (e Id) MarshalJSON() ([]byte, error) {
 	hash, err := hd.EncodeInt64([]int64{int64(e)})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("MarshalJSON.EncodeInt64 said: %w", err)
 	}
 	return json.Marshal(hash)
 }
@@ -42,7 +42,7 @@ func (e *Id) UnmarshalJSON(data []byte) error {
 
 	decoded, err := hd.DecodeInt64WithError(hash)
 	if err != nil || len(decoded) == 0 {
-		return err
+		return fmt.Errorf("UnmarshalJSON.DecodeInt64WithError said: %w", err)
 	}
 
 	*e = Id(decoded[0])

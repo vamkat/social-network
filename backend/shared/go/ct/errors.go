@@ -8,9 +8,10 @@ import (
 // Error represents a custom error type that includes classification, cause, and context.
 // It implements the error interface and supports error wrapping and classification.
 type Error struct {
-	kind error  // Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil
-	err  error  // Cause: wrapped original error.
-	msg  string // Context: Func, args etc.
+	kind error  // Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil // TODO change to use grpc error codes
+	err  error  // Cause: wrapped original error. //TODO change to be original error, that started the chain
+	msg  string // Context: Func, args etc. //TODO change so that error chain survives
+	// TODO add public field, which if it exists we trust to send it to user, if not then we decide what we do
 }
 
 var ErrUnknownClass = errors.New("unknown classification error") // kind is nil

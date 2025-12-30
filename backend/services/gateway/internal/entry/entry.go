@@ -186,10 +186,9 @@ func getConfigs() configs { // sensible defaults
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
 
-		EnableDebugLogs: true,
-		SimplePrint:     true,
-
-		OtelResourceAttributes:    "service.name=gateway,service.version=0.1.0",
+		EnableDebugLogs:           true,
+		SimplePrint:               true,
+		OtelResourceAttributes:    "service.name=api-gateway,service.namespace=social-network,deployment.environment=dev",
 		TelemetryCollectorAddress: "alloy:4317",
 		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",

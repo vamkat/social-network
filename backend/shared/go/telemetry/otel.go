@@ -26,7 +26,7 @@ import (
 // setupOTelSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 // It also sets the global providers, that will at a later step be used to initialize the logger, tracer and meterer
-func SetupOTelSDK(ctx context.Context, collectorAddress string) (func(context.Context) error, error) {
+func SetupOTelSDK(ctx context.Context, collectorAddress string, serviceName string) (func(context.Context) error, error) {
 	var shutdownFuncs []func(context.Context) error
 	var err error
 
@@ -70,7 +70,7 @@ func SetupOTelSDK(ctx context.Context, collectorAddress string) (func(context.Co
 	otel.SetMeterProvider(meterProvider)
 
 	// Set up logger provider.
-	loggerProvider, err := NewLoggerProvider(ctx, collectorAddress)
+	loggerProvider, err := NewLoggerProvider(ctx, collectorAddress, serviceName)
 	if err != nil {
 		handleErr(err)
 		return shutdown, err
@@ -136,14 +136,14 @@ func NewMeterProvider() (*metric.MeterProvider, error) {
 // 	return nil
 // }
 
-func NewLoggerProvider(ctx context.Context, collectorAddress string) (*log.LoggerProvider, error) {
+func NewLoggerProvider(ctx context.Context, collectorAddress string, serviceName string) (*log.LoggerProvider, error) {
 
 	//TODO add service name and set up versioning?
 	resource := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName("my_serviceName"),
-		semconv.ServiceVersion("my_version"),
-		semconv.HostName("my_hostName"),
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion("my_version_TBD"),
+		semconv.HostName("host_TBD"), // TODO kubernetes name or docker something
 	)
 
 	logExporter, err := otlploggrpc.New(

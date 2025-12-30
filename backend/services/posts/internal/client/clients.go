@@ -76,13 +76,3 @@ func (c *Clients) GetFollowingIds(ctx context.Context, userId int64) ([]int64, e
 
 	return resp.Values, nil
 }
-
-// func (c *Clients) GetFollowerIds(ctx context.Context, userId int64) ([]int64, error) {
-// 	//need to make this in users
-// 	return nil, nil
-// }
-
-// func (c *Clients) GetUserGroupIds(ctx context.Context, userId int64) ([]int64, error) {
-// 	//need to make this in users
-// 	return nil, nil
-// }

@@ -24,7 +24,6 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 		if !ok {
 			panic(1)
 		}
-
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
@@ -38,6 +37,7 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPostById(ctx, &grpcReq)
 		if err != nil {
+			//TODO add error for not found
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
 			return
 		}
@@ -153,10 +153,10 @@ func (h *Handlers) createPost() http.HandlerFunc {
 		httpResp := httpResponse{
 			UserId:    ct.Id(claims.UserId),
 			FileId:    ImageId,
-			UploadUrl: uploadURL}
-
+			UploadUrl: uploadURL,
+		}
+		tele.Info(ctx, "created post successfully")
 		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
-
 	}
 }
 

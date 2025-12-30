@@ -170,7 +170,7 @@ func getConfigs() configs { // sensible defaults
 		EnableDebugLogs: true,
 		SimplePrint:     true,
 
-		OtelResourceAttributes:    "service.name=gateway,service.version=0.1.0",
+		OtelResourceAttributes:    "service.name=posts,service.namespace=social-network,deployment.environment=dev",
 		TelemetryCollectorAddress: "alloy:4317",
 		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",

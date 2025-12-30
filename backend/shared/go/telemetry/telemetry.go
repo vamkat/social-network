@@ -68,7 +68,7 @@ func Fatalf(format string, args ...any) {
 // actually activates the functionality of open telemetry
 func InitTelemetry(ctx context.Context, serviceName string, servicePrefix string, collectorAddress string, contextKeys contextKeys, enableDebug bool, simplePrint bool) (func(), error) {
 
-	otelShutdown, err := SetupOTelSDK(ctx, collectorAddress)
+	otelShutdown, err := SetupOTelSDK(ctx, collectorAddress, serviceName)
 	if err != nil {
 		Fatalf("open telemetry sdk failed, ERROR: %s", err.Error())
 	}

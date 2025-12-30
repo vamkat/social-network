@@ -38,12 +38,14 @@ func (h *Handlers) createComment() http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "decoding error: "+err.Error())
 			return
 		}
 
+		tele.Debug(ctx, "decoded create comment request. @1", "data", httpReq)
+
 		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "validation error: "+err.Error())
 			return
 		}
 

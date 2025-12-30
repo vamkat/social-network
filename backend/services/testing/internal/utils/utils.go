@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"time"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -42,7 +43,10 @@ func Title(str string) string {
 
 func HandleErr(testTarget string, ctx context.Context, f func(context.Context) error) {
 	err := f(ctx)
+	time.Sleep(time.Second * 3)
 	if err != nil {
-		fmt.Println("FAIL TEST: err ->", testTarget, "-> error:", err.Error())
+		fmt.Println("------------  FAIL TEST: err ->", testTarget, "-> error:", err.Error())
+	} else {
+		fmt.Println("------------  SUCCESS -> ", testTarget)
 	}
 }

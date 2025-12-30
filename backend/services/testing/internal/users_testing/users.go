@@ -32,9 +32,9 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	}
 
 	var wg sync.WaitGroup
-	wg.Go(func() { utils.HandleErr("users", ctx, randomRegister) })
-	wg.Go(func() { utils.HandleErr("users", ctx, randomLogin) })
-	wg.Go(func() { utils.HandleErr("users", ctx, registerLogin) })
+	wg.Go(func() { utils.HandleErr("users random register", ctx, randomRegister) })
+	wg.Go(func() { utils.HandleErr("users random login", ctx, randomLogin) })
+	wg.Go(func() { utils.HandleErr("users auth flow", ctx, registerLogin) })
 	wg.Wait()
 	return nil
 }
