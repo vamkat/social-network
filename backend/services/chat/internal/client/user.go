@@ -3,49 +3,10 @@ package client
 import (
 	"context"
 	cm "social-network/shared/gen-go/common"
+	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
-
-// Calls user client to convert a slice of ct.Ids representing users to a
-// map[ct.Id]models.User.
-func (c *Clients) UserIdsToMap(ctx context.Context,
-	ids ct.Ids) (map[ct.Id]md.User, error) {
-	// Deduplicate IDs
-	uniq := make(map[ct.Id]struct{}, len(ids))
-	cleaned := make([]int64, 0, len(ids))
-	for _, id := range ids {
-		if _, ok := uniq[id]; !ok {
-			uniq[id] = struct{}{}
-			cleaned = append(cleaned, id.Int64())
-		}
-	}
-
-	if len(cleaned) == 0 {
-		return map[ct.Id]md.User{}, nil
-	}
-	// Call redis first
-
-	// gRPC request
-	req := &cm.UserIds{Values: cleaned}
-	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert response → map
-	out := make(map[ct.Id]md.User, len(resp.Users))
-	for _, u := range resp.Users {
-		uid := ct.Id(u.UserId)
-		out[uid] = md.User{
-			UserId:   uid,
-			Username: ct.Username(u.Username),
-			AvatarId: ct.Id(u.Avatar),
-		}
-	}
-
-	return out, nil
-}
 
 // Converts a slice of ct.Ids representing users to models.User slice.
 func (c *Clients) UserIdsToUsers(ctx context.Context,
@@ -58,20 +19,27 @@ func (c *Clients) UserIdsToUsers(ctx context.Context,
 
 	for _, u := range resp.Users {
 		userInfo = append(userInfo, md.User{
-			UserId:   ct.Id(u.UserId),
-			Username: ct.Username(u.Username),
-			AvatarId: ct.Id(u.Avatar),
+			UserId:    ct.Id(u.UserId),
+			Username:  ct.Username(u.Username),
+			AvatarId:  ct.Id(u.Avatar),
+			AvatarURL: u.AvatarUrl,
 		})
 	}
 	return userInfo, nil
 }
 
-// Function to implemeted by Hydrator
-func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds []int64) (*cm.ListUsers, error) {
-	req := &cm.UserIds{
-		Values: userIds,
-	}
+// Function to inject to retrive users
+func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, error) {
 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// function to inject to retrieve media
+func (c *Clients) GetImages(ctx context.Context, req *media.GetImagesRequest) (*media.GetImagesResponse, error) {
+	resp, err := c.MediaClient.GetImages(ctx, req)
 	if err != nil {
 		return nil, err
 	}

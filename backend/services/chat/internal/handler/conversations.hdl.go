@@ -2,7 +2,8 @@ package handler
 
 import (
 	"context"
-
+	"errors"
+	ce "social-network/services/chat/internal/errors"
 	pb "social-network/shared/gen-go/chat"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -21,6 +22,9 @@ func (h *ChatHandler) CreatePrivateConversation(ctx context.Context, params *pb.
 		UserB: ct.Id(params.UserB),
 	})
 	if err != nil {
+		if errors.Is(err, ce.ErrInvalid) || errors.Is(err, ce.ErrAlreadyExists) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to create private conversation %v", err.(*ct.Error).Public())
+		}
 		return nil, status.Errorf(codes.Internal, "failed to create private conversation %v", err)
 	}
 	return &pb.ConvId{ConvId: convId.Int64()}, nil

@@ -3,14 +3,10 @@ package retrieveusers
 import (
 	"context"
 	cm "social-network/shared/gen-go/common"
-	ct "social-network/shared/go/ct"
 	"time"
 )
 
-// UsersBatchClient is the subset the hydrator needs.
-type UsersBatchClient interface {
-	GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) (*cm.ListUsers, error)
-}
+type GetBatchBasicUserInfo func(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, error)
 
 // RedisCache defines the minimal Redis operations used by the hydrator.
 type RedisCache interface {

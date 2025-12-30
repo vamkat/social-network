@@ -13,6 +13,6 @@ type Client interface {
 
 // RedisCache defines the minimal Redis operations used by the hydrator.
 type RedisCache interface {
-	GetObj(ctx context.Context, key string, dest any) error
-	SetObj(ctx context.Context, key string, value any, exp time.Duration) error
+	GetStr(ctx context.Context, key string) (any, error)
+	SetStr(ctx context.Context, key string, value string, exp time.Duration) error
 }

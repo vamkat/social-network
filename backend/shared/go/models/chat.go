@@ -89,7 +89,7 @@ type GetNextMessageParams struct {
 	ConversationId    ct.Id
 	UserId            ct.Id
 	Limit             ct.Limit
-	HydrateUsers      bool
+	RetrieveUsers     bool
 }
 
 type GetNextMessagesResp struct {

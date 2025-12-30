@@ -105,8 +105,7 @@ func (c *ChatService) GetUserConversations(ctx context.Context,
 	for _, r := range resp {
 		allMemberIDs = append(allMemberIDs, r.MemberIds...)
 	}
-
-	usersMap, err := c.Clients.UserIdsToMap(ctx, allMemberIDs)
+	usersMap, err := c.RetriveUsers.GetUsers(ctx, allMemberIDs)
 	if err != nil {
 		return nil, ct.Wrap(ce.ErrUsersService, err, errMsg)
 	}

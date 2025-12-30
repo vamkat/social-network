@@ -11,21 +11,30 @@ import (
 	"social-network/services/chat/internal/db/dbservice"
 	"social-network/services/chat/internal/handler"
 	"social-network/shared/gen-go/chat"
+	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
+	rds "social-network/shared/go/redis"
+	"social-network/shared/go/retrievemedia"
+	"social-network/shared/go/retrieveusers"
+	"time"
 
 	"syscall"
 )
 
 type configs struct {
+	RedisAddr           string `env:"REDIS_ADDR"`
+	RedisPassword       string `env:"REDIS_PASSWORD"`
+	RedisDB             int    `env:"REDIS_DB"`
 	DatabaseConn        string `env:"DATABASE_URL"`
 	GrpcServerPort      string `env:"GRPC_SERVER_PORT"`
 	NotificationsAdress string `env:"NOTIFICATIONS_ADDRESS"`
 	UsersAdress         string `env:"USERS_ADDRESS"`
+	MediaGRPCAddr       string `env:"MEDIA_GRPC_ADDR"`
 }
 
 var cfgs configs
@@ -44,15 +53,15 @@ func Run() error {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopSignal() //TODO check if this is ok
 
-	notifClient, err := gorpc.GetGRpcClient(notifications.NewNotificationServiceClient, cfgs.NotificationsAdress, ct.CommonKeys())
-	if err != nil {
-		log.Fatal("failed to create notification client: ", err)
-	}
-	userClient, err := gorpc.GetGRpcClient(users.NewUserServiceClient, cfgs.UsersAdress, ct.CommonKeys())
-	if err != nil {
-		log.Fatal("failed to create user client: ", err)
-	}
-	clients := client.NewClients(userClient, notifClient)
+	clients := initClients()
+
+	retriveUsers := retrieveusers.NewUserRetriever(
+		clients.GetBatchBasicUserInfo,
+		clients.RedisClient,
+		retrievemedia.NewMediaRetriever(
+			clients.MediaClient, clients.RedisClient, 3*time.Minute),
+		3*time.Minute,
+	)
 
 	pool, err := postgresql.NewPool(ctx, cfgs.DatabaseConn)
 	if err != nil {
@@ -65,6 +74,7 @@ func Run() error {
 		pool,
 		&clients,
 		dbservice.New(pool),
+		retriveUsers,
 	)
 	if err != nil {
 		log.Fatal("failed to create chat service application: ", err)
@@ -103,4 +113,39 @@ func Run() error {
 	stopServerFunc()
 	log.Println("Server stopped")
 	return nil
+}
+
+func initClients() client.Clients {
+	notifClient, err := gorpc.GetGRpcClient(
+		notifications.NewNotificationServiceClient, cfgs.NotificationsAdress, ct.CommonKeys())
+	if err != nil {
+		log.Fatal("failed to create notification client: ", err)
+	}
+
+	userClient, err := gorpc.GetGRpcClient(
+		users.NewUserServiceClient, cfgs.UsersAdress, ct.CommonKeys(),
+	)
+	if err != nil {
+		log.Fatal("failed to create user client: ", err)
+	}
+
+	mediaClient, err := gorpc.GetGRpcClient(
+		media.NewMediaServiceClient,
+		cfgs.MediaGRPCAddr,
+		ct.CommonKeys(),
+	)
+	if err != nil {
+		log.Fatal("failed to create media client: ", err)
+	}
+
+	redisClient := rds.NewRedisClient(
+		cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB,
+	)
+
+	return client.NewClients(
+		userClient,
+		notifClient,
+		mediaClient,
+		redisClient,
+	)
 }

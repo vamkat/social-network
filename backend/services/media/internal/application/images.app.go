@@ -183,6 +183,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 	var missingVariants ct.Ids
 	var fms []dbservice.File
 
+	failedIds = []FailedId{}
 	errTx := m.txRunner.RunTx(ctx, func(tx *dbservice.Queries) error {
 		fms, missingVariants, err = tx.GetVariants(ctx, imgIds.Unique(), variant)
 		if err != nil {
@@ -203,7 +204,6 @@ func (m *MediaService) GetImages(ctx context.Context,
 		return nil, nil, err
 	}
 
-	failedIds = []FailedId{}
 	downUrls = make(map[ct.Id]string, len(fms))
 	for _, fm := range fms {
 		if err := validateFileStatus(fm); err != nil {

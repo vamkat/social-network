@@ -5,7 +5,6 @@ import (
 	cm "social-network/shared/gen-go/common"
 	mediapb "social-network/shared/gen-go/media"
 	userpb "social-network/shared/gen-go/users"
-	ct "social-network/shared/go/ct"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -45,21 +44,8 @@ func (c *Clients) IsGroupMember(ctx context.Context, userId, groupId int64) (boo
 	return resp.Value, nil
 }
 
-func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) (*cm.ListUsers, error) {
-	req := &cm.UserIds{
-		Values: userIds.Int64(),
-	}
+func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, error) {
 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *Clients) GetBasicUserInfo(ctx context.Context, userId int64) (*cm.User, error) {
-	req := &wrapperspb.Int64Value{Value: userId}
-
-	resp, err := c.UserClient.GetBasicUserInfo(ctx, req)
 	if err != nil {
 		return nil, err
 	}

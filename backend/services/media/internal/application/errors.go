@@ -41,6 +41,7 @@ func validateFileStatus(fm dbservice.File) error {
 	}
 
 	if fm.Status == ct.Pending || fm.Status == ct.Processing {
+		// TODO: Think if I should validate here
 		return ct.Wrap(ErrNotValidated, ErrValidateStatus, errMsg)
 	}
 

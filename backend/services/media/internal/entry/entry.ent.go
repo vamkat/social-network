@@ -78,7 +78,7 @@ func Run() error {
 		&client.Clients{
 			Configs:           cfgs.FileService,
 			MinIOClient:       fileServiceClient,
-			PublicMinIOClient: publicFileServiceClient, //TODO look into eliminating this one, and just using the normal minio client by changing the args based on dev/prod mode
+			PublicMinIOClient: publicFileServiceClient,
 			Validator: &validator.ImageValidator{
 				Config: cfgs.FileService.FileConstraints,
 			},
@@ -133,61 +133,6 @@ func Run() error {
 	tele.Info(ctx, "Server stopped")
 	return nil
 }
-
-// type configurations struct {
-// 	// Server
-// 	ServicePort string `env:"SERVICE_PORT"`
-
-// 	// Database
-// 	DatabaseURL              string `env:"DATABASE_URL"`
-// 	StaleFilesWorkerInterval int    `env:"STALE_FILES_WORKER_INTERVAL_SECONDS"`
-
-// 	// File service – buckets
-// 	BucketOriginals string `env:"BUCKET_ORIGINALS"`
-// 	BucketVariants  string `env:"BUCKET_VARIANTS"`
-
-// 	// File service – workers
-// 	VariantWorkerInterval int `env:"VARIANT_WORKER_INTERVAL_SECONDS"`
-
-// 	// File constraints
-// 	MaxImageUpload int64  `env:"MAX_IMAGE_UPLOAD_BYTES"`
-// 	MaxWidth       int    `env:"MAX_IMAGE_WIDTH"`
-// 	MaxHeight      int    `env:"MAX_IMAGE_HEIGHT"`
-// 	AllowedMIMEs   string `env:"ALLOWED_MIMES"` // comma-separated
-// 	AllowedExt     string `env:"ALLOWED_EXT"`   // comma-separated
-
-// 	// MinIO
-// 	MinioEndpoint       string `env:"MINIO_ENDPOINT"`
-// 	MinioPublicEndpoint string `env:"MINIO_PUBLIC_ENDPOINT"`
-// 	MinioAccessKey      string `env:"MINIO_ACCESS_KEY"`
-// 	MinioSecretKey      string `env:"MINIO_SECRET_KEY"`
-// }
-
-// func getConfigs() configurations {
-// 	//vaggelis TODO: add sensible
-// 	cfg := configurations{
-// 		ServicePort:              "8080",
-// 		DatabaseURL:              "postgres://media_user:media_password@localhost:5432/media_db?sslmode=disable",
-// 		StaleFilesWorkerInterval: 3600, // 1 hour
-// 		BucketOriginals:          "uploads-originals",
-// 		BucketVariants:           "uploads-variants",
-// 		VariantWorkerInterval:    30, // 30 seconds
-// 		MaxImageUpload:           5 << 20,
-// 		MaxWidth:                 4096,
-// 		MaxHeight:                4096,
-// 		AllowedMIMEs:             "image/jpeg,image/jpg,image/png,image/gif,image/webp",
-// 		AllowedExt:               ".jpg,.jpeg,.png,.gif,.webp",
-// 		MinioEndpoint:            "localhost:9000",
-// 		MinioPublicEndpoint:      "",
-// 		MinioAccessKey:           "",
-// 		MinioSecretKey:           "",
-// 	}
-
-// 	if err := configutil.LoadConfigs(&cfg); err != nil {
-// 		tele.Fatalf("failed to load env variables into config struct: %v", err)
-// 	}
-// 	return cfg
-// }
 
 func getConfigs() configs.Config {
 	return configs.Config{

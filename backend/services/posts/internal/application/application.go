@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"social-network/services/posts/internal/client"
 	ds "social-network/services/posts/internal/db/dbservice"
-	cm "social-network/shared/gen-go/common"
-	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
@@ -32,9 +30,10 @@ type Application struct {
 }
 
 // UsersBatchClient abstracts the single RPC used by the hydrator to fetch basic user info.
-type UsersBatchClient interface {
-	GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) (*cm.ListUsers, error)
-}
+// type UsersBatchClient interface {
+// 	GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) (*cm.ListUsers, error)
+// 	GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error)
+// }
 
 // RedisCache defines the minimal Redis operations used by the hydrator.
 type RedisCache interface {
@@ -45,7 +44,6 @@ type RedisCache interface {
 // UserRetriever defines the subset of behavior used by application for user hydration.
 type UserRetriever interface {
 	GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id]models.User, error)
-	GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error)
 }
 
 // ClientsInterface defines the methods that Application needs from clients.
@@ -73,7 +71,7 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients,
 		txRunner:       txRunner,
 		clients:        clients,
 		mediaRetriever: cachedMedia,
-		userRetriever:  ur.NewUserRetriever(clients, redisConnector, cachedMedia, 3*time.Minute),
+		userRetriever:  ur.NewUserRetriever(clients.GetBatchBasicUserInfo, redisConnector, cachedMedia, 3*time.Minute),
 	}, nil
 }
 

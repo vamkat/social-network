@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -13,14 +14,20 @@ import (
 )
 
 type UserRetriever struct {
-	clients        UsersBatchClient
-	cache          RedisCache
-	mediaRetriever *retrievemedia.MediaRetriever
-	ttl            time.Duration
+	GetBatchBasicUserInfo GetBatchBasicUserInfo
+	cache                 RedisCache
+	mediaRetriever        *retrievemedia.MediaRetriever
+	ttl                   time.Duration
 }
 
-func NewUserRetriever(clients UsersBatchClient, cache *redis_connector.RedisClient, mediaRetriever *retrievemedia.MediaRetriever, ttl time.Duration) *UserRetriever {
-	return &UserRetriever{clients: clients, cache: cache, mediaRetriever: mediaRetriever, ttl: ttl}
+// UserRetriever provides a function that abstracts the process of populating a map[ct.Id]models.User
+// from a slice of user ids. It depends on:
+//
+//  1. GetBatchBasicUserInfo function provided by an initiator that holds a connection to social-network user service.
+//  2. A cache interface that implements GetObj() and SetObj() methods.
+//  3. The retrievemedia package.
+func NewUserRetriever(userClient GetBatchBasicUserInfo, cache *redis_connector.RedisClient, mediaRetriever *retrievemedia.MediaRetriever, ttl time.Duration) *UserRetriever {
+	return &UserRetriever{GetBatchBasicUserInfo: userClient, cache: cache, mediaRetriever: mediaRetriever, ttl: ttl}
 }
 
 // GetUsers returns a map[userID]User, using cache + batch RPC.
@@ -36,7 +43,15 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 	// Redis lookup
 	for _, id := range ids {
 		var u models.User
-		if err := h.cache.GetObj(ctx, fmt.Sprintf("basic_user_info:%d", id), &u); err == nil {
+
+		key, err := ct.BasicUserInfoKey{Id: id}.String()
+		if err != nil {
+			fmt.Printf("RETRIEVE USERS - failed to construct redis key for id %v: %v\n", id, err)
+			missing = append(missing, id)
+			continue
+		}
+
+		if err := h.cache.GetObj(ctx, key, &u); err == nil {
 			users[id] = u
 			fmt.Println("RETRIEVE USERS - found user on redis:", u)
 		} else {
@@ -46,7 +61,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 
 	// Batch RPC for missing users
 	if len(missing) > 0 {
-		resp, err := h.clients.GetBatchBasicUserInfo(ctx, missing)
+		resp, err := h.GetBatchBasicUserInfo(ctx, &cm.UserIds{Values: missing.Int64()})
 		if err != nil {
 			return nil, err
 		}
@@ -58,11 +73,17 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 				AvatarId: ct.Id(u.Avatar),
 			}
 			users[user.UserId] = user
-			_ = h.cache.SetObj(ctx,
-				fmt.Sprintf("basic_user_info:%d", u.UserId),
-				user,
-				h.ttl,
-			)
+
+			key, err := ct.BasicUserInfoKey{Id: user.UserId}.String()
+			if err == nil {
+				_ = h.cache.SetObj(ctx,
+					key,
+					user,
+					h.ttl,
+				)
+			} else {
+				fmt.Printf("RETRIEVE USERS - failed to construct redis key for user %v: %v\n", user.UserId, err)
+			}
 		}
 	}
 	//========================== STEP 2 : get avatars from media ===============================================
@@ -92,6 +113,6 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 	return users, nil
 }
 
-func (h *UserRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
-	return h.mediaRetriever.GetImages(ctx, imageIds, variant)
-}
+// func (h *UserRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
+// 	return h.mediaRetriever.GetImages(ctx, imageIds, variant)
+// }

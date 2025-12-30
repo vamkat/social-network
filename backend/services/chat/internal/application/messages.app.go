@@ -61,7 +61,7 @@ func (c *ChatService) GetPreviousMessages(ctx context.Context,
 		allMemberIDs = append(allMemberIDs, r.Sender.UserId)
 	}
 
-	usersMap, err := c.Clients.UserIdsToMap(ctx, allMemberIDs)
+	usersMap, err := c.RetriveUsers.GetUsers(ctx, allMemberIDs)
 	if err != nil {
 		return resp, err // decide if should return struct with no user info or error ??
 	}
@@ -100,7 +100,7 @@ func (c *ChatService) GetNextMessages(ctx context.Context,
 		resp.HaveMoreAfter = true
 	}
 
-	if !args.HydrateUsers {
+	if !args.RetrieveUsers {
 		return resp, nil
 	}
 
@@ -109,7 +109,7 @@ func (c *ChatService) GetNextMessages(ctx context.Context,
 		allMemberIDs = append(allMemberIDs, r.Sender.UserId)
 	}
 
-	usersMap, err := c.Clients.UserIdsToMap(ctx, allMemberIDs)
+	usersMap, err := c.RetriveUsers.GetUsers(ctx, allMemberIDs)
 	if err != nil {
 		return resp, err // decide if should return struct with no user info or error ??
 	}
