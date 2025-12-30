@@ -2,7 +2,6 @@ package entry
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"social-network/services/media/internal/configs"
 	tele "social-network/shared/go/telemetry"
@@ -94,7 +93,7 @@ func EnsureBuckets(ctx context.Context, client *minio.Client, buckets configs.Bu
 		}
 
 		if !exists {
-			tele.Info(ctx, fmt.Sprintf("Creating bucket: %v\n", bucketName), "buckeName", bucketName)
+			tele.Info(ctx, "Creating bucket. @1", "name", bucketName)
 			if err := client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{}); err != nil {
 				return err
 			}

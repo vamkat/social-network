@@ -2,8 +2,10 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	"social-network/shared/gen-go/notifications"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
@@ -107,7 +109,18 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 	if status == "requested" { //Profile was private, request sent
 		resp.IsPending = true
 		resp.ViewerIsFollowing = false
-		//TODO CREATE NOTIFICATION EVENT
+		//CREATE NOTIFICATION EVENT
+		// TODO check formatting
+		notifReq := models.CreateNotificationRequest{
+			UserId:         req.TargetUserId,
+			Title:          "Follow Request",
+			Message:        fmt.Sprintf("%d requested to follow you", req.FollowerId), //username here TODO
+			Type:           notifications.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST,
+			SourceEntityId: req.FollowerId.Int64(),
+			NeedsAction:    true,
+			Aggregate:      false,
+		}
+		s.clients.CreateNotification(ctx, notifReq)
 	} else {
 		resp.IsPending = false
 		resp.ViewerIsFollowing = true

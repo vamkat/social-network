@@ -72,7 +72,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 
 	var imageMap map[int64]string
 	if len(PostImageIds) > 0 {
-		imageMap, _, err = s.clients.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
 	}
 
 	for i := range posts {
@@ -137,7 +137,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 	}
 
 	var imageMap map[int64]string
-	tele.Info(ctx, "GetPublicFeed needs these images", "image ids", postImageIds)
+	tele.Info(ctx, "GetPublicFeed needs these images. @1", "ids", postImageIds)
 	if len(postImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
@@ -214,7 +214,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 
 	var imageMap map[int64]string
 	if len(PostImageIds) > 0 {
-		imageMap, _, err = s.clients.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
 	}
 
 	for i := range posts {
@@ -298,7 +298,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 
 	var imageMap map[int64]string
 	if len(PostImageIds) > 0 {
-		imageMap, _, err = s.clients.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
 	}
 
 	for i := range posts {

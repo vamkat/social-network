@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"social-network/services/posts/internal/client"
 	ds "social-network/services/posts/internal/db/dbservice"
-	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
@@ -52,8 +51,6 @@ type ClientsInterface interface {
 	IsFollowing(ctx context.Context, userId, targetUserId int64) (bool, error)
 	IsGroupMember(ctx context.Context, userId, groupId int64) (bool, error)
 	GetFollowingIds(ctx context.Context, userId int64) ([]int64, error)
-	GetImage(ctx context.Context, imageId int64, variant media.FileVariant) (string, error)
-	GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error)
 }
 
 // NewApplication constructs a new Application with transaction support

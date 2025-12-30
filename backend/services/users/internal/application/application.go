@@ -4,6 +4,7 @@ import (
 	"context"
 	"social-network/services/users/internal/client"
 	ds "social-network/services/users/internal/db/dbservice"
+	"social-network/shared/go/models"
 	"social-network/shared/go/retrievemedia"
 	"time"
 
@@ -39,22 +40,9 @@ type ClientsInterface interface {
 	GetImage(ctx context.Context, imageId int64) (string, error)
 	GetObj(ctx context.Context, key string, dest any) error
 	SetObj(ctx context.Context, key string, value any, exp time.Duration) error
+	CreateNotification(ctx context.Context, req models.CreateNotificationRequest) error
 	// CreateGroupConversation(ctx context.Context, groupId int64, ownerId int64) error
 	// CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error
 	// AddMembersToGroupConversation(ctx context.Context, groupId int64, userIds []int64) error
 	// DeleteConversationByExactMembers(ctx context.Context, userIds []int64) error
-}
-
-func NewApplicationWithMocks(db ds.Querier, clients ClientsInterface) *Application {
-	return &Application{
-		db:      db,
-		clients: clients,
-	}
-}
-func NewApplicationWithMocksTx(db ds.Querier, clients ClientsInterface, txRunner TxRunner) *Application {
-	return &Application{
-		db:       db,
-		clients:  clients,
-		txRunner: txRunner,
-	}
 }

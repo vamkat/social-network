@@ -5,6 +5,7 @@ import (
 	chatpb "social-network/shared/gen-go/chat"
 	mediapb "social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/notifications"
+	"social-network/shared/go/models"
 	rds "social-network/shared/go/redis"
 	"time"
 )
@@ -63,6 +64,22 @@ func (c *Clients) GetObj(ctx context.Context, key string, dest any) error {
 
 func (c *Clients) SetObj(ctx context.Context, key string, value any, exp time.Duration) error {
 	return c.RedisClient.SetObj(ctx, key, value, exp)
+}
+
+func (c *Clients) CreateNotification(ctx context.Context, req models.CreateNotificationRequest) error {
+	grpcRec := &notifications.CreateNotificationRequest{
+		UserId:         req.UserId.Int64(),
+		Title:          req.Title,
+		Message:        req.Message,
+		Type:           req.Type,
+		SourceService:  "users",
+		SourceEntityId: req.SourceEntityId,
+		NeedsAction:    req.NeedsAction,
+		Payload:        req.Payload,
+		Aggregate:      req.Aggregate,
+	}
+	_, err := c.NotifsClient.CreateNotification(ctx, grpcRec)
+	return err
 }
 
 // // on successful follow (public profile or accept follow request)

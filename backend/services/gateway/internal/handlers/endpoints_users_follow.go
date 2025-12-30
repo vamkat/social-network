@@ -9,6 +9,7 @@ import (
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -36,8 +37,7 @@ func (s *Handlers) getFollowSuggestions() http.HandlerFunc {
 			return
 		}
 
-		// tele.Info(ctx, "from users", part1)
-		// tele.Info(ctx, "from posts", part2)
+		tele.Debug(ctx, "from users @1 @2", "part1", part1, "part2", part2)
 
 		myMap := make(map[int64]*common.User)
 		for _, user := range part1.Users {

@@ -245,7 +245,7 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 	}
 
 	if post.ImageId > 0 {
-		imageUrl, err := s.clients.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
+		imageUrl, err := s.mediaRetriever.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
 		if err != nil {
 			return models.Post{}, err
 		}
@@ -303,7 +303,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 	}
 
 	if post.ImageId > 0 {
-		imageUrl, err := s.clients.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
+		imageUrl, err := s.mediaRetriever.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
 		if err != nil {
 			return models.Post{}, err
 		}

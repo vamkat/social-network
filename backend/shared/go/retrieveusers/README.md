@@ -52,7 +52,7 @@ type Application struct {
 func NewApplication(
     // ... config
     redisClient *redis_connector.RedisClient,
-    usersClient myservice.UsersClient, // Impelements UsersBatchClient
+    usersClient myservice.UsersClient, // Implements UsersBatchClient
     mediaRetriever *retrievemedia.MediaRetriever,
 ) *Application {
     

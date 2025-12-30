@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -56,14 +55,14 @@ func WriteJSON(ctx context.Context, w http.ResponseWriter, code int, v any) erro
 	if code == http.StatusNoContent {
 		return nil
 	}
-	tele.Info(ctx, "responding with json", "content", v)
+	tele.Info(ctx, "responding with json @1", "content", v)
 	b, err := json.Marshal(v)
 	if err != nil {
 		tele.Error(ctx, "ERROR WHILE WRITING JSON! @1", "error", err.Error())
 		return err
 	}
 
-	tele.Info(ctx, fmt.Sprintf("sending this: %s", string(b)))
+	tele.Info(ctx, "sending this: @1", "data", string(b))
 
 	_, err = w.Write(b)
 	return err

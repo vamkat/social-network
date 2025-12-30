@@ -66,7 +66,7 @@ func Run() error {
 	if cfgs.FileService.PublicEndpoint != "" {
 		publicFileServiceClient, err = NewMinIOConn(ctx, cfgs.FileService, cfgs.FileService.PublicEndpoint, true)
 		if err != nil {
-			tele.Info(ctx, fmt.Sprintf("Warning: failed to initialize public MinIO client: %v", err), "error", err.Error())
+			tele.Info(ctx, "Warning: failed to initialize public MinIO client: @1", "error", err)
 		} else {
 			tele.Info(ctx, "Initialized public MinIO client for URL generation")
 		}
