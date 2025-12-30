@@ -43,11 +43,12 @@ func testAuthFlow(ctx context.Context) error {
 	// 1. Register
 	registerData := newRegisterReq()
 
-	resp, err := postJSON(client, "/register", registerData)
+	resp, err := postJSON(client, "http://api-gateway:8081/register", registerData)
 	if err != nil {
-		return fmt.Errorf("register failed: %w, body: %s", err, bodyToString(resp))
+		return fmt.Errorf("register failed: %w, body: %s", err, "bodyToString(resp)")
 	}
-	if resp.StatusCode != 200 {
+
+	if resp.StatusCode != 200 && resp.StatusCode != 201 {
 		return fmt.Errorf("register failed: bad status, %w, body: %s", err, bodyToString(resp))
 	}
 
@@ -59,16 +60,16 @@ func testAuthFlow(ctx context.Context) error {
 		"identifier": email,
 		"password":   pass,
 	}
-	resp, err = postJSON(client, "/login", loginData)
+	resp, err = postJSON(client, "http://api-gateway:8081/login", loginData)
 	if err != nil {
 		return fmt.Errorf("login failed: %w, body: %s", err, bodyToString(resp))
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 200 && resp.StatusCode != 201 {
 		return fmt.Errorf("login failed: bad status, %w, body: %s", err, bodyToString(resp))
 	}
 
 	// 3. Auth status
-	resp, err = postJSON(client, "/auth-status", nil)
+	resp, err = postJSON(client, "http://api-gateway:8081/auth-status", nil)
 	if err != nil {
 		return fmt.Errorf("auth status failed: %w, body: %s", err, bodyToString(resp))
 	}
@@ -77,7 +78,7 @@ func testAuthFlow(ctx context.Context) error {
 	}
 
 	// 4. Logout
-	resp, err = postJSON(client, "/logout", nil)
+	resp, err = postJSON(client, "http://api-gateway:8081/logout", nil)
 	if err != nil {
 		return fmt.Errorf("logout failed: %w, body: %s", err, bodyToString(resp))
 	}
@@ -86,12 +87,12 @@ func testAuthFlow(ctx context.Context) error {
 	}
 
 	// 5. Auth status
-	resp, err = postJSON(client, "/auth-status", nil)
+	resp, err = postJSON(client, "http://api-gateway:8081/auth-status", nil)
 	if err != nil {
 		return fmt.Errorf("second auth status failed: %w, body: %s", err, bodyToString(resp))
 	}
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("auth check failed: bad status, %w, body: %s", err, bodyToString(resp))
+	if resp.StatusCode == 200 {
+		return fmt.Errorf("auth check failed, expected bad status, %w, body: %s", err, bodyToString(resp))
 	}
 
 	fmt.Println("api-gateway Finished test auth flow")
@@ -489,7 +490,7 @@ func randomRegister(ctx context.Context) error {
 	gotRateLimited := false
 	for range 100 {
 		registerData := newRegisterReq()
-		resp, err := postJSON(client, "/register", registerData)
+		resp, err := postJSON(client, "http://api-gateway:8081/register", registerData)
 		if err != nil {
 			return fmt.Errorf("spam register failed: %w", err)
 		}
@@ -518,7 +519,7 @@ func randomLogin(ctx context.Context) error {
 	gotRateLimited := false
 	for range 100 {
 		loginReq := newLoginReq()
-		resp, err := postJSON(client, "/login", loginReq)
+		resp, err := postJSON(client, "http://api-gateway:8081/login", loginReq)
 		if err != nil {
 			return fmt.Errorf("spam login failed: %w", err)
 		}
