@@ -2,8 +2,11 @@ package client
 
 import (
 	"context"
+	"fmt"
 	cm "social-network/shared/gen-go/common"
 	mediapb "social-network/shared/gen-go/media"
+	"social-network/shared/gen-go/notifications"
+	notifpb "social-network/shared/gen-go/notifications"
 	userpb "social-network/shared/gen-go/users"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -11,14 +14,16 @@ import (
 
 // Holds connections to clients
 type Clients struct {
-	UserClient  userpb.UserServiceClient
-	MediaClient mediapb.MediaServiceClient
+	UserClient   userpb.UserServiceClient
+	MediaClient  mediapb.MediaServiceClient
+	NotifsClient notifications.NotificationServiceClient
 }
 
-func NewClients(UserClient userpb.UserServiceClient, MediaClient mediapb.MediaServiceClient) *Clients {
+func NewClients(UserClient userpb.UserServiceClient, MediaClient mediapb.MediaServiceClient, NotifsClient notifpb.NotificationServiceClient) *Clients {
 	return &Clients{
-		UserClient:  UserClient,
-		MediaClient: MediaClient,
+		UserClient:   UserClient,
+		MediaClient:  MediaClient,
+		NotifsClient: NotifsClient,
 	}
 }
 
@@ -61,4 +66,51 @@ func (c *Clients) GetFollowingIds(ctx context.Context, userId int64) ([]int64, e
 	}
 
 	return resp.Values, nil
+}
+
+func (c *Clients) CreateNewEvent(ctx context.Context, userId, groupId, eventId int64, groupName, eventTitle string) error {
+	req := &notifpb.CreateNewEventRequest{
+		UserId:     userId,
+		GroupId:    groupId,
+		EventId:    eventId,
+		GroupName:  groupName,
+		EventTitle: eventTitle,
+	}
+	if c.NotifsClient == nil {
+		return fmt.Errorf("NotifsClient is nil")
+	}
+	_, err := c.NotifsClient.CreateNewEvent(ctx, req)
+	return err
+}
+
+// for comments too?
+func (c *Clients) CreatePostLike(ctx context.Context, userId, likerUserId, postId int64, likerUsername string) error {
+	req := &notifpb.CreatePostLikeRequest{
+		UserId:        userId,
+		LikerUserId:   likerUserId,
+		PostId:        postId,
+		LikerUsername: likerUsername,
+		Aggregate:     true,
+	}
+	if c.NotifsClient == nil {
+		return fmt.Errorf("NotifsClient is nil")
+	}
+	_, err := c.NotifsClient.CreatePostLike(ctx, req)
+	return err
+}
+
+func (c *Clients) CreatePostComment(ctx context.Context, userId, commenterId, postId int64, commenterUsername, commentContent string) error {
+	req := &notifpb.CreatePostCommentRequest{
+		UserId:            userId,
+		CommenterUserId:   commenterId,
+		PostId:            postId,
+		CommenterUsername: commenterUsername,
+		CommentContent:    commentContent,
+		Aggregate:         true,
+	}
+	if c.NotifsClient == nil {
+		return fmt.Errorf("NotifsClient is nil")
+	}
+	_, err := c.NotifsClient.CreatePostComment(ctx, req)
+	return err
 }

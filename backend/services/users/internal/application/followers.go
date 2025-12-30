@@ -2,10 +2,8 @@ package application
 
 import (
 	"context"
-	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
-	"social-network/shared/gen-go/notifications"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
@@ -109,22 +107,29 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 	if status == "requested" { //Profile was private, request sent
 		resp.IsPending = true
 		resp.ViewerIsFollowing = false
-		//CREATE NOTIFICATION EVENT
-		// TODO check formatting
-		notifReq := models.CreateNotificationRequest{
-			UserId:         req.TargetUserId,
-			Title:          "Follow Request",
-			Message:        fmt.Sprintf("%d requested to follow you", req.FollowerId), //username here TODO
-			Type:           notifications.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST,
-			SourceEntityId: req.FollowerId.Int64(),
-			NeedsAction:    true,
-			Aggregate:      false,
+
+		// create notification
+		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
 		}
-		s.clients.CreateNotification(ctx, notifReq)
+		err = s.clients.CreateFollowRequestNotification(ctx, req.TargetUserId.Int64(), req.FollowerId.Int64(), follower.Username.String())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
 	} else {
 		resp.IsPending = false
 		resp.ViewerIsFollowing = true
 
+		// create notification
+		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateNewFollower(ctx, req.TargetUserId.Int64(), req.FollowerId.Int64(), follower.Username.String())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
 		//try and create conversation in chat service if none exists
 		//condition that exactly one user follows the other is checked before call is made
 		// err = s.createPrivateConversation(ctx, req)
@@ -176,6 +181,15 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 			return err
 		}
 
+		//create notification
+		targetUser, err := s.GetBasicUserInfo(ctx, req.UserId)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateFollowRequestAccepted(ctx, req.RequesterId.Int64(), req.UserId.Int64(), targetUser.Username.String())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
 		//try and create conversation in chat service if none exists
 		//condition that exactly one user follows the other is checked before call is made
 		// err = s.createPrivateConversation(ctx, models.FollowUserReq{
@@ -194,7 +208,15 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 		if err != nil {
 			return err
 		}
-
+		//create notification
+		targetUser, err := s.GetBasicUserInfo(ctx, req.UserId)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateFollowRequestRejected(ctx, req.RequesterId.Int64(), req.UserId.Int64(), targetUser.Username.String())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
 	}
 	return nil
 }

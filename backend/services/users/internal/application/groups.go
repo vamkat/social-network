@@ -299,7 +299,19 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 	if err != nil {
 		return err
 	}
-	//TODO CREATE NOTIFICATION EVENT
+	//create notification
+	inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
+	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
+	err = s.clients.CreateGroupInvite(ctx, req.InvitedId.Int64(), req.InviterId.Int64(), req.GroupId.Int64(), group.GroupTitle, inviter.Username.String())
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
 	return nil
 }
 
@@ -332,7 +344,19 @@ func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoin
 	if err != nil {
 		return err
 	}
-	//TODO CREATE NOTIFICATION EVENT
+	//create notification
+	requester, err := s.GetBasicUserInfo(ctx, req.RequesterId)
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
+	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
+	err = s.clients.CreateGroupJoinRequest(ctx, group.GroupOwner, int64(req.RequesterId.Int64()), req.GroupId.Int64(), group.GroupTitle, requester.Username.String())
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
 	return nil
 }
 
@@ -358,6 +382,14 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 		return err
 	}
 
+	inviterId, err := s.db.GetGroupInviterId(ctx, ds.GetGroupInviterIdParams{
+		GroupID:    req.GroupId.Int64(),
+		ReceiverID: req.InvitedId.Int64(),
+	})
+	if err != nil {
+		return err
+	}
+
 	if req.Accepted {
 
 		err := s.db.AcceptGroupInvite(ctx, ds.AcceptGroupInviteParams{
@@ -367,6 +399,19 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 		if err != nil {
 			return err
 
+		}
+		//create notification
+		invited, err := s.GetBasicUserInfo(ctx, req.InvitedId)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateGroupInviteAccepted(ctx, int64(req.InvitedId.Int64()), inviterId, req.GroupId.Int64(), group.GroupTitle, invited.Username.String())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
 		}
 
 		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.InvitedId.Int64()})
@@ -381,6 +426,19 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 		})
 		if err != nil {
 			return err
+		}
+		//create notification
+		invited, err := s.GetBasicUserInfo(ctx, req.InvitedId)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateGroupInviteRejected(ctx, int64(req.InvitedId.Int64()), inviterId, req.GroupId.Int64(), group.GroupTitle, invited.Username.String())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
 		}
 	}
 	return nil
@@ -411,6 +469,16 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			return err
 		}
 
+		//create notification
+		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateGroupJoinRequestAccepted(ctx, int64(req.RequesterId.Int64()), group.GroupOwner, req.GroupId.Int64(), group.GroupTitle)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+
 		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.RequesterId.Int64()})
 		// if err != nil {
 		// 	tele.Info("could not add member to group conversation:", err)
@@ -421,6 +489,15 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			GroupID: req.GroupId.Int64(),
 			UserID:  req.RequesterId.Int64(),
 		})
+		//create notification
+		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
+		err = s.clients.CreateGroupJoinRequestRejected(ctx, int64(req.RequesterId.Int64()), group.GroupOwner, req.GroupId.Int64(), group.GroupTitle)
+		if err != nil {
+			//WHAT DO DO WITH ERROR HERE?
+		}
 	}
 	if err != nil {
 		return err

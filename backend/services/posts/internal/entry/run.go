@@ -10,6 +10,7 @@ import (
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/services/posts/internal/handler"
 	"social-network/shared/gen-go/media"
+	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
@@ -74,13 +75,25 @@ func Run() error {
 		tele.Fatalf("failed to connect to media service: %v", err)
 	}
 
+	NotifService, err := gorpc.GetGRpcClient(
+		notifications.NewNotificationServiceClient,
+		cfgs.NotifGRPCAddr,
+		ct.CommonKeys(),
+	)
+	if err != nil {
+		tele.Fatalf("failed to connect to notifications service: %v", err)
+	}
+	if NotifService == nil {
+		tele.Fatal("NotifService is nil after initialization")
+	}
+
 	//
 	//
 	//
 	// REDIS
 	redisConnector := rds.NewRedisClient(cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB)
 
-	clients := client.NewClients(UsersService, MediaService)
+	clients := client.NewClients(UsersService, MediaService, NotifService)
 
 	app, err := application.NewApplication(ds.New(pool), pool, clients, redisConnector)
 	if err != nil {
@@ -138,6 +151,7 @@ type configs struct {
 	PostsGRPCAddr  string `env:"POSTS_GRPC_ADDR"`
 	ChatGRPCAddr   string `env:"CHAT_GRPC_ADDR"`
 	MediaGRPCAddr  string `env:"MEDIA_GRPC_ADDR"`
+	NotifGRPCAddr  string `env:"NOTIFICATIONS_ADDRESS"`
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
@@ -162,6 +176,7 @@ func getConfigs() configs { // sensible defaults
 		PostsGRPCAddr: "posts:50051",
 		ChatGRPCAddr:  "chat:50051",
 		MediaGRPCAddr: "media:50051",
+		NotifGRPCAddr: "notifications:50051",
 
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,

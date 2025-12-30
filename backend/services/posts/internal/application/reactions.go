@@ -26,14 +26,31 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 		return ErrNotAllowed
 	}
 
-	rowsAffected, err := s.db.ToggleOrInsertReaction(ctx, ds.ToggleOrInsertReactionParams{
+	action, err := s.db.ToggleOrInsertReaction(ctx, ds.ToggleOrInsertReactionParams{
 		ContentID: req.EntityId.Int64(),
 		UserID:    req.RequesterId.Int64(),
 	})
-	if err != nil || rowsAffected != 1 {
+	if err != nil {
 		return err
 	}
-
+	if action == "added" {
+		//create notification
+		userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{req.RequesterId})
+		if err != nil {
+			//log error
+		}
+		var likerUsername string
+		if u, ok := userMap[req.RequesterId]; ok {
+			likerUsername = u.Username.String()
+		}
+		row, err := s.db.GetEntityCreatorAndGroup(ctx, req.EntityId.Int64())
+		if err != nil {
+			//log and don't proceed to notif
+		}
+		err = s.clients.CreatePostLike(ctx, row.CreatorID, req.RequesterId.Int64(), req.EntityId.Int64(), likerUsername)
+	} else {
+		//remove notification or not? how?
+	}
 	return nil
 }
 

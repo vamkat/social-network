@@ -31,6 +31,8 @@ type Querier interface {
 	GetFollowingCount(ctx context.Context, followerID int64) (int64, error)
 	GetFollowingIds(ctx context.Context, followerID int64) ([]int64, error)
 	GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, error)
+	GetGroupInviterId(ctx context.Context, arg GetGroupInviterIdParams) (int64, error)
+	GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupInfoRow, error)
 	GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error)
 	GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error)
 	GetUserBasic(ctx context.Context, id int64) (GetUserBasicRow, error)

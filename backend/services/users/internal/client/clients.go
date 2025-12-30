@@ -28,24 +28,6 @@ func NewClients(chatClient chatpb.ChatServiceClient, notifClient notifications.N
 	return c
 }
 
-func (c *Clients) GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error) {
-	req := &mediapb.GetImagesRequest{
-		ImgIds:  &mediapb.ImageIds{ImgIds: imageIds},
-		Variant: 1,
-	}
-	resp, err := c.MediaClient.GetImages(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	var imagesToDelete []int64
-	for _, failedImage := range resp.FailedIds {
-		if failedImage.GetStatus() == 4 || failedImage.GetStatus() == 0 {
-			imagesToDelete = append(imagesToDelete, failedImage.FileId)
-		}
-	}
-	return resp.DownloadUrls, imagesToDelete, nil
-}
-
 func (c *Clients) GetImage(ctx context.Context, imageId int64) (string, error) {
 	req := &mediapb.GetImageRequest{
 		ImageId: imageId,
@@ -79,6 +61,116 @@ func (c *Clients) CreateNotification(ctx context.Context, req models.CreateNotif
 		Aggregate:      req.Aggregate,
 	}
 	_, err := c.NotifsClient.CreateNotification(ctx, grpcRec)
+	return err
+}
+
+func (c *Clients) CreateFollowRequestNotification(ctx context.Context, targetUserID, requesterUserID int64, requesterUsername string) error {
+	req := &notifications.CreateFollowRequestRequest{
+		TargetUserId:      targetUserID,
+		RequesterUserId:   requesterUserID,
+		RequesterUsername: requesterUsername,
+	}
+	_, err := c.NotifsClient.CreateFollowRequest(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateNewFollower(ctx context.Context, targetUserID, followerUserID int64, followerUsername string) error {
+	req := &notifications.CreateNewFollowerRequest{
+		TargetUserId:     targetUserID,
+		FollowerUserId:   followerUserID,
+		FollowerUsername: followerUsername,
+	}
+	_, err := c.NotifsClient.CreateNewFollower(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateGroupInvite(ctx context.Context, invitedUserId, inviterUserId, groupId int64, groupName, inviterUsername string) error {
+	req := &notifications.CreateGroupInviteRequest{
+		InvitedUserId:   invitedUserId,
+		InviterUserId:   inviterUserId,
+		GroupId:         groupId,
+		GroupName:       groupName,
+		InviterUsername: inviterUsername,
+	}
+	_, err := c.NotifsClient.CreateGroupInvite(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateGroupJoinRequest(ctx context.Context, groupOnwerId, requesterId, groupId int64, groupName, requesterUsername string) error {
+	req := &notifications.CreateGroupJoinRequestRequest{
+		GroupOwnerId:      groupOnwerId,
+		RequesterUserId:   requesterId,
+		GroupId:           groupId,
+		GroupName:         groupName,
+		RequesterUsername: requesterUsername,
+	}
+	_, err := c.NotifsClient.CreateGroupJoinRequest(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateFollowRequestAccepted(ctx context.Context, requesterId, targetUserId int64, targetUsername string) error {
+	req := &notifications.CreateFollowRequestAcceptedRequest{
+		RequesterUserId: requesterId,
+		TargetUserId:    targetUserId,
+		TargetUsername:  targetUsername,
+	}
+	_, err := c.NotifsClient.CreateFollowRequestAccepted(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateFollowRequestRejected(ctx context.Context, requesterId, targetUserId int64, targetUsername string) error {
+	req := &notifications.CreateFollowRequestRejectedRequest{
+		RequesterUserId: requesterId,
+		TargetUserId:    targetUserId,
+		TargetUsername:  targetUsername,
+	}
+	_, err := c.NotifsClient.CreateFollowRequestRejected(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateGroupInviteAccepted(ctx context.Context, invitedUserId, inviterUserId, groupId int64, groupName, invitedUsername string) error {
+	req := &notifications.CreateGroupInviteAcceptedRequest{
+		InviterUserId:   inviterUserId,
+		InvitedUserId:   invitedUserId,
+		GroupId:         groupId,
+		GroupName:       groupName,
+		InvitedUsername: invitedUsername,
+	}
+	_, err := c.NotifsClient.CreateGroupInviteAccepted(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateGroupInviteRejected(ctx context.Context, invitedUserId, inviterUserId, groupId int64, groupName, invitedUsername string) error {
+	req := &notifications.CreateGroupInviteRejectedRequest{
+		InviterUserId:   inviterUserId,
+		InvitedUserId:   invitedUserId,
+		GroupId:         groupId,
+		GroupName:       groupName,
+		InvitedUsername: invitedUsername,
+	}
+	_, err := c.NotifsClient.CreateGroupInviteRejected(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateGroupJoinRequestAccepted(ctx context.Context, requesterId, groupOwnerId, groupId int64, groupName string) error {
+	req := &notifications.CreateGroupJoinRequestAcceptedRequest{
+		RequesterUserId: requesterId,
+		GroupOwnerId:    groupOwnerId,
+		GroupId:         groupId,
+		GroupName:       groupName,
+	}
+	_, err := c.NotifsClient.CreateGroupJoinRequestAccepted(ctx, req)
+	return err
+}
+
+func (c *Clients) CreateGroupJoinRequestRejected(ctx context.Context, requesterId, groupOwnerId, groupId int64, groupName string) error {
+	req := &notifications.CreateGroupJoinRequestRejectedRequest{
+		RequesterUserId: requesterId,
+		GroupOwnerId:    groupOwnerId,
+		GroupId:         groupId,
+		GroupName:       groupName,
+	}
+	_, err := c.NotifsClient.CreateGroupJoinRequestRejected(ctx, req)
 	return err
 }
 

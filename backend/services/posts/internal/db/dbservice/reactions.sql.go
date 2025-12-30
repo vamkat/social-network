@@ -30,16 +30,24 @@ func (q *Queries) GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]i
 	return items, nil
 }
 
-const toggleOrInsertReaction = `-- name: ToggleReaction :execrows
+const toggleOrInsertReaction = `-- name: ToggleReaction :one
 WITH deleted AS (
     DELETE FROM reactions
     WHERE content_id = $1
       AND user_id = $2
     RETURNING 1
+),
+inserted AS (
+    INSERT INTO reactions (content_id, user_id)
+    SELECT $1, $2
+    WHERE NOT EXISTS (SELECT 1 FROM deleted)
+    RETURNING 1
 )
-INSERT INTO reactions (content_id, user_id)
-SELECT $1, $2
-WHERE NOT EXISTS (SELECT 1 FROM deleted);
+SELECT
+    CASE
+        WHEN EXISTS (SELECT 1 FROM deleted) THEN 'removed'
+        ELSE 'added'
+    END AS action;
 `
 
 type ToggleOrInsertReactionParams struct {
@@ -47,10 +55,12 @@ type ToggleOrInsertReactionParams struct {
 	UserID    int64
 }
 
-func (q *Queries) ToggleOrInsertReaction(ctx context.Context, arg ToggleOrInsertReactionParams) (int64, error) {
-	result, err := q.db.Exec(ctx, toggleOrInsertReaction, arg.ContentID, arg.UserID)
+func (q *Queries) ToggleOrInsertReaction(ctx context.Context, arg ToggleOrInsertReactionParams) (string, error) {
+	var action string
+	err := q.db.QueryRow(ctx, toggleOrInsertReaction, arg.ContentID, arg.UserID).
+		Scan(&action)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	return result.RowsAffected(), nil
+	return action, nil
 }

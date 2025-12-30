@@ -51,6 +51,9 @@ type ClientsInterface interface {
 	IsFollowing(ctx context.Context, userId, targetUserId int64) (bool, error)
 	IsGroupMember(ctx context.Context, userId, groupId int64) (bool, error)
 	GetFollowingIds(ctx context.Context, userId int64) ([]int64, error)
+	CreateNewEvent(ctx context.Context, userId, groupId, eventId int64, groupName, eventTitle string) error
+	CreatePostLike(ctx context.Context, userId, likerUserId, postId int64, likerUsername string) error
+	CreatePostComment(ctx context.Context, userId, commenterId, postId int64, commenterUsername, commentContent string) error
 }
 
 // NewApplication constructs a new Application with transaction support

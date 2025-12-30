@@ -293,3 +293,37 @@ func (q *Queries) UpdatePostAudience(ctx context.Context, arg UpdatePostAudience
 	}
 	return result.RowsAffected(), nil
 }
+
+const getBasicPostByID = `-- name: GetBasicPostByID :one
+SELECT
+    id,
+    post_body,
+    creator_id,
+    COALESCE(group_id, 0)::bigint AS group_id,
+    audience
+      
+FROM posts
+WHERE id=$1
+  AND p.deleted_at IS NULL
+`
+
+type GetBasicPostByIDRow struct {
+	ID        int64
+	PostBody  string
+	CreatorID int64
+	GroupID   int64
+	Audience  IntendedAudience
+}
+
+func (q *Queries) GetBasicPostByID(ctx context.Context, postId int64) (GetBasicPostByIDRow, error) {
+	row := q.db.QueryRow(ctx, getBasicPostByID, postId)
+	var i GetBasicPostByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.PostBody,
+		&i.CreatorID,
+		&i.GroupID,
+		&i.Audience,
+	)
+	return i, err
+}

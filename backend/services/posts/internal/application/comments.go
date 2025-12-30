@@ -27,7 +27,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	if !hasAccess {
 		return ErrNotAllowed
 	}
-	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
+	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		commentId, err := q.CreateComment(ctx, ds.CreateCommentParams{
 			CommentCreatorID: req.CreatorId.Int64(),
 			ParentID:         req.ParentId.Int64(),
@@ -49,7 +49,28 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
+	//create notification
+	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{req.CreatorId})
+	if err != nil {
+		//log error
+	}
+	var commenterUsername string
+	if u, ok := userMap[req.CreatorId]; ok {
+		commenterUsername = u.Username.String()
+	}
+	basicPost, err := s.db.GetBasicPostByID(ctx, req.ParentId.Int64())
+	if err != nil {
+		//log error
+	}
+	err = s.clients.CreatePostComment(ctx, basicPost.CreatorID, req.CreatorId.Int64(), req.ParentId.Int64(), commenterUsername, req.Body.String())
+	if err != nil {
+		//log error
+	}
+	return nil
 }
 
 func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq) error {

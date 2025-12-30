@@ -30,7 +30,7 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 		Time:  req.EventDate.Time(),
 		Valid: true,
 	}
-	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
+	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 
 		eventId, err := s.db.CreateEvent(ctx, ds.CreateEventParams{
 			EventTitle:     req.Title.String(),
@@ -55,9 +55,13 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
-	//TODO CREATE NOTIFICATION EVENT
-
+	//TODO CREATE NOTIFICATION EVENT (for all members)
+	// err=s.clients.CreateNewEvent(ctx,)
+	return nil
 }
 
 func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) error {

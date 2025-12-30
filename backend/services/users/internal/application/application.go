@@ -36,11 +36,21 @@ func NewApplication(db ds.Querier, txRunner TxRunner, pool *pgxpool.Pool, client
 
 // ClientsInterface defines the methods that Application needs from clients.
 type ClientsInterface interface {
-	GetImages(ctx context.Context, imageIds []int64) (map[int64]string, []int64, error)
 	GetImage(ctx context.Context, imageId int64) (string, error)
 	GetObj(ctx context.Context, key string, dest any) error
 	SetObj(ctx context.Context, key string, value any, exp time.Duration) error
 	CreateNotification(ctx context.Context, req models.CreateNotificationRequest) error
+	CreateFollowRequestNotification(ctx context.Context, targetUserID, requesterUserID int64, requesterUsername string) error
+	CreateNewFollower(ctx context.Context, targetUserID, followerUserID int64, followerUsername string) error
+	CreateGroupInvite(ctx context.Context, invitedUserId, inviterUserId, groupId int64, groupName, inviterUsername string) error
+	CreateGroupJoinRequest(ctx context.Context, groupOnwerId, requesterId, groupId int64, groupName, requesterUsername string) error
+	CreateFollowRequestAccepted(ctx context.Context, requesterId, targetUserId int64, targetUsername string) error
+	CreateFollowRequestRejected(ctx context.Context, requesterId, targetUserId int64, targetUsername string) error
+	CreateGroupInviteAccepted(ctx context.Context, invitedUserId, inviterUserId, groupId int64, groupName, invitedUsername string) error
+	CreateGroupInviteRejected(ctx context.Context, invitedUserId, inviterUserId, groupId int64, groupName, invitedUsername string) error
+	CreateGroupJoinRequestAccepted(ctx context.Context, requesterId, groupOwnerId, groupId int64, groupName string) error
+	CreateGroupJoinRequestRejected(ctx context.Context, requesterId, groupOwnerId, groupId int64, groupName string) error
+
 	// CreateGroupConversation(ctx context.Context, groupId int64, ownerId int64) error
 	// CreatePrivateConversation(ctx context.Context, userId1, userId2 int64) error
 	// AddMembersToGroupConversation(ctx context.Context, groupId int64, userIds []int64) error

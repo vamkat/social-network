@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	ds "social-network/services/users/internal/db/dbservice"
+	"social-network/shared/gen-go/media"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
@@ -90,12 +91,14 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 		// 	return ErrWrongCredentials
 		// }
 		if u.AvatarId > 0 {
-			imageUrl, err := s.clients.GetImage(ctx, u.AvatarId.Int64())
+			images, _, err := s.mediaRetriever.GetImages(ctx, ct.Ids{u.AvatarId}, media.FileVariant_THUMBNAIL)
 			if err != nil {
 				return err
 			}
 
-			u.AvatarURL = imageUrl
+			if url, ok := images[u.AvatarId.Int64()]; ok {
+				u.AvatarURL = url
+			}
 		}
 
 		return nil

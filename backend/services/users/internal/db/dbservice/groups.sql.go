@@ -238,6 +238,39 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 	return i, err
 }
 
+const getGroupBasicInfo = `-- name: GetGroupName :one
+SELECT
+  id,
+  group_owner,
+  group_title,
+  group_description,
+  group_image_id,
+FROM groups
+WHERE id=$1
+  AND deleted_at IS NULL
+`
+
+type GetGroupBasicInfoRow struct {
+	ID               int64
+	GroupOwner       int64
+	GroupTitle       string
+	GroupDescription string
+	GroupImageID     int64
+}
+
+func (q *Queries) GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupInfoRow, error) {
+	row := q.db.QueryRow(ctx, getGroupInfo, id)
+	var i GetGroupInfoRow
+	err := row.Scan(
+		&i.ID,
+		&i.GroupOwner,
+		&i.GroupTitle,
+		&i.GroupDescription,
+		&i.GroupImageID,
+	)
+	return i, err
+}
+
 const getGroupMembers = `-- name: GetGroupMembers :many
 SELECT
     u.id,
@@ -620,6 +653,30 @@ type SendGroupInviteParams struct {
 func (q *Queries) SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error {
 	_, err := q.db.Exec(ctx, sendGroupInvite, arg.GroupID, arg.SenderID, arg.ReceiverID)
 	return err
+}
+
+const getGroupInviterId = `--name: GetGroupInviterId :one
+SELECT sender_id
+FROM group_invites
+WHERE group_id = $1
+  AND receiver_id = $2
+  AND status = 'pending'
+  AND deleted_at IS NULL;
+  `
+
+type GetGroupInviterIdParams struct {
+	GroupID    int64
+	ReceiverID int64
+}
+
+func (q *Queries) GetGroupInviterId(ctx context.Context, arg GetGroupInviterIdParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getGroupInviterId,
+		arg.GroupID,
+		arg.ReceiverID,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const sendGroupJoinRequest = `-- name: SendGroupJoinRequest :exec

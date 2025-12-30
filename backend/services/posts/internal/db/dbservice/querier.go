@@ -10,7 +10,7 @@ type Querier interface {
 	CanUserSeeEntity(ctx context.Context, arg CanUserSeeEntityParams) (bool, error)
 	ClearPostAudience(ctx context.Context, postID int64) error
 	CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error)
-	CreateEvent(ctx context.Context, arg CreateEventParams) (int64,error)
+	CreateEvent(ctx context.Context, arg CreateEventParams) (int64, error)
 	CreatePost(ctx context.Context, arg CreatePostParams) (int64, error)
 	DeleteComment(ctx context.Context, arg DeleteCommentParams) (int64, error)
 	DeleteEvent(ctx context.Context, arg DeleteEventParams) (int64, error)
@@ -20,6 +20,7 @@ type Querier interface {
 	EditComment(ctx context.Context, arg EditCommentParams) (int64, error)
 	EditEvent(ctx context.Context, arg EditEventParams) (int64, error)
 	EditPostContent(ctx context.Context, arg EditPostContentParams) (int64, error)
+	GetBasicPostByID(ctx context.Context, postId int64) (GetBasicPostByIDRow, error)
 	GetCommentsByPostId(ctx context.Context, arg GetCommentsByPostIdParams) ([]GetCommentsByPostIdRow, error)
 	GetEntityCreatorAndGroup(ctx context.Context, id int64) (GetEntityCreatorAndGroupRow, error)
 	GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error)
@@ -41,7 +42,7 @@ type Querier interface {
 	// U4: Users who commented on the same posts as you
 	// Combine scores
 	SuggestUsersByPostActivity(ctx context.Context, creatorID int64) ([]int64, error)
-	ToggleOrInsertReaction(ctx context.Context, arg ToggleOrInsertReactionParams) (int64, error)
+	ToggleOrInsertReaction(ctx context.Context, arg ToggleOrInsertReactionParams) (string, error)
 	UpdatePostAudience(ctx context.Context, arg UpdatePostAudienceParams) (int64, error)
 	UpsertEventResponse(ctx context.Context, arg UpsertEventResponseParams) (int64, error)
 	UpsertImage(ctx context.Context, arg UpsertImageParams) error
