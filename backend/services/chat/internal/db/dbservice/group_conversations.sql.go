@@ -3,7 +3,8 @@ package dbservice
 import (
 	"context"
 	"errors"
-	ce "social-network/services/chat/internal/errors"
+
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 
@@ -48,9 +49,9 @@ func (q *Queries) AddMembersToGroupConversation(
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, ct.Wrap(ce.ErrNotFound, errors.New("group conversation not found"))
+			return 0, ce.Wrap(ce.ErrNotFound, errors.New("group conversation not found"))
 		}
-		return 0, ct.Wrap(ce.ErrInternal, errors.New("failed to add members"))
+		return 0, ce.Wrap(ce.ErrInternal, errors.New("failed to add members"))
 	}
 
 	return res.ConversationID, nil

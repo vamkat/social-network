@@ -2,7 +2,6 @@ package ct_test
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"reflect"
 	"social-network/shared/go/ct"
@@ -442,26 +441,26 @@ func TestValidateBatch(t *testing.T) {
 	// t.Fatal(err2)
 }
 
-func TestErrorChain(t *testing.T) {
-	// Simulate an original error
-	origErr := errors.New("original validation failed")
+// func TestErrorChain(t *testing.T) {
+// 	// Simulate an original error
+// 	origErr := errors.New("original validation failed")
 
-	// Wrap it in your custom Error
-	err1 := ct.Wrap(ct.ErrUnknownClass, origErr, "ValidateBatch step 1")
+// 	// Wrap it in your custom Error
+// 	err1 := ct.Wrap(ct.ErrUnknownClass, origErr, "ValidateBatch step 1")
 
-	// Wrap again, simulating a second validation step
-	err2 := ct.Wrap(nil, err1, "ValidateBatch step 2")
+// 	// Wrap again, simulating a second validation step
+// 	err2 := ct.Wrap(nil, err1, "ValidateBatch step 2")
 
-	// Wrap a third time
-	err3 := ct.Wrap(nil, err2, "ValidateBatch step 3")
+// 	// Wrap a third time
+// 	err3 := ct.Wrap(nil, err2, "ValidateBatch step 3")
 
-	// Print the full error
-	t.Fatalf("Full error chain: %v", err3.Error())
+// 	// Print the full error
+// 	t.Fatalf("Full error chain: %v", err3.Error())
 
-	// Inspecting inner errors
-	var e *ct.Error
-	if errors.As(err3, &e) {
-		t.Logf("Outer error msg: %s, kind: %v", e.Msg, e.Kind)
-		t.Logf("Inner error msg: %s, kind: %v", e.Err.(*ct.Error).Msg, e.Err.(*ct.Error).Kind)
-	}
-}
+// 	// Inspecting inner errors
+// 	var e *ct.Error
+// 	if errors.As(err3, &e) {
+// 		t.Logf("Outer error msg: %s, kind: %v", e.Msg, e.Kind)
+// 		t.Logf("Inner error msg: %s, kind: %v", e.Err.(*ct.Error).Msg, e.Err.(*ct.Error).Kind)
+// 	}
+// }

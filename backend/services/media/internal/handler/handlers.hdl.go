@@ -2,11 +2,11 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"social-network/services/media/internal/application"
 	pb "social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/mapping"
 	tele "social-network/shared/go/telemetry"
@@ -67,11 +67,8 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 		variants,
 	)
 	if err != nil {
-		tele.Error(ctx, "failed to generate upload image url. @1 @2", "request:", req, "error:", err.(*ct.Error).Error())
-		if errors.Is(err, application.ErrReqValidation) {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to generate upload url: %v", err.(*ct.Error).Public())
-		}
-		return nil, status.Errorf(codes.Internal, "failed to generate upload url: %v", err.(*ct.Error).Public())
+		tele.Error(ctx, "failed to generate upload image url. @1 @2", "request:", req, "error:", err.(*ce.Error).Error())
+		return nil, ce.GRPCStatus(err)
 	}
 	res := &pb.UploadImageResponse{
 		FileId:    int64(fileId),
@@ -105,16 +102,7 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		tele.Error(ctx, "get image error", "request", req, "error", err.Error())
-		if errors.Is(err, application.ErrReqValidation) {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to get generate download url: %v", err.(*ct.Error).Public())
-		}
-		if errors.Is(err, application.ErrFailed) {
-			return nil, status.Errorf(codes.NotFound, "failed to get generate download url: %v", err.(*ct.Error).Public())
-		}
-		if errors.Is(err, application.ErrNotValidated) {
-			return nil, status.Errorf(codes.FailedPrecondition, "failed to get generate download url: %v", err.(*ct.Error).Public())
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get generate download url: %v", err.(*ct.Error).Public())
+		return nil, ce.GRPCStatus(err)
 	}
 
 	res := &pb.GetImageResponse{
@@ -141,13 +129,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		tele.Error(ctx, "get images error", "request", req, "error", err.Error())
-		if errors.Is(err, application.ErrReqValidation) {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to generate download urls: %v", err.(*ct.Error).Public())
-		}
-		if errors.Is(err, application.ErrNotFound) {
-			return nil, status.Errorf(codes.NotFound, "failed to generated download urls: %v", err.(*ct.Error).Public())
-		}
-		return nil, status.Errorf(codes.Internal, "failed to generated download urls: %v", err.(*ct.Error).Public())
+		return nil, ce.GRPCStatus(err)
 	}
 
 	// Build response
@@ -187,19 +169,7 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
 		tele.Error(ctx, "validate image error", "request", req, "error", err.Error())
-		if errors.Is(err, application.ErrReqValidation) {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to validate upload: %v", err.(*ct.Error).Public())
-		}
-
-		if errors.Is(err, application.ErrNotFound) {
-			return nil, status.Errorf(codes.NotFound, "failed to validate upload: %v", err.(*ct.Error).Public())
-		}
-
-		if errors.Is(err, application.ErrFailed) {
-			return nil, status.Errorf(codes.FailedPrecondition, "file is invalid: %v", err.(*ct.Error).Public())
-		}
-
-		return nil, status.Errorf(codes.Internal, "failed to validate upload: %v", err.(*ct.Error).Public())
+		return nil, ce.GRPCStatus(err)
 	}
 	res := &pb.ValidateUploadResponse{DownloadUrl: url}
 	tele.Info(ctx, "validate image success. @1 @2", "request", req, "response", res)

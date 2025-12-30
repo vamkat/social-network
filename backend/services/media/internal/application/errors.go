@@ -5,22 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"social-network/services/media/internal/db/dbservice"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"time"
 )
 
 var (
-	ErrReqValidation = errors.New("request validation error")               // invalid arguments
-	ErrNotValidated  = errors.New("file not yet validated")                 // means that validation is pending
-	ErrFailed        = errors.New("file has permanently failed validation") // means that file validation has failed permanently
-	ErrNotFound      = errors.New("not found")                              // Usually equivalent to sql.ErrNoRows
-	ErrInternal      = errors.New("internal error")
+	ErrReqValidation  = errors.New("request validation error")               // invalid arguments
+	ErrNotValidated   = errors.New("file not yet validated")                 // means that validation is pending
+	ErrFailed         = errors.New("file has permanently failed validation") // means that file validation has failed permanently
+	ErrNotFound       = errors.New("not found")                              // Usually equivalent to sql.ErrNoRows
+	ErrInternal       = errors.New("internal error")
+	ErrValidateStatus = errors.New("validate status error")
 )
 
 // Maps a file status to application errors and returns error.
 // Caller decides if adding extra info about the file
 func validateFileStatus(fm dbservice.File) error {
-	ErrValidateStatus := errors.New("validate status error")
 	errMsg := fmt.Sprintf(
 		"file id %v file name %v status %v",
 		fm.Id,
@@ -33,16 +34,18 @@ func validateFileStatus(fm dbservice.File) error {
 	}
 
 	if err := fm.Status.Validate(); err != nil {
-		return ct.Wrap(ErrFailed, err, errMsg)
+		return ce.Wrap(ce.ErrDataLoss, err, errMsg)
 	}
 
 	if fm.Status == ct.Failed {
-		return ct.Wrap(ErrFailed, ErrValidateStatus, errMsg)
+		return ce.Wrap(ce.ErrNotFound, ErrValidateStatus, errMsg).
+			WithPublic("file permenantly failed")
 	}
 
 	if fm.Status == ct.Pending || fm.Status == ct.Processing {
 		// TODO: Think if I should validate here
-		return ct.Wrap(ErrNotValidated, ErrValidateStatus, errMsg)
+		return ce.Wrap(ce.ErrFailedPrecondition, ErrValidateStatus, errMsg).
+			WithPublic("file not yet validated")
 	}
 
 	return nil
@@ -56,10 +59,10 @@ func mapDBError(err error) error {
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return ct.Wrap(ErrNotFound, err)
+		return ce.Wrap(ce.ErrNotFound, err)
 	}
 
-	return ct.Wrap(ErrInternal, err)
+	return ce.Wrap(ce.ErrInternal, err)
 }
 
 // validateUploadRequest validates all inputs required to create an image upload.

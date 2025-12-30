@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"path/filepath"
 	md "social-network/services/media/internal/models"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"strings"
 	"time"
@@ -15,7 +16,9 @@ import (
 	"github.com/minio/minio-go/v7/pkg/tags"
 )
 
-var ErrMinIO = errors.New("minio error")
+var (
+	ErrInternal = errors.New("minio internal error")
+)
 
 func (c *Clients) GenerateDownloadURL(
 	ctx context.Context,
@@ -40,7 +43,7 @@ func (c *Clients) GenerateDownloadURL(
 	)
 
 	if err != nil {
-		return nil, errors.Join(ErrMinIO, err)
+		return nil, ce.Wrap(ce.ErrInternal, err)
 	}
 
 	return url, nil
@@ -68,7 +71,7 @@ func (c *Clients) GenerateUploadURL(
 	)
 
 	if err != nil {
-		return nil, errors.Join(ErrMinIO, err)
+		return nil, ce.Wrap(ce.ErrInternal, err)
 	}
 
 	return url, nil
@@ -78,6 +81,11 @@ func (c *Clients) ValidateUpload(
 	ctx context.Context,
 	fm md.FileMeta,
 ) error {
+	validated, err := c.CheckValidationStatus(ctx, fm)
+	if validated {
+		return nil
+	}
+
 	fileCnstr := c.Configs.FileConstraints
 
 	info, err := c.MinIOClient.StatObject(
@@ -87,7 +95,7 @@ func (c *Clients) ValidateUpload(
 		minio.StatObjectOptions{},
 	)
 	if err != nil {
-		return errors.Join(ErrMinIO, err) // upload never completed
+		return ce.Wrap(ce.ErrNotFound, err) // upload never completed
 	}
 
 	if info.Size != fm.SizeBytes {
@@ -100,26 +108,31 @@ func (c *Clients) ValidateUpload(
 
 	ext := strings.ToLower(filepath.Ext(fm.Filename))
 	if ok := fileCnstr.AllowedExt[ext]; !ok {
-		return fmt.Errorf("invalid file ext %v", ext)
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("invalid file ext %v", ext))
 	}
 
 	switch {
 	case fileCnstr.AllowedMIMEs[fm.MimeType]:
 		if info.Size > fileCnstr.MaxImageUpload {
-			return fmt.Errorf("image size %v exceedes allowed size %v",
-				info.Size,
-				fileCnstr.MaxImageUpload,
+			return ce.Wrap(ce.ErrPermissionDenied,
+				fmt.Errorf("image size %v exceedes allowed size %v",
+					info.Size,
+					fileCnstr.MaxImageUpload,
+				),
 			)
 		}
 		obj, err := c.MinIOClient.GetObject(ctx, fm.Bucket, fm.ObjectKey, minio.GetObjectOptions{})
 		if err != nil {
-			return errors.Join(ErrMinIO, err)
+			return ce.Wrap(ce.ErrInternal, err)
 		}
 		defer obj.Close()
-		c.Validator.ValidateImage(ctx, obj)
+		if err := c.Validator.ValidateImage(ctx, obj); err != nil {
+			return err
+		}
 	default:
-		return fmt.Errorf("unsuported mime type %v", fm.MimeType)
-
+		return ce.Wrap(ce.ErrPermissionDenied,
+			fmt.Errorf("unsuported mime type %v", fm.MimeType),
+		)
 	}
 
 	tagSet, err := tags.NewTags(map[string]string{
@@ -128,7 +141,7 @@ func (c *Clients) ValidateUpload(
 		true,
 	)
 	if err != nil {
-		return errors.Join(ErrMinIO, err)
+		return ce.Wrap(ce.ErrInternal, err)
 	}
 
 	err = c.MinIOClient.PutObjectTagging(
@@ -139,9 +152,30 @@ func (c *Clients) ValidateUpload(
 		minio.PutObjectTaggingOptions{},
 	)
 	if err != nil {
-		return errors.Join(ErrMinIO, err)
+		return ce.Wrap(ce.ErrInternal, err)
 	}
 	return nil
+}
+
+func (c *Clients) CheckValidationStatus(ctx context.Context,
+	fm md.FileMeta) (bool, error) {
+	tagging, err := c.MinIOClient.GetObjectTagging(
+		ctx,
+		fm.Bucket,
+		fm.ObjectKey,
+		minio.GetObjectTaggingOptions{},
+	)
+	if err != nil {
+		if minio.ToErrorResponse(err).Code != "NoSuchTagSet" {
+			return false, ce.Wrap(ce.ErrInternal, err)
+		}
+	}
+
+	existingTags := tagging.ToMap()
+	if existingTags["validated"] == "true" {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (c *Clients) DeleteFile(ctx context.Context,
@@ -169,7 +203,7 @@ func (c *Clients) GenerateVariant(
 	obj, err := c.MinIOClient.GetObject(ctx,
 		srcBucket, srcObjectKey, minio.GetObjectOptions{})
 	if err != nil {
-		return 0, errors.Join(ErrMinIO, err)
+		return 0, ce.Wrap(ce.ErrNotFound, err)
 	}
 	defer obj.Close()
 
@@ -187,7 +221,7 @@ func (c *Clients) GenerateVariant(
 	)
 	size = info.Size
 	if err != nil {
-		return 0, errors.Join(ErrMinIO, err)
+		return 0, ce.Wrap(ce.ErrInternal, err)
 	}
 	return size, nil
 }

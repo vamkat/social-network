@@ -1,36 +1,36 @@
 package commonerrors
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Error represents a custom error type that includes classification, cause, and context.
 // It implements the error interface and supports error wrapping and classification.
 type Error struct {
-	Kind      error  // Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil
+	Code      error  // Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil
 	Err       error  // Cause: wrapped original error.
 	Msg       string // Context: Func, args etc.
 	PublicMsg string // A message that will be displayed to clients.
 	Source    error  // The original most underlying error.
 }
 
-var ErrUnknownClass = errors.New("unknown classification error") // kind is nil
-
 // Returns a string with all available fields of err
 func (e *Error) Error() string {
-	e.Kind = preventNilKind(e.Kind)
+	e.Code = preventNilKind(e.Code)
 	switch {
 	case e.Msg != "" && e.Err != nil:
-		return fmt.Sprintf("%s: %s: %v", e.Kind, e.Msg, e.Err)
+		return fmt.Sprintf("%s: %s: %v", e.Code, e.Msg, e.Err)
 	case e.Msg != "":
-		return fmt.Sprintf("%s: %s", e.Kind, e.Msg)
+		return fmt.Sprintf("%s: %s", e.Code, e.Msg)
 	case e.Err != nil:
-		return fmt.Sprintf("%s: %v", e.Kind, e.Err)
+		return fmt.Sprintf("%s: %v", e.Code, e.Err)
 	default:
-		return e.Kind.Error()
+		return e.Code.Error()
 	}
 }
 
@@ -38,12 +38,12 @@ func preventNilKind(k error) error {
 	if k != nil {
 		return k
 	}
-	return ErrUnknownClass
+	return ErrUnknown
 }
 
 // Method for errors.Is parsing. Returns `MediaError.Kind`.
 func (e *Error) Is(target error) bool {
-	return e.Kind == target
+	return e.Code == target
 }
 
 // Method for error.As parsing. Returns the `MediaError.Err`.
@@ -74,14 +74,14 @@ func Wrap(kind error, err error, msg ...string) *Error {
 	if errors.As(err, &ce) {
 		// Wrapping an existing custom error
 		e := &Error{
-			Kind:      ce.Kind,
+			Code:      ce.Code,
 			Err:       err,
 			Source:    ce.Source,    // retain original source
 			PublicMsg: ce.PublicMsg, // retain public message by default
 		}
 
 		if kind != nil {
-			e.Kind = kind
+			e.Code = kind
 		}
 		if len(msg) > 0 {
 			e.Msg = msg[0]
@@ -91,11 +91,11 @@ func Wrap(kind error, err error, msg ...string) *Error {
 	}
 
 	if kind == nil {
-		kind = ErrUnknownClass
+		kind = ErrUnknown
 	}
 
 	e := &Error{
-		Kind:   kind,
+		Code:   kind,
 		Err:    err,
 		Source: err, // ORIGINAL ROOT ERROR
 	}
@@ -121,9 +121,58 @@ func ToGRPCCode(err error) codes.Code {
 	if err == nil {
 		return codes.OK
 	}
-	code, ok := errorToGRPC[err.(*Error).Kind]
-	if ok {
-		return code
+
+	// TODO: Check this
+	// Propagate gRPC status errors
+	// if st, ok := status.FromError(err); ok {
+	// 	return st.Code()
+	// }
+
+	// Handle context errors
+	if errors.Is(err, context.DeadlineExceeded) {
+		return codes.DeadlineExceeded
 	}
+	if errors.Is(err, context.Canceled) {
+		return codes.Canceled
+	}
+
+	// Handle your domain error
+	var e *Error
+	if errors.As(err, &e) {
+		if code, ok := errorToGRPC[e.Code]; ok {
+			return code
+		}
+	}
+
+	// 4. Fallback
 	return codes.Unknown
+}
+
+func GRPCStatus(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// TODO: Check this
+	// Propagate gRPC status errors
+	if st, ok := status.FromError(err); ok {
+		return st.Err()
+	}
+
+	// Handle context errors
+	if errors.Is(err, context.DeadlineExceeded) {
+		return status.Errorf(codes.DeadlineExceeded, "deadline exceeded")
+	}
+	if errors.Is(err, context.Canceled) {
+		return status.Errorf(codes.Canceled, "request canceled")
+	}
+
+	// Handle domain error
+	var e *Error
+	if errors.As(err, &e) {
+		if code, ok := errorToGRPC[e.Code]; ok {
+			return status.Errorf(code, "service error: %v", e.PublicMsg)
+		}
+	}
+	return status.Errorf(codes.Unknown, "unknown error")
 }

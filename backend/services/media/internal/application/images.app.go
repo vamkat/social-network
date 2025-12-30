@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"social-network/services/media/internal/db/dbservice"
 	"social-network/services/media/internal/mapping"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	tele "social-network/shared/go/telemetry"
 	"time"
@@ -36,7 +37,7 @@ func (m *MediaService) UploadImage(ctx context.Context,
 		exp,
 		variants,
 	); err != nil {
-		return 0, "", ct.Wrap(ErrReqValidation, err)
+		return 0, "", ce.Wrap(ce.ErrInvalidArgument, err)
 	}
 
 	objectKey := uuid.NewString()
@@ -58,14 +59,14 @@ func (m *MediaService) UploadImage(ctx context.Context,
 			})
 
 			if err != nil {
-				return ct.Wrap(
-					ErrInternal,
+				return ce.Wrap(
+					ce.ErrInternal,
 					err,
 					fmt.Sprintf(
-						"UploadImage: creating original file db entry error for file %v",
+						"upload image: creating original file db entry error for file %v",
 						req.Filename,
 					),
-				)
+				).WithPublic("media service error")
 			}
 
 			for _, v := range variants {
@@ -81,25 +82,25 @@ func (m *MediaService) UploadImage(ctx context.Context,
 					Variant:    v,
 				})
 				if err != nil {
-					return ct.Wrap(
-						ErrInternal,
+					return ce.Wrap(
+						ce.ErrInternal,
 						err,
 						fmt.Sprintf(
-							"UploadImage: failed to create variant %v for file with id %v",
+							"upload image: failed to create variant %v for file with id %v",
 							v, fileId),
-					)
+					).WithPublic("media service error")
 				}
 			}
 
 			url, err = m.S3.GenerateUploadURL(ctx, orignalsBucket, objectKey, exp)
 			if err != nil {
-				return ct.Wrap(
-					ErrInternal,
+				return ce.Wrap(
+					ce.ErrInternal,
 					err,
 					fmt.Sprintf(
-						"UploadImage: S3 error: failed to create upload url for file with id %v:",
+						"upload image: failed to create upload url for file with id %v:",
 						fileId),
-				)
+				).WithPublic("media service error")
 			}
 			return nil
 		},
@@ -118,10 +119,11 @@ func (m *MediaService) GetImage(
 	imgId ct.Id,
 	variant ct.FileVariant,
 ) (string, error) {
+
 	errMsg := fmt.Sprintf("get image err: id: %d variant: %s", imgId, variant)
 
 	if err := ct.ValidateBatch(imgId, variant); err != nil {
-		return "", ct.Wrap(ErrReqValidation, err, errMsg)
+		return "", ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
 	}
 
 	var fm dbservice.File
@@ -146,14 +148,14 @@ func (m *MediaService) GetImage(
 	})
 
 	if err != nil {
-		return "", ct.Wrap(nil, err, errMsg)
+		return "", ce.Wrap(nil, err, errMsg)
 	}
 
 	u, err := m.S3.GenerateDownloadURL(
 		ctx, fm.Bucket, fm.ObjectKey, fm.Visibility.SetExp(),
 	)
 	if err != nil {
-		return "", ct.Wrap(ErrInternal, err, errMsg)
+		return "", ce.Wrap(ce.ErrInternal, err, errMsg)
 	}
 
 	return u.String(), nil
@@ -177,7 +179,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 	errMsg := fmt.Sprintf("get images: ids: %v variant: %s", imgIds, variant)
 
 	if err := ct.ValidateBatch(imgIds, variant); err != nil {
-		return nil, nil, ct.Wrap(ErrReqValidation, err, errMsg)
+		return nil, nil, ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
 	}
 
 	var missingVariants ct.Ids
@@ -239,12 +241,12 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 	errMsg := fmt.Sprintf("validate upload: file id: %d", fileId)
 
 	if err := fileId.Validate(); err != nil {
-		return url, ct.Wrap(ErrReqValidation, err, errMsg)
+		return url, ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
 	}
 
 	fileMeta, err := m.Queries.GetFileById(ctx, fileId)
 	if err != nil {
-		return "", ct.Wrap(nil, mapDBError(err), errMsg)
+		return "", ce.Wrap(nil, mapDBError(err), errMsg)
 	}
 
 	if fileMeta.Status == ct.Failed {
@@ -252,20 +254,24 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 	}
 
 	if fileMeta.Status != ct.Complete {
-		if errOuter := m.S3.ValidateUpload(ctx, mapping.DbToModel(fileMeta)); errOuter != nil {
+		if s3Err := m.S3.ValidateUpload(ctx, mapping.DbToModel(fileMeta)); s3Err != nil {
+			if errors.Is(s3Err, ce.ErrInternal) {
+				return "", ce.Wrap(nil, s3Err, errMsg)
+			}
+
 			if err := m.S3.DeleteFile(ctx, fileMeta.Bucket, fileMeta.ObjectKey); err != nil {
-				return url, ct.Wrap(ErrFailed, errors.Join(errOuter, err), errMsg)
+				return url, ce.Wrap(nil, errors.Join(s3Err, err), errMsg)
 			}
 			if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Failed); err != nil {
-				return url, ct.Wrap(ErrFailed, errors.Join(errOuter, err), errMsg)
+				return url, ce.Wrap(nil, errors.Join(s3Err, err), errMsg)
 			}
-			return url, ct.Wrap(ErrFailed, errors.Join(errOuter, err), errMsg)
+			return url, ce.Wrap(nil, s3Err, errMsg)
 		}
 
 		if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Complete); err != nil {
-			return url, err
+			return url, ce.Wrap(ce.ErrInternal,
+				fmt.Errorf("failed to update file status after file validation %w", err))
 		}
-
 		tele.Info(ctx, "Media Service: @1 successfully validated and marked as Complete", "FileId", fileId)
 	}
 

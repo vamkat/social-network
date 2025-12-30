@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"social-network/services/media/internal/configs"
+	ce "social-network/shared/go/commonerrors"
 )
 
 var (
@@ -74,7 +75,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 	limited := io.LimitReader(r, v.Config.MaxImageUpload+1)
 	buf, err := io.ReadAll(limited)
 	if err != nil {
-		return errors.Join(ErrImageValidator, fmt.Errorf("read failed: %w", err))
+		return ce.Wrap(ce.ErrInternal, fmt.Errorf("read failed: %w", err))
 	}
 
 	if int64(len(buf)) > v.Config.MaxImageUpload {
@@ -84,22 +85,22 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 	// 2️⃣ Detect MIME type by content (NOT filename)
 	mime := http.DetectContentType(buf[:min(512, len(buf))])
 	if !v.Config.AllowedMIMEs[mime] {
-		return errors.Join(ErrImageValidator, fmt.Errorf("%w: %s", ErrUnsupportedType, mime))
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("%w: %s", ErrUnsupportedType, mime))
 	}
 
 	// 3️⃣ Decode config only (fast, safe)
 	cfg, format, err := image.DecodeConfig(bytes.NewReader(buf))
 	if err != nil {
-		return errors.Join(ErrImageValidator, ErrInvalidImage)
+		return ce.Wrap(ce.ErrPermissionDenied, ErrInvalidImage)
 	}
 
 	// 4️⃣ Dimension validation (prevents decompression bombs)
 	if cfg.Width <= 0 || cfg.Height <= 0 {
-		return errors.Join(ErrImageValidator, ErrInvalidDimension)
+		return ce.Wrap(ce.ErrPermissionDenied, ErrInvalidDimension)
 	}
 
 	if cfg.Width > v.Config.MaxWidth || cfg.Height > v.Config.MaxHeight {
-		return errors.Join(ErrImageValidator,
+		return ce.Wrap(ce.ErrPermissionDenied,
 			fmt.Errorf(
 				"%w: %dx%d",
 				ErrInvalidDimension,
@@ -111,13 +112,13 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 
 	// 5️⃣ Optional: restrict formats (jpeg/png/gif/etc)
 	if !v.Config.AllowedMIMEs["image/"+format] {
-		return errors.Join(ErrImageValidator, fmt.Errorf("%w: %s", ErrUnsupportedType, format))
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("%w: %s", ErrUnsupportedType, format))
 	}
 
 	// 6️⃣ Fully decode to ensure the image is valid
 	_, _, err = image.Decode(bytes.NewReader(buf))
 	if err != nil {
-		return errors.Join(ErrImageValidator, ErrInvalidImage)
+		return ce.Wrap(ce.ErrPermissionDenied, ErrInvalidImage)
 	}
 
 	return nil
