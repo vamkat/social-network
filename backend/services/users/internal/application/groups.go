@@ -371,7 +371,7 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 
 		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.InvitedId.Int64()})
 		// if err != nil {
-		// 	fmt.Println("could not add member to group conversation:", err)
+		// 	tele.Info("could not add member to group conversation:", err)
 		// }
 
 	} else {
@@ -413,7 +413,7 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 
 		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.RequesterId.Int64()})
 		// if err != nil {
-		// 	fmt.Println("could not add member to group conversation:", err)
+		// 	tele.Info("could not add member to group conversation:", err)
 		// }
 
 	} else {
@@ -489,7 +489,7 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 	//call to chat service to create group conversation with owner as member
 	// err = s.clients.CreateGroupConversation(ctx, groupId, req.OwnerId.Int64())
 	// if err != nil {
-	// 	fmt.Println("group conversation couldn't be created", err)
+	// 	tele.Info("group conversation couldn't be created", err)
 	// }
 
 	return models.GroupId(groupId), nil

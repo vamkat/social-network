@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -45,8 +46,10 @@ func NewPgxTxRunner[T HasWithTx[T]](pool *pgxpool.Pool, db T) (*PgxTxRunner[T], 
 // The function receives a sqlc.Querier interface, not *sqlc.Queries.
 func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	// start tx.
+	tele.Info(ctx, "starting transaction")
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
+		tele.Error(ctx, "failed to begin transaction @1", "error", err)
 		return err
 	}
 	defer tx.Rollback(ctx)
@@ -56,10 +59,12 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 
 	// run the function, passing qtx as sqlc.Querier interface.
 	if err := fn(qtx); err != nil {
+		tele.Error(ctx, "querier errored. @1", "error", err)
 		return err
 	}
 
 	// commit transaction.
+	tele.Info(ctx, "committing transaction")
 	return tx.Commit(ctx)
 }
 

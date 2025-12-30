@@ -129,7 +129,7 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 		//condition that exactly one user follows the other is checked before call is made
 		// err = s.createPrivateConversation(ctx, req)
 		// if err != nil {
-		// 	fmt.Println("conversation couldn't be created", err)
+		// 	tele.Info("conversation couldn't be created", err)
 		// }
 	}
 
@@ -156,7 +156,7 @@ func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq
 
 	// err = s.deletePrivateConversation(ctx, req)
 	// if err != nil {
-	// 	fmt.Println("conversation couldn't be deleted", err)
+	// 	tele.Info("conversation couldn't be deleted", err)
 	// }
 
 	return nil
@@ -183,7 +183,7 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 		// 	TargetUserId: req.UserId,
 		// })
 		// if err != nil {
-		// 	fmt.Println("conversation couldn't be created", err)
+		// 	tele.Info("conversation couldn't be created", err)
 		// }
 
 	} else {

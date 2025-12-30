@@ -111,6 +111,7 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 }
 
 func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "UpdateUserEmail gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UpdateUserEmail: request is nil")
 	}
@@ -138,6 +139,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 
 // FOLLOW
 func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagination) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetFollowersPaginated gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowersPaginated: request is nil")
 	}
@@ -167,6 +169,7 @@ func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagina
 }
 
 func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagination) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetFollowingPaginated gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowingPaginated: request is nil")
 	}
@@ -196,6 +199,7 @@ func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagina
 }
 
 func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest) (*pb.FollowUserResponse, error) {
+	tele.Info(ctx, "FollowUser gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "FollowUser: request is nil")
 	}
@@ -225,6 +229,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 }
 
 func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "UnFollowUser gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UnFollowUser: request is nil")
 	}
@@ -251,6 +256,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 }
 
 func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFollowRequestRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "HandleFollowRequest gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "HandleFollowRequest: request is nil")
 	}
@@ -279,6 +285,7 @@ func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFo
 }
 
 func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int64Value) (*cm.UserIds, error) {
+	tele.Info(ctx, "GetFollowingIds gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowingIds: request is nil")
 	}
@@ -295,6 +302,7 @@ func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int6
 }
 
 func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb.Int64Value) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetFollowSuggestions gRPC method called.")
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowSuggestions: request is nil")
 	}
