@@ -3,6 +3,8 @@ package commonerrors
 import (
 	"errors"
 	"fmt"
+
+	"google.golang.org/grpc/codes"
 )
 
 // Error represents a custom error type that includes classification, cause, and context.
@@ -30,11 +32,6 @@ func (e *Error) Error() string {
 	default:
 		return e.Kind.Error()
 	}
-}
-
-// Returns a string containing only the kind field of Error.
-func (e *Error) Public() string {
-	return preventNilKind(e.Kind).Error()
 }
 
 func preventNilKind(k error) error {
@@ -117,4 +114,16 @@ func Wrap(kind error, err error, msg ...string) *Error {
 func (e *Error) WithPublic(msg string) *Error {
 	e.PublicMsg = msg
 	return e
+}
+
+// Helper mapper from error to grpc code.
+func ToGRPCCode(err error) codes.Code {
+	if err == nil {
+		return codes.OK
+	}
+	code, ok := errorToGRPC[err.(*Error).Kind]
+	if ok {
+		return code
+	}
+	return codes.Unknown
 }

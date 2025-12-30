@@ -49,31 +49,6 @@ func TestError_Error(t *testing.T) {
 	}
 }
 
-func TestError_Public(t *testing.T) {
-	tests := []struct {
-		name     string
-		err      *Error
-		expected string
-	}{
-		{
-			name:     "nil kind defaults to ErrUnknownClass",
-			err:      &Error{Kind: nil},
-			expected: "unknown classification error",
-		},
-		{
-			name:     "valid kind",
-			err:      &Error{Kind: ErrNotFound},
-			expected: "NOT_FOUND",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.err.Public())
-		})
-	}
-}
-
 func TestError_Is(t *testing.T) {
 	err := &Error{Kind: ErrNotFound}
 
