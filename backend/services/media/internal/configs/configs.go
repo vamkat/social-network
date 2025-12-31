@@ -49,6 +49,6 @@ type Db struct {
 type Tele struct {
 	EnableDebugLogs           bool   `env:"ENABLE_DEBUG_LOGS"`
 	SimplePrint               bool   `env:"ENABLE_SIMPLE_PRINT"`
-	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
 	OtelResourceAttributes    string `end:"OTEL_RESOURCE_ATTRIBUTES"`
+	TelemetryCollectorAddress string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 }

@@ -72,7 +72,7 @@ func InitTelemetry(ctx context.Context, serviceName string, servicePrefix string
 	if err != nil {
 		Fatalf("open telemetry sdk failed, ERROR: %s", err.Error())
 	}
-	Info(ctx, "open telemetry ready")
+	Info(ctx, "open telemetry sdk initialized with args: @1 @2 @3 @4 @5", "name", serviceName, "prefix", servicePrefix, "address", collectorAddress, "keys", contextKeys, "debug", enableDebug, "simple", simplePrint)
 
 	logger := newLogger(serviceName, contextKeys, enableDebug, simplePrint, servicePrefix)
 	slog.SetDefault(logger.slog)
