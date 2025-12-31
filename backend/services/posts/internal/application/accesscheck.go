@@ -16,7 +16,13 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		return false, err
 	}
 
-	isFollowing, err := s.clients.IsFollowing(ctx, req.requesterId, row.CreatorID)
+	var targetUserId int64
+	if row.ParentCreatorID > 0 { //in case of comment, we need the parent creator for isFollowing
+		targetUserId = row.ParentCreatorID
+	} else {
+		targetUserId = row.CreatorID
+	}
+	isFollowing, err := s.clients.IsFollowing(ctx, req.requesterId, targetUserId)
 	if err != nil {
 		return false, err
 	}
