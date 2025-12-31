@@ -37,7 +37,6 @@ func Run() {
 		tele.Fatalf("failed to init telemetry: %s", err.Error())
 	}
 	defer closeTelemetry()
-
 	tele.Info(ctx, "initialized telemetry")
 
 	//
@@ -167,7 +166,7 @@ type configs struct {
 	SimplePrint     bool `env:"ENABLE_SIMPLE_PRINT"`
 
 	OtelResourceAttributes    string `env:"OTEL_RESOURCE_ATTRIBUTES"`
-	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
+	TelemetryCollectorAddress string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	PassSecret                string `env:"PASSWORD_SECRET"`
 	EncrytpionKey             string `env:"ENC_KEY"`
 }

@@ -1,10 +1,12 @@
 package ct
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
+	tele "social-network/shared/go/telemetry"
 	"strconv"
 
 	"github.com/lib/pq"
@@ -29,7 +31,7 @@ var hd = func() *hashids.HashID {
 func (e Id) MarshalJSON() ([]byte, error) {
 	hash, err := hd.EncodeInt64([]int64{int64(e)})
 	if err != nil {
-		return nil, fmt.Errorf("MarshalJSON.EncodeInt64 said: %w", err)
+		return nil, fmt.Errorf("failed to marshal Id: %w", err)
 	}
 	return json.Marshal(hash)
 }
@@ -42,7 +44,7 @@ func (e *Id) UnmarshalJSON(data []byte) error {
 
 	decoded, err := hd.DecodeInt64WithError(hash)
 	if err != nil || len(decoded) == 0 {
-		return fmt.Errorf("UnmarshalJSON.DecodeInt64WithError said: %w", err)
+		return fmt.Errorf("failed to unmarshal Id: %w  and decoded length: %d (should be 1)", err, len(decoded))
 	}
 
 	*e = Id(decoded[0])
@@ -185,14 +187,22 @@ func (ids Ids) MarshalJSON() ([]byte, error) {
 }
 
 func (ids *Ids) UnmarshalJSON(data []byte) error {
-	var raw []int64
+	tele.Debug(context.Background(), "unmarshal @1", "data", data, "str", string(data))
+	var raw []string
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
 
+	tele.Debug(context.Background(), "unmarshal @1", "raw", raw)
+
 	out := make(Ids, len(raw))
 	for i, v := range raw {
-		out[i] = Id(v)
+		tele.Debug(context.Background(), "unmarshal loop @1", "v", v)
+		decoded, err := hd.DecodeInt64WithError(v)
+		if err != nil || len(decoded) == 0 {
+			return fmt.Errorf("failed to unmarshal Ids: %w and decoded length: %d (should be 1)", err, len(decoded))
+		}
+		out[i] = Id(decoded[0])
 	}
 
 	*ids = out

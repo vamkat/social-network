@@ -33,6 +33,17 @@ func Run() error {
 
 	//
 	//
+	//
+	// TELEMETRY
+	closeTelemetry, err := tele.InitTelemetry(ctx, "users", "USR", cfgs.TelemetryCollectorAddress, ct.CommonKeys(), cfgs.EnableDebugLogs, cfgs.SimplePrint)
+	if err != nil {
+		tele.Fatalf("failed to init telemetry: %s", err.Error())
+	}
+	defer closeTelemetry()
+	tele.Info(ctx, "initialized telemetry")
+
+	//
+	//
 	// CLIENT SERVICES
 	chatClient, err := gorpc.GetGRpcClient(
 		chat.NewChatServiceClient,
@@ -141,7 +152,9 @@ type configs struct {
 	GrpcServerPort        string `env:"GRPC_SERVER_PORT"`
 
 	OtelResourceAttributes    string `end:"OTEL_RESOURCE_ATTRIBUTES"`
-	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
+	TelemetryCollectorAddress string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	EnableDebugLogs           bool   `env:"ENABLE_DEBUG_LOGS"`
+	SimplePrint               bool   `env:"ENABLE_SIMPLE_PRINT"`
 }
 
 func getConfigs() configs {
@@ -156,6 +169,8 @@ func getConfigs() configs {
 		ShutdownTimeout:           5,
 		OtelResourceAttributes:    "service.name=users,service.namespace=social-network,deployment.environment=dev",
 		TelemetryCollectorAddress: "alloy:4317",
+		EnableDebugLogs:           true,
+		SimplePrint:               true,
 	}
 
 	_, err := configutil.LoadConfigs(&cfgs)

@@ -11,7 +11,7 @@ x-env: &common-env
   GRPC_SERVER_PORT: :50051
   OTEL_EXPORTER_OTLP_INSECURE: true
   OTEL_EXPORTER_OTLP_ENDPOINT: "alloy:4317"
-
+  
 services:
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   # USERS SERVICE + DATABASE: handles everything users related
@@ -37,6 +37,7 @@ services:
       DB_PASSWORD: secret
       DB_NAME: social_users
       SSL_MODE: disable
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=users,service.namespace=social-network,deployment.environment=dev"
     depends_on:
       users-db:
         condition: service_healthy
@@ -87,6 +88,7 @@ services:
       DB_PASSWORD: secret
       DB_NAME: social_posts
       SSL_MODE: disable
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=posts,service.namespace=social-network,deployment.environment=dev"
     depends_on:
       posts-db:
         condition: service_healthy
@@ -137,6 +139,7 @@ services:
       DB_PASSWORD: secret
       DB_NAME: social_chat
       SSL_MODE: disable
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=chat,service.namespace=social-network,deployment.environment=dev"
     depends_on:
       chat-db:
         condition: service_healthy
@@ -188,6 +191,7 @@ services:
       DB_PASSWORD: secret
       DB_NAME: social_notifications
       SSL_MODE: disable
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=notifications,service.namespace=social-network,deployment.environment=dev"
     depends_on:
       notifications-db:
         condition: service_healthy
@@ -243,6 +247,7 @@ services:
       MINIO_PUBLIC_ENDPOINT: localhost:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=media,service.namespace=social-network,deployment.environment=dev"
     depends_on:
       media-db:
         condition: service_healthy
@@ -353,6 +358,28 @@ services:
       - victoria-logs-data:/victoria-logs-data
     command:
       - -storageDataPath=/victoria-logs-data
+
+  #
+  #
+  #
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # GRAFANA: visualization and analytics platform for monitoring data
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  grafana:
+    networks:
+      - social-network
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./backend/services/monitoring/grafana/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
 
   #
   #

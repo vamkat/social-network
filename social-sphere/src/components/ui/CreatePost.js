@@ -39,6 +39,8 @@ export default function CreatePost() {
             limit: FOLLOWERS_LIMIT,
             offset: 0
         });
+
+        console.log("FOLLOWERS DATA SKJFVNKJSFVNKJV",followersData)
         setFollowers(followersData || []);
         setFollowersOffset(FOLLOWERS_LIMIT);
         setHasMoreFollowers(followersData && followersData.length === FOLLOWERS_LIMIT);
@@ -190,10 +192,14 @@ export default function CreatePost() {
                 postData.image_type = imageFile.type;
             }
 
+            console.log("SELECTED FOLLOWERS: ", selectedFollowers);
+
             // Add audience IDs for selected posts
             if (privacy === "selected") {
-                postData.audience_ids = selectedFollowers.map(id => parseInt(id));
+                postData.audience_ids = selectedFollowers.map(id => id);
             }
+
+            console.log("POST DATA: ", postData);
 
             // Step 1: Create post with metadata
             const resp = await createPost(postData);
@@ -316,17 +322,17 @@ export default function CreatePost() {
                                 <>
                                     {followers.map((follower) => (
                                         <label
-                                            key={follower.UserId}
+                                            key={follower.id}
                                             className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
                                         >
                                             <input
                                                 type="checkbox"
-                                                checked={selectedFollowers.includes(String(follower.UserId))}
-                                                onChange={() => toggleFollower(String(follower.UserId))}
+                                                checked={selectedFollowers.includes(String(follower.id))}
+                                                onChange={() => toggleFollower(String(follower.id))}
                                                 className="rounded border-gray-300"
                                             />
                                             <span className="text-sm">
-                                                @{follower.Username}
+                                                @{follower.username}
                                             </span>
                                         </label>
                                     ))}

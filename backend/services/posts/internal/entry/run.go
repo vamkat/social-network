@@ -161,7 +161,7 @@ type configs struct {
 	SimplePrint     bool `env:"ENABLE_SIMPLE_PRINT"`
 
 	OtelResourceAttributes    string `env:"OTEL_RESOURCE_ATTRIBUTES"`
-	TelemetryCollectorAddress string `env:"TELEMETRY_COLLECTOR_ADDR"`
+	TelemetryCollectorAddress string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	PassSecret                string `env:"PASSWORD_SECRET"`
 	EncrytpionKey             string `env:"ENC_KEY"`
 }
@@ -182,13 +182,13 @@ func getConfigs() configs { // sensible defaults
 		ShutdownTimeout: 5,
 		GrpcServerPort:  ":50051",
 
-		EnableDebugLogs: true,
-		SimplePrint:     true,
-
+		EnableDebugLogs:           true,
+		SimplePrint:               true,
 		OtelResourceAttributes:    "service.name=posts,service.namespace=social-network,deployment.environment=dev",
 		TelemetryCollectorAddress: "alloy:4317",
-		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
-		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
+
+		PassSecret:    "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
+		EncrytpionKey: "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 	}
 
 	// load environment variables if present

@@ -28,6 +28,9 @@ docker-up-test:
 	$(MAKE) docker-up
 	$(MAKE) docker-test
 
+api:
+	docker-compose up api-gateway --build
+
 # this network is used to let the tester connect to the rest of the containers
 # since the tester won't be part of the normal docker-compose, it will have it's own so that someone gotta go out of their way to test
 create-network:
