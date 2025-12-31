@@ -33,6 +33,11 @@ SELECT EXISTS (
     FROM ent e
     WHERE
         (
+            -- CASE 0: creator can always see
+            e.creator_id = $3::bigint
+        )
+        OR
+        (
             -- CASE 1: group entity
             e.group_id IS NOT NULL
             AND $1::bool = TRUE
