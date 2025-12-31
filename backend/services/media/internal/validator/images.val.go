@@ -71,32 +71,52 @@ type ImageValidator struct {
 //   - This function reads the entire image into memory, which may be a concern for very large images.
 //   - The function is defensive, designed to prevent invalid or malicious images from being processed.
 func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
+	errMsg := "image validator: validate image"
+
 	// 1️⃣ Enforce max upload size
 	limited := io.LimitReader(r, v.Config.MaxImageUpload+1)
 	buf, err := io.ReadAll(limited)
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, fmt.Errorf("read failed: %w", err))
+		return ce.Wrap(
+			ce.ErrInternal,
+			fmt.Errorf("read failed: %w", err),
+			errMsg+": limit reader")
 	}
 
 	if int64(len(buf)) > v.Config.MaxImageUpload {
-		return ErrImageTooLarge
+		return ce.Wrap(ce.ErrPermissionDenied,
+			ErrImageTooLarge,
+			errMsg,
+		).WithPublic(fmt.Sprintf("image too large. Max size %v", v.Config.MaxImageUpload))
 	}
 
 	// 2️⃣ Detect MIME type by content (NOT filename)
 	mime := http.DetectContentType(buf[:min(512, len(buf))])
 	if !v.Config.AllowedMIMEs[mime] {
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("%w: %s", ErrUnsupportedType, mime))
+		return ce.Wrap(
+			ce.ErrPermissionDenied,
+			fmt.Errorf("%w: %s", ErrUnsupportedType, mime),
+			errMsg,
+		).WithPublic(fmt.Sprintf("unsuported mime type %v", mime))
 	}
 
 	// 3️⃣ Decode config only (fast, safe)
 	cfg, format, err := image.DecodeConfig(bytes.NewReader(buf))
 	if err != nil {
-		return ce.Wrap(ce.ErrPermissionDenied, ErrInvalidImage)
+		return ce.Wrap(
+			ce.ErrPermissionDenied,
+			ErrInvalidImage,
+			errMsg+": first pass decode",
+		).WithPublic("unsupported file type")
 	}
 
 	// 4️⃣ Dimension validation (prevents decompression bombs)
 	if cfg.Width <= 0 || cfg.Height <= 0 {
-		return ce.Wrap(ce.ErrPermissionDenied, ErrInvalidDimension)
+		return ce.Wrap(
+			ce.ErrPermissionDenied,
+			ErrInvalidDimension,
+			errMsg+": decompression bomb check",
+		).WithPublic("invalid dimensions")
 	}
 
 	if cfg.Width > v.Config.MaxWidth || cfg.Height > v.Config.MaxHeight {
@@ -107,18 +127,26 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 				cfg.Width,
 				cfg.Height,
 			),
-		)
+			errMsg,
+		).WithPublic("invalid dimensions")
 	}
 
 	// 5️⃣ Optional: restrict formats (jpeg/png/gif/etc)
 	if !v.Config.AllowedMIMEs["image/"+format] {
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("%w: %s", ErrUnsupportedType, format))
+		return ce.Wrap(
+			ce.ErrPermissionDenied,
+			fmt.Errorf("%w: %s", ErrUnsupportedType, format),
+			errMsg+": allowed mimes check",
+		).WithPublic(fmt.Sprintf("unsuported mime type %v", format))
 	}
 
 	// 6️⃣ Fully decode to ensure the image is valid
 	_, _, err = image.Decode(bytes.NewReader(buf))
 	if err != nil {
-		return ce.Wrap(ce.ErrPermissionDenied, ErrInvalidImage)
+		return ce.Wrap(ce.ErrPermissionDenied,
+			ErrInvalidImage,
+			errMsg+": second pass decode",
+		).WithPublic("invalid file type")
 	}
 
 	return nil

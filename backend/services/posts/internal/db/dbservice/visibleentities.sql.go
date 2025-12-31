@@ -97,6 +97,15 @@ SELECT
         END
     )::BIGINT AS creator_id,
 
+    -- creator of the parent post (only for comments)
+    (
+        CASE
+            WHEN mi.content_type = 'comment'
+                THEN p2.creator_id
+            ELSE 0
+        END
+    )::BIGINT AS parent_creator_id,
+
     -- group_id: post.group_id, event.group_id, or parent post group for comments
 COALESCE(
     CASE
@@ -107,6 +116,7 @@ COALESCE(
     0
 )::BIGINT AS group_id,
 
+-- parent post id (for comments)
     CASE
         WHEN mi.content_type = 'comment' THEN c.parent_id
         ELSE 0
@@ -122,15 +132,16 @@ LIMIT 1
 `
 
 type GetEntityCreatorAndGroupRow struct {
-	ContentType ContentType
-	CreatorID   int64
-	GroupID     int64
-	ParentID    int64
+	ContentType     ContentType
+	CreatorID       int64
+	ParentCreatorID int64
+	GroupID         int64
+	ParentID        int64
 }
 
 func (q *Queries) GetEntityCreatorAndGroup(ctx context.Context, id int64) (GetEntityCreatorAndGroupRow, error) {
 	row := q.db.QueryRow(ctx, getEntityCreatorAndGroup, id)
 	var i GetEntityCreatorAndGroupRow
-	err := row.Scan(&i.ContentType, &i.CreatorID, &i.GroupID, &i.ParentID)
+	err := row.Scan(&i.ContentType, &i.CreatorID, &i.ParentCreatorID, &i.GroupID, &i.ParentID)
 	return i, err
 }

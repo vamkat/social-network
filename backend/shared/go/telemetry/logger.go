@@ -94,15 +94,15 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 				if ok == false {
 					key = "bad_key!"
 				}
-				messageBuilder.WriteRune('(')
+				// messageBuilder.WriteRune('(')
 				messageBuilder.WriteString(key)
-				messageBuilder.WriteString(": ")
+				messageBuilder.WriteString("=")
 				val, ok := args[(next-1)*2+1].(string)
 				if ok == false {
 					val = formatArg(args[(next-1)*2+1])
 				}
 				messageBuilder.WriteString(val)
-				messageBuilder.WriteRune(')')
+				// messageBuilder.WriteRune(')')
 				argsAlreadyPrinted[(next-1)*2] = true
 				argsAlreadyPrinted[(next-1)*2+1] = true
 				continue

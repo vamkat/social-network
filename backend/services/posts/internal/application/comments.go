@@ -2,17 +2,20 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 )
 
 func (s *Application) CreateComment(ctx context.Context, req models.CreateCommentReq) (err error) {
+	errMsg := fmt.Sprintf("create comment: req: %#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
 	}
 
 	accessCtx := accessContext{
@@ -22,10 +25,10 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, errMsg+": hasRightToView").WithPublic("posts service error")
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity"), errMsg).WithPublic("permission denied")
 	}
 	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		commentId, err := q.CreateComment(ctx, ds.CreateCommentParams{
@@ -35,7 +38,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		})
 
 		if err != nil {
-			return err
+			return ce.Wrap(ce.ErrInternal, err, errMsg+": db: create comment").WithPublic("posts service error")
 		}
 
 		if req.ImageId != 0 {
@@ -44,13 +47,13 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 				ParentID: commentId,
 			})
 			if err != nil {
-				return err
+				return ce.Wrap(ce.ErrInternal, err, errMsg+": db: upsert image").WithPublic("posts service error")
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return err
+		return ce.Wrap(nil, err, errMsg)
 	}
 
 	//create notification
@@ -79,18 +82,18 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 		return err
 	}
 
-	// accessCtx := accessContext{
-	// 	requesterId: req.CreatorId.Int64(),
-	// 	entityId:    req.CommentId.Int64(),
-	// }
+	accessCtx := accessContext{
+		requesterId: req.CreatorId.Int64(),
+		entityId:    req.CommentId.Int64(),
+	}
 
-	// hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	// if err != nil {
-	// 	return err
-	// }
-	// if !hasAccess {
-	// 	return ErrNotAllowed
-	// }
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
+	}
 
 	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		rowsAffected, err := q.EditComment(ctx, ds.EditCommentParams{
@@ -133,18 +136,18 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 		return err
 	}
 
-	// accessCtx := accessContext{
-	// 	requesterId: req.RequesterId.Int64(),
-	// 	entityId:    req.EntityId.Int64(),
-	// }
+	accessCtx := accessContext{
+		requesterId: req.RequesterId.Int64(),
+		entityId:    req.EntityId.Int64(),
+	}
 
-	// hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	// if err != nil {
-	// 	return err
-	// }
-	// if !hasAccess {
-	// 	return ErrNotAllowed
-	// }
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return ErrNotAllowed
+	}
 
 	rowsAffected, err := s.db.DeleteComment(ctx, ds.DeleteCommentParams{
 		ID:               req.EntityId.Int64(),

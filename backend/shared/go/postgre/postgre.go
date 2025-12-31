@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+	ce "social-network/shared/go/commonerrors"
 	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5"
@@ -50,7 +51,7 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		tele.Error(ctx, "failed to begin transaction @1", "error", err)
-		return err
+		return ce.Wrap(ce.ErrInternal, err, "run tx error")
 	}
 	defer tx.Rollback(ctx)
 
@@ -65,7 +66,11 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 
 	// commit transaction.
 	tele.Info(ctx, "committing transaction")
-	return tx.Commit(ctx)
+	err = tx.Commit(ctx)
+	if err != nil {
+		return ce.Wrap(ce.ErrInternal, err, "run tx error")
+	}
+	return nil
 }
 
 // NewPool creates a pgx connection pool.

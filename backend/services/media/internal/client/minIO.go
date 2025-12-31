@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -14,10 +13,6 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/tags"
-)
-
-var (
-	ErrInternal = errors.New("minio internal error")
 )
 
 func (c *Clients) GenerateDownloadURL(
@@ -81,7 +76,9 @@ func (c *Clients) ValidateUpload(
 	ctx context.Context,
 	fm md.FileMeta,
 ) error {
-	validated, err := c.CheckValidationStatus(ctx, fm)
+	errMsg := fmt.Sprintf("S3 client: validate upload: file object key: %v", fm.ObjectKey)
+
+	validated, _ := c.CheckValidationStatus(ctx, fm)
 	if validated {
 		return nil
 	}
@@ -95,20 +92,24 @@ func (c *Clients) ValidateUpload(
 		minio.StatObjectOptions{},
 	)
 	if err != nil {
-		return ce.Wrap(ce.ErrNotFound, err) // upload never completed
+		return ce.Wrap(ce.ErrNotFound, err, errMsg+": get object stats") // upload never completed
 	}
 
 	if info.Size != fm.SizeBytes {
-		return fmt.Errorf(
-			"upload size mismatch: expected=%d actual=%d",
-			fm.SizeBytes,
-			info.Size,
-		)
+		return ce.Wrap(
+			ce.ErrPermissionDenied,
+			fmt.Errorf("upload size mismatch: expected=%d actual=%d", fm.SizeBytes, info.Size),
+			errMsg+": promised and actual size check",
+		).WithPublic("size mismatch")
 	}
 
 	ext := strings.ToLower(filepath.Ext(fm.Filename))
 	if ok := fileCnstr.AllowedExt[ext]; !ok {
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("invalid file ext %v", ext))
+		return ce.Wrap(
+			ce.ErrPermissionDenied,
+			fmt.Errorf("invalid file ext %v", ext),
+			errMsg+": allowed ext check",
+		).WithPublic("invalid file extension")
 	}
 
 	switch {
@@ -119,7 +120,8 @@ func (c *Clients) ValidateUpload(
 					info.Size,
 					fileCnstr.MaxImageUpload,
 				),
-			)
+				errMsg+": size check",
+			).WithPublic("file too big")
 		}
 		obj, err := c.MinIOClient.GetObject(ctx, fm.Bucket, fm.ObjectKey, minio.GetObjectOptions{})
 		if err != nil {
@@ -127,12 +129,13 @@ func (c *Clients) ValidateUpload(
 		}
 		defer obj.Close()
 		if err := c.Validator.ValidateImage(ctx, obj); err != nil {
-			return err
+			return err // Validate returns customerrors type with public message
 		}
 	default:
 		return ce.Wrap(ce.ErrPermissionDenied,
 			fmt.Errorf("unsuported mime type %v", fm.MimeType),
-		)
+			errMsg,
+		).WithPublic(fmt.Sprintf("unsuported mime type %v", fm.MimeType))
 	}
 
 	tagSet, err := tags.NewTags(map[string]string{
@@ -141,7 +144,7 @@ func (c *Clients) ValidateUpload(
 		true,
 	)
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err)
+		return ce.Wrap(ce.ErrInternal, err, errMsg+": tagSet")
 	}
 
 	err = c.MinIOClient.PutObjectTagging(
@@ -152,13 +155,14 @@ func (c *Clients) ValidateUpload(
 		minio.PutObjectTaggingOptions{},
 	)
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err)
+		return ce.Wrap(ce.ErrInternal, err, errMsg+": putObjectTagging")
 	}
 	return nil
 }
 
 func (c *Clients) CheckValidationStatus(ctx context.Context,
 	fm md.FileMeta) (bool, error) {
+	errMsg := "s3 client: check validation status"
 	tagging, err := c.MinIOClient.GetObjectTagging(
 		ctx,
 		fm.Bucket,
@@ -167,7 +171,7 @@ func (c *Clients) CheckValidationStatus(ctx context.Context,
 	)
 	if err != nil {
 		if minio.ToErrorResponse(err).Code != "NoSuchTagSet" {
-			return false, ce.Wrap(ce.ErrInternal, err)
+			return false, ce.Wrap(ce.ErrInternal, err, errMsg)
 		}
 	}
 

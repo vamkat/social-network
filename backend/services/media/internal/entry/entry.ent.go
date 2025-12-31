@@ -176,7 +176,7 @@ func getConfigs() configs.Config {
 		Tele: configs.Tele{
 			EnableDebugLogs:           true,
 			SimplePrint:               true,
-			TelemetryCollectorAddress: os.Getenv("TELEMETRY_COLLECTOR_ADDR"),
+			TelemetryCollectorAddress: os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
 			OtelResourceAttributes:    "service.name=media,service.namespace=social-network,deployment.environment=dev",
 		},
 	}

@@ -24,7 +24,7 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 			panic(1)
 		}
 
-		type CreatePostJSONRequest struct {
+		type CreateEventJSONRequest struct {
 			Title     ct.Title         `json:"event_title"`
 			Body      ct.EventBody     `json:"event_body"`
 			GroupId   ct.Id            `json:"group_id"`
@@ -35,7 +35,7 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 			ImageType string `json:"image_type"`
 		}
 
-		httpReq := CreatePostJSONRequest{}
+		httpReq := CreateEventJSONRequest{}
 
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
