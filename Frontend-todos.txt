@@ -1,9 +1,8 @@
 ======== This week TODOs ========
 
-- Comments in Post Card (create comment with/without image - get comments - update comment - delete comment)
-- Single post component
+- Comments in Post Card (create comment with/without image - get comments - update comment - delete comment) --  IN PROGRESS (caught some bugs- reported to backend)
 
-- Create users and test privacy and audiences (from posts)
+- Create users and test privacy and audiences (from posts) - IN PROGRESS (caught some bugs- reported to backend)
 
 POSTS MUST BE DONE BY NEW YEAR!
 
