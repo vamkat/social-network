@@ -1,8 +1,9 @@
+import { HeroHeader } from "@/components/HeroHeader";
 import Link from "next/link";
 
 export default function LandingPage() {
     return (
-        <div className="page-container">
+        <div className="page-container ">
             {/* Navigation */}
             <nav className="section-border">
                 <div className="max-w-7xl mx-auto px-6 py-6">
@@ -24,6 +25,12 @@ export default function LandingPage() {
                             >
                                 Get Started
                             </Link>
+                            <Link
+                                href="/about"
+                                className="link-primary text-sm"
+                            >
+                                About Us
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -31,13 +38,11 @@ export default function LandingPage() {
 
             {/* Hero Section */}
             <section className="section-border bg-(--muted)/10">
-                <div className="max-w-7xl mx-auto px-6 py-32 md:py-26">
+                {/* <div className="max-w-7xl mx-auto px-6 py-32 md:py-26">
                     <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
-                        {/* Left side - Content */}
+ 
                         <div className="relative max-w-2xl">
-                            {/* <div className="text-label mb-8">
-                                Beta / 2025
-                            </div> */}
+
 
                             <h1 className="heading-xl mb-12">
                                 Connect<br />
@@ -70,7 +75,6 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        {/* Right side - Image */}
                         <div className="hidden lg:flex justify-center items-center">
                             <img
                                 src="/check.png"
@@ -79,14 +83,15 @@ export default function LandingPage() {
                             />
                         </div>
                     </div>
-                </div>
+                </div> */}
+                <HeroHeader/>
             </section>
 
-            {/* Features Section */}
-            <section className="section-border">
+
+            {/* <section className="section-border">
                 <div className="max-w-7xl mx-auto px-6 py-24">
                     <div className="grid md:grid-cols-3 gap-x-12 gap-y-20">
-                        {/* Feature 1 */}
+
                         <div>
                             <div className="text-label mb-4">
                                 01 / Real-time
@@ -100,7 +105,7 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        {/* Feature 2 */}
+
                         <div>
                             <div className="text-label mb-4">
                                 02 / Privacy
@@ -113,7 +118,6 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        {/* Feature 3 */}
                         <div>
                             <div className="text-label mb-4">
                                 03 / Groups
@@ -129,7 +133,7 @@ export default function LandingPage() {
                 </div>
             </section>
             
-            {/* CTA Section */}
+
             <section className="section-border bg-(--muted)/10">
                 <div className="max-w-7xl mx-auto px-6 py-32">
                     <div className="max-w-4xl">
@@ -149,7 +153,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Footer */}
+
             <footer>
                 <div className="max-w-7xl mx-auto px-6 py-12">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
@@ -163,7 +167,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </div>
-            </footer>
+            </footer> */}
         </div>
     );
 }

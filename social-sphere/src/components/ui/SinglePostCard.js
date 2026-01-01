@@ -668,7 +668,7 @@ export default function SinglePostCard({ post }) {
                         <Tooltip content="Edit Post">
                             <button
                                 onClick={handleStartEditPost}
-                                className="p-2 text-(--muted) hover:text-(--accent) hover:bg-(--accent)/5 rounded-full transition-colors"
+                                className="p-2 text-(--muted) hover:text-(--accent) hover:bg-(--accent)/5 rounded-full transition-colors cursor-pointer"
                             >
                                 <Pencil className="w-4 h-4" />
                             </button>
@@ -677,7 +677,7 @@ export default function SinglePostCard({ post }) {
                         <Tooltip content="Delete Post">
                             <button
                                 onClick={handleDeleteClick}
-                                className="p-2 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors"
+                                className="p-2 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors cursor-pointer"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -780,7 +780,7 @@ export default function SinglePostCard({ post }) {
                                 <button
                                     type="button"
                                     onClick={handleRemoveImage}
-                                    className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                    className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors cursor-pointer"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -798,7 +798,7 @@ export default function SinglePostCard({ post }) {
                                 <button
                                     type="button"
                                     onClick={handleRemoveExistingImage}
-                                    className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                    className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors cursor-pointer"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -882,7 +882,7 @@ export default function SinglePostCard({ post }) {
                                 <span className="text-sm font-medium">{reactionsCount}</span>
                             </button>
 
-                            <div className="flex items-center gap-2 text-(--accent)">
+                            <div className="flex items-center gap-2 text-(--accent) cursor-pointer">
                                 <MessageCircle className="w-5 h-5 fill-(--accent)/10" />
                                 <span className="text-sm font-medium">{commentsCount}</span>
                             </div>
@@ -947,7 +947,7 @@ export default function SinglePostCard({ post }) {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleRemoveEditingCommentImage}
-                                                                className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                                                className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors cursor-pointer"
                                                             >
                                                                 <Trash2 className="w-3 h-3" />
                                                             </button>
@@ -965,7 +965,7 @@ export default function SinglePostCard({ post }) {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleRemoveCommentExistingImage}
-                                                                className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                                                className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors cursor-pointer"
                                                             >
                                                                 <Trash2 className="w-3 h-3" />
                                                             </button>
@@ -983,7 +983,7 @@ export default function SinglePostCard({ post }) {
                                                         <button
                                                             type="button"
                                                             onClick={() => editingCommentFileInputRef.current?.click()}
-                                                            className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                                            className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                                         >
                                                             {editingCommentImagePreview || comment.image_url ? "Change Image" : "Add Image"}
                                                         </button>
@@ -1020,7 +1020,7 @@ export default function SinglePostCard({ post }) {
                                                                     <Tooltip content="Edit Comment">
                                                                         <button
                                                                             onClick={() => handleStartEditComment(comment)}
-                                                                            className="p-1 text-(--muted) hover:text-(--accent) hover:bg-(--accent)/5 rounded-full transition-colors"
+                                                                            className="p-1 text-(--muted) hover:text-(--accent) hover:bg-(--accent)/5 rounded-full transition-colors cursor-pointer"
                                                                         >
                                                                             <Pencil className="w-3 h-3" />
                                                                         </button>
@@ -1028,7 +1028,7 @@ export default function SinglePostCard({ post }) {
                                                                     <Tooltip content="Delete Comment">
                                                                         <button
                                                                             onClick={(e) => handleDeleteCommentClick(comment, e)}
-                                                                            className="p-1 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors"
+                                                                            className="p-1 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors cursor-pointer"
                                                                         >
                                                                             <Trash2 className="w-3 h-3" />
                                                                         </button>
@@ -1095,7 +1095,7 @@ export default function SinglePostCard({ post }) {
                                     <button
                                         type="button"
                                         onClick={handleRemoveCommentImage}
-                                        className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors"
+                                        className="absolute -top-2 -right-2 bg-background text-(--muted) hover:text-red-500 rounded-full p-1.5 border border-(--border) shadow-sm transition-colors cursor-pointer"
                                     >
                                         <Trash2 className="w-3 h-3" />
                                     </button>
@@ -1113,7 +1113,7 @@ export default function SinglePostCard({ post }) {
                                 <button
                                     type="button"
                                     onClick={() => commentFileInputRef.current?.click()}
-                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                 >
                                     {commentImageFile ? "Change Image" : "Add Image"}
                                 </button>
@@ -1122,7 +1122,7 @@ export default function SinglePostCard({ post }) {
                                     <button
                                         type="button"
                                         onClick={handleCancelComposer}
-                                        className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                        className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                     >
                                         Cancel
                                     </button>
@@ -1130,7 +1130,7 @@ export default function SinglePostCard({ post }) {
                                         type="button"
                                         disabled={!draftComment.trim()}
                                         onClick={handleSubmitComment}
-                                        className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50"
+                                        className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                                     >
                                         Reply
                                     </button>

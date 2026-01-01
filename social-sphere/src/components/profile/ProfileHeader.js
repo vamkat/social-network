@@ -167,7 +167,7 @@ export function ProfileHeader({ user }) {
                                             disabled={isLoading}
                                             onMouseEnter={() => setIsHovering(true)}
                                             onMouseLeave={() => setIsHovering(false)}
-                                            className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                                            className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
                                                 isLoading
                                                     ? "opacity-70 cursor-wait"
                                                     : isFollowing

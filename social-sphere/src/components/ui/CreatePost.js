@@ -423,7 +423,7 @@ export default function CreatePost() {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-(--muted) border hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-(--muted) border hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                             >
                                 <ImageIcon size={18} />
                                 <span>Image</span>
@@ -438,14 +438,14 @@ export default function CreatePost() {
                                 <button
                                     type="button"
                                     onClick={handleCancel}
-                                    className="px-4 py-1.5 text-sm text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                    className="px-4 py-1.5 text-sm text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={!isValid}
-                                    className="px-5 py-1.5 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="px-5 py-1.5 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                 >
                                     Post
                                 </button>

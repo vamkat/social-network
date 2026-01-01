@@ -7,7 +7,6 @@ import Tooltip from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useStore } from "@/store/store";
 import { logout } from "@/actions/auth/logout";
-import { useRouter } from "next/navigation";
 import { SearchUsers } from "@/actions/search/search-users";
 
 export default function Navbar() {
@@ -15,6 +14,7 @@ export default function Navbar() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const searchRef = useRef(null);
+    const isLoggingOut = useRef(false);
     const clearUser = useStore((state) => state.clearUser);
 
     const user = useStore((state) => state.user);
@@ -72,6 +72,9 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
+            // Set flag immediately to prevent any re-renders
+            isLoggingOut.current = true;
+
             // logout
             const resp = await logout();
 
@@ -85,8 +88,14 @@ export default function Navbar() {
             window.location.href = "/login";
 
         } catch (error) {
-            console.error('Logout error:', error)
+            console.error('Logout error:', error);
+            isLoggingOut.current = false;
         }
+    }
+
+    // Prevent rendering during logout to avoid API calls with missing cookie
+    if (isLoggingOut.current) {
+        return <div></div>;
     }
 
     if (!user) {
@@ -115,23 +124,23 @@ export default function Navbar() {
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-(--border) bg-(--background)/95 backdrop-blur-md">
-            <div className="w-full px-3 sm:px-4 md:px-6">
-                <div className="relative flex items-center justify-between h-16 gap-3">
+            <div className="w-full px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16 gap-2 sm:gap-3">
                     {/* Left Section: Logo */}
                     <div className="flex items-center shrink-0">
                         <Link
                             href="/feed/public"
-                            className="hidden sm:flex items-center shrink-0"
+                            className="flex items-center"
                             prefetch={false}
                         >
-                            <span className="hidden md:block text-base font-medium tracking-tight text-foreground hover:text-(--muted) transition-colors">
+                            <span className="text-sm sm:text-base font-medium tracking-tight text-foreground hover:text-(--muted) transition-colors">
                                 SocialSphere
                             </span>
                         </Link>
                     </div>
 
-                    {/* Desktop Search Bar - Centered */}
-                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-10" ref={searchRef}>
+                    {/* Center Section: Search Bar - Grows to fill available space */}
+                    <div className="hidden md:flex flex-1 max-w-md mx-4 ml-50" ref={searchRef}>
                         <div className="relative w-full group">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 {isSearching ? (
@@ -153,7 +162,7 @@ export default function Navbar() {
 
                             {/* Search Results Dropdown */}
                             {showSearchResults && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto">
                                     {searchResults.length > 0 ? (
                                         <div className="py-2">
                                             {searchResults.map((result) => (
@@ -193,9 +202,9 @@ export default function Navbar() {
                     </div>
 
                     {/* Right Section: Nav + Actions */}
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center gap-1">
+                        <div className="hidden lg:flex items-center gap-1">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 const active = isActive(item.href);
@@ -216,8 +225,8 @@ export default function Navbar() {
                             })}
                         </div>
 
-                        {/* Mobile Navigation - Icon only */}
-                        <div className="flex md:hidden items-center gap-0.5">
+                        {/* Tablet/Mobile Navigation - Icon only */}
+                        <div className="flex lg:hidden items-center gap-0.5">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 const active = isActive(item.href);
@@ -226,12 +235,12 @@ export default function Navbar() {
                                         <Link
                                             href={item.href}
                                             prefetch={false}
-                                            className={`p-2.5 rounded-full transition-all ${active
+                                            className={`p-2 sm:p-2.5 rounded-full transition-all ${active
                                                 ? "bg-(--accent)/10 text-(--accent)"
                                                 : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
                                                 }`}
                                         >
-                                            <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
+                                            <Icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={active ? 2.5 : 2} />
                                         </Link>
                                     </Tooltip>
                                 );
@@ -239,19 +248,19 @@ export default function Navbar() {
                         </div>
 
                         {/* Divider */}
-                        <div className="h-6 w-px bg-(--border) mx-1" />
+                        <div className="h-6 w-px bg-(--border) mx-0.5 sm:mx-1" />
 
                         {/* Messages */}
                         <Tooltip content="Messages">
                             <Link
                                 href="/messages"
-                                className={`relative p-2.5 rounded-full transition-all ${isActive('/messages')
+                                className={`relative p-2 sm:p-2.5 rounded-full transition-all ${isActive('/messages')
                                     ? "bg-(--accent)/10 text-(--accent)"
                                     : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
                                     }`}
                             >
-                                <Send className="w-5 h-5" strokeWidth={isActive('/messages') ? 2.5 : 2} />
-                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
+                                <Send className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isActive('/messages') ? 2.5 : 2} />
+                                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
                                     1
                                 </span>
                             </Link>
@@ -261,24 +270,24 @@ export default function Navbar() {
                         <Tooltip content="Notifications">
                             <Link
                                 href="/notifications"
-                                className={`relative p-2.5 rounded-full transition-all ${isActive('/notifications')
+                                className={`relative p-2 sm:p-2.5 rounded-full transition-all ${isActive('/notifications')
                                     ? "bg-(--accent)/10 text-(--accent)"
                                     : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
                                     }`}
                             >
-                                <Bell className="w-5 h-5" strokeWidth={isActive('/notifications') ? 2.5 : 2} />
+                                <Bell className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isActive('/notifications') ? 2.5 : 2} />
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-background" />
                             </Link>
                         </Tooltip>
 
                         {/* User Dropdown */}
                         {user && (
-                            <div className="relative ml-1.5 pl-2.5 border-l border-(--border)" ref={dropdownRef}>
+                            <div className="relative ml-0.5 sm:ml-1.5 pl-1 sm:pl-2.5 border-l border-(--border)" ref={dropdownRef}>
                                 <button
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                    className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity cursor-pointer"
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-(--muted)/10 border border-(--border) flex items-center justify-center overflow-hidden hover:border-(--accent) transition-colors">
+                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-(--muted)/10 border border-(--border) flex items-center justify-center overflow-hidden hover:border-(--accent) transition-colors">
                                         {user.avatar_url ? (
                                             <img src={user.avatar_url} alt={user.username?.[0] || "U"} className="w-full h-full object-cover" />
                                         ) : (
@@ -298,7 +307,7 @@ export default function Navbar() {
 
                                 {/* Dropdown Menu */}
                                 {isDropdownOpen && (
-                                    <div className="absolute right-0 top-full mt-3 w-52 rounded-2xl border border-(--border) bg-background shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute right-0 top-full mt-3 w-52 rounded-2xl border border-(--border) bg-background shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-100">
                                         <div className="p-1.5">
                                             <Link
                                                 href={`/profile/${user.id}`}
@@ -320,11 +329,8 @@ export default function Navbar() {
                                             </Link>
                                             <div className="h-px bg-(--border) my-1.5" />
                                             <button
-                                                onClick={() => {
-                                                    setIsDropdownOpen(false);
-                                                    handleLogout();
-                                                }}
-                                                className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl text-red-500 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
                                             >
                                                 <LogOut className="w-4 h-4" />
                                                 Sign Out
@@ -337,22 +343,68 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Mobile Search Bar - Below main nav */}
-                <div className="lg:hidden pb-3">
-                    {/* Placeholder for now - logic can be mirrored if needed or hidden */}
+                {/* Mobile Search Bar - Below main nav, fully functional */}
+                <div className="md:hidden pb-3 pt-1" ref={searchRef}>
                     <div className="relative w-full group">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Search className="h-4 w-4 text-(--muted) group-focus-within:text-(--accent) transition-colors" />
+                            {isSearching ? (
+                                <Loader2 className="h-4 w-4 text-(--muted) animate-spin" />
+                            ) : (
+                                <Search className="h-4 w-4 text-(--muted) group-focus-within:text-(--accent) transition-colors" />
+                            )}
                         </div>
                         <input
                             type="text"
-                            /* Mobile search logic can be implemented here similarly to desktop if requested */
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => {
+                                if (searchResults.length > 0) setShowSearchResults(true);
+                            }}
                             className="block w-full pl-11 pr-4 py-2.5 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
                             placeholder="Search users..."
                         />
+
+                        {/* Mobile Search Results Dropdown */}
+                        {showSearchResults && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto">
+                                {searchResults.length > 0 ? (
+                                    <div className="py-2">
+                                        {searchResults.map((result) => (
+                                            <Link
+                                                key={result.id}
+                                                href={`/profile/${result.id}`}
+                                                prefetch={false}
+                                                onClick={() => {
+                                                    setShowSearchResults(false);
+                                                    setSearchQuery("");
+                                                }}
+                                                className="flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors"
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                    {result.avatar_url ? (
+                                                        <img src={result.avatar_url} alt={result.username || "User"} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User className="w-5 h-5 text-(--muted)" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-foreground truncate">
+                                                        {result.username}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-4 text-center text-sm text-(--muted)">
+                                        No users found
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+                </div>
         </nav>
     );
 }
