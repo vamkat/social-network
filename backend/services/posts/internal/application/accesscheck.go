@@ -10,7 +10,6 @@ import (
 // post audience=followers: requester can see if they follow creator
 // post audience=selected: requester can see if they are in post audience table
 func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bool, error) {
-
 	row, err := s.db.GetEntityCreatorAndGroup(ctx, req.entityId)
 	if err != nil {
 		return false, err

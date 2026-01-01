@@ -60,7 +60,8 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 
 	// run the function, passing qtx as sqlc.Querier interface.
 	if err := fn(qtx); err != nil {
-		tele.Error(ctx, "querier errored. @1", "error", err)
+		//TODO add no rows check to avoid logging non error
+		tele.Error(ctx, "querier @1", "error", err)
 		return err
 	}
 
@@ -68,7 +69,7 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	tele.Info(ctx, "committing transaction")
 	err = tx.Commit(ctx)
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err, "run tx error")
+		return ce.Wrap(ce.ErrInternal, err, "transaction commit error")
 	}
 	return nil
 }

@@ -214,6 +214,7 @@ func (m *MiddleSystem) Finalize(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}
+		tele.Info(r.Context(), "middleware finished, calling @1", "endpoint", r.URL)
 		next.ServeHTTP(w, r)
 	})
 }

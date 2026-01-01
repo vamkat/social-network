@@ -11,12 +11,11 @@ import (
 	tele "social-network/shared/go/telemetry"
 )
 
-func (s *Application) CreateComment(ctx context.Context, req models.CreateCommentReq) (err error) {
-	errMsg := fmt.Sprintf("create comment: req: %#v", req)
+const genericPublic = "posts service error"
 
+func (s *Application) CreateComment(ctx context.Context, req models.CreateCommentReq) (err error) {
 	if err := ct.ValidateStruct(req); err != nil {
-		tele.Error(ctx, "Posts Service: Request to create comment failed validation: @1", "request", req)
-		return ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -25,13 +24,11 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if err != nil {
-		tele.Error(ctx, "Posts Service: hasRightToView for create comment failed with accessCtx @1 ", "access ctx", accessCtx)
-		return ce.Wrap(ce.ErrInternal, err, errMsg+": hasRightToView").WithPublic("posts service error")
+	if err != nil { //err := "invalid parten id", "CreateComment>CreateComment>HasAccess: invalid parent id"
+		return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		tele.Error(ctx, "Posts Service: Requester @1 has no permission to create comment for post @2", "requester id", req.CreatorId, "post id", req.ParentId)
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity"), errMsg).WithPublic("permission denied")
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit entity: %v", req.ParentId)).WithPublic("permission denied")
 	}
 	var commentId int64
 	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -42,8 +39,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		})
 
 		if err != nil {
-			tele.Error(ctx, "Posts Service: db create comment failed for req @1 ", "request", req)
-			return ce.Wrap(ce.ErrInternal, err, errMsg+": db: create comment").WithPublic("posts service error")
+			return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 		}
 
 		if req.ImageId != 0 {
@@ -52,21 +48,19 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 				ParentID: commentId,
 			})
 			if err != nil {
-				tele.Error(ctx, "Posts Service: db upsert image for comment @1 failed for image id @2 ", "comment id", commentId, "image id", req.ImageId)
-				return ce.Wrap(ce.ErrInternal, err, errMsg+": db: upsert image").WithPublic("posts service error")
+				return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		tele.Error(ctx, "Posts Service: create comment tx failed for req @1 ", "request", req)
-		return ce.Wrap(nil, err, errMsg)
+		return ce.Wrap(nil, err)
 	}
 
 	//create notification
 	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{req.CreatorId})
 	if err != nil {
-		tele.Error(ctx, "Posts Service: create comment: get users failed for user @1 ", "user id", req.CreatorId)
+		tele.Error(ctx, "failed to GetUsers for @1: @2 ", "userId", req.CreatorId, "error", err.Error())
 		return nil //return with no error but without creating non-essential notif
 	}
 	var commenterUsername string
@@ -75,23 +69,20 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	}
 	basicPost, err := s.db.GetBasicPostByID(ctx, req.ParentId.Int64())
 	if err != nil {
-		tele.Error(ctx, "Posts Service: get basic post by id failed for post @1 ", "post id", req.ParentId)
+		tele.Error(ctx, "get GetBasicPostByID failed for post @1: @2 ", "post id", req.ParentId, "error", err.Error())
 		return nil //return with no error but without creating non-essential notif
 	}
 	err = s.clients.CreatePostComment(ctx, basicPost.CreatorID, req.CreatorId.Int64(), req.ParentId.Int64(), commenterUsername, req.Body.String())
 	if err != nil {
-		tele.Error(ctx, "Posts Service: create post comment notification failed for comment @1 ", "comment id", commentId)
+		tele.Error(ctx, "CreatePostComment notification failed for comment @1: @2", "comment id", commentId, "error", err.Error())
 		return nil //return with no error but without creating non-essential notif
 	}
 	return nil
 }
 
 func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq) error {
-	errMsg := fmt.Sprintf("edit comment: req: %#v", req)
-
 	if err := ct.ValidateStruct(req); err != nil {
-		tele.Error(ctx, "Posts Service: Request to edit comment failed validation: @1", "request", req)
-		return ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -101,45 +92,39 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		tele.Error(ctx, "Posts Service: hasRightToView for create comment failed with accessCtx @1 ", "access ctx", accessCtx)
-		return ce.Wrap(ce.ErrInternal, err, errMsg+": hasRightToView").WithPublic("posts service error")
+		return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		tele.Error(ctx, "Posts Service: Requester @1 has no permission to edit comment @2", "requester id", req.CreatorId, "post id", req.CommentId)
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity"), errMsg).WithPublic("permission denied")
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity")).WithPublic("permission denied")
 	}
 
-	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
+	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		rowsAffected, err := q.EditComment(ctx, ds.EditCommentParams{
 			CommentBody:      req.Body.String(),
 			ID:               req.CommentId.Int64(),
 			CommentCreatorID: req.CreatorId.Int64(),
 		})
 		if err != nil {
-			tele.Error(ctx, "Posts Service: db edit comment failed for req @1 ", "request", req)
-			return ce.Wrap(ce.ErrInternal, err, errMsg+": db: edit comment").WithPublic("posts service error")
+			return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 		}
 		if rowsAffected != 1 {
-			tele.Error(ctx, "Posts Service: db create comment found no comment fitting the criteria req @1 ", "request", req)
-			return ce.Wrap(ce.ErrNotFound, err, errMsg+": db: create comment").WithPublic("posts service error")
-
+			return ce.Wrap(ce.ErrNotFound, fmt.Errorf("comment not found or not owned by user")).WithPublic("permission denied")
 		}
+
 		if req.ImageId > 0 {
 			err := q.UpsertImage(ctx, ds.UpsertImageParams{
 				ID:       req.ImageId.Int64(),
 				ParentID: req.CommentId.Int64(),
 			})
 			if err != nil {
-				tele.Error(ctx, "Posts Service: db upsert image for comment @1 failed for image id @2 ", "comment id", req.CommentId, "image id", req.ImageId)
-				return ce.Wrap(ce.ErrInternal, err, errMsg+": db: upsert image").WithPublic("posts service error")
+				return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 			}
 		}
+
 		if req.DeleteImage {
 			rowsAffected, err := q.DeleteImage(ctx, req.CommentId.Int64())
 			if err != nil {
-				tele.Error(ctx, "Posts Service: db delete image for comment @1 failed for image id @2 ", "comment id", req.CommentId, "image id", req.ImageId)
-				return ce.Wrap(ce.ErrInternal, err, errMsg+": db: delete image").WithPublic("posts service error")
-
+				return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 			}
 			if rowsAffected != 1 {
 				tele.Warn(ctx, "EditComment: image @1 for comment @2 could not be deleted: not found.", "image id", req.ImageId, "comment id", req.CommentId)
@@ -147,15 +132,15 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 		}
 		return nil
 	})
+	if err != nil {
+		return ce.Wrap(nil, err)
+	}
 
+	return nil
 }
-
 func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) error {
-	errMsg := fmt.Sprintf("delete comment: req: %#v", req)
-
 	if err := ct.ValidateStruct(req); err != nil {
-		tele.Error(ctx, "Posts Service: Request to delete comment failed validation: @1", "request", req)
-		return ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -165,14 +150,10 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		tele.Error(ctx, "Posts Service: hasRightToView for delete comment failed with accessCtx @1 ", "access ctx", accessCtx)
-		return ce.Wrap(ce.ErrInternal, err, errMsg+": hasRightToView").WithPublic("posts service error")
-
+		return ce.Wrap(ce.ErrInternal, err, "s.hasRightToView failed with accessCtx: %#v", ct.ReqActionDetails).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		tele.Error(ctx, "Posts Service: Requester @1 has no permission to delete comment @2", "requester id", req.RequesterId, "comment id", req.EntityId)
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity"), errMsg).WithPublic("permission denied")
-
+		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity")).WithPublic("permission denied")
 	}
 
 	rowsAffected, err := s.db.DeleteComment(ctx, ds.DeleteCommentParams{
@@ -180,22 +161,18 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 		CommentCreatorID: req.RequesterId.Int64(),
 	})
 	if err != nil {
-		tele.Error(ctx, "Posts Service: db delete comment failed for req @1 ", "request", req)
-		return ce.Wrap(ce.ErrInternal, err, errMsg+": db: delete comment").WithPublic("posts service error")
-
+		return ce.Wrap(ce.ErrInternal, err, "db.DeleteComment failed, with entity").WithPublic(genericPublic)
 	}
 	if rowsAffected != 1 {
-		tele.Warn(ctx, "Posts Service: comment @1 could not be deleted: not found.", "comment id", req.EntityId)
+		tele.Warn(ctx, "DeleteComment: comment @1 could not be deleted: not found.", "comment id", req.EntityId)
 	}
+
 	return nil
 }
 
 func (s *Application) GetCommentsByParentId(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Comment, error) {
-	errMsg := fmt.Sprintf("get comments by parent id: req: %#v", req)
-
 	if err := ct.ValidateStruct(req); err != nil {
-		tele.Error(ctx, "Posts Service: Request to get comments by parent id failed validation: @1", "request", req)
-		return nil, ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -205,13 +182,10 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		tele.Error(ctx, "Posts Service: hasRightToView for comments for post @1 failed with accessCtx @2 ", "post id", req.EntityId, "access ctx", accessCtx)
-		return nil, ce.Wrap(ce.ErrInternal, err, errMsg+": hasRightToView").WithPublic("posts service error")
+		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		tele.Error(ctx, "Posts Service: Requester @1 has no permission to view comments for post @2", "requester id", req.RequesterId, "post id", req.EntityId)
-		return nil, ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view comments of this entity"), errMsg).WithPublic("permission denied")
-
+		return nil, ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view comments of this entity")).WithPublic("permission denied")
 	}
 
 	rows, err := s.db.GetCommentsByPostId(ctx, ds.GetCommentsByPostIdParams{
@@ -221,17 +195,19 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		Offset:   req.Offset.Int32(),
 	})
 	if err != nil {
-		tele.Error(ctx, "Posts Service: dbget comments by post id failed for req @1 ", "request", req)
-		return nil, ce.Wrap(ce.ErrInternal, err, errMsg+": db: get comments by post id").WithPublic("posts service error")
-
+		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
 	}
+
+	if len(rows) == 0 {
+		return []models.Comment{}, nil
+	}
+
 	comments := make([]models.Comment, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
 	commentImageIds := make(ct.Ids, 0, len(rows))
 
 	for _, r := range rows {
-		uid := ct.Id(r.CommentCreatorID)
-		userIDs = append(userIDs, uid)
+		userIDs = append(userIDs, ct.Id(r.CommentCreatorID))
 
 		comments = append(comments, models.Comment{
 			CommentId: ct.Id(r.ID),
@@ -246,19 +222,15 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 			LikedByUser:    r.LikedByUser,
 			ImageId:        ct.Id(r.Image),
 		})
+
 		if r.Image > 0 {
 			commentImageIds = append(commentImageIds, ct.Id(r.Image))
 		}
 	}
 
-	if len(comments) == 0 {
-		return comments, nil
-	}
-
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		tele.Error(ctx, "Posts Service: get comments by parent id: get users failed for user ids @1 ", "user ids", userIDs)
-		return nil, ce.Wrap(ce.ErrInternal, err, errMsg+": user retriever").WithPublic("error retrieving users info")
+		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic("error retrieving users info")
 	}
 
 	var imageMap map[int64]string
@@ -266,9 +238,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, commentImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		tele.Error(ctx, "Posts Service: get comments by parent id: get images failed for image ids @1 ", "image ids", commentImageIds)
-		return nil, ce.Wrap(ce.ErrInternal, err, errMsg+": user retriever").WithPublic("error retrieving users info")
-
+		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic("error retrieving images")
 	}
 
 	for i := range comments {

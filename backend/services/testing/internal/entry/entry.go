@@ -23,7 +23,7 @@ func Run() {
 	ctx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
 	wg := sync.WaitGroup{}
-	for range 5 {
+	for range 3 {
 		wg.Go(func() {
 			if err := users_test.StartTest(ctx, cfgs); err != nil {
 				tele.Fatal("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ERROR WTF !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + err.Error())
@@ -31,9 +31,8 @@ func Run() {
 		})
 
 		wg.Go(func() {
-			if err := gateway_test.StartTest(ctx, cfgs); err != nil {
-				tele.Fatal("!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ERROR WTF !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + err.Error())
-			}
+			gateway_test.StartTest(ctx, cfgs)
+
 		})
 		time.Sleep(time.Millisecond * 2000)
 	}
