@@ -90,7 +90,7 @@ export default function Modal({
                         <button
                             onClick={onClose}
                             disabled={isLoading}
-                            className="p-1 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors disabled:opacity-50"
+                            className="p-1 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                         >
                             <X className="w-5 h-5" />
                         </button>
