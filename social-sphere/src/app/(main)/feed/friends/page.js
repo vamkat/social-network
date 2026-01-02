@@ -9,7 +9,6 @@ export const metadata = {
 
 export default async function FriendsFeedPage() {
     const posts = await getFriendsPosts({ limit: 10, offset: 0 });
-    console.log(posts);
 
     return (
         <div className="w-full">

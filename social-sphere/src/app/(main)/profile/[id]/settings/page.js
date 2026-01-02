@@ -7,7 +7,6 @@ export default async function SettingsPage({ params }) {
 
     // get user's info
     const user = await getProfileInfo(id);
-    console.log(user);
 
     if (user.user_id !== id) { redirect(`/profile/${id}`); }
 

@@ -49,9 +49,6 @@ export default function RegisterForm() {
             userData.avatar_size = avatarFile.size;
             userData.avatar_type = avatarFile.type;
         }
-
-        console.log("userData", userData);
-
         try {
             // Step 1: Register with metadata
             const resp = await register(userData);
@@ -82,12 +79,8 @@ export default function RegisterForm() {
                     } else {
                         // Step 3: Validate upload
                         const validateResp = await validateUpload(resp.FileId);
-                        console.log("Validate response:", validateResp);
                         if (validateResp.success && validateResp.download_url) {
                             userStoreData.avatar_url = validateResp.download_url;
-                            console.log("Set avatar_url to:", validateResp.download_url);
-                        } else {
-                            console.log("No download_url in response or validation failed");
                         }
                     }
                 } catch (uploadError) {

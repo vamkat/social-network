@@ -21,8 +21,6 @@ export function ProfileHeader({ user }) {
         if (isLoading) return;
         setIsLoading(true);
 
-        console.log("sending request to user with id: ", user.user_id)
-
         try {
             if (isFollowing) {
                 // Handle Unfollow
@@ -50,7 +48,6 @@ export function ProfileHeader({ user }) {
                 // Handle Follow
                 const response = await followUser(user.user_id);
                 if (response.success) {
-                    console.log("Follow response:", response.data);
                     // Use the actual backend response to determine state
                     if (response.data.is_pending) {
                         setIsPending(true);

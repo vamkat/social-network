@@ -13,8 +13,6 @@ export default async function PublicFeedPage() {
     const offset = 0;
     const posts = await getPublicPosts({ limit, offset });
 
-    console.log(posts[0]);
-
     return (
         <div className="w-full">
             {/* Create Post Section */}

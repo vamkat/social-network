@@ -50,8 +50,6 @@ export async function updateProfileAction(prevState, formData) {
     };
 
     try {
-
-        console.log("Updating profile with:", payload);
         const result = await updateProfileInfo(payload);
 
         // Backend returns UserProfileResponse which has user_id
@@ -103,7 +101,6 @@ export async function updatePasswordAction(prevState, formData) {
 
     try {
         // Service now takes { oldPassword, newPassword } matching backend requirement
-        console.log("Updating password with:", { oldPassword: currentPassword, newPassword: newPassword });
         const result = await updateProfilePassword({
             oldPassword: currentPassword,
             newPassword: newPassword

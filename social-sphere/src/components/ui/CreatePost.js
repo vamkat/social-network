@@ -40,7 +40,6 @@ export default function CreatePost() {
             offset: 0
         });
 
-        console.log("FOLLOWERS DATA SKJFVNKJSFVNKJV",followersData)
         setFollowers(followersData || []);
         setFollowersOffset(FOLLOWERS_LIMIT);
         setHasMoreFollowers(followersData && followersData.length === FOLLOWERS_LIMIT);
@@ -192,15 +191,10 @@ export default function CreatePost() {
                 postData.image_type = imageFile.type;
             }
 
-            console.log("SELECTED FOLLOWERS: ", selectedFollowers);
-
             // Add audience IDs for selected posts
             if (privacy === "selected") {
                 postData.audience_ids = selectedFollowers.map(id => id);
             }
-
-            console.log("POST DATA: ", postData);
-
             // Step 1: Create post with metadata
             const resp = await createPost(postData);
 
