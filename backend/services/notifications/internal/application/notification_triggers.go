@@ -67,6 +67,11 @@ func (a *Application) CreateNewFollowerNotification(ctx context.Context, targetU
 
 // CreateGroupInviteNotification creates a notification when a user is invited to join a group
 func (a *Application) CreateGroupInviteNotification(ctx context.Context, invitedUserID, inviterUserID, groupID int64, groupName, inviterUsername string) error {
+	return a.CreateGroupInviteForMultipleUsers(ctx, []int64{invitedUserID}, inviterUserID, groupID, groupName, inviterUsername)
+}
+
+// CreateGroupInviteForMultipleUsers creates a notification when users are invited to join a group
+func (a *Application) CreateGroupInviteForMultipleUsers(ctx context.Context, invitedUserIDs []int64, inviterUserID, groupID int64, groupName, inviterUsername string) error {
 	title := "Group Invitation"
 	message := fmt.Sprintf("%s invited you to join the group \"%s\"", inviterUsername, groupName)
 
@@ -78,20 +83,23 @@ func (a *Application) CreateGroupInviteNotification(ctx context.Context, invited
 		"action":       "accept_or_decline",
 	}
 
-	_, err := a.CreateNotificationWithAggregation(
-		ctx,
-		invitedUserID, // recipient
-		GroupInvite,   // type
-		title,         // title
-		message,       // message
-		"users",       // source service
-		groupID,       // source entity ID (the group)
-		true,          // needs action
-		payload,       // payload
-		false,         // never aggregate group invites
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create group invite notification: %w", err)
+	// Create notifications for each user
+	for _, invitedUserID := range invitedUserIDs {
+		_, err := a.CreateNotificationWithAggregation(
+			ctx,
+			invitedUserID, // recipient
+			GroupInvite,   // type
+			title,         // title
+			message,       // message
+			"users",       // source service
+			groupID,       // source entity ID (the group)
+			true,          // needs action
+			payload,       // payload
+			false,         // never aggregate group invites
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create group invite notification for user %d: %w", invitedUserID, err)
+		}
 	}
 
 	return nil
@@ -131,7 +139,12 @@ func (a *Application) CreateGroupJoinRequestNotification(ctx context.Context, gr
 
 // CreateNewEventNotification creates a notification when a new event is created in a group the user is part of
 func (a *Application) CreateNewEventNotification(ctx context.Context, userID, groupID, eventID int64, groupName, eventTitle string) error {
-	title := "New Event in Group"
+	return a.CreateNewEventForMultipleUsers(ctx, []int64{userID}, groupID, eventID, groupName, eventTitle)
+}
+
+// CreateNewEventForMultipleUsers creates a notification when a new event is created in a group for multiple users
+func (a *Application) CreateNewEventForMultipleUsers(ctx context.Context, userIDs []int64, groupID, eventID int64, groupName, eventTitle string) error {
+	title := fmt.Sprintf("New Event: %s", eventTitle)
 	message := fmt.Sprintf("New event \"%s\" was created in group \"%s\"", eventTitle, groupName)
 
 	payload := map[string]string{
@@ -142,20 +155,23 @@ func (a *Application) CreateNewEventNotification(ctx context.Context, userID, gr
 		"action":      "view_event",
 	}
 
-	_, err := a.CreateNotificationWithAggregation(
-		ctx,
-		userID,   // recipient
-		NewEvent, // type
-		title,    // title
-		message,  // message
-		"posts",  // source service
-		eventID,  // source entity ID (the event)
-		false,    // doesn't need action (just informational)
-		payload,  // payload
-		false,    // never aggregate new events
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create new event notification: %w", err)
+	// Create notifications for each user
+	for _, userID := range userIDs {
+		_, err := a.CreateNotificationWithAggregation(
+			ctx,
+			userID,   // recipient
+			NewEvent, // type
+			title,    // title
+			message,  // message
+			"posts",  // source service
+			eventID,  // source entity ID (the event)
+			false,    // doesn't need action (just informational)
+			payload,  // payload
+			false,    // never aggregate new events
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create new event notification for user %d: %w", userID, err)
+		}
 	}
 
 	return nil
@@ -261,6 +277,11 @@ func (a *Application) CreateMentionNotification(ctx context.Context, userID, men
 
 // CreateNewMessageNotification creates a notification when a user receives a new message in a chat
 func (a *Application) CreateNewMessageNotification(ctx context.Context, userID, senderID, chatID int64, senderUsername, messageContent string, aggregate bool) error {
+	return a.CreateNewMessageForMultipleUsers(ctx, []int64{userID}, senderID, chatID, senderUsername, messageContent, aggregate)
+}
+
+// CreateNewMessageForMultipleUsers creates a notification when a user sends a message to multiple users in a chat
+func (a *Application) CreateNewMessageForMultipleUsers(ctx context.Context, userIDs []int64, senderID, chatID int64, senderUsername, messageContent string, aggregate bool) error {
 	title := "New Message"
 	message := fmt.Sprintf("%s sent you a message", senderUsername)
 
@@ -272,20 +293,23 @@ func (a *Application) CreateNewMessageNotification(ctx context.Context, userID, 
 		"action":          "view_chat",
 	}
 
-	_, err := a.CreateNotificationWithAggregation(
-		ctx,
-		userID,     // recipient
-		NewMessage, // type
-		title,      // title
-		message,    // message
-		"chat",     // source service
-		chatID,     // source entity ID (the chat)
-		false,      // doesn't need action (just informational)
-		payload,    // payload
-		aggregate,  // whether to aggregate
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create new message notification: %w", err)
+	// Create notifications for each user
+	for _, userID := range userIDs {
+		_, err := a.CreateNotificationWithAggregation(
+			ctx,
+			userID,     // recipient
+			NewMessage, // type
+			title,      // title
+			message,    // message
+			"chat",     // source service
+			chatID,     // source entity ID (the chat)
+			false,      // doesn't need action (just informational)
+			payload,    // payload
+			aggregate,  // whether to aggregate
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create new message notification for user %d: %w", userID, err)
+		}
 	}
 
 	return nil
