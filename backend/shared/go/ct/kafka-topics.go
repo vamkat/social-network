@@ -1,10 +1,7 @@
 package ct
 
-type KafkaTopic struct {
-	index int
-	topic string
-}
+type KafkaTopic string
 
 var (
-	Notification = KafkaTopic{1, "notification"}
+	Notification = "notification"
 )
