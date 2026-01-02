@@ -14,7 +14,6 @@ export async function logout() {
         return { success: false, error: error.message };
     }
 
-    // Redirect after successful logout - this throws a NEXT_REDIRECT error
-    // which Next.js catches to perform the redirect
+    // Redirect after successful logout
     redirect("/login");
 }

@@ -57,6 +57,7 @@ export default function PostCard({ post }) {
     const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [isDeletingComment, setIsDeletingComment] = useState(false);
+    const [commentReactions, setCommentReactions] = useState({});
     const composerRef = useRef(null);
     const cardRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -118,10 +119,18 @@ export default function PostCard({ post }) {
                 offset: 0
             });
 
-            console.log("Comment", result.comments)
-
             if (result.success && result.comments) {
                 setComments(result.comments);
+                // Initialize comment reactions state
+                const reactionsState = {};
+                result.comments.forEach(comment => {
+                    reactionsState[comment.comment_id] = {
+                        liked: comment.liked_by_user,
+                        count: comment.reactions_count,
+                        pending: false
+                    };
+                });
+                setCommentReactions(reactionsState);
                 // Check if there are more comments to load
                 setHasMore(commentsCount > 1);
             }
@@ -150,6 +159,16 @@ export default function PostCard({ post }) {
                 // Then prepend them above the existing comments (which has newest at bottom)
                 const reversedComments = [...result.comments].reverse();
                 setComments((prev) => [...reversedComments, ...prev]);
+                // Initialize comment reactions state for new comments
+                const reactionsState = {};
+                result.comments.forEach(comment => {
+                    reactionsState[comment.comment_id] = {
+                        liked: comment.liked_by_user,
+                        count: comment.reactions_count,
+                        pending: false
+                    };
+                });
+                setCommentReactions(prev => ({ ...prev, ...reactionsState }));
                 // Check if there are still more to load
                 setHasMore(comments.length + result.comments.length < commentsCount);
             }
@@ -283,7 +302,6 @@ export default function PostCard({ post }) {
             }
 
             if (imageFile && resp.FileId && resp.UploadUrl) {
-                console.log("Sending to url with id provided.... ")
                 const uploadRes = await fetch(resp.UploadUrl, {
                     method: "PUT",
                     body: imageFile,
@@ -638,6 +656,64 @@ export default function PostCard({ post }) {
             setError("Failed to delete comment. Please try again.");
         } finally {
             setIsDeletingComment(false);
+        }
+    };
+
+    const handleCommentReactionClick = async (commentId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const currentReaction = commentReactions[commentId];
+        if (!currentReaction || currentReaction.pending) return;
+
+        // Optimistic update
+        const previousLiked = currentReaction.liked;
+        const previousCount = currentReaction.count;
+
+        setCommentReactions(prev => ({
+            ...prev,
+            [commentId]: {
+                liked: !previousLiked,
+                count: previousLiked ? previousCount - 1 : previousCount + 1,
+                pending: true
+            }
+        }));
+
+        try {
+            const resp = await toggleReaction(commentId);
+
+            if (!resp.success) {
+                // Revert on error
+                setCommentReactions(prev => ({
+                    ...prev,
+                    [commentId]: {
+                        liked: previousLiked,
+                        count: previousCount,
+                        pending: false
+                    }
+                }));
+                console.error("Failed to toggle comment reaction:", resp.error);
+            } else {
+                // Update pending state
+                setCommentReactions(prev => ({
+                    ...prev,
+                    [commentId]: {
+                        ...prev[commentId],
+                        pending: false
+                    }
+                }));
+            }
+        } catch (err) {
+            // Revert on error
+            setCommentReactions(prev => ({
+                ...prev,
+                [commentId]: {
+                    liked: previousLiked,
+                    count: previousCount,
+                    pending: false
+                }
+            }));
+            console.error("Failed to toggle comment reaction:", err);
         }
     };
 
@@ -1062,6 +1138,19 @@ export default function PostCard({ post }) {
                                                                     alt="Comment attachment"
                                                                     className="max-w-full max-h-48 rounded-lg border border-(--border) object-cover"
                                                                 />
+                                                            </div>
+                                                        )}
+                                                        {/* Comment Reactions */}
+                                                        {commentReactions[comment.comment_id] && (
+                                                            <div className="mt-2">
+                                                                <button
+                                                                    onClick={(e) => handleCommentReactionClick(comment.comment_id, e)}
+                                                                    disabled={commentReactions[comment.comment_id].pending}
+                                                                    className="flex items-center gap-1 text-(--muted) hover:text-red-500 transition-colors group/comment-heart disabled:opacity-50"
+                                                                >
+                                                                    <Heart className={`w-4 h-4 transition-transform group-hover/comment-heart:scale-110 cursor-pointer ${commentReactions[comment.comment_id].liked ? "fill-red-500 text-red-500" : ""}`} />
+                                                                    <span className="text-xs font-medium">{commentReactions[comment.comment_id].count}</span>
+                                                                </button>
                                                             </div>
                                                         )}
                                                     </div>

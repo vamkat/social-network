@@ -32,8 +32,6 @@ export default function ProfileContent({ result, posts }) {
         );
     }
 
-    console.log(result.user);
-
     // Render profile
     return (
         <div className="w-full">
