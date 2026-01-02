@@ -1,12 +1,28 @@
 ======== This week TODOs ========
 
-- Comments in Post Card (create comment with/without image - get comments - update comment - delete comment) --  IN PROGRESS (caught some bugs- reported to backend)
+- Group Page (page with all groups - pagination feature, search bar, modal for group creation) - DONE?
 
-- Create users and test privacy and audiences (from posts) - IN PROGRESS (caught some bugs- reported to backend)
+- Single group page /groups/{id} (REAL MEN DONT CRY) :
+1. {IF OWNER} => 
+    1. Update/delete group
+    2. Ability to invite others
+    3. Section to accept invitation requests? (or is it in notifs?)
+    4. Section to see all members
+    5. CreatePost , CreateEvent (seperate sections/pages/tabs)
 
-POSTS MUST BE DONE BY NEW YEAR!
+2. {IF MEMBER} =>
+    1. Ability to invite others
+    2. Section to see all members
+    3. CreatePost , CreateEvent (seperate sections/pages/tabs)
+
+3. {IF NOTHING} =>
+    1. group info
+    2. only one post diplay?
+    3. Ability to request in
 
 ======== LATER TODOs ========
-- create/ update groups
-- group/{id} page with all fucks needed (REAL MAN DONT CRY)
-- search groups
+
+PROPER RESPONSE HANDLING - ERROR HANDLING
+ENSURE VALIDATION EVERYWHERE
+GLOBAL LOGGER
+MIDDLEWARE
