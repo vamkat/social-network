@@ -720,9 +720,9 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 	}
 
 	GroupImage := req.GroupImageId
-	if err := invalidId("GroupImage", GroupImage); err != nil {
-		return nil, err
-	}
+	// if err := invalidId("GroupImage", GroupImage); err != nil {
+	// 	return nil, err
+	// }
 
 	resp, err := s.Application.CreateGroup(ctx, &models.CreateGroupRequest{
 		OwnerId:          ct.Id(OwnerId),
