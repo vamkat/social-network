@@ -161,9 +161,9 @@ type Groups struct {
 }
 
 type InviteToGroupReq struct {
-	InviterId ct.Id
-	InvitedId ct.Id `json:"invited_id"`
-	GroupId   ct.Id `json:"group_id"`
+	InviterId  ct.Id
+	InvitedIds ct.Ids `json:"invited_id"`
+	GroupId    ct.Id  `json:"group_id"`
 }
 
 type HandleGroupInviteRequest struct {

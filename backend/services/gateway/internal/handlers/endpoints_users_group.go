@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
@@ -424,8 +425,10 @@ func (s *Handlers) inviteToGroup() http.HandlerFunc {
 
 		req := &users.InviteToGroupRequest{
 			InviterId: claims.UserId,
-			InvitedId: body.InvitedId.Int64(),
-			GroupId:   body.GroupId.Int64(),
+			InvitedIds: &common.UserIds{
+				Values: body.InvitedIds.Int64(),
+			},
+			GroupId: body.GroupId.Int64(),
 		}
 
 		_, err = s.UsersService.InviteToGroup(ctx, req)

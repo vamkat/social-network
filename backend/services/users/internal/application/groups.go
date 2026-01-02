@@ -291,46 +291,46 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 		return ErrNotAuthorized
 	}
 
-	err = s.db.SendGroupInvite(ctx, ds.SendGroupInviteParams{
-		GroupID:    req.GroupId.Int64(),
-		SenderID:   req.InviterId.Int64(),
-		ReceiverID: req.InvitedId.Int64(),
+	err = s.db.SendGroupInvites(ctx, ds.SendGroupInvitesParams{
+		GroupID:     req.GroupId.Int64(),
+		SenderID:    req.InviterId.Int64(),
+		ReceiverIDs: req.InvitedIds.Int64(),
 	})
 	if err != nil {
 		return err
 	}
-	//create notification
-	inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
-	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
-	}
-	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
-	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
-	}
-	err = s.clients.CreateGroupInvite(ctx, req.InvitedId.Int64(), req.InviterId.Int64(), req.GroupId.Int64(), group.GroupTitle, inviter.Username.String())
-	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
-	}
+	//create notification (waiting for batch notification)
+	// inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
+	// if err != nil {
+	// 	//WHAT DO DO WITH ERROR HERE?
+	// }
+	// group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+	// if err != nil {
+	// 	//WHAT DO DO WITH ERROR HERE?
+	// }
+	// err = s.clients.CreateGroupInvite(ctx, req.InvitedId.Int64(), req.InviterId.Int64(), req.GroupId.Int64(), group.GroupTitle, inviter.Username.String())
+	// if err != nil {
+	// 	//WHAT DO DO WITH ERROR HERE?
+	// }
 	return nil
 }
 
 // SKIP GRPC FOR NOW
-func (s *Application) CancelInviteToGroup(ctx context.Context, req models.InviteToGroupReq) error {
-	if err := ct.ValidateStruct(req); err != nil {
-		return err
-	}
-	err := s.db.CancelGroupInvite(ctx, ds.CancelGroupInviteParams{
-		GroupID:    req.GroupId.Int64(),
-		ReceiverID: req.InvitedId.Int64(),
-		SenderID:   req.InviterId.Int64(),
-	})
-	if err != nil {
-		return err
-	}
-	//TODO REMOVE NOTIFICATION EVENT
-	return nil
-}
+// func (s *Application) CancelInviteToGroup(ctx context.Context, req models.InviteToGroupReq) error {
+// 	if err := ct.ValidateStruct(req); err != nil {
+// 		return err
+// 	}
+// 	err := s.db.CancelGroupInvite(ctx, ds.CancelGroupInviteParams{
+// 		GroupID:    req.GroupId.Int64(),
+// 		ReceiverID: req.InvitedId.Int64(),
+// 		SenderID:   req.InviterId.Int64(),
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+// 	//TODO REMOVE NOTIFICATION EVENT
+// 	return nil
+// }
 
 func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoinRequest) error {
 	if err := ct.ValidateStruct(req); err != nil {

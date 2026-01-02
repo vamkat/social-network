@@ -256,7 +256,7 @@ message GroupSearchRequest {
 
 message InviteToGroupRequest {
   int64 inviter_id = 1;
-  int64 invited_id = 2;
+  common.UserIds invited_ids = 2;
   int64 group_id = 3;
 }
 

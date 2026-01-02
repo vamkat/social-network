@@ -637,21 +637,32 @@ func (q *Queries) SearchGroups(
 	return items, nil
 }
 
-const sendGroupInvite = `-- name: SendGroupInvite :exec
+const sendGroupInvites = `-- name: SendGroupInvite :exec
 INSERT INTO group_invites (group_id, sender_id, receiver_id, status)
-VALUES ($1, $2, $3, 'pending') 
+SELECT
+    $1 AS group_id,
+    $2 AS sender_id,
+    receiver_id,
+    'pending'
+FROM unnest($3::bigint[]) AS receiver_id
 ON CONFLICT (group_id, receiver_id)
-DO UPDATE SET status = 'pending'
+DO UPDATE SET status = 'pending';
 `
 
-type SendGroupInviteParams struct {
-	GroupID    int64
-	SenderID   int64
-	ReceiverID int64
+type SendGroupInvitesParams struct {
+	GroupID     int64
+	SenderID    int64
+	ReceiverIDs []int64
 }
 
-func (q *Queries) SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error {
-	_, err := q.db.Exec(ctx, sendGroupInvite, arg.GroupID, arg.SenderID, arg.ReceiverID)
+func (q *Queries) SendGroupInvites(ctx context.Context, arg SendGroupInvitesParams) error {
+	_, err := q.db.Exec(
+		ctx,
+		sendGroupInvites,
+		arg.GroupID,
+		arg.SenderID,
+		arg.ReceiverIDs,
+	)
 	return err
 }
 

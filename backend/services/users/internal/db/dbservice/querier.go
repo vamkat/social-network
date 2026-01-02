@@ -53,7 +53,7 @@ type Querier interface {
 	RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoinRequestParams) error
 	SearchGroups(ctx context.Context, arg SearchGroupsParams) ([]SearchGroupsRow, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
-	SendGroupInvite(ctx context.Context, arg SendGroupInviteParams) error
+	SendGroupInvites(ctx context.Context, arg SendGroupInvitesParams) error
 	SendGroupJoinRequest(ctx context.Context, arg SendGroupJoinRequestParams) error
 	SoftDeleteGroup(ctx context.Context, id int64) error
 	SoftDeleteUser(ctx context.Context, id int64) error

@@ -542,20 +542,15 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 		return nil, err
 	}
 
-	invitedId := req.InvitedId
-	if err := invalidId("invitedId", invitedId); err != nil {
-		return nil, err
-	}
-
 	groupId := req.GroupId
 	if err := invalidId("groupId", groupId); err != nil {
 		return nil, err
 	}
 
 	err := s.Application.InviteToGroup(ctx, models.InviteToGroupReq{
-		InviterId: ct.Id(inviterId),
-		InvitedId: ct.Id(invitedId),
-		GroupId:   ct.Id(groupId),
+		InviterId:  ct.Id(inviterId),
+		InvitedIds: ct.FromInt64s(req.InvitedIds.Values),
+		GroupId:    ct.Id(groupId),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "InviteToGroup: %v", err)
