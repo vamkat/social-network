@@ -284,6 +284,22 @@ func (s *Server) CreateGroupInvite(ctx context.Context, req *pb.CreateGroupInvit
 	return notification, nil
 }
 
+// CreateGroupInviteForMultipleUsers creates a group invite notification for multiple users
+func (s *Server) CreateGroupInviteForMultipleUsers(ctx context.Context, req *pb.CreateGroupInviteForMultipleUsersRequest) (*pb.CreateGroupInviteForMultipleUsersResponse, error) {
+	if len(req.InvitedUserIds) == 0 || req.InviterUserId == 0 || req.GroupId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "invited_user_ids, inviter_user_id, and group_id are required")
+	}
+
+	err := s.Application.CreateGroupInviteForMultipleUsers(ctx, req.InvitedUserIds, req.InviterUserId, req.GroupId, req.GroupName, req.InviterUsername)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create group invite notifications for multiple users: %v", err)
+	}
+
+	// For now, return an empty response since the internal function returns only error
+	// In a real implementation, we might want to return the created notifications
+	return &pb.CreateGroupInviteForMultipleUsersResponse{}, nil
+}
+
 // CreateGroupJoinRequest creates a group join request notification
 func (s *Server) CreateGroupJoinRequest(ctx context.Context, req *pb.CreateGroupJoinRequestRequest) (*pb.Notification, error) {
 	if req.GroupOwnerId == 0 || req.RequesterUserId == 0 || req.GroupId == 0 {

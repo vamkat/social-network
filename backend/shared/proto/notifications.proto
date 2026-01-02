@@ -28,6 +28,8 @@ service NotificationService {
   rpc CreateNewFollower (CreateNewFollowerRequest) returns (Notification);
   // Creates a group invite notification
   rpc CreateGroupInvite (CreateGroupInviteRequest) returns (Notification);
+  // Creates a group invite notification for multiple users
+  rpc CreateGroupInviteForMultipleUsers (CreateGroupInviteForMultipleUsersRequest) returns (CreateGroupInviteForMultipleUsersResponse);
   // Creates a group join request notification
   rpc CreateGroupJoinRequest (CreateGroupJoinRequestRequest) returns (Notification);
   // Creates a new event notification
@@ -232,6 +234,20 @@ message CreateGroupInviteRequest {
   int64 group_id = 3; // id of the group
   string group_name = 4; // name of the group
   string inviter_username = 5; // username of the inviter
+}
+
+// Request to create a group invite notification for multiple users
+message CreateGroupInviteForMultipleUsersRequest {
+  repeated int64 invited_user_ids = 1; // recipients
+  int64 inviter_user_id = 2; // user that sent the invite
+  int64 group_id = 3; // id of the group
+  string group_name = 4; // name of the group
+  string inviter_username = 5; // username of the inviter
+}
+
+// Response for creating a group invite notification for multiple users
+message CreateGroupInviteForMultipleUsersResponse {
+  repeated Notification created_notifications = 1; // created notifications
 }
 
 // Request to create a group join request notification

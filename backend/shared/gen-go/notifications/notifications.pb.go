@@ -1193,6 +1193,128 @@ func (x *CreateGroupInviteRequest) GetInviterUsername() string {
 	return ""
 }
 
+// Request to create a group invite notification for multiple users
+type CreateGroupInviteForMultipleUsersRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	InvitedUserIds  []int64                `protobuf:"varint,1,rep,packed,name=invited_user_ids,json=invitedUserIds,proto3" json:"invited_user_ids,omitempty"` // recipients
+	InviterUserId   int64                  `protobuf:"varint,2,opt,name=inviter_user_id,json=inviterUserId,proto3" json:"inviter_user_id,omitempty"`           // user that sent the invite
+	GroupId         int64                  `protobuf:"varint,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`                               // id of the group
+	GroupName       string                 `protobuf:"bytes,4,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`                          // name of the group
+	InviterUsername string                 `protobuf:"bytes,5,opt,name=inviter_username,json=inviterUsername,proto3" json:"inviter_username,omitempty"`        // username of the inviter
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) Reset() {
+	*x = CreateGroupInviteForMultipleUsersRequest{}
+	mi := &file_notifications_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateGroupInviteForMultipleUsersRequest) ProtoMessage() {}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateGroupInviteForMultipleUsersRequest.ProtoReflect.Descriptor instead.
+func (*CreateGroupInviteForMultipleUsersRequest) Descriptor() ([]byte, []int) {
+	return file_notifications_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) GetInvitedUserIds() []int64 {
+	if x != nil {
+		return x.InvitedUserIds
+	}
+	return nil
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) GetInviterUserId() int64 {
+	if x != nil {
+		return x.InviterUserId
+	}
+	return 0
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) GetGroupId() int64 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) GetGroupName() string {
+	if x != nil {
+		return x.GroupName
+	}
+	return ""
+}
+
+func (x *CreateGroupInviteForMultipleUsersRequest) GetInviterUsername() string {
+	if x != nil {
+		return x.InviterUsername
+	}
+	return ""
+}
+
+// Response for creating a group invite notification for multiple users
+type CreateGroupInviteForMultipleUsersResponse struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	CreatedNotifications []*Notification        `protobuf:"bytes,1,rep,name=created_notifications,json=createdNotifications,proto3" json:"created_notifications,omitempty"` // created notifications
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *CreateGroupInviteForMultipleUsersResponse) Reset() {
+	*x = CreateGroupInviteForMultipleUsersResponse{}
+	mi := &file_notifications_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateGroupInviteForMultipleUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateGroupInviteForMultipleUsersResponse) ProtoMessage() {}
+
+func (x *CreateGroupInviteForMultipleUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notifications_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateGroupInviteForMultipleUsersResponse.ProtoReflect.Descriptor instead.
+func (*CreateGroupInviteForMultipleUsersResponse) Descriptor() ([]byte, []int) {
+	return file_notifications_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CreateGroupInviteForMultipleUsersResponse) GetCreatedNotifications() []*Notification {
+	if x != nil {
+		return x.CreatedNotifications
+	}
+	return nil
+}
+
 // Request to create a group join request notification
 type CreateGroupJoinRequestRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
@@ -1207,7 +1329,7 @@ type CreateGroupJoinRequestRequest struct {
 
 func (x *CreateGroupJoinRequestRequest) Reset() {
 	*x = CreateGroupJoinRequestRequest{}
-	mi := &file_notifications_proto_msgTypes[15]
+	mi := &file_notifications_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1219,7 +1341,7 @@ func (x *CreateGroupJoinRequestRequest) String() string {
 func (*CreateGroupJoinRequestRequest) ProtoMessage() {}
 
 func (x *CreateGroupJoinRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[15]
+	mi := &file_notifications_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1232,7 +1354,7 @@ func (x *CreateGroupJoinRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupJoinRequestRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupJoinRequestRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{15}
+	return file_notifications_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateGroupJoinRequestRequest) GetGroupOwnerId() int64 {
@@ -1284,7 +1406,7 @@ type CreateNewEventRequest struct {
 
 func (x *CreateNewEventRequest) Reset() {
 	*x = CreateNewEventRequest{}
-	mi := &file_notifications_proto_msgTypes[16]
+	mi := &file_notifications_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1296,7 +1418,7 @@ func (x *CreateNewEventRequest) String() string {
 func (*CreateNewEventRequest) ProtoMessage() {}
 
 func (x *CreateNewEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[16]
+	mi := &file_notifications_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1309,7 +1431,7 @@ func (x *CreateNewEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateNewEventRequest.ProtoReflect.Descriptor instead.
 func (*CreateNewEventRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{16}
+	return file_notifications_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CreateNewEventRequest) GetUserId() int64 {
@@ -1361,7 +1483,7 @@ type CreatePostLikeRequest struct {
 
 func (x *CreatePostLikeRequest) Reset() {
 	*x = CreatePostLikeRequest{}
-	mi := &file_notifications_proto_msgTypes[17]
+	mi := &file_notifications_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1373,7 +1495,7 @@ func (x *CreatePostLikeRequest) String() string {
 func (*CreatePostLikeRequest) ProtoMessage() {}
 
 func (x *CreatePostLikeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[17]
+	mi := &file_notifications_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1386,7 +1508,7 @@ func (x *CreatePostLikeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePostLikeRequest.ProtoReflect.Descriptor instead.
 func (*CreatePostLikeRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{17}
+	return file_notifications_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreatePostLikeRequest) GetUserId() int64 {
@@ -1439,7 +1561,7 @@ type CreatePostCommentRequest struct {
 
 func (x *CreatePostCommentRequest) Reset() {
 	*x = CreatePostCommentRequest{}
-	mi := &file_notifications_proto_msgTypes[18]
+	mi := &file_notifications_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1451,7 +1573,7 @@ func (x *CreatePostCommentRequest) String() string {
 func (*CreatePostCommentRequest) ProtoMessage() {}
 
 func (x *CreatePostCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[18]
+	mi := &file_notifications_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1464,7 +1586,7 @@ func (x *CreatePostCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePostCommentRequest.ProtoReflect.Descriptor instead.
 func (*CreatePostCommentRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{18}
+	return file_notifications_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreatePostCommentRequest) GetUserId() int64 {
@@ -1524,7 +1646,7 @@ type CreateMentionRequest struct {
 
 func (x *CreateMentionRequest) Reset() {
 	*x = CreateMentionRequest{}
-	mi := &file_notifications_proto_msgTypes[19]
+	mi := &file_notifications_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1536,7 +1658,7 @@ func (x *CreateMentionRequest) String() string {
 func (*CreateMentionRequest) ProtoMessage() {}
 
 func (x *CreateMentionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[19]
+	mi := &file_notifications_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1549,7 +1671,7 @@ func (x *CreateMentionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMentionRequest.ProtoReflect.Descriptor instead.
 func (*CreateMentionRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{19}
+	return file_notifications_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateMentionRequest) GetUserId() int64 {
@@ -1609,7 +1731,7 @@ type CreateNewMessageRequest struct {
 
 func (x *CreateNewMessageRequest) Reset() {
 	*x = CreateNewMessageRequest{}
-	mi := &file_notifications_proto_msgTypes[20]
+	mi := &file_notifications_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1621,7 +1743,7 @@ func (x *CreateNewMessageRequest) String() string {
 func (*CreateNewMessageRequest) ProtoMessage() {}
 
 func (x *CreateNewMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[20]
+	mi := &file_notifications_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1634,7 +1756,7 @@ func (x *CreateNewMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateNewMessageRequest.ProtoReflect.Descriptor instead.
 func (*CreateNewMessageRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{20}
+	return file_notifications_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *CreateNewMessageRequest) GetUserId() int64 {
@@ -1691,7 +1813,7 @@ type CreateFollowRequestAcceptedRequest struct {
 
 func (x *CreateFollowRequestAcceptedRequest) Reset() {
 	*x = CreateFollowRequestAcceptedRequest{}
-	mi := &file_notifications_proto_msgTypes[21]
+	mi := &file_notifications_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1703,7 +1825,7 @@ func (x *CreateFollowRequestAcceptedRequest) String() string {
 func (*CreateFollowRequestAcceptedRequest) ProtoMessage() {}
 
 func (x *CreateFollowRequestAcceptedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[21]
+	mi := &file_notifications_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1716,7 +1838,7 @@ func (x *CreateFollowRequestAcceptedRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use CreateFollowRequestAcceptedRequest.ProtoReflect.Descriptor instead.
 func (*CreateFollowRequestAcceptedRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{21}
+	return file_notifications_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CreateFollowRequestAcceptedRequest) GetRequesterUserId() int64 {
@@ -1752,7 +1874,7 @@ type CreateFollowRequestRejectedRequest struct {
 
 func (x *CreateFollowRequestRejectedRequest) Reset() {
 	*x = CreateFollowRequestRejectedRequest{}
-	mi := &file_notifications_proto_msgTypes[22]
+	mi := &file_notifications_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1764,7 +1886,7 @@ func (x *CreateFollowRequestRejectedRequest) String() string {
 func (*CreateFollowRequestRejectedRequest) ProtoMessage() {}
 
 func (x *CreateFollowRequestRejectedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[22]
+	mi := &file_notifications_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1777,7 +1899,7 @@ func (x *CreateFollowRequestRejectedRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use CreateFollowRequestRejectedRequest.ProtoReflect.Descriptor instead.
 func (*CreateFollowRequestRejectedRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{22}
+	return file_notifications_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *CreateFollowRequestRejectedRequest) GetRequesterUserId() int64 {
@@ -1815,7 +1937,7 @@ type CreateGroupInviteAcceptedRequest struct {
 
 func (x *CreateGroupInviteAcceptedRequest) Reset() {
 	*x = CreateGroupInviteAcceptedRequest{}
-	mi := &file_notifications_proto_msgTypes[23]
+	mi := &file_notifications_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1827,7 +1949,7 @@ func (x *CreateGroupInviteAcceptedRequest) String() string {
 func (*CreateGroupInviteAcceptedRequest) ProtoMessage() {}
 
 func (x *CreateGroupInviteAcceptedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[23]
+	mi := &file_notifications_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1840,7 +1962,7 @@ func (x *CreateGroupInviteAcceptedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupInviteAcceptedRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupInviteAcceptedRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{23}
+	return file_notifications_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CreateGroupInviteAcceptedRequest) GetInviterUserId() int64 {
@@ -1892,7 +2014,7 @@ type CreateGroupInviteRejectedRequest struct {
 
 func (x *CreateGroupInviteRejectedRequest) Reset() {
 	*x = CreateGroupInviteRejectedRequest{}
-	mi := &file_notifications_proto_msgTypes[24]
+	mi := &file_notifications_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1904,7 +2026,7 @@ func (x *CreateGroupInviteRejectedRequest) String() string {
 func (*CreateGroupInviteRejectedRequest) ProtoMessage() {}
 
 func (x *CreateGroupInviteRejectedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[24]
+	mi := &file_notifications_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1917,7 +2039,7 @@ func (x *CreateGroupInviteRejectedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupInviteRejectedRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupInviteRejectedRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{24}
+	return file_notifications_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *CreateGroupInviteRejectedRequest) GetInviterUserId() int64 {
@@ -1968,7 +2090,7 @@ type CreateGroupJoinRequestAcceptedRequest struct {
 
 func (x *CreateGroupJoinRequestAcceptedRequest) Reset() {
 	*x = CreateGroupJoinRequestAcceptedRequest{}
-	mi := &file_notifications_proto_msgTypes[25]
+	mi := &file_notifications_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1980,7 +2102,7 @@ func (x *CreateGroupJoinRequestAcceptedRequest) String() string {
 func (*CreateGroupJoinRequestAcceptedRequest) ProtoMessage() {}
 
 func (x *CreateGroupJoinRequestAcceptedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[25]
+	mi := &file_notifications_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1993,7 +2115,7 @@ func (x *CreateGroupJoinRequestAcceptedRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use CreateGroupJoinRequestAcceptedRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupJoinRequestAcceptedRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{25}
+	return file_notifications_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *CreateGroupJoinRequestAcceptedRequest) GetRequesterUserId() int64 {
@@ -2037,7 +2159,7 @@ type CreateGroupJoinRequestRejectedRequest struct {
 
 func (x *CreateGroupJoinRequestRejectedRequest) Reset() {
 	*x = CreateGroupJoinRequestRejectedRequest{}
-	mi := &file_notifications_proto_msgTypes[26]
+	mi := &file_notifications_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2049,7 +2171,7 @@ func (x *CreateGroupJoinRequestRejectedRequest) String() string {
 func (*CreateGroupJoinRequestRejectedRequest) ProtoMessage() {}
 
 func (x *CreateGroupJoinRequestRejectedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_notifications_proto_msgTypes[26]
+	mi := &file_notifications_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2062,7 +2184,7 @@ func (x *CreateGroupJoinRequestRejectedRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use CreateGroupJoinRequestRejectedRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupJoinRequestRejectedRequest) Descriptor() ([]byte, []int) {
-	return file_notifications_proto_rawDescGZIP(), []int{26}
+	return file_notifications_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *CreateGroupJoinRequestRejectedRequest) GetRequesterUserId() int64 {
@@ -2191,7 +2313,16 @@ const file_notifications_proto_rawDesc = "" +
 	"\bgroup_id\x18\x03 \x01(\x03R\agroupId\x12\x1d\n" +
 	"\n" +
 	"group_name\x18\x04 \x01(\tR\tgroupName\x12)\n" +
-	"\x10inviter_username\x18\x05 \x01(\tR\x0finviterUsername\"\xda\x01\n" +
+	"\x10inviter_username\x18\x05 \x01(\tR\x0finviterUsername\"\xe1\x01\n" +
+	"(CreateGroupInviteForMultipleUsersRequest\x12(\n" +
+	"\x10invited_user_ids\x18\x01 \x03(\x03R\x0einvitedUserIds\x12&\n" +
+	"\x0finviter_user_id\x18\x02 \x01(\x03R\rinviterUserId\x12\x19\n" +
+	"\bgroup_id\x18\x03 \x01(\x03R\agroupId\x12\x1d\n" +
+	"\n" +
+	"group_name\x18\x04 \x01(\tR\tgroupName\x12)\n" +
+	"\x10inviter_username\x18\x05 \x01(\tR\x0finviterUsername\"}\n" +
+	")CreateGroupInviteForMultipleUsersResponse\x12P\n" +
+	"\x15created_notifications\x18\x01 \x03(\v2\x1b.notifications.NotificationR\x14createdNotifications\"\xda\x01\n" +
 	"\x1dCreateGroupJoinRequestRequest\x12$\n" +
 	"\x0egroup_owner_id\x18\x01 \x01(\x03R\fgroupOwnerId\x12*\n" +
 	"\x11requester_user_id\x18\x02 \x01(\x03R\x0frequesterUserId\x12\x19\n" +
@@ -2290,13 +2421,14 @@ const file_notifications_proto_rawDesc = "" +
 	"\x1fNOTIFICATION_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aNOTIFICATION_STATUS_UNREAD\x10\x01\x12\x1c\n" +
 	"\x18NOTIFICATION_STATUS_READ\x10\x02\x12\x1f\n" +
-	"\x1bNOTIFICATION_STATUS_DELETED\x10\x032\xd2\x13\n" +
+	"\x1bNOTIFICATION_STATUS_DELETED\x10\x032\xeb\x14\n" +
 	"\x13NotificationService\x12[\n" +
 	"\x12CreateNotification\x12(.notifications.CreateNotificationRequest\x1a\x1b.notifications.Notification\x12l\n" +
 	"\x13CreateNotifications\x12).notifications.CreateNotificationsRequest\x1a*.notifications.CreateNotificationsResponse\x12]\n" +
 	"\x13CreateFollowRequest\x12).notifications.CreateFollowRequestRequest\x1a\x1b.notifications.Notification\x12Y\n" +
 	"\x11CreateNewFollower\x12'.notifications.CreateNewFollowerRequest\x1a\x1b.notifications.Notification\x12Y\n" +
-	"\x11CreateGroupInvite\x12'.notifications.CreateGroupInviteRequest\x1a\x1b.notifications.Notification\x12c\n" +
+	"\x11CreateGroupInvite\x12'.notifications.CreateGroupInviteRequest\x1a\x1b.notifications.Notification\x12\x96\x01\n" +
+	"!CreateGroupInviteForMultipleUsers\x127.notifications.CreateGroupInviteForMultipleUsersRequest\x1a8.notifications.CreateGroupInviteForMultipleUsersResponse\x12c\n" +
 	"\x16CreateGroupJoinRequest\x12,.notifications.CreateGroupJoinRequestRequest\x1a\x1b.notifications.Notification\x12S\n" +
 	"\x0eCreateNewEvent\x12$.notifications.CreateNewEventRequest\x1a\x1b.notifications.Notification\x12\x8d\x01\n" +
 	"\x1eCreateNewEventForMultipleUsers\x124.notifications.CreateNewEventForMultipleUsersRequest\x1a5.notifications.CreateNewEventForMultipleUsersResponse\x12S\n" +
@@ -2331,115 +2463,120 @@ func file_notifications_proto_rawDescGZIP() []byte {
 }
 
 var file_notifications_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_notifications_proto_goTypes = []any{
-	(NotificationType)(0),                          // 0: notifications.NotificationType
-	(NotificationStatus)(0),                        // 1: notifications.NotificationStatus
-	(*Notification)(nil),                           // 2: notifications.Notification
-	(*CreateNotificationRequest)(nil),              // 3: notifications.CreateNotificationRequest
-	(*CreateNotificationsRequest)(nil),             // 4: notifications.CreateNotificationsRequest
-	(*CreateNotificationsResponse)(nil),            // 5: notifications.CreateNotificationsResponse
-	(*CreateNewEventForMultipleUsersRequest)(nil),  // 6: notifications.CreateNewEventForMultipleUsersRequest
-	(*CreateNewEventForMultipleUsersResponse)(nil), // 7: notifications.CreateNewEventForMultipleUsersResponse
-	(*GetUserNotificationsRequest)(nil),            // 8: notifications.GetUserNotificationsRequest
-	(*GetUserNotificationsResponse)(nil),           // 9: notifications.GetUserNotificationsResponse
-	(*MarkNotificationAsReadRequest)(nil),          // 10: notifications.MarkNotificationAsReadRequest
-	(*DeleteNotificationRequest)(nil),              // 11: notifications.DeleteNotificationRequest
-	(*NotificationPreferences)(nil),                // 12: notifications.NotificationPreferences
-	(*UpdateNotificationPreferencesRequest)(nil),   // 13: notifications.UpdateNotificationPreferencesRequest
-	(*CreateFollowRequestRequest)(nil),             // 14: notifications.CreateFollowRequestRequest
-	(*CreateNewFollowerRequest)(nil),               // 15: notifications.CreateNewFollowerRequest
-	(*CreateGroupInviteRequest)(nil),               // 16: notifications.CreateGroupInviteRequest
-	(*CreateGroupJoinRequestRequest)(nil),          // 17: notifications.CreateGroupJoinRequestRequest
-	(*CreateNewEventRequest)(nil),                  // 18: notifications.CreateNewEventRequest
-	(*CreatePostLikeRequest)(nil),                  // 19: notifications.CreatePostLikeRequest
-	(*CreatePostCommentRequest)(nil),               // 20: notifications.CreatePostCommentRequest
-	(*CreateMentionRequest)(nil),                   // 21: notifications.CreateMentionRequest
-	(*CreateNewMessageRequest)(nil),                // 22: notifications.CreateNewMessageRequest
-	(*CreateFollowRequestAcceptedRequest)(nil),     // 23: notifications.CreateFollowRequestAcceptedRequest
-	(*CreateFollowRequestRejectedRequest)(nil),     // 24: notifications.CreateFollowRequestRejectedRequest
-	(*CreateGroupInviteAcceptedRequest)(nil),       // 25: notifications.CreateGroupInviteAcceptedRequest
-	(*CreateGroupInviteRejectedRequest)(nil),       // 26: notifications.CreateGroupInviteRejectedRequest
-	(*CreateGroupJoinRequestAcceptedRequest)(nil),  // 27: notifications.CreateGroupJoinRequestAcceptedRequest
-	(*CreateGroupJoinRequestRejectedRequest)(nil),  // 28: notifications.CreateGroupJoinRequestRejectedRequest
-	nil,                           // 29: notifications.Notification.PayloadEntry
-	nil,                           // 30: notifications.CreateNotificationRequest.PayloadEntry
-	nil,                           // 31: notifications.NotificationPreferences.PreferencesEntry
-	nil,                           // 32: notifications.UpdateNotificationPreferencesRequest.PreferencesEntry
-	(*timestamppb.Timestamp)(nil), // 33: google.protobuf.Timestamp
-	(*wrapperspb.Int64Value)(nil), // 34: google.protobuf.Int64Value
-	(*emptypb.Empty)(nil),         // 35: google.protobuf.Empty
+	(NotificationType)(0),                             // 0: notifications.NotificationType
+	(NotificationStatus)(0),                           // 1: notifications.NotificationStatus
+	(*Notification)(nil),                              // 2: notifications.Notification
+	(*CreateNotificationRequest)(nil),                 // 3: notifications.CreateNotificationRequest
+	(*CreateNotificationsRequest)(nil),                // 4: notifications.CreateNotificationsRequest
+	(*CreateNotificationsResponse)(nil),               // 5: notifications.CreateNotificationsResponse
+	(*CreateNewEventForMultipleUsersRequest)(nil),     // 6: notifications.CreateNewEventForMultipleUsersRequest
+	(*CreateNewEventForMultipleUsersResponse)(nil),    // 7: notifications.CreateNewEventForMultipleUsersResponse
+	(*GetUserNotificationsRequest)(nil),               // 8: notifications.GetUserNotificationsRequest
+	(*GetUserNotificationsResponse)(nil),              // 9: notifications.GetUserNotificationsResponse
+	(*MarkNotificationAsReadRequest)(nil),             // 10: notifications.MarkNotificationAsReadRequest
+	(*DeleteNotificationRequest)(nil),                 // 11: notifications.DeleteNotificationRequest
+	(*NotificationPreferences)(nil),                   // 12: notifications.NotificationPreferences
+	(*UpdateNotificationPreferencesRequest)(nil),      // 13: notifications.UpdateNotificationPreferencesRequest
+	(*CreateFollowRequestRequest)(nil),                // 14: notifications.CreateFollowRequestRequest
+	(*CreateNewFollowerRequest)(nil),                  // 15: notifications.CreateNewFollowerRequest
+	(*CreateGroupInviteRequest)(nil),                  // 16: notifications.CreateGroupInviteRequest
+	(*CreateGroupInviteForMultipleUsersRequest)(nil),  // 17: notifications.CreateGroupInviteForMultipleUsersRequest
+	(*CreateGroupInviteForMultipleUsersResponse)(nil), // 18: notifications.CreateGroupInviteForMultipleUsersResponse
+	(*CreateGroupJoinRequestRequest)(nil),             // 19: notifications.CreateGroupJoinRequestRequest
+	(*CreateNewEventRequest)(nil),                     // 20: notifications.CreateNewEventRequest
+	(*CreatePostLikeRequest)(nil),                     // 21: notifications.CreatePostLikeRequest
+	(*CreatePostCommentRequest)(nil),                  // 22: notifications.CreatePostCommentRequest
+	(*CreateMentionRequest)(nil),                      // 23: notifications.CreateMentionRequest
+	(*CreateNewMessageRequest)(nil),                   // 24: notifications.CreateNewMessageRequest
+	(*CreateFollowRequestAcceptedRequest)(nil),        // 25: notifications.CreateFollowRequestAcceptedRequest
+	(*CreateFollowRequestRejectedRequest)(nil),        // 26: notifications.CreateFollowRequestRejectedRequest
+	(*CreateGroupInviteAcceptedRequest)(nil),          // 27: notifications.CreateGroupInviteAcceptedRequest
+	(*CreateGroupInviteRejectedRequest)(nil),          // 28: notifications.CreateGroupInviteRejectedRequest
+	(*CreateGroupJoinRequestAcceptedRequest)(nil),     // 29: notifications.CreateGroupJoinRequestAcceptedRequest
+	(*CreateGroupJoinRequestRejectedRequest)(nil),     // 30: notifications.CreateGroupJoinRequestRejectedRequest
+	nil,                           // 31: notifications.Notification.PayloadEntry
+	nil,                           // 32: notifications.CreateNotificationRequest.PayloadEntry
+	nil,                           // 33: notifications.NotificationPreferences.PreferencesEntry
+	nil,                           // 34: notifications.UpdateNotificationPreferencesRequest.PreferencesEntry
+	(*timestamppb.Timestamp)(nil), // 35: google.protobuf.Timestamp
+	(*wrapperspb.Int64Value)(nil), // 36: google.protobuf.Int64Value
+	(*emptypb.Empty)(nil),         // 37: google.protobuf.Empty
 }
 var file_notifications_proto_depIdxs = []int32{
 	0,  // 0: notifications.Notification.type:type_name -> notifications.NotificationType
-	29, // 1: notifications.Notification.payload:type_name -> notifications.Notification.PayloadEntry
-	33, // 2: notifications.Notification.created_at:type_name -> google.protobuf.Timestamp
-	33, // 3: notifications.Notification.expires_at:type_name -> google.protobuf.Timestamp
+	31, // 1: notifications.Notification.payload:type_name -> notifications.Notification.PayloadEntry
+	35, // 2: notifications.Notification.created_at:type_name -> google.protobuf.Timestamp
+	35, // 3: notifications.Notification.expires_at:type_name -> google.protobuf.Timestamp
 	1,  // 4: notifications.Notification.status:type_name -> notifications.NotificationStatus
 	0,  // 5: notifications.CreateNotificationRequest.type:type_name -> notifications.NotificationType
-	30, // 6: notifications.CreateNotificationRequest.payload:type_name -> notifications.CreateNotificationRequest.PayloadEntry
+	32, // 6: notifications.CreateNotificationRequest.payload:type_name -> notifications.CreateNotificationRequest.PayloadEntry
 	3,  // 7: notifications.CreateNotificationsRequest.notifications:type_name -> notifications.CreateNotificationRequest
 	2,  // 8: notifications.CreateNotificationsResponse.created_notifications:type_name -> notifications.Notification
 	2,  // 9: notifications.CreateNewEventForMultipleUsersResponse.created_notifications:type_name -> notifications.Notification
 	0,  // 10: notifications.GetUserNotificationsRequest.types:type_name -> notifications.NotificationType
 	2,  // 11: notifications.GetUserNotificationsResponse.notifications:type_name -> notifications.Notification
-	31, // 12: notifications.NotificationPreferences.preferences:type_name -> notifications.NotificationPreferences.PreferencesEntry
-	32, // 13: notifications.UpdateNotificationPreferencesRequest.preferences:type_name -> notifications.UpdateNotificationPreferencesRequest.PreferencesEntry
-	3,  // 14: notifications.NotificationService.CreateNotification:input_type -> notifications.CreateNotificationRequest
-	4,  // 15: notifications.NotificationService.CreateNotifications:input_type -> notifications.CreateNotificationsRequest
-	14, // 16: notifications.NotificationService.CreateFollowRequest:input_type -> notifications.CreateFollowRequestRequest
-	15, // 17: notifications.NotificationService.CreateNewFollower:input_type -> notifications.CreateNewFollowerRequest
-	16, // 18: notifications.NotificationService.CreateGroupInvite:input_type -> notifications.CreateGroupInviteRequest
-	17, // 19: notifications.NotificationService.CreateGroupJoinRequest:input_type -> notifications.CreateGroupJoinRequestRequest
-	18, // 20: notifications.NotificationService.CreateNewEvent:input_type -> notifications.CreateNewEventRequest
-	6,  // 21: notifications.NotificationService.CreateNewEventForMultipleUsers:input_type -> notifications.CreateNewEventForMultipleUsersRequest
-	19, // 22: notifications.NotificationService.CreatePostLike:input_type -> notifications.CreatePostLikeRequest
-	20, // 23: notifications.NotificationService.CreatePostComment:input_type -> notifications.CreatePostCommentRequest
-	21, // 24: notifications.NotificationService.CreateMention:input_type -> notifications.CreateMentionRequest
-	22, // 25: notifications.NotificationService.CreateNewMessage:input_type -> notifications.CreateNewMessageRequest
-	23, // 26: notifications.NotificationService.CreateFollowRequestAccepted:input_type -> notifications.CreateFollowRequestAcceptedRequest
-	24, // 27: notifications.NotificationService.CreateFollowRequestRejected:input_type -> notifications.CreateFollowRequestRejectedRequest
-	25, // 28: notifications.NotificationService.CreateGroupInviteAccepted:input_type -> notifications.CreateGroupInviteAcceptedRequest
-	26, // 29: notifications.NotificationService.CreateGroupInviteRejected:input_type -> notifications.CreateGroupInviteRejectedRequest
-	27, // 30: notifications.NotificationService.CreateGroupJoinRequestAccepted:input_type -> notifications.CreateGroupJoinRequestAcceptedRequest
-	28, // 31: notifications.NotificationService.CreateGroupJoinRequestRejected:input_type -> notifications.CreateGroupJoinRequestRejectedRequest
-	8,  // 32: notifications.NotificationService.GetUserNotifications:input_type -> notifications.GetUserNotificationsRequest
-	34, // 33: notifications.NotificationService.GetUnreadNotificationsCount:input_type -> google.protobuf.Int64Value
-	10, // 34: notifications.NotificationService.MarkNotificationAsRead:input_type -> notifications.MarkNotificationAsReadRequest
-	34, // 35: notifications.NotificationService.MarkAllAsRead:input_type -> google.protobuf.Int64Value
-	11, // 36: notifications.NotificationService.DeleteNotification:input_type -> notifications.DeleteNotificationRequest
-	34, // 37: notifications.NotificationService.GetNotificationPreferences:input_type -> google.protobuf.Int64Value
-	13, // 38: notifications.NotificationService.UpdateNotificationPreferences:input_type -> notifications.UpdateNotificationPreferencesRequest
-	2,  // 39: notifications.NotificationService.CreateNotification:output_type -> notifications.Notification
-	5,  // 40: notifications.NotificationService.CreateNotifications:output_type -> notifications.CreateNotificationsResponse
-	2,  // 41: notifications.NotificationService.CreateFollowRequest:output_type -> notifications.Notification
-	2,  // 42: notifications.NotificationService.CreateNewFollower:output_type -> notifications.Notification
-	2,  // 43: notifications.NotificationService.CreateGroupInvite:output_type -> notifications.Notification
-	2,  // 44: notifications.NotificationService.CreateGroupJoinRequest:output_type -> notifications.Notification
-	2,  // 45: notifications.NotificationService.CreateNewEvent:output_type -> notifications.Notification
-	7,  // 46: notifications.NotificationService.CreateNewEventForMultipleUsers:output_type -> notifications.CreateNewEventForMultipleUsersResponse
-	2,  // 47: notifications.NotificationService.CreatePostLike:output_type -> notifications.Notification
-	2,  // 48: notifications.NotificationService.CreatePostComment:output_type -> notifications.Notification
-	2,  // 49: notifications.NotificationService.CreateMention:output_type -> notifications.Notification
-	2,  // 50: notifications.NotificationService.CreateNewMessage:output_type -> notifications.Notification
-	2,  // 51: notifications.NotificationService.CreateFollowRequestAccepted:output_type -> notifications.Notification
-	2,  // 52: notifications.NotificationService.CreateFollowRequestRejected:output_type -> notifications.Notification
-	2,  // 53: notifications.NotificationService.CreateGroupInviteAccepted:output_type -> notifications.Notification
-	2,  // 54: notifications.NotificationService.CreateGroupInviteRejected:output_type -> notifications.Notification
-	2,  // 55: notifications.NotificationService.CreateGroupJoinRequestAccepted:output_type -> notifications.Notification
-	2,  // 56: notifications.NotificationService.CreateGroupJoinRequestRejected:output_type -> notifications.Notification
-	9,  // 57: notifications.NotificationService.GetUserNotifications:output_type -> notifications.GetUserNotificationsResponse
-	34, // 58: notifications.NotificationService.GetUnreadNotificationsCount:output_type -> google.protobuf.Int64Value
-	35, // 59: notifications.NotificationService.MarkNotificationAsRead:output_type -> google.protobuf.Empty
-	35, // 60: notifications.NotificationService.MarkAllAsRead:output_type -> google.protobuf.Empty
-	35, // 61: notifications.NotificationService.DeleteNotification:output_type -> google.protobuf.Empty
-	12, // 62: notifications.NotificationService.GetNotificationPreferences:output_type -> notifications.NotificationPreferences
-	35, // 63: notifications.NotificationService.UpdateNotificationPreferences:output_type -> google.protobuf.Empty
-	39, // [39:64] is the sub-list for method output_type
-	14, // [14:39] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	33, // 12: notifications.NotificationPreferences.preferences:type_name -> notifications.NotificationPreferences.PreferencesEntry
+	34, // 13: notifications.UpdateNotificationPreferencesRequest.preferences:type_name -> notifications.UpdateNotificationPreferencesRequest.PreferencesEntry
+	2,  // 14: notifications.CreateGroupInviteForMultipleUsersResponse.created_notifications:type_name -> notifications.Notification
+	3,  // 15: notifications.NotificationService.CreateNotification:input_type -> notifications.CreateNotificationRequest
+	4,  // 16: notifications.NotificationService.CreateNotifications:input_type -> notifications.CreateNotificationsRequest
+	14, // 17: notifications.NotificationService.CreateFollowRequest:input_type -> notifications.CreateFollowRequestRequest
+	15, // 18: notifications.NotificationService.CreateNewFollower:input_type -> notifications.CreateNewFollowerRequest
+	16, // 19: notifications.NotificationService.CreateGroupInvite:input_type -> notifications.CreateGroupInviteRequest
+	17, // 20: notifications.NotificationService.CreateGroupInviteForMultipleUsers:input_type -> notifications.CreateGroupInviteForMultipleUsersRequest
+	19, // 21: notifications.NotificationService.CreateGroupJoinRequest:input_type -> notifications.CreateGroupJoinRequestRequest
+	20, // 22: notifications.NotificationService.CreateNewEvent:input_type -> notifications.CreateNewEventRequest
+	6,  // 23: notifications.NotificationService.CreateNewEventForMultipleUsers:input_type -> notifications.CreateNewEventForMultipleUsersRequest
+	21, // 24: notifications.NotificationService.CreatePostLike:input_type -> notifications.CreatePostLikeRequest
+	22, // 25: notifications.NotificationService.CreatePostComment:input_type -> notifications.CreatePostCommentRequest
+	23, // 26: notifications.NotificationService.CreateMention:input_type -> notifications.CreateMentionRequest
+	24, // 27: notifications.NotificationService.CreateNewMessage:input_type -> notifications.CreateNewMessageRequest
+	25, // 28: notifications.NotificationService.CreateFollowRequestAccepted:input_type -> notifications.CreateFollowRequestAcceptedRequest
+	26, // 29: notifications.NotificationService.CreateFollowRequestRejected:input_type -> notifications.CreateFollowRequestRejectedRequest
+	27, // 30: notifications.NotificationService.CreateGroupInviteAccepted:input_type -> notifications.CreateGroupInviteAcceptedRequest
+	28, // 31: notifications.NotificationService.CreateGroupInviteRejected:input_type -> notifications.CreateGroupInviteRejectedRequest
+	29, // 32: notifications.NotificationService.CreateGroupJoinRequestAccepted:input_type -> notifications.CreateGroupJoinRequestAcceptedRequest
+	30, // 33: notifications.NotificationService.CreateGroupJoinRequestRejected:input_type -> notifications.CreateGroupJoinRequestRejectedRequest
+	8,  // 34: notifications.NotificationService.GetUserNotifications:input_type -> notifications.GetUserNotificationsRequest
+	36, // 35: notifications.NotificationService.GetUnreadNotificationsCount:input_type -> google.protobuf.Int64Value
+	10, // 36: notifications.NotificationService.MarkNotificationAsRead:input_type -> notifications.MarkNotificationAsReadRequest
+	36, // 37: notifications.NotificationService.MarkAllAsRead:input_type -> google.protobuf.Int64Value
+	11, // 38: notifications.NotificationService.DeleteNotification:input_type -> notifications.DeleteNotificationRequest
+	36, // 39: notifications.NotificationService.GetNotificationPreferences:input_type -> google.protobuf.Int64Value
+	13, // 40: notifications.NotificationService.UpdateNotificationPreferences:input_type -> notifications.UpdateNotificationPreferencesRequest
+	2,  // 41: notifications.NotificationService.CreateNotification:output_type -> notifications.Notification
+	5,  // 42: notifications.NotificationService.CreateNotifications:output_type -> notifications.CreateNotificationsResponse
+	2,  // 43: notifications.NotificationService.CreateFollowRequest:output_type -> notifications.Notification
+	2,  // 44: notifications.NotificationService.CreateNewFollower:output_type -> notifications.Notification
+	2,  // 45: notifications.NotificationService.CreateGroupInvite:output_type -> notifications.Notification
+	18, // 46: notifications.NotificationService.CreateGroupInviteForMultipleUsers:output_type -> notifications.CreateGroupInviteForMultipleUsersResponse
+	2,  // 47: notifications.NotificationService.CreateGroupJoinRequest:output_type -> notifications.Notification
+	2,  // 48: notifications.NotificationService.CreateNewEvent:output_type -> notifications.Notification
+	7,  // 49: notifications.NotificationService.CreateNewEventForMultipleUsers:output_type -> notifications.CreateNewEventForMultipleUsersResponse
+	2,  // 50: notifications.NotificationService.CreatePostLike:output_type -> notifications.Notification
+	2,  // 51: notifications.NotificationService.CreatePostComment:output_type -> notifications.Notification
+	2,  // 52: notifications.NotificationService.CreateMention:output_type -> notifications.Notification
+	2,  // 53: notifications.NotificationService.CreateNewMessage:output_type -> notifications.Notification
+	2,  // 54: notifications.NotificationService.CreateFollowRequestAccepted:output_type -> notifications.Notification
+	2,  // 55: notifications.NotificationService.CreateFollowRequestRejected:output_type -> notifications.Notification
+	2,  // 56: notifications.NotificationService.CreateGroupInviteAccepted:output_type -> notifications.Notification
+	2,  // 57: notifications.NotificationService.CreateGroupInviteRejected:output_type -> notifications.Notification
+	2,  // 58: notifications.NotificationService.CreateGroupJoinRequestAccepted:output_type -> notifications.Notification
+	2,  // 59: notifications.NotificationService.CreateGroupJoinRequestRejected:output_type -> notifications.Notification
+	9,  // 60: notifications.NotificationService.GetUserNotifications:output_type -> notifications.GetUserNotificationsResponse
+	36, // 61: notifications.NotificationService.GetUnreadNotificationsCount:output_type -> google.protobuf.Int64Value
+	37, // 62: notifications.NotificationService.MarkNotificationAsRead:output_type -> google.protobuf.Empty
+	37, // 63: notifications.NotificationService.MarkAllAsRead:output_type -> google.protobuf.Empty
+	37, // 64: notifications.NotificationService.DeleteNotification:output_type -> google.protobuf.Empty
+	12, // 65: notifications.NotificationService.GetNotificationPreferences:output_type -> notifications.NotificationPreferences
+	37, // 66: notifications.NotificationService.UpdateNotificationPreferences:output_type -> google.protobuf.Empty
+	41, // [41:67] is the sub-list for method output_type
+	15, // [15:41] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_notifications_proto_init() }
@@ -2453,7 +2590,7 @@ func file_notifications_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_notifications_proto_rawDesc), len(file_notifications_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   31,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -21,31 +21,32 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NotificationService_CreateNotification_FullMethodName             = "/notifications.NotificationService/CreateNotification"
-	NotificationService_CreateNotifications_FullMethodName            = "/notifications.NotificationService/CreateNotifications"
-	NotificationService_CreateFollowRequest_FullMethodName            = "/notifications.NotificationService/CreateFollowRequest"
-	NotificationService_CreateNewFollower_FullMethodName              = "/notifications.NotificationService/CreateNewFollower"
-	NotificationService_CreateGroupInvite_FullMethodName              = "/notifications.NotificationService/CreateGroupInvite"
-	NotificationService_CreateGroupJoinRequest_FullMethodName         = "/notifications.NotificationService/CreateGroupJoinRequest"
-	NotificationService_CreateNewEvent_FullMethodName                 = "/notifications.NotificationService/CreateNewEvent"
-	NotificationService_CreateNewEventForMultipleUsers_FullMethodName = "/notifications.NotificationService/CreateNewEventForMultipleUsers"
-	NotificationService_CreatePostLike_FullMethodName                 = "/notifications.NotificationService/CreatePostLike"
-	NotificationService_CreatePostComment_FullMethodName              = "/notifications.NotificationService/CreatePostComment"
-	NotificationService_CreateMention_FullMethodName                  = "/notifications.NotificationService/CreateMention"
-	NotificationService_CreateNewMessage_FullMethodName               = "/notifications.NotificationService/CreateNewMessage"
-	NotificationService_CreateFollowRequestAccepted_FullMethodName    = "/notifications.NotificationService/CreateFollowRequestAccepted"
-	NotificationService_CreateFollowRequestRejected_FullMethodName    = "/notifications.NotificationService/CreateFollowRequestRejected"
-	NotificationService_CreateGroupInviteAccepted_FullMethodName      = "/notifications.NotificationService/CreateGroupInviteAccepted"
-	NotificationService_CreateGroupInviteRejected_FullMethodName      = "/notifications.NotificationService/CreateGroupInviteRejected"
-	NotificationService_CreateGroupJoinRequestAccepted_FullMethodName = "/notifications.NotificationService/CreateGroupJoinRequestAccepted"
-	NotificationService_CreateGroupJoinRequestRejected_FullMethodName = "/notifications.NotificationService/CreateGroupJoinRequestRejected"
-	NotificationService_GetUserNotifications_FullMethodName           = "/notifications.NotificationService/GetUserNotifications"
-	NotificationService_GetUnreadNotificationsCount_FullMethodName    = "/notifications.NotificationService/GetUnreadNotificationsCount"
-	NotificationService_MarkNotificationAsRead_FullMethodName         = "/notifications.NotificationService/MarkNotificationAsRead"
-	NotificationService_MarkAllAsRead_FullMethodName                  = "/notifications.NotificationService/MarkAllAsRead"
-	NotificationService_DeleteNotification_FullMethodName             = "/notifications.NotificationService/DeleteNotification"
-	NotificationService_GetNotificationPreferences_FullMethodName     = "/notifications.NotificationService/GetNotificationPreferences"
-	NotificationService_UpdateNotificationPreferences_FullMethodName  = "/notifications.NotificationService/UpdateNotificationPreferences"
+	NotificationService_CreateNotification_FullMethodName                = "/notifications.NotificationService/CreateNotification"
+	NotificationService_CreateNotifications_FullMethodName               = "/notifications.NotificationService/CreateNotifications"
+	NotificationService_CreateFollowRequest_FullMethodName               = "/notifications.NotificationService/CreateFollowRequest"
+	NotificationService_CreateNewFollower_FullMethodName                 = "/notifications.NotificationService/CreateNewFollower"
+	NotificationService_CreateGroupInvite_FullMethodName                 = "/notifications.NotificationService/CreateGroupInvite"
+	NotificationService_CreateGroupInviteForMultipleUsers_FullMethodName = "/notifications.NotificationService/CreateGroupInviteForMultipleUsers"
+	NotificationService_CreateGroupJoinRequest_FullMethodName            = "/notifications.NotificationService/CreateGroupJoinRequest"
+	NotificationService_CreateNewEvent_FullMethodName                    = "/notifications.NotificationService/CreateNewEvent"
+	NotificationService_CreateNewEventForMultipleUsers_FullMethodName    = "/notifications.NotificationService/CreateNewEventForMultipleUsers"
+	NotificationService_CreatePostLike_FullMethodName                    = "/notifications.NotificationService/CreatePostLike"
+	NotificationService_CreatePostComment_FullMethodName                 = "/notifications.NotificationService/CreatePostComment"
+	NotificationService_CreateMention_FullMethodName                     = "/notifications.NotificationService/CreateMention"
+	NotificationService_CreateNewMessage_FullMethodName                  = "/notifications.NotificationService/CreateNewMessage"
+	NotificationService_CreateFollowRequestAccepted_FullMethodName       = "/notifications.NotificationService/CreateFollowRequestAccepted"
+	NotificationService_CreateFollowRequestRejected_FullMethodName       = "/notifications.NotificationService/CreateFollowRequestRejected"
+	NotificationService_CreateGroupInviteAccepted_FullMethodName         = "/notifications.NotificationService/CreateGroupInviteAccepted"
+	NotificationService_CreateGroupInviteRejected_FullMethodName         = "/notifications.NotificationService/CreateGroupInviteRejected"
+	NotificationService_CreateGroupJoinRequestAccepted_FullMethodName    = "/notifications.NotificationService/CreateGroupJoinRequestAccepted"
+	NotificationService_CreateGroupJoinRequestRejected_FullMethodName    = "/notifications.NotificationService/CreateGroupJoinRequestRejected"
+	NotificationService_GetUserNotifications_FullMethodName              = "/notifications.NotificationService/GetUserNotifications"
+	NotificationService_GetUnreadNotificationsCount_FullMethodName       = "/notifications.NotificationService/GetUnreadNotificationsCount"
+	NotificationService_MarkNotificationAsRead_FullMethodName            = "/notifications.NotificationService/MarkNotificationAsRead"
+	NotificationService_MarkAllAsRead_FullMethodName                     = "/notifications.NotificationService/MarkAllAsRead"
+	NotificationService_DeleteNotification_FullMethodName                = "/notifications.NotificationService/DeleteNotification"
+	NotificationService_GetNotificationPreferences_FullMethodName        = "/notifications.NotificationService/GetNotificationPreferences"
+	NotificationService_UpdateNotificationPreferences_FullMethodName     = "/notifications.NotificationService/UpdateNotificationPreferences"
 )
 
 // NotificationServiceClient is the client API for NotificationService service.
@@ -70,6 +71,8 @@ type NotificationServiceClient interface {
 	CreateNewFollower(ctx context.Context, in *CreateNewFollowerRequest, opts ...grpc.CallOption) (*Notification, error)
 	// Creates a group invite notification
 	CreateGroupInvite(ctx context.Context, in *CreateGroupInviteRequest, opts ...grpc.CallOption) (*Notification, error)
+	// Creates a group invite notification for multiple users
+	CreateGroupInviteForMultipleUsers(ctx context.Context, in *CreateGroupInviteForMultipleUsersRequest, opts ...grpc.CallOption) (*CreateGroupInviteForMultipleUsersResponse, error)
 	// Creates a group join request notification
 	CreateGroupJoinRequest(ctx context.Context, in *CreateGroupJoinRequestRequest, opts ...grpc.CallOption) (*Notification, error)
 	// Creates a new event notification
@@ -174,6 +177,16 @@ func (c *notificationServiceClient) CreateGroupInvite(ctx context.Context, in *C
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Notification)
 	err := c.cc.Invoke(ctx, NotificationService_CreateGroupInvite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationServiceClient) CreateGroupInviteForMultipleUsers(ctx context.Context, in *CreateGroupInviteForMultipleUsersRequest, opts ...grpc.CallOption) (*CreateGroupInviteForMultipleUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateGroupInviteForMultipleUsersResponse)
+	err := c.cc.Invoke(ctx, NotificationService_CreateGroupInviteForMultipleUsers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -402,6 +415,8 @@ type NotificationServiceServer interface {
 	CreateNewFollower(context.Context, *CreateNewFollowerRequest) (*Notification, error)
 	// Creates a group invite notification
 	CreateGroupInvite(context.Context, *CreateGroupInviteRequest) (*Notification, error)
+	// Creates a group invite notification for multiple users
+	CreateGroupInviteForMultipleUsers(context.Context, *CreateGroupInviteForMultipleUsersRequest) (*CreateGroupInviteForMultipleUsersResponse, error)
 	// Creates a group join request notification
 	CreateGroupJoinRequest(context.Context, *CreateGroupJoinRequestRequest) (*Notification, error)
 	// Creates a new event notification
@@ -476,6 +491,9 @@ func (UnimplementedNotificationServiceServer) CreateNewFollower(context.Context,
 }
 func (UnimplementedNotificationServiceServer) CreateGroupInvite(context.Context, *CreateGroupInviteRequest) (*Notification, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroupInvite not implemented")
+}
+func (UnimplementedNotificationServiceServer) CreateGroupInviteForMultipleUsers(context.Context, *CreateGroupInviteForMultipleUsersRequest) (*CreateGroupInviteForMultipleUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateGroupInviteForMultipleUsers not implemented")
 }
 func (UnimplementedNotificationServiceServer) CreateGroupJoinRequest(context.Context, *CreateGroupJoinRequestRequest) (*Notification, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroupJoinRequest not implemented")
@@ -644,6 +662,24 @@ func _NotificationService_CreateGroupInvite_Handler(srv interface{}, ctx context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NotificationServiceServer).CreateGroupInvite(ctx, req.(*CreateGroupInviteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationService_CreateGroupInviteForMultipleUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateGroupInviteForMultipleUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).CreateGroupInviteForMultipleUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_CreateGroupInviteForMultipleUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).CreateGroupInviteForMultipleUsers(ctx, req.(*CreateGroupInviteForMultipleUsersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1034,6 +1070,10 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateGroupInvite",
 			Handler:    _NotificationService_CreateGroupInvite_Handler,
+		},
+		{
+			MethodName: "CreateGroupInviteForMultipleUsers",
+			Handler:    _NotificationService_CreateGroupInviteForMultipleUsers_Handler,
 		},
 		{
 			MethodName: "CreateGroupJoinRequest",

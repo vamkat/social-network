@@ -67,6 +67,11 @@ func (a *Application) CreateNewFollowerNotification(ctx context.Context, targetU
 
 // CreateGroupInviteNotification creates a notification when a user is invited to join a group
 func (a *Application) CreateGroupInviteNotification(ctx context.Context, invitedUserID, inviterUserID, groupID int64, groupName, inviterUsername string) error {
+	return a.CreateGroupInviteForMultipleUsers(ctx, []int64{invitedUserID}, inviterUserID, groupID, groupName, inviterUsername)
+}
+
+// CreateGroupInviteForMultipleUsers creates a notification when users are invited to join a group
+func (a *Application) CreateGroupInviteForMultipleUsers(ctx context.Context, invitedUserIDs []int64, inviterUserID, groupID int64, groupName, inviterUsername string) error {
 	title := "Group Invitation"
 	message := fmt.Sprintf("%s invited you to join the group \"%s\"", inviterUsername, groupName)
 
@@ -78,20 +83,23 @@ func (a *Application) CreateGroupInviteNotification(ctx context.Context, invited
 		"action":       "accept_or_decline",
 	}
 
-	_, err := a.CreateNotificationWithAggregation(
-		ctx,
-		invitedUserID, // recipient
-		GroupInvite,   // type
-		title,         // title
-		message,       // message
-		"users",       // source service
-		groupID,       // source entity ID (the group)
-		true,          // needs action
-		payload,       // payload
-		false,         // never aggregate group invites
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create group invite notification: %w", err)
+	// Create notifications for each user
+	for _, invitedUserID := range invitedUserIDs {
+		_, err := a.CreateNotificationWithAggregation(
+			ctx,
+			invitedUserID, // recipient
+			GroupInvite,   // type
+			title,         // title
+			message,       // message
+			"users",       // source service
+			groupID,       // source entity ID (the group)
+			true,          // needs action
+			payload,       // payload
+			false,         // never aggregate group invites
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create group invite notification for user %d: %w", invitedUserID, err)
+		}
 	}
 
 	return nil
