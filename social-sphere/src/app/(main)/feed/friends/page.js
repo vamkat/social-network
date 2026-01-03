@@ -36,7 +36,7 @@ export default async function FriendsFeedPage() {
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
                         <p className="text-muted text-center max-w-md px-4">
-                            Your friends haven't shared anything yet. Why not be the first to start the conversation?
+                            Your friends haven't shared anything yet. <br></br> Why not be the first?
                         </p>
                     </div>
                 )}
