@@ -64,7 +64,8 @@ func (e *Error) Unwrap() error {
 	return e.Err
 }
 
-//TODOvagelis make wrap embed the stack trace into the error it receives, ex. "(<package_name>)<function_name>: <error_message> "(application)DeleteComment: request validation failed"
+//TODO vagelis make wrap embed the stack trace into the error it receives, ex. "(<package_name>)<function_name>: <error_message> "(application)DeleteComment: request validation failed"
+//TODO New function
 
 // Wrap creates a MediaError that classifies and optionally wraps an existing error.
 //

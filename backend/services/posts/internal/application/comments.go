@@ -72,6 +72,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		tele.Error(ctx, "get GetBasicPostByID failed for post @1: @2 ", "post id", req.ParentId, "error", err.Error())
 		return nil //return with no error but without creating non-essential notif
 	}
+
 	err = s.clients.CreatePostComment(ctx, basicPost.CreatorID, req.CreatorId.Int64(), req.ParentId.Int64(), commenterUsername, req.Body.String())
 	if err != nil {
 		tele.Error(ctx, "CreatePostComment notification failed for comment @1: @2", "comment id", commentId, "error", err.Error())

@@ -37,15 +37,21 @@ func (r *Record) Data() []byte {
 	return r.rec.Value
 }
 
+var ErrEmptyRecord = errors.New("empty record")
+
+// TODO commit must return a confirmation
+
 // Commit marks the record as processed in the Kafka client.
 // MAKE SURE THIS IS AT THE END OF A TRANSACTION, DONT BE COMMITING THINGS YOU LATER UNDO!!
-func (r *Record) Commit(ctx context.Context) {
+func (r *Record) Commit(ctx context.Context) error {
 	if r.rec == nil {
-		return
+		return ErrEmptyRecord
 	}
 	select {
 	case r.commitChannel <- r.rec:
 	case <-ctx.Done():
 		// optionally log or ignore
 	}
+
+	return nil
 }

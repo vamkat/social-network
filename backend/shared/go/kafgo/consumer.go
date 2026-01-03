@@ -95,6 +95,7 @@ func (kfc *kafkaConsumer) StartConsuming(ctx context.Context) (func(), error) {
 		kgo.ConsumeTopics(kfc.topics...),
 		kgo.DisableAutoCommit(),
 		kgo.AllowAutoTopicCreation(),
+		kgo.Balancers(kgo.CooperativeStickyBalancer()),
 	)
 	if err != nil {
 		return nil, err
@@ -156,7 +157,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 						continue
 					}
 
-					timer.Reset(time.Second)
+					timer.Reset(time.Second * 5)
 					select {
 					case <-timer.C:
 						tele.Info(context.Background(), "SLOW CHANNEL DETECTED")
@@ -228,7 +229,9 @@ outer:
 
 var counter = 0
 
+//TODO make separate commit channels and routine for each topic
 //TODO handle out of order commits...
+//TODO batch commits, small batches
 
 // commitRoutine listens to the commitChannel and commits records as they come in
 func (kfc *kafkaConsumer) commitRoutine() {
@@ -240,7 +243,7 @@ func (kfc *kafkaConsumer) commitRoutine() {
 			tele.Info(context.Background(), "COMMIT WATCHER ROUTINE CLOSING DUE TO CONTEXT")
 			return
 		case record := <-kfc.commitChannel:
-			tele.Info(context.Background(), "commit: @1", "counter", counter)
+			tele.Info(context.Background(), "commit: @1 @2", "counter", counter, "data", string(record.Value))
 			counter++
 
 			//TODO pool records here instead of doing them one by one
@@ -248,8 +251,8 @@ func (kfc *kafkaConsumer) commitRoutine() {
 			defer cancel()
 			err := kfc.client.CommitRecords(ctx, record) //TODO is this the correct context?
 			if err != nil {
-				tele.Info(context.Background(), "COMMIT ERROR FOUND") //TODO think what needs to be done here
-				kfc.shutdownProcedure(true)                           //TODO this is excessive, but not sure what else to do? other than retry?
+				tele.Info(context.Background(), "COMMIT ERROR FOUND @1", "error", err.Error()) //TODO think what needs to be done here
+				kfc.shutdownProcedure(true)                                                    //TODO this is excessive, but not sure what else to do? other than retry?
 			}
 
 		}

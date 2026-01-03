@@ -17,10 +17,12 @@ import (
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
+	"social-network/shared/go/kafgo"
 	postgresql "social-network/shared/go/postgre"
 	rds "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
 	"social-network/shared/go/retrieveusers"
+	tele "social-network/shared/go/telemetry"
 	"time"
 
 	"syscall"
@@ -54,6 +56,50 @@ func Run() error {
 	defer stopSignal() //TODO check if this is ok
 
 	clients := initClients()
+
+	//
+	//
+	//
+	// KAFKA CONSUMER
+	consumer, err := kafgo.NewKafkaConsumer([]string{"localhost:9092"}, "chat")
+	if err != nil {
+		fmt.Println("yo")
+	}
+
+	memberChannel, err := consumer.RegisterTopic("group_memberships1")
+	_, err = consumer.RegisterTopic("group_memberships2")
+
+	close, err := consumer.StartConsuming(ctx)
+	if err != nil {
+		fmt.Println("bla")
+	}
+	defer close()
+
+	tele.Debug(ctx, "my channel @1", "chan", memberChannel)
+
+	//usage example:
+	// for record := range memberChannel {
+	// 	fmt.Println(string(record.Data()))
+	// 	record.Commit(ctx)
+	// }
+
+	//
+	//
+	//
+	// KAFKA PRODUCER
+
+	producer, close, err := kafgo.NewKafkaProducer([]string{"localhost:9092"})
+	if err != nil {
+		tele.Fatal("wtf")
+	}
+	defer close()
+
+	tele.Debug(ctx, "my producer: @1", "producer", producer)
+	//usage example
+	// err = producer.Send(ctx, "notifications", "sdf")
+	// if err != nil{
+	// 	tele.Warn(ctx, "failed to produce")
+	// }
 
 	retriveUsers := retrieveusers.NewUserRetriever(
 		clients.GetBatchBasicUserInfo,

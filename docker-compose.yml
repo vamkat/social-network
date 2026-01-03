@@ -481,6 +481,7 @@ services:
     volumes:
       - ./backend/services/kafka/config:/mnt/shared/config
 
+
   #
   #
   #
@@ -503,9 +504,7 @@ services:
       
     ports:
       - "8081:8081"
-    depends_on:
-      redis:
-        condition: service_started
+
 
 
 

@@ -29,6 +29,7 @@ func NewKafkaProducer(seeds []string) (producer *KafkaProducer, close func(), er
 	return kfc, cl.Close, nil
 }
 
+// TODO batch sends instead of doing one by one
 // Send sends payload(s) to the specified topic
 func (kfc *KafkaProducer) Send(ctx context.Context, topic string, payload ...any) error {
 	records := make([]*kgo.Record, len(payload))
