@@ -4,6 +4,7 @@
 
 * **Stable error classification**
 * **Explicit error wrapping**
+* **Stack trace for current error origin**
 * **Clear separation between internal diagnostics and public messages**
 * **Idiomatic integration with `errors.Is` / `errors.As`**
 * **First-class gRPC status mapping**

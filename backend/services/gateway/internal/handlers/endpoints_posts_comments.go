@@ -7,6 +7,7 @@ import (
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/go/ct"
+	"social-network/shared/go/gorpc"
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
 	"social-network/shared/go/models"
@@ -62,7 +63,8 @@ func (h *Handlers) createComment() http.HandlerFunc {
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
-				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
+				status, class := gorpc.Classify(err)
+				utils.WriteJSON(ctx, w, status, class)
 				return
 			}
 			ImageId = ct.Id(mediaRes.FileId)

@@ -3,6 +3,7 @@ package gorpc
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,14 +30,14 @@ const (
 	ErrorClassUnknown      ErrorClass = "UNKNOWN_ERROR"
 )
 
-func Classify(err error) ClassifiedError {
+func Classify(err error) (httpStatus int, class ClassifiedError) {
 	if err == nil {
-		return ClassifiedError{}
+		return http.StatusOK, ClassifiedError{}
 	}
 
 	// ---- Context errors (caller-side) ----
 	if errors.Is(err, context.DeadlineExceeded) {
-		return ClassifiedError{
+		return grpcCodeToHTTP(codes.DeadlineExceeded), ClassifiedError{
 			Class:       ErrorClassTimeout,
 			GRPCCode:    codes.DeadlineExceeded,
 			Retryable:   true,
@@ -45,7 +46,7 @@ func Classify(err error) ClassifiedError {
 	}
 
 	if errors.Is(err, context.Canceled) {
-		return ClassifiedError{
+		return grpcCodeToHTTP(codes.Canceled), ClassifiedError{
 			Class:       ErrorClassCanceled,
 			GRPCCode:    codes.Canceled,
 			Retryable:   false,
@@ -57,7 +58,7 @@ func Classify(err error) ClassifiedError {
 	st, ok := status.FromError(err)
 	if !ok {
 		// Non-gRPC error (network / transport)
-		return ClassifiedError{
+		return grpcCodeToHTTP(codes.Unknown), ClassifiedError{
 			Class:       ErrorClassTransport,
 			GRPCCode:    codes.Unknown,
 			Retryable:   true,
@@ -66,6 +67,8 @@ func Classify(err error) ClassifiedError {
 	}
 
 	code := st.Code()
+
+	httpStatus = grpcCodeToHTTP(code)
 
 	switch code {
 
@@ -78,7 +81,7 @@ func Classify(err error) ClassifiedError {
 		codes.FailedPrecondition,
 		codes.OutOfRange:
 
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassClient,
 			GRPCCode:    code,
 			Retryable:   false,
@@ -90,7 +93,7 @@ func Classify(err error) ClassifiedError {
 		codes.DataLoss,
 		codes.Unknown:
 
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassServer,
 			GRPCCode:    code,
 			Retryable:   true,
@@ -99,7 +102,7 @@ func Classify(err error) ClassifiedError {
 
 	// ---- Availability / dependency failures ----
 	case codes.Unavailable:
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassUnavailable,
 			GRPCCode:    code,
 			Retryable:   true,
@@ -107,7 +110,7 @@ func Classify(err error) ClassifiedError {
 		}
 
 	case codes.ResourceExhausted:
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassRetryable,
 			GRPCCode:    code,
 			Retryable:   true,
@@ -115,7 +118,7 @@ func Classify(err error) ClassifiedError {
 		}
 
 	case codes.Aborted:
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassRetryable,
 			GRPCCode:    code,
 			Retryable:   true,
@@ -123,7 +126,7 @@ func Classify(err error) ClassifiedError {
 		}
 
 	case codes.DeadlineExceeded:
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassTimeout,
 			GRPCCode:    code,
 			Retryable:   true,
@@ -132,7 +135,7 @@ func Classify(err error) ClassifiedError {
 
 	// ---- Explicit non-retryable dependency errors ----
 	case codes.Unimplemented:
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassNonRetryable,
 			GRPCCode:    code,
 			Retryable:   false,
@@ -140,11 +143,63 @@ func Classify(err error) ClassifiedError {
 		}
 
 	default:
-		return ClassifiedError{
+		return httpStatus, ClassifiedError{
 			Class:       ErrorClassUnknown,
 			GRPCCode:    code,
 			Retryable:   false,
 			Description: "unclassified grpc error",
 		}
+	}
+}
+
+func grpcCodeToHTTP(code codes.Code) int {
+	switch code {
+
+	// ---- Client errors ----
+	case codes.InvalidArgument,
+		codes.OutOfRange:
+		return http.StatusBadRequest // 400
+
+	case codes.Unauthenticated:
+		return http.StatusUnauthorized // 401
+
+	case codes.PermissionDenied:
+		return http.StatusForbidden // 403
+
+	case codes.NotFound:
+		return http.StatusNotFound // 404
+
+	case codes.AlreadyExists:
+		return http.StatusConflict // 409
+
+	case codes.FailedPrecondition:
+		return http.StatusPreconditionFailed // 412
+
+	// ---- Rate limiting / quota ----
+	case codes.ResourceExhausted:
+		return http.StatusTooManyRequests // 429
+
+	// ---- Timeout ----
+	case codes.DeadlineExceeded:
+		return http.StatusGatewayTimeout // 504
+
+	// ---- Dependency / availability ----
+	case codes.Unavailable:
+		return http.StatusServiceUnavailable // 503
+
+	case codes.Aborted:
+		return http.StatusConflict // 409 (safe + common)
+
+	// ---- Server errors ----
+	case codes.Internal,
+		codes.DataLoss,
+		codes.Unknown:
+		return http.StatusInternalServerError // 500
+
+	case codes.Unimplemented:
+		return http.StatusNotImplemented // 501
+
+	default:
+		return http.StatusInternalServerError // 500
 	}
 }
