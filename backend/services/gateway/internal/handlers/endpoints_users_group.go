@@ -239,7 +239,7 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 		}
 
 		type reqBody struct {
-			GroupId int64 `json:"group_id"`
+			GroupId ct.Id `json:"group_id"`
 		}
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
@@ -249,7 +249,7 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 		}
 
 		req := &users.GeneralGroupRequest{
-			GroupId: body.GroupId,
+			GroupId: body.GroupId.Int64(),
 			UserId:  claims.UserId,
 		}
 
