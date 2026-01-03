@@ -2,12 +2,11 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function leaveGroup({ userId, groupId }) {
+export async function leaveGroup({ groupId }) {
     try {
         const response = await serverApiRequest("/group/leave", {
             method: "POST",
             body: JSON.stringify({
-                user_id: userId,
                 group_id: groupId,
             }),
             forwardCookies: true,

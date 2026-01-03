@@ -1,26 +1,27 @@
-import Script from "next/script";
+import { getGroup } from "@/actions/groups/get-group";
+import { GroupHeader } from "@/components/groups/GroupHeader";
+import { redirect } from "next/navigation";
 
-export default function GroupPage() {
+export default async function GroupPage({ params }) {
+  const { id } = await params;
+  console.log("ID: ", id);
+  const result = await getGroup(id);
+
+  if (!result.success) {
+    redirect("/groups");
+  }
+
+  const group = result.data;
+
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center gap-8">
-      <div
-        className="tenor-gif-embed"
-        data-postid="14878906917560316861"
-        data-share-method="host"
-        data-aspect-ratio="0.769231"
-        data-width="30%"
-      >
-        <a href="https://tenor.com/view/gorilla-middle-finger-gif-14878906917560316861">
-          Gorilla Middle Finger Meme
-        </a>
+    <div className="min-h-screen">
+      <GroupHeader group={group} />
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-(--muted)">
+          <p>Group content area - Posts, Events, and Members sections coming soon...</p>
+        </div>
       </div>
-
-      <Script
-        src="https://tenor.com/embed.js"
-        strategy="afterInteractive"
-      />
-
-      <h1 className="text-2xl font-bold">This page is not implemented yet</h1>
     </div>
   );
 }

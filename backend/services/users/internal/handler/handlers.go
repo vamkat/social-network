@@ -731,6 +731,45 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 	return wrapperspb.Int64(int64(resp)), nil
 }
 
+func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupRequest) (*emptypb.Empty, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "CreateGroup: request is nil")
+	}
+	requesterId := req.RequesterId
+	if err := invalidId("requester", requesterId); err != nil {
+		return nil, err
+	}
+
+	groupId := req.GroupId
+	if err := invalidId("group", groupId); err != nil {
+		return nil, err
+	}
+
+	groupTitle := req.GroupTitle
+	if err := invalidString("GroupTitle", groupTitle); err != nil {
+		return nil, err
+	}
+
+	groupDescription := req.GroupDescription
+	if err := invalidString("GroupDescription", groupDescription); err != nil {
+		return nil, err
+	}
+
+	groupImage := req.GroupImageId
+
+	err := s.Application.UpdateGroup(ctx, &models.UpdateGroupRequest{
+		RequesterId:      ct.Id(requesterId),
+		GroupId:          ct.Id(groupId),
+		GroupTitle:       ct.Title(groupTitle),
+		GroupDescription: ct.About(groupDescription),
+		GroupImage:       ct.Id(groupImage),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "CreateGroup: %v", err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
 // PROFILE
 func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*cm.User, error) {
 	if req == nil {

@@ -151,7 +151,7 @@ export default function GroupsContent() {
                 </div>
                 <button
                     onClick={() => setIsCreateGroupOpen(true)}
-                    className="flex items-center gap-2 bg-(--accent) text-background px-5 py-2.5 rounded-full font-medium text-sm hover:bg-(--accent-hover) transition-all shadow-lg shadow-black/5 cursor-pointer"
+                    className="flex items-center gap-2 bg-(--accent) text-white px-5 py-2.5 rounded-full font-medium text-sm hover:bg-(--accent-hover) transition-all shadow-lg shadow-black/5 cursor-pointer"
                 >
                     <Plus className="w-4 h-4" />
                     Create Group
