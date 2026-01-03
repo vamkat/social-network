@@ -1,19 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Users, UserPlus, Settings, LogOut, Clock, Shield, Mail } from "lucide-react";
+import { Users, UserPlus, Settings, LogOut, Clock, UserRoundPlus } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
 import { requestJoinGroup } from "@/actions/groups/request-join-group";
 import { leaveGroup } from "@/actions/groups/leave-group";
+import Tooltip from "../ui/Tooltip";
+import UpdateGroupModal from "./UpdateGroupModal";
+import { useRouter } from "next/navigation";
 
 export function GroupHeader({ group }) {
+    const router = useRouter();
     const [isMember, setIsMember] = useState(group.is_member);
     const [isOwner] = useState(group.is_owner);
     const [isPending, setIsPending] = useState(group.is_pending);
     const [isLoading, setIsLoading] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
 
     const handleJoinRequest = async () => {
         if (isLoading) return;
@@ -57,13 +62,18 @@ export function GroupHeader({ group }) {
         setShowInviteModal(true);
     };
 
+    const handleUpdateSuccess = () => {
+        // Refresh the page to get updated group data
+        router.refresh();
+    };
+
     return (
         <>
             <div className="w-full border-b border-(--border)">
                 <Container>
                     <div className="py-8">
                         {/* Top Section: Group Image, Title, Actions */}
-                        <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center mb-6">
+                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-6">
                             {/* Group Image */}
                             <div className="relative">
                                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-(--muted)/10 border-2 border-(--border) ring-4 ring-background shadow-lg">
@@ -85,21 +95,25 @@ export function GroupHeader({ group }) {
                             <div className="flex-1 min-w-0 flex flex-col sm:flex-row justify-between items-start gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-                                            {group.group_title}
-                                        </h1>
-                                        {isOwner && (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-(--accent) text-white shadow-sm">
-                                                <Shield className="w-3 h-3" />
+                                    {isOwner && (
+                                            <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-[10px] bg-(--accent) text-white shadow-sm">
+                                                {/* <Shield className="w-3 h-3" /> */}
                                                 Owner
                                             </span>
                                         )}
                                         {!isOwner && isMember && (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-500 text-white shadow-sm">
+                                            <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs bg-green-500 text-white shadow-sm">
                                                 Member
                                             </span>
                                         )}
                                     </div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+                                            {group.group_title}
+                                        </h1>
+                                        
+                                    </div>
+                                    
                                     <div className="flex items-center gap-2 text-(--muted)">
                                         <Users className="w-4 h-4" />
                                         <span className="text-base">
@@ -112,34 +126,38 @@ export function GroupHeader({ group }) {
                                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
                                     {isOwner ? (
                                         <>
-                                            {/* Settings/Edit Group */}
-                                            <button
-                                                onClick={() => {/* TODO: Navigate to edit page */}}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--border) text-foreground hover:bg-(--muted)/5 transition-colors"
-                                            >
-                                                <Settings className="w-4 h-4" />
-                                                <span className="hidden sm:inline">Settings</span>
-                                            </button>
                                             {/* Invite Members */}
+                                            <Tooltip content="Invite members">
                                             <button
                                                 onClick={handleInviteMembers}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20 transition-colors"
+                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20 transition-colors cursor-pointer"
                                             >
                                                 <UserPlus className="w-4 h-4" />
-                                                Invite
                                             </button>
+                                            </Tooltip>
+                                            {/* Settings/Edit Group */}
+                                            <Tooltip content="Settings">
+                                            <button
+                                                onClick={() => setShowUpdateModal(true)}
+                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--border) text-foreground hover:bg-(--muted)/5 transition-colors cursor-pointer"
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                            </button>
+                                            </Tooltip>
                                         </>
                                     ) : isMember ? (
                                         <>
                                             {/* Invite Members */}
+                                            <Tooltip content="Invite Members">
                                             <button
                                                 onClick={handleInviteMembers}
                                                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--accent) text-(--accent) hover:bg-(--accent)/5 transition-colors"
                                             >
                                                 <UserPlus className="w-4 h-4" />
-                                                Invite
                                             </button>
+                                            </Tooltip>
                                             {/* Leave Group */}
+                                            <Tooltip content="Leave Group">
                                             <button
                                                 onClick={() => setShowLeaveModal(true)}
                                                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--border) text-(--muted) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-colors"
@@ -147,13 +165,17 @@ export function GroupHeader({ group }) {
                                                 <LogOut className="w-4 h-4" />
                                                 <span className="hidden sm:inline">Leave</span>
                                             </button>
+                                            </Tooltip>
                                         </>
                                     ) : (
                                         /* Non-member: Request to Join or Cancel Request */
+                                        <Tooltip content={isPending ? (
+                                            "Pending Request"
+                                        ) : ( "Request to Join" )} >
                                         <button
                                             onClick={handleJoinRequest}
                                             disabled={isLoading}
-                                            className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
                                                 isLoading
                                                     ? "opacity-70 cursor-wait"
                                                     : isPending
@@ -164,15 +186,14 @@ export function GroupHeader({ group }) {
                                             {isPending ? (
                                                 <>
                                                     <Clock className="w-4 h-4" />
-                                                    Request Pending
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Mail className="w-4 h-4" />
-                                                    Request to Join
+                                                    <UserRoundPlus className="w-4 h-4" />
                                                 </>
                                             )}
                                         </button>
+                                        </Tooltip>
                                     )}
                                 </div>
                             </div>
@@ -222,6 +243,14 @@ export function GroupHeader({ group }) {
                     </div>
                 </Modal>
             )}
+
+            {/* Update Group Modal */}
+            <UpdateGroupModal
+                isOpen={showUpdateModal}
+                onClose={() => setShowUpdateModal(false)}
+                onSuccess={handleUpdateSuccess}
+                group={group}
+            />
         </>
     );
 }
