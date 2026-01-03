@@ -27,7 +27,7 @@ export default function Container({ children, size = "default", className = "" }
             w-full
             px-4
             sm:px-6
-            lg:px-8
+            lg:px-0
             ${sizeClasses[size]}
             ${className}
         `}>
