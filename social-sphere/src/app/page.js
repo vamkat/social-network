@@ -1,4 +1,3 @@
-import { HeroHeader } from "@/components/HeroHeader";
 import Link from "next/link";
 
 export default function LandingPage() {
