@@ -283,6 +283,7 @@ JOIN users u
     ON gm.user_id = u.id
 WHERE gm.group_id = $1
   AND gm.deleted_at IS NULL
+  AND u.deleted_at IS NULL
 ORDER BY gm.joined_at DESC, u.id DESC
 LIMIT $2 OFFSET $3
 `
@@ -316,6 +317,48 @@ func (q *Queries) GetGroupMembers(ctx context.Context, arg GetGroupMembersParams
 			&i.AvatarID,
 			&i.Role,
 			&i.JoinedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllGroupMemberIds = `-- name: GetAllGroupMembers :many
+SELECT
+    u.id,
+FROM group_members gm
+JOIN users u
+    ON gm.user_id = u.id
+WHERE gm.group_id = $1
+  AND gm.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+ORDER BY u.id DESC;
+`
+
+type GetAllGroupMemberIdsParams struct {
+	GroupID int64
+}
+
+type GetAllGroupMemberIdsRow struct {
+	ID int64
+}
+
+func (q *Queries) GetAllGroupMemberIds(ctx context.Context, arg GetAllGroupMemberIdsParams) ([]GetAllGroupMemberIdsRow, error) {
+	rows, err := q.db.Query(ctx, getAllGroupMemberIds, arg.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllGroupMemberIdsRow{}
+	for rows.Next() {
+		var i GetAllGroupMemberIdsRow
+		if err := rows.Scan(
+			&i.ID,
 		); err != nil {
 			return nil, err
 		}

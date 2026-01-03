@@ -60,6 +60,7 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 	}
 
 	//TODO CREATE NOTIFICATION EVENT (for all members)
+	//get group members
 	// err=s.clients.CreateNewEvent(ctx,)
 	return nil
 }

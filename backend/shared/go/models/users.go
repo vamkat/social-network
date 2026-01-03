@@ -107,7 +107,7 @@ type UpdateProfilePrivacyRequest struct {
 // Groups
 // -------------------------------------------
 
-type GroupId int64
+type GroupId ct.Id
 
 type GroupRole string
 

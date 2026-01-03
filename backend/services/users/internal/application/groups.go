@@ -218,6 +218,38 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 	return members, nil
 }
 
+// intentionally doesn't return avatar urls to avoid redundant calls
+func (s *Application) GetAllGroupMemberIds(ctx context.Context, req models.GroupId) (ct.Ids, error) {
+	if err := ct.ValidateBatch(ct.Id(req)); err != nil {
+		return nil, err
+	}
+	//check request comes from member
+	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
+		GroupId: ct.Id(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrNotAuthorized
+	}
+
+	//paginated (newest first)
+	rows, err := s.db.GetAllGroupMemberIds(ctx, ds.GetAllGroupMemberIdsParams{
+		GroupID: ct.Id(req).Int64(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	members := make([]ct.Id, 0, len(rows))
+
+	for _, r := range rows {
+		members = append(members, ct.Id(r.ID))
+	}
+
+	return members, nil
+}
+
 func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchReq) ([]models.Group, error) {
 	if err := ct.ValidateStruct(req); err != nil {
 		return []models.Group{}, err

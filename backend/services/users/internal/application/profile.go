@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -213,8 +212,9 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 		Username: req.Username,
 		AvatarId: req.AvatarId,
 	}
+	key, err := ct.BasicUserInfoKey{Id: req.UserId}.String()
 	_ = s.clients.SetObj(ctx,
-		fmt.Sprintf("basic_user_info:%d", req.UserId),
+		key,
 		basicUserInfo,
 		3*time.Minute,
 	)
