@@ -18,6 +18,7 @@ type CreateCommentParams struct {
 	CommentBody      string
 }
 
+// inserts a new comment and returns the id
 func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createComment, arg.CommentCreatorID, arg.ParentID, arg.CommentBody)
 	var id int64
@@ -36,6 +37,9 @@ type DeleteCommentParams struct {
 	CommentCreatorID int64
 }
 
+// soft-deletes a comment with given id and creator id, as long as it's not already marked deleted
+// returns rows affected
+// 0 rows could mean no comment fitting these criteria was found, or it was already deleted
 func (q *Queries) DeleteComment(ctx context.Context, arg DeleteCommentParams) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteComment, arg.ID, arg.CommentCreatorID)
 	if err != nil {
@@ -56,6 +60,9 @@ type EditCommentParams struct {
 	CommentCreatorID int64
 }
 
+// updates the body of a comment with given id and creator id, as long as it's not marked deleted
+// returns rows affected
+// 0 rows could mean no comment fitting the criteria was found, or it was already marked deleted
 func (q *Queries) EditComment(ctx context.Context, arg EditCommentParams) (int64, error) {
 	result, err := q.db.Exec(ctx, editComment, arg.CommentBody, arg.ID, arg.CommentCreatorID)
 	if err != nil {
@@ -118,6 +125,7 @@ type GetCommentsByPostIdRow struct {
 	Image            int64
 }
 
+// returns paginated comments of post with given id, in descending created order
 func (q *Queries) GetCommentsByPostId(ctx context.Context, arg GetCommentsByPostIdParams) ([]GetCommentsByPostIdRow, error) {
 	rows, err := q.db.Query(ctx, getCommentsByPostId,
 		arg.ParentID,

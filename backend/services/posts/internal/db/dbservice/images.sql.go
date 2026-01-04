@@ -10,6 +10,9 @@ SET deleted_at = CURRENT_TIMESTAMP
 WHERE parent_id = $1 AND deleted_at IS NULL
 `
 
+// soft-deletes image with given parent_id as long as it wasn't already marked as deleted
+// returns rows affected
+// 0 rows affected could mean no row was found or the image was already deleted
 func (q *Queries) DeleteImage(ctx context.Context, id int64) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteImage, id)
 	if err != nil {
@@ -27,6 +30,8 @@ ORDER BY sort_order
   LIMIT 1
 `
 
+// returns the first not-deleted image associated with the given parent-id
+// returns norows and id 0 if no rows found
 func (q *Queries) GetImages(ctx context.Context, parentID int64) (int64, error) {
 	row := q.db.QueryRow(ctx, getImages, parentID)
 	var id int64
@@ -51,6 +56,7 @@ type UpsertImageParams struct {
 	ParentID int64
 }
 
+// inserts a new image or updates the image associated with the parent_id if it exists
 func (q *Queries) UpsertImage(ctx context.Context, arg UpsertImageParams) error {
 	_, err := q.db.Exec(ctx, upsertImage, arg.ID, arg.ParentID)
 	return err

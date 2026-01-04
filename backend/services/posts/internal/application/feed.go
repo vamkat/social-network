@@ -2,24 +2,26 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
-	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPersonalizedFeedReq) ([]models.Post, error) {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	idsRequesterFollows, err := s.clients.GetFollowingIds(ctx, req.RequesterId.Int64())
 	if err != nil {
-		return nil, err
+		return nil, ce.ParseGrpcErr(err, input)
 	}
 
 	rows, err := s.db.GetPersonalizedFeed(ctx, ds.GetPersonalizedFeedParams{
@@ -29,8 +31,13 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 		Limit:   req.Limit.Int32(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
+
+	if len(rows) == 0 {
+		return []models.Post{}, nil
+	}
+
 	posts := make([]models.Post, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
 	PostImageIds := make(ct.Ids, 0, len(rows))
@@ -61,18 +68,17 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 
 	}
 
-	if len(posts) == 0 {
-		return posts, nil
-	}
-
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	var imageMap map[int64]string
 	if len(PostImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+	}
+	if err != nil {
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	}
 
 	for i := range posts {
@@ -87,16 +93,23 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 }
 
 func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPaginatedReq) ([]models.Post, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
+
 	rows, err := s.db.GetPublicFeed(ctx, ds.GetPublicFeedParams{
 		UserID: req.RequesterId.Int64(),
 		Offset: req.Offset.Int32(),
 		Limit:  req.Limit.Int32(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+
+	if len(rows) == 0 {
+		return []models.Post{}, nil
 	}
 
 	posts := make([]models.Post, 0, len(rows))
@@ -126,20 +139,19 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 		}
 
 	}
-	if len(posts) == 0 {
-		tele.Warn(ctx, "GetPublicFeed: no posts in feed")
-		return posts, nil
-	}
 
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	var imageMap map[int64]string
-	tele.Info(ctx, "GetPublicFeed needs these images. @1", "ids", postImageIds)
+
 	if len(postImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
+	}
+	if err != nil {
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	}
 
 	for i := range posts {
@@ -154,14 +166,15 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 }
 
 func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetUserPostsReq) ([]models.Post, error) {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	isFollowing, err := s.clients.IsFollowing(ctx, req.RequesterId.Int64(), int64(req.CreatorId))
 	if err != nil {
-		return nil, err
+		return nil, ce.ParseGrpcErr(err, input)
 	}
 
 	rows, err := s.db.GetUserPostsPaginated(ctx, ds.GetUserPostsPaginatedParams{
@@ -172,7 +185,11 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 		Offset:    req.Offset.Int32(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+
+	if len(rows) == 0 {
+		return []models.Post{}, nil
 	}
 
 	posts := make([]models.Post, 0, len(rows))
@@ -203,18 +220,17 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 
 	}
 
-	if len(posts) == 0 {
-		return posts, nil
-	}
-
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	var imageMap map[int64]string
 	if len(PostImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+	}
+	if err != nil {
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	}
 
 	for i := range posts {
@@ -229,34 +245,35 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 }
 
 func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.GetGroupPostsReq) ([]models.Post, error) {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	var groupId pgtype.Int8
 	groupId.Int64 = req.GroupId.Int64()
 	if req.GroupId == 0 {
-		return nil, ErrNoGroupIdGiven
+		return nil, ce.New(ce.ErrInvalidArgument, fmt.Errorf("no group id given"), input).WithPublic("invalid arguments")
 	}
 	groupId.Valid = true
 
 	isMember, err := s.clients.IsGroupMember(ctx, req.RequesterId.Int64(), req.GroupId.Int64())
 	if err != nil {
-		return nil, err
+		return nil, ce.ParseGrpcErr(err, input)
 	}
 	if !isMember {
-		return nil, ErrNotAllowed
+		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not group member"), input).WithPublic("permission denied")
 	}
 
 	rows, err := s.db.GetGroupPostsPaginated(ctx, ds.GetGroupPostsPaginatedParams{
 		GroupID: groupId,
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if len(rows) == 0 {
-		return nil, ErrNotFound
+		return []models.Post{}, nil
 	}
 	posts := make([]models.Post, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
@@ -287,18 +304,18 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 			PostImageIds = append(PostImageIds, ct.Id(r.Image))
 		}
 	}
-	if len(posts) == 0 {
-		return posts, nil
-	}
 
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	var imageMap map[int64]string
 	if len(PostImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+	}
+	if err != nil {
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	}
 
 	for i := range posts {

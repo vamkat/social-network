@@ -2,7 +2,9 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
+	ce "social-network/shared/go/commonerrors"
 )
 
 // group and post audience=group: only members can see
@@ -10,9 +12,11 @@ import (
 // post audience=followers: requester can see if they follow creator
 // post audience=selected: requester can see if they are in post audience table
 func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bool, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	row, err := s.db.GetEntityCreatorAndGroup(ctx, req.entityId)
 	if err != nil {
-		return false, err
+		return false, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	var targetUserId int64
@@ -23,14 +27,14 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 	}
 	isFollowing, err := s.clients.IsFollowing(ctx, req.requesterId, targetUserId)
 	if err != nil {
-		return false, err
+		return false, ce.ParseGrpcErr(err, input)
 	}
 
 	var isMember bool
 	if row.GroupID > 0 {
 		isMember, err = s.clients.IsGroupMember(ctx, req.requesterId, row.GroupID)
 		if err != nil {
-			return false, err
+			return false, ce.ParseGrpcErr(err, input)
 		}
 	}
 
@@ -46,7 +50,7 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		IsMember:    isMember,
 	})
 	if err != nil {
-		return false, err
+		return false, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	return canSee, nil
 }

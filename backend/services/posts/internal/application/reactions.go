@@ -2,15 +2,19 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
 
 func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.GenericReq) error {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
+
 	}
 
 	accessCtx := accessContext{
@@ -20,10 +24,10 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to react to entity %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	action, err := s.db.ToggleOrInsertReaction(ctx, ds.ToggleOrInsertReactionParams{
@@ -31,7 +35,7 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 		UserID:    req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if action == "added" {
 		//create notification
@@ -48,6 +52,9 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 			//log and don't proceed to notif
 		}
 		err = s.clients.CreatePostLike(ctx, row.CreatorID, req.RequesterId.Int64(), req.EntityId.Int64(), likerUsername)
+		if err != nil {
+			//log error
+		}
 	} else {
 		//remove notification or not? how?
 	}

@@ -27,6 +27,7 @@ type CreateEventParams struct {
 	EventDate      pgtype.Date
 }
 
+// inserts a new event and returns the id
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createEvent,
 		arg.EventTitle,
@@ -51,6 +52,11 @@ type DeleteEventParams struct {
 	EventCreatorID int64
 }
 
+// deletes an event with given id and creator id as long as it's not already deleted
+//
+// returns rows affected
+//
+// no rows could mean no event was found fitting the given criteria or was already marked deleted
 func (q *Queries) DeleteEvent(ctx context.Context, arg DeleteEventParams) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteEvent, arg.ID, arg.EventCreatorID)
 	if err != nil {
@@ -72,6 +78,11 @@ type DeleteEventResponseParams struct {
 	UserID  int64
 }
 
+// soft-deletes an event response to an event with given id, by user with given id, as long as it's not already marked deleted
+//
+// returns rows affected
+//
+// 0 rows could mean no response fitting the criteria was found, or was already marked deleted
 func (q *Queries) DeleteEventResponse(ctx context.Context, arg DeleteEventResponseParams) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteEventResponse, arg.EventID, arg.UserID)
 	if err != nil {
@@ -96,6 +107,11 @@ type EditEventParams struct {
 	EventCreatorID int64
 }
 
+// updates event title, body and date for event with given id and given creator id, as long as it wasn't marked deleted
+//
+// returns rows affected
+//
+// 0 rows affected could mean no event response fitting the criteria was found, or it was marked deleted
 func (q *Queries) EditEvent(ctx context.Context, arg EditEventParams) (int64, error) {
 	result, err := q.db.Exec(ctx, editEvent,
 		arg.EventTitle,
@@ -143,7 +159,7 @@ WHERE e.group_id = $1
   AND e.deleted_at IS NULL
   AND e.event_date >= CURRENT_DATE
 
-ORDER BY e.event_date ASC
+ORDER BY e.event_date DESC
 OFFSET $2
 LIMIT $3
 `
@@ -170,6 +186,9 @@ type GetEventsByGroupIdRow struct {
 	UserResponse   pgtype.Bool
 }
 
+// returns paginated events for given group id, ordered by descending event date
+//
+// includes going/not going count, and requester's response if any
 func (q *Queries) GetEventsByGroupId(ctx context.Context, arg GetEventsByGroupIdParams) ([]GetEventsByGroupIdRow, error) {
 	rows, err := q.db.Query(ctx, getEventsByGroupId,
 		arg.GroupID,
@@ -225,6 +244,7 @@ type UpsertEventResponseParams struct {
 	Going   bool
 }
 
+// inserts a new event response for given event id and user id, or updates it if it already exists
 func (q *Queries) UpsertEventResponse(ctx context.Context, arg UpsertEventResponseParams) (int64, error) {
 	result, err := q.db.Exec(ctx, upsertEventResponse, arg.EventID, arg.UserID, arg.Going)
 	if err != nil {

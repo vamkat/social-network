@@ -2,8 +2,10 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
@@ -12,17 +14,18 @@ import (
 )
 
 func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq) error {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	isMember, err := s.clients.IsGroupMember(ctx, req.CreatorId.Int64(), req.GroupId.Int64())
 	if err != nil {
-		return err
+		return ce.ParseGrpcErr(err, input)
 	}
 	if !isMember {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not group member"), input).WithPublic("permission denied")
 	}
 
 	// convert date
@@ -40,7 +43,7 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 			EventDate:      eventDate,
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 
 		if req.ImageId != 0 {
@@ -49,14 +52,14 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 				ParentID: eventId,
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return err
+		return ce.Wrap(nil, err)
 	}
 
 	//TODO CREATE NOTIFICATION EVENT (for all members)
@@ -66,9 +69,10 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 }
 
 func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) error {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -78,10 +82,10 @@ func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) er
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit entity: %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	rowsAffected, err := s.db.DeleteEvent(ctx, ds.DeleteEventParams{
@@ -89,19 +93,20 @@ func (s *Application) DeleteEvent(ctx context.Context, req models.GenericReq) er
 		EventCreatorID: req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if rowsAffected != 1 {
-		return ErrNotFound
+		return ce.New(ce.ErrNotFound, fmt.Errorf("event %v not found or not owned by user %v", req.EntityId, req.RequesterId), input).WithPublic("not found")
 	}
 
 	return nil
 }
 
 func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) error {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -111,10 +116,11 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
+
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to edit event: %v", req.EventId), input).WithPublic("permission denied")
 	}
 
 	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -131,10 +137,11 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 			EventCreatorID: req.RequesterId.Int64(),
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 		if rowsAffected != 1 {
-			return ErrNotFound
+			return ce.New(ce.ErrNotFound, fmt.Errorf("event %v not found or not owned by user %v", req.EventId, req.RequesterId), input).WithPublic("not found")
+
 		}
 		if req.Image > 0 {
 			err := q.UpsertImage(ctx, ds.UpsertImageParams{
@@ -142,13 +149,13 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 				ParentID: req.EventId.Int64(),
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 		}
 		if req.DeleteImage {
 			rowsAffected, err := q.DeleteImage(ctx, req.EventId.Int64())
 			if err != nil {
-				return err
+				return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("event id: %v", req.EventId)).WithPublic(genericPublic)
 			}
 			if rowsAffected != 1 {
 				tele.Warn(ctx, "EditEvent: image to be deleted not found @1", "request", req)
@@ -160,9 +167,10 @@ func (s *Application) EditEvent(ctx context.Context, req models.EditEventReq) er
 }
 
 func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Event, error) {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -172,10 +180,10 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return nil, ErrNotAllowed
+		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view events of group %v", req.EntityId), input).WithPublic("permission denied")
 	}
 	rows, err := s.db.GetEventsByGroupId(ctx, ds.GetEventsByGroupIdParams{
 		GroupID: req.EntityId.Int64(),
@@ -184,7 +192,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		UserID:  req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return nil, nil
+		return nil, ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	events := make([]models.Event, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
@@ -221,12 +229,15 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	var imageMap map[int64]string
 	if len(EventImageIds) > 0 {
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, EventImageIds, media.FileVariant_MEDIUM)
+	}
+	if err != nil {
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	}
 
 	for i := range events {
@@ -241,9 +252,10 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 }
 
 func (s *Application) RespondToEvent(ctx context.Context, req models.RespondToEventReq) error {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -253,30 +265,31 @@ func (s *Application) RespondToEvent(ctx context.Context, req models.RespondToEv
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to respond to event %v", req.EventId), input).WithPublic("permission denied")
 	}
 
-	rowsAffected, err := s.db.UpsertEventResponse(ctx, ds.UpsertEventResponseParams{
+	_, err = s.db.UpsertEventResponse(ctx, ds.UpsertEventResponseParams{
 		EventID: req.EventId.Int64(),
 		UserID:  req.ResponderId.Int64(),
 		Going:   req.Going,
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
-	if rowsAffected != 1 {
-		return ErrNotFound
-	}
+	// if rowsAffected != 1 {
+	// 	return ErrNotFound
+	// }
 	return nil
 }
 
 func (s *Application) RemoveEventResponse(ctx context.Context, req models.GenericReq) error {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -286,10 +299,10 @@ func (s *Application) RemoveEventResponse(ctx context.Context, req models.Generi
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to remove response with id %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	rowsAffected, err := s.db.DeleteEventResponse(ctx, ds.DeleteEventResponseParams{
@@ -297,10 +310,10 @@ func (s *Application) RemoveEventResponse(ctx context.Context, req models.Generi
 		UserID:  req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if rowsAffected != 1 {
-		return ErrNotFound
+		return ce.New(ce.ErrNotFound, fmt.Errorf("event response %v not found or not owned by user %v", req.EntityId, req.RequesterId), input).WithPublic("not found")
 	}
 	return nil
 }

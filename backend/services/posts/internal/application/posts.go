@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
@@ -14,9 +16,10 @@ import (
 )
 
 func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) (err error) {
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	var groupId pgtype.Int8
@@ -28,16 +31,17 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 	audience := ds.IntendedAudience(req.Audience.String())
 
 	if !groupId.Valid && audience == "group" {
-		return ErrNoGroupIdGiven
+		return ce.New(ce.ErrInvalidArgument, fmt.Errorf("no group id given"), input).WithPublic("invalid arguments")
 	}
 
 	if groupId.Valid {
 		isMember, err := s.clients.IsGroupMember(ctx, req.CreatorId.Int64(), req.GroupId.Int64())
 		if err != nil {
-			return err
+			return ce.ParseGrpcErr(err, input)
 		}
 		if !isMember {
-			return ErrNotAllowed
+			return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not a member of group %v", req.GroupId), input).WithPublic("permission denied")
+
 		}
 	}
 	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -49,22 +53,23 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 			Audience:  audience,
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 
 		if audience == "selected" {
-			if len(req.AudienceIds) < 1 {
-				return ErrNoAudienceSelected
+			audienceIds := ct.Ids(req.AudienceIds).Unique()
+			if len(audienceIds) < 1 {
+				return ce.New(ce.ErrInvalidArgument, fmt.Errorf("no audience given for post with audience=selected"), input).WithPublic(genericPublic)
 			}
 			rowsAffected, err := q.InsertPostAudience(ctx, ds.InsertPostAudienceParams{
 				PostID:         postId,
-				AllowedUserIds: req.AudienceIds.Int64(), //does nil work here? TODO test
+				AllowedUserIds: audienceIds.Int64(), //does nil work here? TODO test
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
-			if rowsAffected < 1 {
-				return ErrNoAudienceSelected
+			if rowsAffected < int64(len(audienceIds)) {
+				return ce.New(ce.ErrInternal, fmt.Errorf("unexpected rows returned: expected %v, got %v", len(audienceIds), rowsAffected), input).WithPublic(genericPublic)
 			}
 		}
 
@@ -74,7 +79,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 				ParentID: postId,
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 		}
 
@@ -84,8 +89,10 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 }
 
 func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -95,10 +102,10 @@ func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) err
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to delete entity %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	rowsAffected, err := s.db.DeletePost(ctx, ds.DeletePostParams{
@@ -106,17 +113,19 @@ func (s *Application) DeletePost(ctx context.Context, req models.GenericReq) err
 		CreatorID: req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if rowsAffected != 1 {
-		return ErrNotFound
+		return ce.New(ce.ErrNotFound, fmt.Errorf("post %v not found or not owned by user %v", req.EntityId, req.RequesterId), input).WithPublic("not found")
 	}
 	return nil
 }
 
 func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -126,10 +135,10 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return err
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ErrNotAllowed
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit entity %v", req.PostId), input).WithPublic("permission denied")
 	}
 
 	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -141,10 +150,10 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 				CreatorID: req.RequesterId.Int64(),
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 			if rowsAffected != 1 {
-				return ErrNotFound
+				return ce.New(ce.ErrNotFound, fmt.Errorf("post %v not found or not owned by user %v", req.PostId, req.RequesterId), input).WithPublic("not found")
 			}
 		}
 
@@ -155,52 +164,53 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 				ParentID: req.PostId.Int64(),
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 		}
 		//delete image
 		if req.DeleteImage {
 			rowsAffected, err := q.DeleteImage(ctx, req.PostId.Int64())
 			if err != nil {
-				return err
+				return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("post id: %v", req.PostId)).WithPublic(genericPublic)
 			}
 			if rowsAffected != 1 {
-				tele.Warn(ctx, "EditPost: image to be deleted not found. @1", "request", req)
+				tele.Warn(ctx, "image @1 for post @2 could not be deleted: not found.", "image id", req.ImageId, "post id", req.PostId)
 			}
 		}
 		// edit audience
-		rowsAffected, err := q.UpdatePostAudience(ctx, ds.UpdatePostAudienceParams{
+		_, err := q.UpdatePostAudience(ctx, ds.UpdatePostAudienceParams{
 			ID:        req.PostId.Int64(),
 			CreatorID: req.RequesterId.Int64(),
 			Audience:  ds.IntendedAudience(req.Audience),
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
-		if rowsAffected != 1 {
-			tele.Warn(ctx, "EditPost: no audience change. @1", "request", req)
-		}
+		// if rowsAffected != 1 {
+		// 	tele.Warn(ctx, "EditPost: no audience change. @1", "request", req)
+		// }
 
 		// edit audience ids
 		if req.Audience == "selected" {
-			if len(req.AudienceIds) < 1 {
-				return ErrNoAudienceSelected
+			audienceIds := ct.Ids(req.AudienceIds).Unique()
+			if len(audienceIds) < 1 {
+				return ce.New(ce.ErrInvalidArgument, fmt.Errorf("no audience given for post with audience=selected"), input).WithPublic(genericPublic)
 			}
 			//delete previous audience ids
 			err := q.ClearPostAudience(ctx, req.PostId.Int64())
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 			//insert new ids
 			rowsAffected, err := q.InsertPostAudience(ctx, ds.InsertPostAudienceParams{
 				PostID:         req.PostId.Int64(),
-				AllowedUserIds: req.AudienceIds.Int64(),
+				AllowedUserIds: audienceIds.Int64(),
 			})
 			if err != nil {
-				return err
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
-			if rowsAffected < 1 {
-				return ErrNoAudienceSelected
+			if rowsAffected < int64(len(audienceIds)) {
+				return ce.New(ce.ErrInternal, fmt.Errorf("unexpected rows returned: expected %v, got %v", len(audienceIds), rowsAffected), input).WithPublic(genericPublic)
 			}
 		}
 
@@ -210,24 +220,30 @@ func (s *Application) EditPost(ctx context.Context, req models.EditPostReq) erro
 }
 
 func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.SimpleIdReq) (models.Post, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return models.Post{}, err
+		return models.Post{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	var groupId pgtype.Int8
 	groupId.Int64 = req.Id.Int64()
+	if req.Id == 0 {
+		return models.Post{}, ce.New(ce.ErrInvalidArgument, fmt.Errorf("no group id given"), input).WithPublic("invalid arguments")
+	}
 	groupId.Valid = true
+
 	p, err := s.db.GetMostPopularPostInGroup(ctx, groupId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.Post{}, ErrNotFound
+			return models.Post{}, nil
 		}
-		return models.Post{}, err
+		return models.Post{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{ct.Id(p.CreatorID)})
 	if err != nil {
-		return models.Post{}, err
+		return models.Post{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	post := models.Post{
@@ -247,7 +263,7 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 	if post.ImageId > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
 		if err != nil {
-			return models.Post{}, err
+			return models.Post{}, ce.Wrap(nil, err, input).WithPublic("error retrieving image")
 		}
 
 		post.ImageUrl = imageUrl
@@ -257,18 +273,23 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 }
 
 func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (models.Post, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return models.Post{}, err
+		return models.Post{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
-	userCanView, err := s.hasRightToView(ctx, accessContext{
+
+	accessCtx := accessContext{
 		requesterId: req.RequesterId.Int64(),
 		entityId:    req.EntityId.Int64(),
-	})
-	if err != nil {
-		return models.Post{}, err
 	}
-	if !userCanView {
-		return models.Post{}, ErrNotAllowed
+
+	hasAccess, err := s.hasRightToView(ctx, accessCtx)
+	if err != nil {
+		return models.Post{}, ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
+	}
+	if !hasAccess {
+		return models.Post{}, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit entity %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	p, err := s.db.GetPostByID(ctx, ds.GetPostByIDParams{
@@ -277,7 +298,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.Post{}, ErrNotFound
+			return models.Post{}, ce.New(ce.ErrNotFound, err, input).WithPublic("not found")
 		}
 		return models.Post{}, err
 	}
@@ -295,7 +316,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 
 	userMap, err := s.userRetriever.GetUsers(ctx, userIds.Unique())
 	if err != nil {
-		return models.Post{}, err
+		return models.Post{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	selectedUsers := make([]models.User, 0, len(p.SelectedAudience))
@@ -325,7 +346,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 	if post.ImageId > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
 		if err != nil {
-			return models.Post{}, err
+			return models.Post{}, ce.Wrap(nil, err, input).WithPublic("error retrieving image")
 		}
 
 		post.ImageUrl = imageUrl

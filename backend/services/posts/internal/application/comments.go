@@ -14,8 +14,10 @@ import (
 const genericPublic = "posts service error"
 
 func (s *Application) CreateComment(ctx context.Context, req models.CreateCommentReq) (err error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -24,11 +26,11 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	}
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if err != nil { //err := "invalid parten id", "CreateComment>CreateComment>HasAccess: invalid parent id"
-		return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+	if err != nil {
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit entity: %v", req.ParentId)).WithPublic("permission denied")
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to comment on post: %v", req.ParentId), input).WithPublic("permission denied")
 	}
 	var commentId int64
 	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -39,7 +41,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		})
 
 		if err != nil {
-			return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 
 		if req.ImageId != 0 {
@@ -48,7 +50,7 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 				ParentID: commentId,
 			})
 			if err != nil {
-				return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 		}
 		return nil
@@ -82,8 +84,10 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 }
 
 func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -93,10 +97,10 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity")).WithPublic("permission denied")
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit entity %v", req.CommentId), input).WithPublic("permission denied")
 	}
 
 	err = s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -106,10 +110,10 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 			CommentCreatorID: req.CreatorId.Int64(),
 		})
 		if err != nil {
-			return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 		if rowsAffected != 1 {
-			return ce.Wrap(ce.ErrNotFound, fmt.Errorf("comment not found or not owned by user")).WithPublic("permission denied")
+			return ce.New(ce.ErrNotFound, fmt.Errorf("comment %v not found or not owned by user %v", req.CommentId, req.CreatorId), input).WithPublic("not found")
 		}
 
 		if req.ImageId > 0 {
@@ -118,17 +122,17 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 				ParentID: req.CommentId.Int64(),
 			})
 			if err != nil {
-				return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 			}
 		}
 
 		if req.DeleteImage {
 			rowsAffected, err := q.DeleteImage(ctx, req.CommentId.Int64())
 			if err != nil {
-				return ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+				return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("comment id: %v", req.CommentId)).WithPublic(genericPublic)
 			}
 			if rowsAffected != 1 {
-				tele.Warn(ctx, "EditComment: image @1 for comment @2 could not be deleted: not found.", "image id", req.ImageId, "comment id", req.CommentId)
+				tele.Warn(ctx, "image @1 for comment @2 could not be deleted: not found.", "image id", req.ImageId, "comment id", req.CommentId)
 			}
 		}
 		return nil
@@ -140,8 +144,10 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 	return nil
 }
 func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -151,10 +157,10 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err, "s.hasRightToView failed with accessCtx: %#v", ct.ReqActionDetails).WithPublic(genericPublic)
+		return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view or edit this entity")).WithPublic("permission denied")
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to delete entity %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	rowsAffected, err := s.db.DeleteComment(ctx, ds.DeleteCommentParams{
@@ -162,18 +168,20 @@ func (s *Application) DeleteComment(ctx context.Context, req models.GenericReq) 
 		CommentCreatorID: req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err, "db.DeleteComment failed, with entity").WithPublic(genericPublic)
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if rowsAffected != 1 {
-		tele.Warn(ctx, "DeleteComment: comment @1 could not be deleted: not found.", "comment id", req.EntityId)
+		return ce.New(ce.ErrNotFound, fmt.Errorf("comment %v not found or not owned by user %v", req.EntityId, req.RequesterId), input).WithPublic("not found")
 	}
 
 	return nil
 }
 
 func (s *Application) GetCommentsByParentId(ctx context.Context, req models.EntityIdPaginatedReq) ([]models.Comment, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed").WithPublic("invalid data received")
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	accessCtx := accessContext{
@@ -183,10 +191,10 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 
 	hasAccess, err := s.hasRightToView(ctx, accessCtx)
 	if err != nil {
-		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+		return nil, ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
 	}
 	if !hasAccess {
-		return nil, ce.Wrap(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view comments of this entity")).WithPublic("permission denied")
+		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view comments of entity %v", req.EntityId), input).WithPublic("permission denied")
 	}
 
 	rows, err := s.db.GetCommentsByPostId(ctx, ds.GetCommentsByPostIdParams{
@@ -196,7 +204,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		Offset:   req.Offset.Int32(),
 	})
 	if err != nil {
-		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic(genericPublic)
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	if len(rows) == 0 {
@@ -231,7 +239,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 
 	userMap, err := s.userRetriever.GetUsers(ctx, userIDs)
 	if err != nil {
-		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic("error retrieving users info")
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
 	}
 
 	var imageMap map[int64]string
@@ -239,7 +247,7 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, commentImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(ce.ErrInternal, err).WithPublic("error retrieving images")
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	}
 
 	for i := range comments {
