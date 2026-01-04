@@ -11,13 +11,24 @@ import (
 )
 
 // Record is a type that helps with commiting after processing a record
-// AFTER PROCESSING THE RECORD MAKE SURE TO COMMIT!!!
+//
+// # MAKE SURE THE PROCESSING OF THE RECORD IS INSIDE A TRANSACTION
+//
+// # AND AFTER PROCESSING THE RECORD MAKE SURE TO COMMIT!
+//
+// Usage:
+//
+// Record.Data() -> get your data
+//
+// err := Record.Commit() -> commit the result, make sure this is done
+//
+// # ^--- MAKE SURE TO HANDLE THE ERROR, IMPORTANT!
 type Record struct {
 	monotinicId    uint64
 	rec            *kgo.Record
 	commitChannel  chan<- (*Record)
 	confirmChannel chan (struct{})
-	Context        context.Context //HANDLER OF RECORDS MUST LISTEN TO CONTEXT AND IF IT EXPIRES ROLLBACK THE TRANSACTION
+	context        context.Context
 }
 
 var ErrBadArgs = errors.New("bro, you passed bad arguments")
@@ -32,15 +43,15 @@ func newRecord(ctx context.Context, record *kgo.Record, commitChannel chan<- (*R
 		rec:            record,
 		commitChannel:  commitChannel,
 		confirmChannel: make(chan struct{}),
-		Context:        ctx,
+		context:        ctx,
 		monotinicId:    monotonicId,
 	}, nil
 }
 
 // Data returns the data payload
-func (r *Record) Data() []byte {
+func (r *Record) Data(ctx context.Context) []byte {
 	if r.rec == nil {
-		//log?
+		tele.Warn(ctx, "empty kafka record")
 		return []byte("no data found")
 	}
 	return r.rec.Value
@@ -48,8 +59,10 @@ func (r *Record) Data() []byte {
 
 var ErrEmptyRecord = errors.New("empty record")
 
-// TODO commit must return a confirmation
+// debug purposes
 var a atomic.Int64
+
+var ErrContextExpired = errors.New("context expired")
 
 // Commit marks the record as processed in the Kafka client.
 // MAKE SURE THIS IS AT THE END OF A TRANSACTION, DONT BE COMMITING THINGS YOU LATER UNDO!!
@@ -60,9 +73,10 @@ func (r *Record) Commit(ctx context.Context) error {
 	}
 	select {
 	case r.commitChannel <- r:
-	case <-ctx.Done():
-		// optionally log or ignore
-		tele.Error(ctx, "record context done")
+	case <-r.context.Done():
+		//listening to the context in case the consumer is shutting down
+		tele.Warn(ctx, "record context done")
+		return ErrContextExpired
 	}
 
 	a.Add(1)

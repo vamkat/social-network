@@ -93,7 +93,7 @@ func SpamProducer() {
 			dur := 30
 			time.Sleep(time.Millisecond * time.Duration(dur))
 			tele.Info(ctx, "sending after waiting for: @1", "millis", dur)
-			err := producer.Send(ctx, "test_topic", X{fmt.Sprint("alex:", i, " and slept for: ", dur, "ms sadfl"), i})
+			err := producer.Send(ctx, "test_topic", []byte(fmt.Sprint("alex:", i, " and slept for: ", dur, "ms count: ", i)))
 			if err != nil {
 				tele.Error(ctx, "KAFKA SEND ERROR: @1", "error", err.Error())
 				return

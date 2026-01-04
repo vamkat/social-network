@@ -21,5 +21,38 @@ func (h *Handlers) testHandler() http.HandlerFunc {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send logout ACK")
 			return
 		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(htmlPage))
 	}
 }
+
+var htmlPage = `<!DOCTYPE html>
+<html>
+<head>
+	<title>Example</title>
+</head>
+<body>
+	<h1>Hello</h1>
+</body>
+<script>
+const socket = new WebSocket("ws://IP_ADDRESS:PORT");
+
+socket.onopen = () => {
+	console.log("WebSocket connected");
+};
+
+socket.onmessage = (event) => {
+	console.log(event.data);
+};
+
+socket.onerror = (error) => {
+	console.error("WebSocket error:", error);
+};
+
+socket.onclose = (event) => {
+	console.log("WebSocket closed:", event.code, event.reason);
+};
+</script>
+</html>`

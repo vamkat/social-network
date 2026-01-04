@@ -13,16 +13,15 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-type committerData struct {
-	TopicChannel       chan *Record
-	CommitChannel      chan *Record
-	CommitRoutineReady bool
-	ExpectedIds        []uint64
-	Mutex              *sync.Mutex
+type topicData struct {
+	TopicChannel  chan *Record //the consumer uses this to send messages to whoever needs messages
+	CommitChannel chan *Record //used by Record.Commit() so that the message handler can communicate to the commit routine
+	ExpectedIds   []uint64     //these are id's the consumer generated that correspond to the records it fetches, it's needed so that committing records happens in the same order as they arrived
+	Mutex         *sync.Mutex
 }
 
-func newCommitRoutine() *committerData {
-	return &committerData{
+func newCommitRoutine() *topicData {
+	return &topicData{
 		TopicChannel:  make(chan *Record),
 		CommitChannel: make(chan *Record),
 		Mutex:         &sync.Mutex{},
@@ -34,34 +33,63 @@ func newCommitRoutine() *committerData {
 
 type kafkaConsumer struct {
 	topics            []string
-	seeds             []string
-	group             string
+	seeds             []string //use by the franz package to connect to the cluster, put as many as you have
+	group             string   //consumer group means that messages as distributed to the members of the same group
 	context           context.Context
-	client            *kgo.Client
-	committerDataMap  map[string]*committerData
-	commitBuffer      int
-	topicBuffer       int
+	client            *kgo.Client           //what actually does operation to kafka
+	topicDataMap      map[string]*topicData //data needed for each topic
+	commitBuffer      int                   //how big the commit channel buffer
+	topicBuffer       int                   //how big the topic channels' buffer
 	cancel            func()
 	isConsuming       bool
 	weAreShuttingDown bool
 }
 
-//TODO check if consumer and producer work gracefully after kafka restarts
+//ALL TODOs
+//set up proper limits on how many records this consumer can have at the same time.
+//test more that shutdown is graceful enough
+//test that records don't get lost when service gets restarted
+//add comitting remaining documents on shutdown
+//add batching to commits
+//make a trap for detecting out of order documents
+//add major retrying behavior instead of defaulting to a shutdown
 
-// seeds are used for finding the server, just as many kafka ip's you have
-// enter all the topics you want to consume
-// enter you group identifier
+// Seeds are used for finding the server, just as many kafka ip's you have.
+//
+// Enter all the topics you want to consume.
+//
+// Enter your group identifier because within the same group messages get spread evenly (at least it tries to).
+//
+// Usage:
+//
+//			//create consumer
+//			consumer, err := kafgo.NewKafkaConsumer([]string{"localhost:9092"}, "chat")
+//			if err != nil {
+//	     	tele.Error(ctx, "wtf")
+//			}
+//
+//			//register topics. You will be given a
+//			//channel to listen to for messages of that topic
+//			memberChannel, err := consumer.RegisterTopic("notifications")
+//			alertChannel, err = consumer.RegisterTopic("alerts")
+//
+//			//then activate the consumption
+//			close, err := consumer.StartConsuming(ctx)
+//			if err != nil {
+//				tele.Error(ctx, "wtf")
+//			}
+//			defer close()
 func NewKafkaConsumer(seeds []string, group string) (*kafkaConsumer, error) {
 	if len(seeds) == 0 || group == "" {
 		return nil, errors.New("NewKafkaConsumer: bad arguments")
 	}
 
 	kfc := &kafkaConsumer{
-		seeds:            seeds,
-		group:            group,
-		committerDataMap: make(map[string]*committerData),
-		commitBuffer:     1000,
-		topicBuffer:      5000,
+		seeds:        seeds,
+		group:        group,
+		topicDataMap: make(map[string]*topicData),
+		commitBuffer: 1000,
+		topicBuffer:  5000,
 	}
 
 	return kfc, nil
@@ -76,6 +104,9 @@ func (kfc *kafkaConsumer) WithCommitBuffer(size int) *kafkaConsumer {
 }
 
 func (kfc *kafkaConsumer) WithTopicBuffer(size int) *kafkaConsumer {
+	if kfc.isConsuming {
+		panic("don't mess with the consumer while it's consuming!")
+	}
 	kfc.topicBuffer = size
 	return kfc
 }
@@ -84,20 +115,19 @@ var ErrFetch = errors.New("error when fetching")
 var ErrConsumerFunc = errors.New("consumer function error")
 
 // RegisterTopic registers a topic for consumption and returns a channel to receive records
-// Recommended buffer size is above 100, should probably be in the thousands, set to 0 for default
 func (kfc *kafkaConsumer) RegisterTopic(topic ct.KafkaTopic) (<-chan *Record, error) {
 	if kfc.isConsuming {
 		panic("you can't register topics in the middle of consuming!")
 	}
 
-	_, ok := kfc.committerDataMap[string(topic)]
+	_, ok := kfc.topicDataMap[string(topic)]
 	if ok {
 		panic("you've passed duplicate topics")
 	}
 
 	kfc.topics = append(kfc.topics, string(topic))
 	committerData := newCommitRoutine()
-	kfc.committerDataMap[string(topic)] = committerData
+	kfc.topicDataMap[string(topic)] = committerData
 
 	return committerData.TopicChannel, nil
 }
@@ -143,7 +173,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 	// commitChannels are listened to by a routine for that topic's record commits
 	// after the handlers are done processing the record they call commit, and these routines get informed
 	for _, topic := range kfc.topics {
-		commitData := kfc.committerDataMap[topic]
+		commitData := kfc.topicDataMap[topic]
 		commitData.CommitChannel = make(chan *Record, kfc.commitBuffer)
 		go kfc.commitRoutine(commitData)
 	}
@@ -175,7 +205,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 				for !iter.Done() {
 					newId := monotonicIds.Add(1)
 					record := iter.Next()
-					committerData := kfc.committerDataMap[record.Topic]
+					committerData := kfc.topicDataMap[record.Topic]
 
 					//since the commit routines need to commit the records in the right order
 					//we need keep track of what records have arrived, this is then read by commit routine
@@ -232,12 +262,12 @@ func (kfc *kafkaConsumer) shutdownProcedure(thereIsSomethingWrong bool) {
 	kfc.cancel()
 
 	//closing all topic channels, so that no more record are sent to handlers
-	for _, committerData := range kfc.committerDataMap {
+	for _, committerData := range kfc.topicDataMap {
 		close(committerData.TopicChannel)
 	}
 
 	//ranging over the topics again to drain them and discard the records
-	for _, committerData := range kfc.committerDataMap {
+	for _, committerData := range kfc.topicDataMap {
 		for range committerData.TopicChannel {
 		}
 	}
@@ -252,8 +282,6 @@ func (kfc *kafkaConsumer) shutdownProcedure(thereIsSomethingWrong bool) {
 	}
 }
 
-//TODO make separate commit channels and routine for each topic
-//TODO handle out of order commits...
 //TODO batch commits, small batches
 //TODO add detection trap whenc committing monotinicIds out of order
 
@@ -264,7 +292,7 @@ func (kfc *kafkaConsumer) shutdownProcedure(thereIsSomethingWrong bool) {
 // HOPEFULLY THE RECORD HANDLERS DO THEIR BEST EFFORT TO PROCESS IT, and if it's corrupted then they should commit it to remove it from circulation
 // if a handler is incapable of of processing the record, then it needs to close the channel
 // so that the shutdown operation can begin and restart the pod
-func (kfc *kafkaConsumer) commitRoutine(data *committerData) {
+func (kfc *kafkaConsumer) commitRoutine(data *topicData) {
 	foundRecords := make(map[uint64]*Record, 30)
 	for {
 		select {
@@ -364,7 +392,7 @@ func (kfc *kafkaConsumer) validateBeforeStart() error {
 	if len(kfc.topics) == 0 {
 		return errors.New("no topics registered")
 	}
-	if len(kfc.committerDataMap) != len(kfc.topics) {
+	if len(kfc.topicDataMap) != len(kfc.topics) {
 		return errors.New("topic/channel mismatch")
 	}
 
@@ -374,7 +402,7 @@ func (kfc *kafkaConsumer) validateBeforeStart() error {
 			return errors.New("duplicate topic")
 		}
 		seen[t] = struct{}{}
-		ch, ok := kfc.committerDataMap[t]
+		ch, ok := kfc.topicDataMap[t]
 		if !ok || ch == nil {
 			return errors.New("missing topic channel")
 		}

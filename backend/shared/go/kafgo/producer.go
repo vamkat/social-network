@@ -2,20 +2,35 @@ package kafgo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	tele "social-network/shared/go/telemetry"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-// How to use this. Create a kafka producer. User Send() to send payloads. The payload should be a struct with json tags, cause it will get marshaled.
+// How to use this. Create a kafka producer.
+// User Send() to send payloads.
+// The payload is a byte slice.
 
 type KafkaProducer struct {
 	client *kgo.Client
 }
 
-// seeds are used for finding the server, just as many kafka ip's you have
+// seeds are used for finding the cluster, just give as many kafka ip's you have
+//
+// Usage:
+//
+//	   producer, close, err := kafgo.NewKafkaProducer([]string{"localhost:9092"})
+//	   if err != nil {
+//		   tele.Fatal("wtf")
+//	    }
+//	    defer close()
+//
+//		//then use this to send messages to kafka
+//	    err := producer.Send(ctx, topic, payload)
+//		err != nil{
+//			tele.Fatal("wtf2")
+//		}
 func NewKafkaProducer(seeds []string) (producer *KafkaProducer, close func(), err error) {
 	cl, err := kgo.NewClient(
 		kgo.SeedBrokers(seeds...),
@@ -31,16 +46,12 @@ func NewKafkaProducer(seeds []string) (producer *KafkaProducer, close func(), er
 }
 
 // TODO batch sends instead of doing one by one
+
 // Send sends payload(s) to the specified topic
-func (kfc *KafkaProducer) Send(ctx context.Context, topic string, payload ...any) error {
+func (kfc *KafkaProducer) Send(ctx context.Context, topic string, payload ...[]byte) error {
 	records := make([]*kgo.Record, len(payload))
 	for i, p := range payload {
-		bytes, err := json.Marshal(p)
-		if err != nil {
-			tele.Error(ctx, "prod send error")
-			return err
-		}
-		records[i] = &kgo.Record{Topic: topic, Value: bytes}
+		records[i] = &kgo.Record{Topic: topic, Value: p}
 	}
 	results := kfc.client.ProduceSync(ctx, records...)
 	if results.FirstErr() != nil {
