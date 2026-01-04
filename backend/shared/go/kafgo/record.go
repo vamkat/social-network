@@ -11,20 +11,22 @@ import (
 // Record is a type that helps with commiting after processing a record
 // AFTER PROCESSING THE RECORD MAKE SURE TO COMMIT!!!
 type Record struct {
-	rec           *kgo.Record
-	commitChannel chan<- (*kgo.Record)
+	rec            *kgo.Record
+	commitChannel  chan<- (*Record)
+	confirmChannel chan (struct{})
 }
 
 var ErrBadArgs = errors.New("bro, you passed bad arguments")
 
 // newRecord creates a new Record instance
-func newRecord(record *kgo.Record, commitChannel chan<- (*kgo.Record)) (*Record, error) {
+func newRecord(record *kgo.Record, commitChannel chan<- (*Record)) (*Record, error) {
 	if record == nil {
 		return nil, fmt.Errorf("%w record: %v", ErrBadArgs, record)
 	}
 	return &Record{
-		rec:           record,
-		commitChannel: commitChannel,
+		rec:            record,
+		commitChannel:  commitChannel,
+		confirmChannel: make(chan struct{}),
 	}, nil
 }
 
@@ -48,10 +50,13 @@ func (r *Record) Commit(ctx context.Context) error {
 		return ErrEmptyRecord
 	}
 	select {
-	case r.commitChannel <- r.rec:
+	case r.commitChannel <- r:
 	case <-ctx.Done():
 		// optionally log or ignore
 	}
+
+	//wait for the commit routine to confirm this record
+	<-r.confirmChannel
 
 	return nil
 }

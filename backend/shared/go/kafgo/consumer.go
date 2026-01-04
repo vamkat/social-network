@@ -11,6 +11,22 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
+type committerData struct {
+	TopicChannel       chan *Record
+	CommitChannel      chan *Record
+	StartOffset        chan int64
+	CommitRoutineReady bool
+	ExpectedOffsets    []int64
+}
+
+func newCommitRoutine() *committerData {
+	return &committerData{
+		TopicChannel:  make(chan *Record),
+		CommitChannel: make(chan *Record),
+		StartOffset:   make(chan int64),
+	}
+}
+
 // To explain the idea of this package. You create a kafka consumer. You then call RegisterTopic() to register topics which gives you a channel to listen to.
 // You will receive a Record{} from this channel. You get your data from the Data() method, process it, and once you're done you Commit(), and that's all you gotta do!
 
@@ -20,8 +36,9 @@ type kafkaConsumer struct {
 	group             string
 	context           context.Context
 	client            *kgo.Client
-	topicChannels     map[string]chan *Record
-	commitChannel     chan (*kgo.Record)
+	committerDataMap  map[string]*committerData
+	allOffsetsSorted  bool
+	offtsetsOkCount   int
 	commitBuffer      int
 	topicBuffer       int
 	cancel            func()
@@ -40,12 +57,11 @@ func NewKafkaConsumer(seeds []string, group string) (*kafkaConsumer, error) {
 	}
 
 	kfc := &kafkaConsumer{
-		seeds:         seeds,
-		group:         group,
-		topicChannels: make(map[string]chan *Record, 3),
-		commitBuffer:  1000,
-		topicBuffer:   5000,
-		commitChannel: make(chan (*kgo.Record), 1000),
+		seeds:            seeds,
+		group:            group,
+		committerDataMap: make(map[string]*committerData),
+		commitBuffer:     1000,
+		topicBuffer:      5000,
 	}
 
 	return kfc, nil
@@ -56,7 +72,6 @@ func (kfc *kafkaConsumer) WithCommitBuffer(size int) *kafkaConsumer {
 		panic("don't mess with the consumer while it's consuming!")
 	}
 	kfc.commitBuffer = size
-	kfc.commitChannel = make(chan (*kgo.Record), size)
 	return kfc
 }
 
@@ -75,13 +90,15 @@ func (kfc *kafkaConsumer) RegisterTopic(topic ct.KafkaTopic) (<-chan *Record, er
 		panic("you can't register topics in the middle of consuming!")
 	}
 
-	_, ok := kfc.topicChannels[string(topic)]
+	_, ok := kfc.committerDataMap[string(topic)]
 	if ok {
 		panic("you've passed duplicate topics")
 	}
+
 	kfc.topics = append(kfc.topics, string(topic))
 	topicChannel := make(chan *Record, kfc.topicBuffer)
-	kfc.topicChannels[string(topic)] = topicChannel
+	kfc.committerDataMap[string(topic)] = newCommitRoutine()
+
 	return topicChannel, nil
 }
 
@@ -122,9 +139,15 @@ func (kfc *kafkaConsumer) StartConsuming(ctx context.Context) (func(), error) {
 // actuallyStartConsuming actually does the consumption
 func (kfc *kafkaConsumer) actuallyStartConsuming() {
 	kfc.isConsuming = true
-	// commitChannel is listened to by a routine for record commits
-	// after the handlers are done processing the record
-	go kfc.commitRoutine()
+
+	// commitChannels are listened to by a routine for that topic's record commits
+	// after the handlers are done processing the record they call commit, and these routines get informed
+	for _, topic := range kfc.topics {
+		commitData := kfc.committerDataMap[topic]
+		commitData.CommitChannel = make(chan *Record, kfc.commitBuffer)
+		commitData.StartOffset = make(chan int64)
+		go kfc.commitRoutine(commitData)
+	}
 
 	go func() {
 		timer := time.NewTimer(time.Second)
@@ -147,10 +170,22 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 				// We can iterate through a record iterator...
 				iter := fetches.RecordIter()
 				for !iter.Done() {
-
 					record := iter.Next()
 
-					Record, err := newRecord(record, kfc.commitChannel)
+					committerData := kfc.committerDataMap[record.Topic]
+					committerData.ExpectedOffsets = append(committerData.ExpectedOffsets, record.Offset)
+					//since the commit routines need to commit the records in the right order
+					//we need to find the smallest record offset and let them know
+					if !committerData.CommitRoutineReady {
+						committerData.StartOffset <- record.Offset
+						committerData.CommitRoutineReady = true
+						kfc.offtsetsOkCount++
+						if kfc.offtsetsOkCount == len(kfc.topics) {
+							kfc.allOffsetsSorted = true
+						}
+					}
+
+					Record, err := newRecord(record, committerData.CommitChannel)
 					if err != nil {
 						//think what to do
 						tele.Info(context.Background(), "failed to create record")
@@ -164,7 +199,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 						kfc.shutdownProcedure(true)
 						tele.Info(context.Background(), "SLOW CHANNEL error: ")
 						return
-					case kfc.topicChannels[record.Topic] <- Record:
+					case committerData.TopicChannel <- Record:
 					}
 				}
 			}
@@ -194,70 +229,67 @@ func (kfc *kafkaConsumer) shutdownProcedure(thereIsSomethingWrong bool) {
 	kfc.cancel()
 
 	//closing all topic channels, so that no more record are sent to handlers
-	for _, ch := range kfc.topicChannels {
-		close(ch)
+	for _, committerData := range kfc.committerDataMap {
+		close(committerData.TopicChannel)
 	}
 
 	//ranging over the topics again to drain them and discard the records
-	for _, ch := range kfc.topicChannels {
-		for range ch {
+	for _, committerData := range kfc.committerDataMap {
+		for range committerData.TopicChannel {
 		}
 	}
 
-	timer := time.NewTimer(time.Second * 10)
+	// timer := time.NewTimer(time.Second * 10) //TODO use me!
 
 	//committing any remaining commits
-outer:
-	for {
-		select {
-		case record := <-kfc.commitChannel:
-			err := kfc.client.CommitRecords(record.Context, record) //TODO is this the correct context?
-			if err != nil {
-				tele.Info(context.Background(), "ERROR FOUND") //TODO think what needs to be done here
-			}
-			timer.Reset(time.Second * 10)
-		case <-timer.C:
-			tele.Info(context.Background(), "enough waiting for commit messages, ending it all now")
-			break outer
-		}
-	}
+	//TODO do this!
 
 	if thereIsSomethingWrong {
 		os.Exit(1)
 	}
 }
 
-var counter = 0
-
 //TODO make separate commit channels and routine for each topic
 //TODO handle out of order commits...
 //TODO batch commits, small batches
+//TODO add detection trap whenc committing offsets out of order
 
 // commitRoutine listens to the commitChannel and commits records as they come in
-func (kfc *kafkaConsumer) commitRoutine() {
+func (kfc *kafkaConsumer) commitRoutine(data *committerData) {
 	defer tele.Info(context.Background(), "COMMIT WATCHER ROUTINE CLOSING DEFERRED")
-
+	//we wait for the consumer loop to give us the offset of the first record if receives
+	nextOffset := <-data.StartOffset
+	tooEarlyOffsets := make(map[int64]struct{}, 30)
 	for {
 		select {
 		case <-kfc.context.Done():
 			tele.Info(context.Background(), "COMMIT WATCHER ROUTINE CLOSING DUE TO CONTEXT")
 			return
-		case record := <-kfc.commitChannel:
-			tele.Info(context.Background(), "commit: @1 @2", "counter", counter, "data", string(record.Value))
-			counter++
 
-			//TODO pool records here instead of doing them one by one
-			ctx, cancel := context.WithTimeout(kfc.context, time.Second*2)
-			defer cancel()
-			err := kfc.client.CommitRecords(ctx, record) //TODO is this the correct context?
-			if err != nil {
-				tele.Info(context.Background(), "COMMIT ERROR FOUND @1", "error", err.Error()) //TODO think what needs to be done here
-				kfc.shutdownProcedure(true)                                                    //TODO this is excessive, but not sure what else to do? other than retry?
+		case record := <-data.CommitChannel:
+			tooEarlyOffsets[record.rec.Offset] = struct{}{}
+
+			_, nextExists := tooEarlyOffsets[data.ExpectedOffsets[0]]
+			for nextExists {
+				//TODO pool records here instead of doing them one by one
+				ctx, cancel := context.WithTimeout(kfc.context, time.Second*2) //TODO is this the correct context?
+				defer cancel()
+				err := kfc.client.CommitRecords(ctx, record.rec) //TODO is this the correct context?
+
+				if err != nil {
+					tele.Info(context.Background(), "COMMIT ERROR FOUND @1", "error", err.Error()) //TODO think what needs to be done here
+					kfc.shutdownProcedure(true)                                                    //TODO this is excessive, but not sure what else to do? other than retry?
+				}
+
+				data.ExpectedOffsets = data.ExpectedOffsets[1:]
+				if len(data.ExpectedOffsets) == 0 {
+					break
+				}
+				_, nextExists = tooEarlyOffsets[nextOffset]
 			}
 
 		}
 	}
-
 }
 
 func (kfc *kafkaConsumer) validateBeforeStart() error {
@@ -287,7 +319,7 @@ func (kfc *kafkaConsumer) validateBeforeStart() error {
 	if len(kfc.topics) == 0 {
 		return errors.New("no topics registered")
 	}
-	if len(kfc.topicChannels) != len(kfc.topics) {
+	if len(kfc.committerDataMap) != len(kfc.topics) {
 		return errors.New("topic/channel mismatch")
 	}
 
@@ -297,7 +329,7 @@ func (kfc *kafkaConsumer) validateBeforeStart() error {
 			return errors.New("duplicate topic")
 		}
 		seen[t] = struct{}{}
-		ch, ok := kfc.topicChannels[t]
+		ch, ok := kfc.committerDataMap[t]
 		if !ok || ch == nil {
 			return errors.New("missing topic channel")
 		}
@@ -305,12 +337,6 @@ func (kfc *kafkaConsumer) validateBeforeStart() error {
 
 	if kfc.commitBuffer <= 0 {
 		return errors.New("invalid commit buffer")
-	}
-	if kfc.commitChannel == nil {
-		return errors.New("nil commit channel")
-	}
-	if cap(kfc.commitChannel) != kfc.commitBuffer {
-		return errors.New("commit channel capacity mismatch")
 	}
 
 	return nil
