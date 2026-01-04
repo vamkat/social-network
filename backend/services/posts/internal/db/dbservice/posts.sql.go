@@ -201,7 +201,17 @@ COALESCE(
      ORDER BY i.sort_order ASC
      LIMIT 1
     ), 0
-)::bigint AS image
+)::bigint AS image,
+
+ COALESCE(
+        (
+            SELECT array_agg(pa.allowed_user_id ORDER BY pa.allowed_user_id)
+            FROM post_audience pa
+            WHERE pa.post_id = p.id
+              AND p.audience = 'selected'
+        ),
+        ARRAY[]::bigint[]
+    ) AS selected_audience
 
 
 FROM posts p
@@ -215,18 +225,19 @@ type GetPostByIDParams struct {
 }
 
 type GetPostByIDRow struct {
-	ID              int64
-	PostBody        string
-	CreatorID       int64
-	GroupID         int64
-	Audience        IntendedAudience
-	CommentsCount   int32
-	ReactionsCount  int32
-	LastCommentedAt pgtype.Timestamptz
-	CreatedAt       pgtype.Timestamptz
-	UpdatedAt       pgtype.Timestamptz
-	LikedByUser     bool
-	Image           int64
+	ID               int64
+	PostBody         string
+	CreatorID        int64
+	GroupID          int64
+	Audience         IntendedAudience
+	CommentsCount    int32
+	ReactionsCount   int32
+	LastCommentedAt  pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	LikedByUser      bool
+	Image            int64
+	SelectedAudience []int64
 }
 
 func (q *Queries) GetPostByID(ctx context.Context, arg GetPostByIDParams) (GetPostByIDRow, error) {
@@ -245,6 +256,7 @@ func (q *Queries) GetPostByID(ctx context.Context, arg GetPostByIDParams) (GetPo
 		&i.UpdatedAt,
 		&i.LikedByUser,
 		&i.Image,
+		&i.SelectedAudience,
 	)
 	return i, err
 }

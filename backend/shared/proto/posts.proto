@@ -140,6 +140,7 @@ message Post {
     bool liked_by_user = 11;
     int64 image_id = 12;
     string image_url=13;
+    common.ListUsers selected_audience_users=14;
 }
 
 message ListPosts {

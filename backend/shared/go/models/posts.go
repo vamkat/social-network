@@ -30,19 +30,20 @@ type GenericPaginatedReq struct {
 // Posts
 // -------------------------------------------
 type Post struct {
-	PostId          ct.Id          `json:"post_id"`
-	Body            ct.PostBody    `json:"post_body"`
-	User            User           `json:"post_user"`
-	GroupId         ct.Id          `json:"group_id,omitempty" validate:"nullable"`
-	Audience        ct.Audience    `json:"audience"`
-	CommentsCount   int            `json:"comments_count"`
-	ReactionsCount  int            `json:"reactions_count"`
-	LastCommentedAt ct.GenDateTime `json:"last_commented_at"`
-	CreatedAt       ct.GenDateTime `json:"created_at"`
-	UpdatedAt       ct.GenDateTime `json:"updated_at" validate:"nullable"`
-	LikedByUser     bool           `json:"liked_by_user"`
-	ImageId         ct.Id          `json:"image" validate:"nullable"`
-	ImageUrl        string         `json:"image_url"`
+	PostId                ct.Id          `json:"post_id"`
+	Body                  ct.PostBody    `json:"post_body"`
+	User                  User           `json:"post_user"`
+	GroupId               ct.Id          `json:"group_id,omitempty" validate:"nullable"`
+	Audience              ct.Audience    `json:"audience"`
+	CommentsCount         int            `json:"comments_count"`
+	ReactionsCount        int            `json:"reactions_count"`
+	LastCommentedAt       ct.GenDateTime `json:"last_commented_at"`
+	CreatedAt             ct.GenDateTime `json:"created_at"`
+	UpdatedAt             ct.GenDateTime `json:"updated_at" validate:"nullable"`
+	LikedByUser           bool           `json:"liked_by_user"`
+	ImageId               ct.Id          `json:"image" validate:"nullable"`
+	ImageUrl              string         `json:"image_url"`
+	SelectedAudienceUsers []User         `json:"selected_audience_users"`
 }
 
 type CreatePostReq struct {

@@ -44,6 +44,18 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 
 		tele.Info(ctx, "retrieved post by id. @1", "grpcResp", grpcResp)
 
+		selectedAudience := make([]models.User, 0, len(grpcResp.SelectedAudienceUsers.Users))
+
+		for _, u := range grpcResp.SelectedAudienceUsers.Users {
+
+			selectedAudience = append(selectedAudience, models.User{
+				UserId:    ct.Id(u.UserId),
+				Username:  ct.Username(u.Username),
+				AvatarId:  ct.Id(u.Avatar),
+				AvatarURL: u.AvatarUrl,
+			})
+		}
+
 		post := models.Post{
 			PostId: ct.Id(grpcResp.PostId),
 			Body:   ct.PostBody(grpcResp.PostBody),
@@ -53,16 +65,17 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 				AvatarId:  ct.Id(grpcResp.User.Avatar),
 				AvatarURL: grpcResp.User.AvatarUrl,
 			},
-			GroupId:         ct.Id(grpcResp.GroupId),
-			Audience:        ct.Audience(grpcResp.Audience),
-			CommentsCount:   int(grpcResp.CommentsCount),
-			ReactionsCount:  int(grpcResp.ReactionsCount),
-			LastCommentedAt: ct.GenDateTime(grpcResp.LastCommentedAt.AsTime()),
-			CreatedAt:       ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
-			UpdatedAt:       ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
-			LikedByUser:     grpcResp.LikedByUser,
-			ImageId:         ct.Id(grpcResp.ImageId),
-			ImageUrl:        grpcResp.ImageUrl,
+			GroupId:               ct.Id(grpcResp.GroupId),
+			Audience:              ct.Audience(grpcResp.Audience),
+			CommentsCount:         int(grpcResp.CommentsCount),
+			ReactionsCount:        int(grpcResp.ReactionsCount),
+			LastCommentedAt:       ct.GenDateTime(grpcResp.LastCommentedAt.AsTime()),
+			CreatedAt:             ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
+			UpdatedAt:             ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
+			LikedByUser:           grpcResp.LikedByUser,
+			ImageId:               ct.Id(grpcResp.ImageId),
+			ImageUrl:              grpcResp.ImageUrl,
+			SelectedAudienceUsers: selectedAudience,
 		}
 
 		err = utils.WriteJSON(ctx, w, http.StatusOK, post)

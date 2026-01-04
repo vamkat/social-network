@@ -34,6 +34,17 @@ func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb
 		tele.Error(ctx, "Error in GetPostById. @1 @2", "request", req, "error", err.Error())
 		return nil, ce.GRPCStatus(err)
 	}
+
+	selectedUsers := make([]*cm.User, 0, len(post.SelectedAudienceUsers))
+	for _, u := range post.SelectedAudienceUsers {
+		selectedUsers = append(selectedUsers, &cm.User{
+			UserId:    u.UserId.Int64(),
+			Username:  u.Username.String(),
+			Avatar:    u.AvatarId.Int64(),
+			AvatarUrl: u.AvatarURL,
+		})
+	}
+
 	return &pb.Post{
 		PostId:   int64(post.PostId),
 		PostBody: string(post.Body),
@@ -54,6 +65,9 @@ func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb
 		LikedByUser:     post.LikedByUser,
 		ImageId:         int64(post.ImageId),
 		ImageUrl:        post.ImageUrl,
+		SelectedAudienceUsers: &cm.ListUsers{
+			Users: selectedUsers,
+		},
 	}, nil
 }
 

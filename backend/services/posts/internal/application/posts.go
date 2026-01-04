@@ -281,25 +281,45 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 		}
 		return models.Post{}, err
 	}
+	var userIds ct.Ids
+	//add creator
+	userIds = append(userIds, ct.Id(p.CreatorID))
+	//add selected audience if any
+	if len(p.SelectedAudience) > 0 {
+		for _, id := range p.SelectedAudience {
+			if id > 0 {
+				userIds = append(userIds, ct.Id(id))
+			}
+		}
+	}
 
-	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{ct.Id(p.CreatorID)})
+	userMap, err := s.userRetriever.GetUsers(ctx, userIds.Unique())
 	if err != nil {
 		return models.Post{}, err
 	}
 
+	selectedUsers := make([]models.User, 0, len(p.SelectedAudience))
+
+	if len(p.SelectedAudience) > 0 {
+		for _, id := range p.SelectedAudience {
+			selectedUsers = append(selectedUsers, userMap[ct.Id(id)])
+		}
+	}
+
 	post := models.Post{
-		PostId:          ct.Id(p.ID),
-		Body:            ct.PostBody(p.PostBody),
-		User:            userMap[ct.Id(p.CreatorID)],
-		GroupId:         ct.Id(p.GroupID),
-		Audience:        ct.Audience(p.Audience),
-		CommentsCount:   int(p.CommentsCount),
-		ReactionsCount:  int(p.ReactionsCount),
-		LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.Time),
-		CreatedAt:       ct.GenDateTime(p.CreatedAt.Time),
-		UpdatedAt:       ct.GenDateTime(p.UpdatedAt.Time),
-		LikedByUser:     p.LikedByUser,
-		ImageId:         ct.Id(p.Image),
+		PostId:                ct.Id(p.ID),
+		Body:                  ct.PostBody(p.PostBody),
+		User:                  userMap[ct.Id(p.CreatorID)],
+		GroupId:               ct.Id(p.GroupID),
+		Audience:              ct.Audience(p.Audience),
+		CommentsCount:         int(p.CommentsCount),
+		ReactionsCount:        int(p.ReactionsCount),
+		LastCommentedAt:       ct.GenDateTime(p.LastCommentedAt.Time),
+		CreatedAt:             ct.GenDateTime(p.CreatedAt.Time),
+		UpdatedAt:             ct.GenDateTime(p.UpdatedAt.Time),
+		LikedByUser:           p.LikedByUser,
+		ImageId:               ct.Id(p.Image),
+		SelectedAudienceUsers: selectedUsers,
 	}
 
 	if post.ImageId > 0 {

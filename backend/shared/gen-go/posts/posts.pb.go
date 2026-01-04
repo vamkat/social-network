@@ -250,22 +250,23 @@ func (x *GenericPaginatedReq) GetOffset() int32 {
 }
 
 type Post struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	PostId          int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	PostBody        string                 `protobuf:"bytes,2,opt,name=post_body,json=postBody,proto3" json:"post_body,omitempty"`
-	User            *common.User           `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
-	GroupId         int64                  `protobuf:"varint,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	Audience        string                 `protobuf:"bytes,5,opt,name=audience,proto3" json:"audience,omitempty"`
-	CommentsCount   int32                  `protobuf:"varint,6,opt,name=comments_count,json=commentsCount,proto3" json:"comments_count,omitempty"`
-	ReactionsCount  int32                  `protobuf:"varint,7,opt,name=reactions_count,json=reactionsCount,proto3" json:"reactions_count,omitempty"`
-	LastCommentedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_commented_at,json=lastCommentedAt,proto3" json:"last_commented_at,omitempty"`
-	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	LikedByUser     bool                   `protobuf:"varint,11,opt,name=liked_by_user,json=likedByUser,proto3" json:"liked_by_user,omitempty"`
-	ImageId         int64                  `protobuf:"varint,12,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
-	ImageUrl        string                 `protobuf:"bytes,13,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	PostId                int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	PostBody              string                 `protobuf:"bytes,2,opt,name=post_body,json=postBody,proto3" json:"post_body,omitempty"`
+	User                  *common.User           `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
+	GroupId               int64                  `protobuf:"varint,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	Audience              string                 `protobuf:"bytes,5,opt,name=audience,proto3" json:"audience,omitempty"`
+	CommentsCount         int32                  `protobuf:"varint,6,opt,name=comments_count,json=commentsCount,proto3" json:"comments_count,omitempty"`
+	ReactionsCount        int32                  `protobuf:"varint,7,opt,name=reactions_count,json=reactionsCount,proto3" json:"reactions_count,omitempty"`
+	LastCommentedAt       *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_commented_at,json=lastCommentedAt,proto3" json:"last_commented_at,omitempty"`
+	CreatedAt             *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt             *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	LikedByUser           bool                   `protobuf:"varint,11,opt,name=liked_by_user,json=likedByUser,proto3" json:"liked_by_user,omitempty"`
+	ImageId               int64                  `protobuf:"varint,12,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	ImageUrl              string                 `protobuf:"bytes,13,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
+	SelectedAudienceUsers *common.ListUsers      `protobuf:"bytes,14,opt,name=selected_audience_users,json=selectedAudienceUsers,proto3" json:"selected_audience_users,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Post) Reset() {
@@ -387,6 +388,13 @@ func (x *Post) GetImageUrl() string {
 		return x.ImageUrl
 	}
 	return ""
+}
+
+func (x *Post) GetSelectedAudienceUsers() *common.ListUsers {
+	if x != nil {
+		return x.SelectedAudienceUsers
+	}
+	return nil
 }
 
 type ListPosts struct {
@@ -1550,7 +1558,7 @@ const file_posts_proto_rawDesc = "" +
 	"\x13GenericPaginatedReq\x12!\n" +
 	"\frequester_id\x18\x01 \x01(\x03R\vrequesterId\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\xff\x03\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\xca\x04\n" +
 	"\x04Post\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\x03R\x06postId\x12\x1b\n" +
 	"\tpost_body\x18\x02 \x01(\tR\bpostBody\x12 \n" +
@@ -1567,7 +1575,8 @@ const file_posts_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\"\n" +
 	"\rliked_by_user\x18\v \x01(\bR\vlikedByUser\x12\x19\n" +
 	"\bimage_id\x18\f \x01(\x03R\aimageId\x12\x1b\n" +
-	"\timage_url\x18\r \x01(\tR\bimageUrl\".\n" +
+	"\timage_url\x18\r \x01(\tR\bimageUrl\x12I\n" +
+	"\x17selected_audience_users\x18\x0e \x01(\v2\x11.common.ListUsersR\x15selectedAudienceUsers\".\n" +
 	"\tListPosts\x12!\n" +
 	"\x05posts\x18\x01 \x03(\v2\v.posts.PostR\x05posts\"\xc8\x01\n" +
 	"\rCreatePostReq\x12\x1d\n" +
@@ -1738,78 +1747,79 @@ var file_posts_proto_goTypes = []any{
 	(*RespondToEventReq)(nil),      // 19: posts.RespondToEventReq
 	(*common.User)(nil),            // 20: common.User
 	(*timestamppb.Timestamp)(nil),  // 21: google.protobuf.Timestamp
-	(*common.UserIds)(nil),         // 22: common.UserIds
-	(*wrapperspb.BoolValue)(nil),   // 23: google.protobuf.BoolValue
-	(*emptypb.Empty)(nil),          // 24: google.protobuf.Empty
-	(*common.ListUsers)(nil),       // 25: common.ListUsers
+	(*common.ListUsers)(nil),       // 22: common.ListUsers
+	(*common.UserIds)(nil),         // 23: common.UserIds
+	(*wrapperspb.BoolValue)(nil),   // 24: google.protobuf.BoolValue
+	(*emptypb.Empty)(nil),          // 25: google.protobuf.Empty
 }
 var file_posts_proto_depIdxs = []int32{
 	20, // 0: posts.Post.user:type_name -> common.User
 	21, // 1: posts.Post.last_commented_at:type_name -> google.protobuf.Timestamp
 	21, // 2: posts.Post.created_at:type_name -> google.protobuf.Timestamp
 	21, // 3: posts.Post.updated_at:type_name -> google.protobuf.Timestamp
-	4,  // 4: posts.ListPosts.posts:type_name -> posts.Post
-	22, // 5: posts.CreatePostReq.audience_ids:type_name -> common.UserIds
-	22, // 6: posts.EditPostReq.audience_ids:type_name -> common.UserIds
-	20, // 7: posts.Comment.user:type_name -> common.User
-	21, // 8: posts.Comment.created_at:type_name -> google.protobuf.Timestamp
-	21, // 9: posts.Comment.updated_at:type_name -> google.protobuf.Timestamp
-	11, // 10: posts.ListComments.comments:type_name -> posts.Comment
-	20, // 11: posts.Event.user:type_name -> common.User
-	21, // 12: posts.Event.event_date:type_name -> google.protobuf.Timestamp
-	21, // 13: posts.Event.created_at:type_name -> google.protobuf.Timestamp
-	21, // 14: posts.Event.updated_at:type_name -> google.protobuf.Timestamp
-	23, // 15: posts.Event.user_response:type_name -> google.protobuf.BoolValue
-	15, // 16: posts.ListEvents.events:type_name -> posts.Event
-	21, // 17: posts.CreateEventReq.event_date:type_name -> google.protobuf.Timestamp
-	21, // 18: posts.EditEventReq.event_date:type_name -> google.protobuf.Timestamp
-	1,  // 19: posts.PostsService.GetPostById:input_type -> posts.GenericReq
-	6,  // 20: posts.PostsService.CreatePost:input_type -> posts.CreatePostReq
-	1,  // 21: posts.PostsService.DeletePost:input_type -> posts.GenericReq
-	7,  // 22: posts.PostsService.EditPost:input_type -> posts.EditPostReq
-	0,  // 23: posts.PostsService.GetMostPopularPostInGroup:input_type -> posts.SimpleIdReq
-	9,  // 24: posts.PostsService.GetPersonalizedFeed:input_type -> posts.GetPersonalizedFeedReq
-	3,  // 25: posts.PostsService.GetPublicFeed:input_type -> posts.GenericPaginatedReq
-	8,  // 26: posts.PostsService.GetUserPostsPaginated:input_type -> posts.GetUserPostsReq
-	10, // 27: posts.PostsService.GetGroupPostsPaginated:input_type -> posts.GetGroupPostsReq
-	13, // 28: posts.PostsService.CreateComment:input_type -> posts.CreateCommentReq
-	14, // 29: posts.PostsService.EditComment:input_type -> posts.EditCommentReq
-	1,  // 30: posts.PostsService.DeleteComment:input_type -> posts.GenericReq
-	2,  // 31: posts.PostsService.GetCommentsByParentId:input_type -> posts.EntityIdPaginatedReq
-	17, // 32: posts.PostsService.CreateEvent:input_type -> posts.CreateEventReq
-	1,  // 33: posts.PostsService.DeleteEvent:input_type -> posts.GenericReq
-	18, // 34: posts.PostsService.EditEvent:input_type -> posts.EditEventReq
-	2,  // 35: posts.PostsService.GetEventsByGroupId:input_type -> posts.EntityIdPaginatedReq
-	19, // 36: posts.PostsService.RespondToEvent:input_type -> posts.RespondToEventReq
-	1,  // 37: posts.PostsService.RemoveEventResponse:input_type -> posts.GenericReq
-	0,  // 38: posts.PostsService.SuggestUsersByPostActivity:input_type -> posts.SimpleIdReq
-	1,  // 39: posts.PostsService.ToggleOrInsertReaction:input_type -> posts.GenericReq
-	4,  // 40: posts.PostsService.GetPostById:output_type -> posts.Post
-	24, // 41: posts.PostsService.CreatePost:output_type -> google.protobuf.Empty
-	24, // 42: posts.PostsService.DeletePost:output_type -> google.protobuf.Empty
-	24, // 43: posts.PostsService.EditPost:output_type -> google.protobuf.Empty
-	4,  // 44: posts.PostsService.GetMostPopularPostInGroup:output_type -> posts.Post
-	5,  // 45: posts.PostsService.GetPersonalizedFeed:output_type -> posts.ListPosts
-	5,  // 46: posts.PostsService.GetPublicFeed:output_type -> posts.ListPosts
-	5,  // 47: posts.PostsService.GetUserPostsPaginated:output_type -> posts.ListPosts
-	5,  // 48: posts.PostsService.GetGroupPostsPaginated:output_type -> posts.ListPosts
-	24, // 49: posts.PostsService.CreateComment:output_type -> google.protobuf.Empty
-	24, // 50: posts.PostsService.EditComment:output_type -> google.protobuf.Empty
-	24, // 51: posts.PostsService.DeleteComment:output_type -> google.protobuf.Empty
-	12, // 52: posts.PostsService.GetCommentsByParentId:output_type -> posts.ListComments
-	24, // 53: posts.PostsService.CreateEvent:output_type -> google.protobuf.Empty
-	24, // 54: posts.PostsService.DeleteEvent:output_type -> google.protobuf.Empty
-	24, // 55: posts.PostsService.EditEvent:output_type -> google.protobuf.Empty
-	16, // 56: posts.PostsService.GetEventsByGroupId:output_type -> posts.ListEvents
-	24, // 57: posts.PostsService.RespondToEvent:output_type -> google.protobuf.Empty
-	24, // 58: posts.PostsService.RemoveEventResponse:output_type -> google.protobuf.Empty
-	25, // 59: posts.PostsService.SuggestUsersByPostActivity:output_type -> common.ListUsers
-	24, // 60: posts.PostsService.ToggleOrInsertReaction:output_type -> google.protobuf.Empty
-	40, // [40:61] is the sub-list for method output_type
-	19, // [19:40] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	22, // 4: posts.Post.selected_audience_users:type_name -> common.ListUsers
+	4,  // 5: posts.ListPosts.posts:type_name -> posts.Post
+	23, // 6: posts.CreatePostReq.audience_ids:type_name -> common.UserIds
+	23, // 7: posts.EditPostReq.audience_ids:type_name -> common.UserIds
+	20, // 8: posts.Comment.user:type_name -> common.User
+	21, // 9: posts.Comment.created_at:type_name -> google.protobuf.Timestamp
+	21, // 10: posts.Comment.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 11: posts.ListComments.comments:type_name -> posts.Comment
+	20, // 12: posts.Event.user:type_name -> common.User
+	21, // 13: posts.Event.event_date:type_name -> google.protobuf.Timestamp
+	21, // 14: posts.Event.created_at:type_name -> google.protobuf.Timestamp
+	21, // 15: posts.Event.updated_at:type_name -> google.protobuf.Timestamp
+	24, // 16: posts.Event.user_response:type_name -> google.protobuf.BoolValue
+	15, // 17: posts.ListEvents.events:type_name -> posts.Event
+	21, // 18: posts.CreateEventReq.event_date:type_name -> google.protobuf.Timestamp
+	21, // 19: posts.EditEventReq.event_date:type_name -> google.protobuf.Timestamp
+	1,  // 20: posts.PostsService.GetPostById:input_type -> posts.GenericReq
+	6,  // 21: posts.PostsService.CreatePost:input_type -> posts.CreatePostReq
+	1,  // 22: posts.PostsService.DeletePost:input_type -> posts.GenericReq
+	7,  // 23: posts.PostsService.EditPost:input_type -> posts.EditPostReq
+	0,  // 24: posts.PostsService.GetMostPopularPostInGroup:input_type -> posts.SimpleIdReq
+	9,  // 25: posts.PostsService.GetPersonalizedFeed:input_type -> posts.GetPersonalizedFeedReq
+	3,  // 26: posts.PostsService.GetPublicFeed:input_type -> posts.GenericPaginatedReq
+	8,  // 27: posts.PostsService.GetUserPostsPaginated:input_type -> posts.GetUserPostsReq
+	10, // 28: posts.PostsService.GetGroupPostsPaginated:input_type -> posts.GetGroupPostsReq
+	13, // 29: posts.PostsService.CreateComment:input_type -> posts.CreateCommentReq
+	14, // 30: posts.PostsService.EditComment:input_type -> posts.EditCommentReq
+	1,  // 31: posts.PostsService.DeleteComment:input_type -> posts.GenericReq
+	2,  // 32: posts.PostsService.GetCommentsByParentId:input_type -> posts.EntityIdPaginatedReq
+	17, // 33: posts.PostsService.CreateEvent:input_type -> posts.CreateEventReq
+	1,  // 34: posts.PostsService.DeleteEvent:input_type -> posts.GenericReq
+	18, // 35: posts.PostsService.EditEvent:input_type -> posts.EditEventReq
+	2,  // 36: posts.PostsService.GetEventsByGroupId:input_type -> posts.EntityIdPaginatedReq
+	19, // 37: posts.PostsService.RespondToEvent:input_type -> posts.RespondToEventReq
+	1,  // 38: posts.PostsService.RemoveEventResponse:input_type -> posts.GenericReq
+	0,  // 39: posts.PostsService.SuggestUsersByPostActivity:input_type -> posts.SimpleIdReq
+	1,  // 40: posts.PostsService.ToggleOrInsertReaction:input_type -> posts.GenericReq
+	4,  // 41: posts.PostsService.GetPostById:output_type -> posts.Post
+	25, // 42: posts.PostsService.CreatePost:output_type -> google.protobuf.Empty
+	25, // 43: posts.PostsService.DeletePost:output_type -> google.protobuf.Empty
+	25, // 44: posts.PostsService.EditPost:output_type -> google.protobuf.Empty
+	4,  // 45: posts.PostsService.GetMostPopularPostInGroup:output_type -> posts.Post
+	5,  // 46: posts.PostsService.GetPersonalizedFeed:output_type -> posts.ListPosts
+	5,  // 47: posts.PostsService.GetPublicFeed:output_type -> posts.ListPosts
+	5,  // 48: posts.PostsService.GetUserPostsPaginated:output_type -> posts.ListPosts
+	5,  // 49: posts.PostsService.GetGroupPostsPaginated:output_type -> posts.ListPosts
+	25, // 50: posts.PostsService.CreateComment:output_type -> google.protobuf.Empty
+	25, // 51: posts.PostsService.EditComment:output_type -> google.protobuf.Empty
+	25, // 52: posts.PostsService.DeleteComment:output_type -> google.protobuf.Empty
+	12, // 53: posts.PostsService.GetCommentsByParentId:output_type -> posts.ListComments
+	25, // 54: posts.PostsService.CreateEvent:output_type -> google.protobuf.Empty
+	25, // 55: posts.PostsService.DeleteEvent:output_type -> google.protobuf.Empty
+	25, // 56: posts.PostsService.EditEvent:output_type -> google.protobuf.Empty
+	16, // 57: posts.PostsService.GetEventsByGroupId:output_type -> posts.ListEvents
+	25, // 58: posts.PostsService.RespondToEvent:output_type -> google.protobuf.Empty
+	25, // 59: posts.PostsService.RemoveEventResponse:output_type -> google.protobuf.Empty
+	22, // 60: posts.PostsService.SuggestUsersByPostActivity:output_type -> common.ListUsers
+	25, // 61: posts.PostsService.ToggleOrInsertReaction:output_type -> google.protobuf.Empty
+	41, // [41:62] is the sub-list for method output_type
+	20, // [20:41] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_posts_proto_init() }
