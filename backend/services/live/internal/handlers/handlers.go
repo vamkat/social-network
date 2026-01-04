@@ -51,5 +51,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 10, 10).
 			Finalize(h.testHandler()))
 
+	mux.HandleFunc("/live",
+		Chain("/live").
+			RateLimit(IP, 10, 10).
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			EnrichContext().
+			RateLimit(USERID, 10, 10).
+			Finalize(h.Connect()))
+
 	return mux
 }
