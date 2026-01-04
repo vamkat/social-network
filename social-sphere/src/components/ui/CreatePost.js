@@ -145,10 +145,12 @@ export default function CreatePost() {
     };
 
     const toggleFollower = (followerId) => {
+        // Ensure followerId is a string for consistent comparison
+        const followerIdStr = String(followerId);
         setSelectedFollowers((prev) =>
-            prev.includes(followerId)
-                ? prev.filter((id) => id !== followerId)
-                : [...prev, followerId]
+            prev.includes(followerIdStr)
+                ? prev.filter((id) => id !== followerIdStr)
+                : [...prev, followerIdStr]
         );
     };
 
@@ -314,15 +316,15 @@ export default function CreatePost() {
                         >
                             {followers.length > 0 ? (
                                 <>
-                                    {followers.map((follower) => (
+                                    {followers.map((follower, index) => (
                                         <label
-                                            key={follower.id}
+                                            key={follower.id || `follower-${index}`}
                                             className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
                                         >
                                             <input
                                                 type="checkbox"
                                                 checked={selectedFollowers.includes(String(follower.id))}
-                                                onChange={() => toggleFollower(String(follower.id))}
+                                                onChange={() => toggleFollower(follower.id)}
                                                 className="rounded border-gray-300"
                                             />
                                             <span className="text-sm">

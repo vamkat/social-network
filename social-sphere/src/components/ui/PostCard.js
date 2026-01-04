@@ -13,6 +13,7 @@ import { editComment } from "@/actions/posts/edit-comment";
 import { deleteComment } from "@/actions/posts/delete-comment";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { getFollowers } from "@/actions/users/get-followers";
+import { getPost } from "@/actions/posts/get-post";
 import { getRelativeTime } from "@/lib/time";
 import { toggleReaction } from "@/actions/posts/toggle-reaction";
 import { getComments } from "@/actions/posts/get-comments";
@@ -64,7 +65,6 @@ export default function PostCard({ post }) {
     const commentFileInputRef = useRef(null);
     const editingCommentFileInputRef = useRef(null);
     const dropdownRef = useRef(null);
-    const router = useRouter();
 
     const isOwnPost = Boolean(
         user &&
@@ -203,18 +203,40 @@ export default function PostCard({ post }) {
     };
 
     const toggleFollower = (followerId) => {
+        // Ensure followerId is a string for consistent comparison
+        const followerIdStr = String(followerId);
         setSelectedFollowers((prev) =>
-            prev.includes(followerId)
-                ? prev.filter((id) => id !== followerId)
-                : [...prev, followerId]
+            prev.includes(followerIdStr)
+                ? prev.filter((id) => id !== followerIdStr)
+                : [...prev, followerIdStr]
         );
     };
 
-    const handleStartEditPost = (e) => {
+    const handleStartEditPost = async (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Fetch full post data to get selected_audience_users
+        const fetchedPost = await getPost(post.post_id);
+        if (!fetchedPost) {
+            setError("Failed to load post data");
+            return;
+        }
+
         setPostDraft(postContent);
-        setPrivacy(post.audience || "everyone");
+        const postPrivacy = fetchedPost.audience || "everyone";
+        setPrivacy(postPrivacy);
+
+        // If privacy is "selected", load the followers and set the selected ones
+        if (postPrivacy === "selected") {
+            await fetchFollowers();
+            // Set selected followers from fetched post's selected_audience_users
+            if (fetchedPost.selected_audience_users && Array.isArray(fetchedPost.selected_audience_users)) {
+                // Ensure IDs are strings for consistent comparison
+                setSelectedFollowers(fetchedPost.selected_audience_users.map(user => String(user.id)));
+            }
+        }
+
         setIsEditingPost(true);
         setError("");
         setRemoveExistingImage(false);
@@ -280,7 +302,7 @@ export default function PostCard({ post }) {
                 post_id: post.post_id,
                 post_body: postDraft.trim(),
                 audience: privacy,
-                audience_ids: privacy === "selected" ? selectedFollowers.map(id => parseInt(id)) : []
+                audience_ids: privacy === "selected" ? selectedFollowers : []
             };
 
             // Handle new image upload
@@ -828,19 +850,19 @@ export default function PostCard({ post }) {
                                 </p>
                                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                                     {followers.length > 0 ? (
-                                        followers.map((follower) => (
+                                        followers.map((follower, index) => (
                                             <label
-                                                key={follower.UserId}
+                                                key={follower.id || `follower-${index}`}
                                                 className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
                                             >
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedFollowers.includes(String(follower.UserId))}
-                                                    onChange={() => toggleFollower(String(follower.UserId))}
+                                                    checked={selectedFollowers.includes(String(follower.id))}
+                                                    onChange={() => toggleFollower(follower.id)}
                                                     className="rounded border-gray-300"
                                                 />
                                                 <span className="text-sm">
-                                                    @{follower.Username}
+                                                    @{follower.username}
                                                 </span>
                                             </label>
                                         ))
@@ -907,7 +929,7 @@ export default function PostCard({ post }) {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                             >
                                 {image ? "change image" : "Upload Image"}
                             </button>
@@ -915,14 +937,14 @@ export default function PostCard({ post }) {
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                     onClick={handleCancelEditPost}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="button"
-                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50"
+                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                                     disabled={!postDraft.trim()}
                                     onClick={handleSaveEditPost}
                                 >
@@ -1081,14 +1103,14 @@ export default function PostCard({ post }) {
                                                             <div className="flex items-center gap-2">
                                                                 <button
                                                                     type="button"
-                                                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                                                     onClick={handleCancelEditComment}
                                                                 >
                                                                     Cancel
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50"
+                                                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                                                                     disabled={!editingText.trim()}
                                                                     onClick={() => handleSaveEditComment(comment)}
                                                                 >

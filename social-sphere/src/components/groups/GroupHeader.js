@@ -25,7 +25,7 @@ export function GroupHeader({ group }) {
         setIsLoading(true);
 
         try {
-            const response = await requestJoinGroup({ groupId: parseInt(group.group_id) });
+            const response = await requestJoinGroup({ groupId: group.group_id });
             if (response.success) {
                 // Toggle pending state (the endpoint handles both request and cancel)
                 setIsPending(!isPending);
@@ -44,7 +44,7 @@ export function GroupHeader({ group }) {
         setIsLoading(true);
 
         try {
-            const response = await leaveGroup({ groupId: parseInt(group.group_id) });
+            const response = await leaveGroup({ groupId: group.group_id });
             if (response.success) {
                 setIsMember(false);
                 setShowLeaveModal(false);

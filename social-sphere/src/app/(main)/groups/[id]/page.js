@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 
 export default async function GroupPage({ params }) {
   const { id } = await params;
-  console.log("ID: ", id);
   const result = await getGroup(id);
 
   if (!result.success) {

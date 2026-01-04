@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Activity, Users, Send, Bell, User, LogOut, Settings, HeartPulse, Search, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/Tooltip";
@@ -11,6 +11,7 @@ import { SearchUsers } from "@/actions/search/search-users";
 
 export default function Navbar() {
     const pathname = usePathname();
+    const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const searchRef = useRef(null);
@@ -68,6 +69,14 @@ export default function Navbar() {
 
         return () => clearTimeout(timer);
     }, [searchQuery]);
+
+    const handleResultClick = (userId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowSearchResults(false);
+        setSearchQuery("");
+        router.push(`/profile/${userId}`);
+    };
 
     const handleLogout = async () => {
         try {
@@ -146,19 +155,15 @@ export default function Navbar() {
 
                             {/* Search Results Dropdown */}
                             {showSearchResults && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto z-200">
                                     {searchResults.length > 0 ? (
                                         <div className="py-2">
                                             {searchResults.map((result) => (
-                                                <Link
+                                                <button
+                                                    type="button"
                                                     key={result.id}
-                                                    href={`/profile/${result.id}`}
-                                                    prefetch={false}
-                                                    onClick={() => {
-                                                        setShowSearchResults(false);
-                                                        setSearchQuery("");
-                                                    }}
-                                                    className="flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors"
+                                                    onMouseDown={(e) => handleResultClick(result.id, e)}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors cursor-pointer text-left"
                                                 >
                                                     <div className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
                                                         {result.avatar_url ? (
@@ -172,7 +177,7 @@ export default function Navbar() {
                                                             {result.username}
                                                         </p>
                                                     </div>
-                                                </Link>
+                                                </button>
                                             ))}
                                         </div>
                                     ) : (
@@ -350,19 +355,15 @@ export default function Navbar() {
 
                         {/* Mobile Search Results Dropdown */}
                         {showSearchResults && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto">
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-(--border) rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto z-200">
                                 {searchResults.length > 0 ? (
                                     <div className="py-2">
                                         {searchResults.map((result) => (
-                                            <Link
+                                            <button
+                                                type="button"
                                                 key={result.id}
-                                                href={`/profile/${result.id}`}
-                                                prefetch={false}
-                                                onClick={() => {
-                                                    setShowSearchResults(false);
-                                                    setSearchQuery("");
-                                                }}
-                                                className="flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors"
+                                                onMouseDown={(e) => handleResultClick(result.id, e)}
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors cursor-pointer text-left"
                                             >
                                                 <div className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
                                                     {result.avatar_url ? (
@@ -376,7 +377,7 @@ export default function Navbar() {
                                                         {result.username}
                                                     </p>
                                                 </div>
-                                            </Link>
+                                            </button>
                                         ))}
                                     </div>
                                 ) : (

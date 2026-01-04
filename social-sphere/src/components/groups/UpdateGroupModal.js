@@ -77,7 +77,7 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
 
         try {
             const groupData = {
-                group_id: parseInt(group.group_id),
+                group_id: group.group_id,
                 group_title: title.trim(),
                 group_description: description.trim(),
             };

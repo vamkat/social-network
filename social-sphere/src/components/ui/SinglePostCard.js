@@ -68,7 +68,7 @@ export default function SinglePostCard({ post }) {
     const isOwnPost = Boolean(
         user &&
         post?.post_user?.id &&
-        String(post.post_user.id) === String(user.id)
+        post.post_user.id === user.id
     );
 
     // Close dropdown when clicking outside
@@ -202,18 +202,31 @@ export default function SinglePostCard({ post }) {
     };
 
     const toggleFollower = (followerId) => {
+        // Ensure followerId is a string for consistent comparison
+        const followerIdStr = String(followerId);
         setSelectedFollowers((prev) =>
-            prev.includes(followerId)
-                ? prev.filter((id) => id !== followerId)
-                : [...prev, followerId]
+            prev.includes(followerIdStr)
+                ? prev.filter((id) => id !== followerIdStr)
+                : [...prev, followerIdStr]
         );
     };
 
-    const handleStartEditPost = (e) => {
+    const handleStartEditPost = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         setPostDraft(postContent);
-        setPrivacy(post.audience || "everyone");
+        const postPrivacy = post.audience || "everyone";
+        setPrivacy(postPrivacy);
+
+        // If privacy is "selected", load the followers and set the selected ones
+        if (postPrivacy === "selected") {
+            await fetchFollowers();
+            // Set selected followers from post's selected_audience_users
+            if (post.selected_audience_users && Array.isArray(post.selected_audience_users)) {
+                setSelectedFollowers(post.selected_audience_users.map(user => String(user.id)));
+            }
+        }
+
         setIsEditingPost(true);
         setError("");
         setRemoveExistingImage(false);
@@ -279,7 +292,7 @@ export default function SinglePostCard({ post }) {
                 post_id: post.post_id,
                 post_body: postDraft.trim(),
                 audience: privacy,
-                audience_ids: privacy === "selected" ? selectedFollowers.map(id => parseInt(id)) : []
+                audience_ids: privacy === "selected" ? selectedFollowers : []
             };
 
             // Handle new image upload
@@ -292,6 +305,8 @@ export default function SinglePostCard({ post }) {
             else if (removeExistingImage) {
                 editData.delete_image = true;
             }
+
+            console.log("SENDING DATA TO EDIT: ", editData);
 
             const resp = await editPost(editData);
 
@@ -322,7 +337,7 @@ export default function SinglePostCard({ post }) {
 
             setPostContent(postDraft);
             setIsEditingPost(false);
-            window.location.reload();
+            //window.location.reload();
 
         } catch (err) {
             console.error("Failed to edit post:", err);
@@ -820,22 +835,25 @@ export default function SinglePostCard({ post }) {
                                 </p>
                                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                                     {followers.length > 0 ? (
-                                        followers.map((follower) => (
-                                            <label
-                                                key={follower.UserId}
-                                                className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedFollowers.includes(String(follower.UserId))}
-                                                    onChange={() => toggleFollower(String(follower.UserId))}
-                                                    className="rounded border-gray-300"
-                                                />
-                                                <span className="text-sm">
-                                                    @{follower.Username}
-                                                </span>
-                                            </label>
-                                        ))
+                                        followers.map((follower, index) => {
+                                            const isChecked = selectedFollowers.includes(String(follower.id));
+                                            return (
+                                                <label
+                                                    key={follower.id || `follower-${index}`}
+                                                    className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleFollower(follower.id)}
+                                                        className="rounded border-gray-300"
+                                                    />
+                                                    <span className="text-sm">
+                                                        @{follower.username}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })
                                     ) : (
                                         <p className="text-xs text-(--muted) text-center py-2">
                                             {isLoadingFollowers ? "Loading followers..." : "No followers to select"}
@@ -899,7 +917,7 @@ export default function SinglePostCard({ post }) {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                             >
                                 {image ? "change image" : "Upload Image"}
                             </button>
@@ -907,14 +925,14 @@ export default function SinglePostCard({ post }) {
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                     onClick={handleCancelEditPost}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="button"
-                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50"
+                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer" 
                                     disabled={!postDraft.trim()}
                                     onClick={handleSaveEditPost}
                                 >

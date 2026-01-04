@@ -28,7 +28,8 @@ export async function generateMetadata({ params }) {
 export default async function ProfilePage({ params }) {
     const { id } = await params;
     const result = await getUserProfile(id);
-    const posts = await getUserPosts({ creatorId: id });
+    // Fetch initial 10 posts for infinite scrolling
+    const posts = await getUserPosts({ creatorId: id, limit: 10, offset: 0 });
 
     // Pass the result object (contains success, user, or error)
     return <ProfileContent result={result} posts={posts} />;
