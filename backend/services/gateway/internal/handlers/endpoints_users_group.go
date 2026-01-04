@@ -104,7 +104,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 		}
 
 		type updateGroupData struct {
-			GroupId          int64  `json:"group_id"`
+			GroupId          ct.Id  `json:"group_id"`
 			GroupTitle       string `json:"group_title"`
 			GroupDescription string `json:"group_description"`
 
@@ -150,7 +150,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 
 		updateGroupRequest := users.UpdateGroupRequest{
 			RequesterId:      claims.UserId,
-			GroupId:          httpReq.GroupId,
+			GroupId:          httpReq.GroupId.Int64(),
 			GroupTitle:       httpReq.GroupTitle,
 			GroupDescription: httpReq.GroupDescription,
 			GroupImageId:     GroupImageId.Int64(),
