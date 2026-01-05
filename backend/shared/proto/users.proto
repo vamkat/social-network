@@ -154,6 +154,7 @@ message RegisterUserRequest {
 
 message RegisterUserResponse {
   int64 user_id = 1;
+  string username=2;
 }
 
 // LOGIN 

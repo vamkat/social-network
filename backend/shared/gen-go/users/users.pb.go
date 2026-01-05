@@ -317,6 +317,7 @@ func (x *RegisterUserRequest) GetPassword() string {
 type RegisterUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -356,6 +357,13 @@ func (x *RegisterUserResponse) GetUserId() int64 {
 		return x.UserId
 	}
 	return 0
+}
+
+func (x *RegisterUserResponse) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
 }
 
 // LOGIN
@@ -2005,9 +2013,10 @@ const file_users_proto_rawDesc = "" +
 	"\x05about\x18\x06 \x01(\tR\x05about\x12\x16\n" +
 	"\x06public\x18\a \x01(\bR\x06public\x12\x14\n" +
 	"\x05email\x18\b \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\t \x01(\tR\bpassword\"/\n" +
+	"\bpassword\x18\t \x01(\tR\bpassword\"K\n" +
 	"\x14RegisterUserResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"J\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"J\n" +
 	"\fLoginRequest\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x01 \x01(\tR\n" +

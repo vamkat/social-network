@@ -29,7 +29,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 
-	userId, err := s.Application.RegisterUser(ctx, models.RegisterUserRequest{
+	resp, err := s.Application.RegisterUser(ctx, models.RegisterUserRequest{
 		Username:    ct.Username(req.GetUsername()),
 		FirstName:   ct.Name(req.GetFirstName()),
 		LastName:    ct.Name(req.GetLastName()),
@@ -46,7 +46,8 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 	}
 
 	return &pb.RegisterUserResponse{
-		UserId: userId.Int64(),
+		UserId:   resp.UserId,
+		Username: resp.Username.String(),
 	}, nil
 }
 

@@ -17,16 +17,17 @@ import (
 
 const genericPublic = "users service error"
 
-func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserRequest) (ct.Id, error) {
+func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserRequest) (models.RegisterUserResponse, error) {
 	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return 0, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
+		return models.RegisterUserResponse{}, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
+	username := req.Username
 	//if no username assign full name
-	if req.Username == "" {
-		req.Username = ct.Username(string(req.FirstName) + "_" + string(req.LastName))
+	if username == "" {
+		username = ct.Username(string(req.FirstName) + "_" + string(req.LastName))
 	}
 
 	// convert date
@@ -66,13 +67,16 @@ func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserR
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				return 0, ce.New(ce.ErrAlreadyExists, err, input).WithPublic("email already exists")
+				return models.RegisterUserResponse{}, ce.New(ce.ErrAlreadyExists, err, input).WithPublic("email already exists")
 			}
 		}
-		return 0, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+		return models.RegisterUserResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
-	return newId, nil
+	return models.RegisterUserResponse{
+		UserId:   newId.Int64(),
+		Username: username,
+	}, nil
 
 }
 

@@ -88,10 +88,6 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		type httpResponse struct {
-			UserId ct.Id
-		}
-
 		httpResp := models.User{
 			UserId:    ct.Id(resp.UserId),
 			Username:  ct.Username(resp.Username),
@@ -229,11 +225,13 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 		type httpResponse struct {
 			UserId    ct.Id
+			Username  ct.Username
 			FileId    ct.Id
 			UploadUrl string
 		}
 		httpResp := httpResponse{
 			UserId:    ct.Id(resp.UserId),
+			Username:  ct.Username(resp.Username),
 			FileId:    AvatarId,
 			UploadUrl: uploadURL}
 
