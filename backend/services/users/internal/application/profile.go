@@ -2,7 +2,9 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
@@ -15,14 +17,17 @@ import (
 
 // TODO add checks for post events (registration, updates, group titles and descriptions) - date:(valid format, over 13, not over 110),text fields:(length, special characters)
 
+// not responsible for image url fetching
 func (s *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (resp models.User, err error) {
+	input := fmt.Sprintf("%#v", userId)
+
 	if err := userId.Validate(); err != nil {
-		return models.User{}, err
+		return models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	row, err := s.db.GetUserBasic(ctx, userId.Int64())
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	u := models.User{
 		UserId:   ct.Id(userId),
@@ -33,15 +38,17 @@ func (s *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (resp 
 
 }
 
-// TO CONSIDER: who calls this and the above? Should fetching the url happen here or in retrieve users?
+// image url fetching happens in retrieve users
 func (s *Application) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids) ([]models.User, error) {
+	input := fmt.Sprintf("%#v", userIds)
+
 	if err := userIds.Validate(); err != nil {
-		return nil, err
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	rows, err := s.db.GetBatchUsersBasic(ctx, userIds.Int64())
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	users := make([]models.User, 0, len(rows))
@@ -56,15 +63,16 @@ func (s *Application) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids)
 }
 
 func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfileRequest) (models.UserProfileResponse, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	var profile models.UserProfileResponse
 	if err := ct.ValidateStruct(req); err != nil {
-		return profile, err
+		return profile, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	row, err := s.db.GetUserProfile(ctx, req.UserId.Int64())
 	if err != nil {
-		tele.Warn(ctx, "error when getting user profile. @1", "error", err)
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	dob := time.Time{}
 	if row.DateOfBirth.Valid {
@@ -91,12 +99,12 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 
 	profile.ViewerIsFollowing, err = s.IsFollowing(ctx, followingParams)
 	if err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.Wrap(nil, err)
 	}
 
 	profile.IsPending, err = s.isFollowRequestPending(ctx, followingParams)
 	if err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.Wrap(nil, err)
 	}
 
 	if req.RequesterId == req.UserId {
@@ -109,16 +117,16 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 
 	profile.FollowersCount, err = s.db.GetFollowerCount(ctx, req.UserId.Int64())
 	if err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	profile.FollowingCount, err = s.db.GetFollowingCount(ctx, req.UserId.Int64())
 	if err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	groupsRow, err := s.db.UserGroupCountsPerRole(ctx, req.UserId.Int64())
 	if err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	profile.GroupsCount = groupsRow.TotalMemberships //owner and member, can change to member only
@@ -127,7 +135,7 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 	if profile.AvatarId > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, profile.AvatarId.Int64(), media.FileVariant(1))
 		if err != nil {
-			return models.UserProfileResponse{}, err
+			return models.UserProfileResponse{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user image")
 		}
 
 		profile.AvatarURL = imageUrl
@@ -141,8 +149,10 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 }
 
 func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq) ([]models.User, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return []models.User{}, err
+		return []models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	rows, err := s.db.SearchUsers(ctx, ds.SearchUsersParams{
@@ -151,7 +161,11 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+
+	if len(rows) == 0 {
+		return []models.User{}, nil
 	}
 
 	users := make([]models.User, 0, len(rows))
@@ -171,7 +185,7 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.User{}, err
+			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user images")
 		}
 		for i := range users {
 			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
@@ -183,9 +197,10 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 
 func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdateProfileRequest) (models.UserProfileResponse, error) {
 	//NOTE front needs to send everything, not just changed fields
+	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	dob := pgtype.Date{
@@ -203,7 +218,7 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 		AboutMe:     req.About.String(),
 	})
 	if err != nil {
-		return models.UserProfileResponse{}, err
+		return models.UserProfileResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	//update redis basic user info
@@ -218,6 +233,9 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 		basicUserInfo,
 		3*time.Minute,
 	)
+	if err != nil {
+		tele.Warn(ctx, "could not set new basic user info for user @1 using key @2", "userId", req.UserId, "key", key)
+	}
 
 	newDob := time.Time{}
 	if row.DateOfBirth.Valid {
@@ -240,8 +258,10 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 }
 
 func (s *Application) UpdateProfilePrivacy(ctx context.Context, req models.UpdateProfilePrivacyRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	err := s.db.UpdateProfilePrivacy(ctx, ds.UpdateProfilePrivacyParams{
@@ -249,7 +269,7 @@ func (s *Application) UpdateProfilePrivacy(ctx context.Context, req models.Updat
 		ProfilePublic: req.Public,
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	return nil

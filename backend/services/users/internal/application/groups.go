@@ -2,15 +2,19 @@ package application
 
 import (
 	"context"
+	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 )
 
 func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagination) ([]models.Group, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return []models.Group{}, err
+		return []models.Group{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	//paginated (sorting by most members first)
 	rows, err := s.db.GetAllGroups(ctx, ds.GetAllGroupsParams{
@@ -18,7 +22,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 		Limit:  req.Limit.Int32(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	groups := make([]models.Group, 0, len(rows))
@@ -54,7 +58,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return nil, err
+			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		}
 		for i := range groups {
 			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
@@ -65,9 +69,11 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 }
 
 func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pagination) ([]models.Group, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	//paginated (joined latest first)
 	if err := ct.ValidateStruct(req); err != nil {
-		return []models.Group{}, err
+		return []models.Group{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	rows, err := s.db.GetUserGroups(ctx, ds.GetUserGroupsParams{
 		GroupOwner: req.UserId.Int64(),
@@ -75,7 +81,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 		Offset:     req.Offset.Int32(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	groups := make([]models.Group, 0, len(rows))
@@ -87,7 +93,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 			UserId:  req.UserId,
 		})
 		if err != nil {
-			return nil, err
+			return nil, ce.Wrap(nil, err)
 		}
 		groups = append(groups, models.Group{
 			GroupId:          ct.Id(r.GroupID),
@@ -109,7 +115,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return nil, err
+			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		}
 		for i := range groups {
 			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
@@ -120,12 +126,14 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 }
 
 func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupReq) (models.Group, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return models.Group{}, err
+		return models.Group{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	row, err := s.db.GetGroupInfo(ctx, req.GroupId.Int64())
 	if err != nil {
-		return models.Group{}, err
+		return models.Group{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	group := models.Group{
 		GroupId:          ct.Id(row.ID),
@@ -140,7 +148,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 		UserId:  req.UserId,
 	})
 	if err != nil {
-		return models.Group{}, err
+		return models.Group{}, ce.Wrap(nil, err)
 	}
 	group.IsMember = userInfo.isMember
 	group.IsOwner = userInfo.isOwner
@@ -149,7 +157,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	if group.GroupImage > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant(1))
 		if err != nil {
-			return models.Group{}, err
+			return models.Group{}, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		}
 
 		group.GroupImageURL = imageUrl
@@ -160,8 +168,10 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 }
 
 func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembersReq) ([]models.GroupUser, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return []models.GroupUser{}, err
+		return []models.GroupUser{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	//check request comes from member
 	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
@@ -169,10 +179,10 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 		UserId:  req.UserId,
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.Wrap(nil, err)
 	}
 	if !isMember {
-		return nil, ErrNotAuthorized
+		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not a member of group %v", req.UserId, req.GroupId), input).WithPublic("permission denied")
 	}
 
 	//paginated (newest first)
@@ -182,7 +192,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 		Offset:  req.Offset.Int32(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	members := make([]models.GroupUser, 0, len(rows))
 	var imageIds ct.Ids
@@ -208,7 +218,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.GroupUser{}, err
+			return []models.GroupUser{}, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		}
 		for i := range members {
 			members[i].AvatarUrl = avatarMap[members[i].AvatarId.Int64()]
@@ -220,18 +230,10 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 
 // intentionally doesn't return avatar urls to avoid redundant calls
 func (s *Application) GetAllGroupMemberIds(ctx context.Context, req models.GroupId) (ct.Ids, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateBatch(ct.Id(req)); err != nil {
-		return nil, err
-	}
-	//check request comes from member
-	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
-		GroupId: ct.Id(req),
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !isMember {
-		return nil, ErrNotAuthorized
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	//paginated (newest first)
@@ -239,7 +241,7 @@ func (s *Application) GetAllGroupMemberIds(ctx context.Context, req models.Group
 		GroupID: ct.Id(req).Int64(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	members := make([]ct.Id, 0, len(rows))
 
@@ -251,8 +253,10 @@ func (s *Application) GetAllGroupMemberIds(ctx context.Context, req models.Group
 }
 
 func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchReq) ([]models.Group, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return []models.Group{}, err
+		return []models.Group{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	//weighted (title more important than description)
 	//paginated (most members first)
@@ -263,8 +267,13 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 		Offset: req.Offset.Int32(),
 	})
 	if err != nil {
-		return []models.Group{}, err
+		return []models.Group{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
+
+	if len(rows) == 0 {
+		return []models.Group{}, nil
+	}
+
 	groups := make([]models.Group, 0, len(rows))
 	var imageIds ct.Ids
 
@@ -274,7 +283,7 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 			UserId:  req.UserId,
 		})
 		if err != nil {
-			return nil, err
+			return nil, ce.Wrap(nil, err)
 		}
 		groups = append(groups, models.Group{
 			GroupId:          ct.Id(r.ID),
@@ -296,7 +305,7 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return nil, err
+			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		}
 		for i := range groups {
 			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
@@ -308,8 +317,10 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 }
 
 func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGroupReq) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	//check request comes from member
 	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
@@ -317,10 +328,10 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 		UserId:  req.InviterId,
 	})
 	if err != nil {
-		return err
+		return ce.Wrap(nil, err)
 	}
 	if !isMember {
-		return ErrNotAuthorized
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not a member of group %v", req.InviterId, req.GroupId), input).WithPublic("permission denied")
 	}
 
 	err = s.db.SendGroupInvites(ctx, ds.SendGroupInvitesParams{
@@ -329,7 +340,7 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 		ReceiverIDs: req.InvitedIds.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	//create notification (waiting for batch notification)
 	// inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
@@ -365,8 +376,10 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 // }
 
 func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoinRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	err := s.db.SendGroupJoinRequest(ctx, ds.SendGroupJoinRequestParams{
 		GroupID: req.GroupId.Int64(),
@@ -374,7 +387,7 @@ func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoin
 	})
 
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	//create notification
 	requester, err := s.GetBasicUserInfo(ctx, req.RequesterId)
@@ -394,24 +407,28 @@ func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoin
 
 // SKIP GRPC FOR NOW
 func (s *Application) CancelJoinGroupRequest(ctx context.Context, req models.GroupJoinRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
+
 	err := s.db.CancelGroupJoinRequest(ctx, ds.CancelGroupJoinRequestParams{
 		GroupID: req.GroupId.Int64(),
 		UserID:  req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	//TODO REMOVE NOTIFICATION EVENT
 	return nil
 }
 
-// CHAT SERVICE EVENT add member to group conversation if accepted
 func (s *Application) RespondToGroupInvite(ctx context.Context, req models.HandleGroupInviteRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	inviterId, err := s.db.GetGroupInviterId(ctx, ds.GetGroupInviterIdParams{
@@ -419,7 +436,7 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 		ReceiverID: req.InvitedId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	if req.Accepted {
@@ -429,7 +446,7 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 			ReceiverID: req.InvitedId.Int64(),
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 
 		}
 		//create notification
@@ -457,7 +474,7 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 			ReceiverID: req.InvitedId.Int64(),
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 		//create notification
 		invited, err := s.GetBasicUserInfo(ctx, req.InvitedId)
@@ -477,8 +494,10 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 }
 
 func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.HandleJoinRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
@@ -486,10 +505,10 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 		UserId:  req.OwnerId,
 	})
 	if err != nil {
-		return err
+		return ce.Wrap(nil, err)
 	}
 	if !isOwner {
-		return ErrNotAuthorized
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not the owner of group %v", req.OwnerId, req.GroupId), input).WithPublic("permission denied")
 	}
 
 	if req.Accepted {
@@ -498,7 +517,7 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			UserID:  req.RequesterId.Int64(),
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 
 		//create notification
@@ -521,6 +540,9 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			GroupID: req.GroupId.Int64(),
 			UserID:  req.RequesterId.Int64(),
 		})
+		if err != nil {
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+		}
 		//create notification
 		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 		if err != nil {
@@ -531,32 +553,45 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			//WHAT DO DO WITH ERROR HERE?
 		}
 	}
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
-// CHAT SERVICE EVENT soft remove member from group conversation (keep history)
 func (s *Application) LeaveGroup(ctx context.Context, req models.GeneralGroupReq) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
-	err := s.db.LeaveGroup(ctx, ds.LeaveGroupParams{
+	//check request comes from member
+	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.UserId,
+	})
+	if err != nil {
+		return ce.Wrap(nil, err)
+	}
+	if !isMember {
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not a member of group %v", req.UserId, req.GroupId), input).WithPublic("permission denied")
+	}
+
+	err = s.db.LeaveGroup(ctx, ds.LeaveGroupParams{
 		GroupID: req.GroupId.Int64(),
 		UserID:  req.UserId.Int64(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	return nil
 }
 
 // SKIP GRPC FOR NOW
 func (s *Application) RemoveFromGroup(ctx context.Context, req models.RemoveFromGroupRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	//check owner has indeed the owner role
 	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
@@ -564,10 +599,10 @@ func (s *Application) RemoveFromGroup(ctx context.Context, req models.RemoveFrom
 		UserId:  req.OwnerId,
 	})
 	if err != nil {
-		return err
+		return ce.Wrap(nil, err)
 	}
 	if !isOwner {
-		return ErrNotAuthorized
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not the owner of group %v", req.OwnerId, req.GroupId), input).WithPublic("permission denied")
 	}
 
 	err = s.LeaveGroup(ctx, models.GeneralGroupReq{
@@ -575,14 +610,16 @@ func (s *Application) RemoveFromGroup(ctx context.Context, req models.RemoveFrom
 		UserId:  req.MemberId,
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	return nil
 }
 
 func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRequest) (models.GroupId, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return 0, err
+		return 0, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	groupId, err := s.db.CreateGroup(ctx, ds.CreateGroupParams{
@@ -592,7 +629,7 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 		GroupImageID:     req.GroupImage.Int64(),
 	})
 	if err != nil {
-		return 0, err
+		return 0, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	//call to chat service to create group conversation with owner as member
@@ -605,20 +642,22 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 }
 
 func (s *Application) UpdateGroup(ctx context.Context, req *models.UpdateGroupRequest) error {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateStruct(req); err != nil {
+		return ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
+	}
+
 	//check requester is owner
 	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
 		GroupId: req.GroupId,
 		UserId:  req.RequesterId,
 	})
 	if err != nil {
-		return err
+		return ce.Wrap(nil, err)
 	}
 	if !isOwner {
-		return ErrNotAuthorized
-	}
-
-	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not the owner of group %v", req.RequesterId, req.GroupId), input).WithPublic("permission denied")
 	}
 
 	rowsAffected, err := s.db.UpdateGroup(ctx, ds.UpdateGroupParams{
@@ -629,11 +668,11 @@ func (s *Application) UpdateGroup(ctx context.Context, req *models.UpdateGroupRe
 	})
 
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	if rowsAffected != 1 {
-		return ErrNotFound
+		return ce.New(ce.ErrNotFound, fmt.Errorf("group %v was not found or has been deleted", req.GroupId), input).WithPublic("not found")
 	}
 
 	return nil
@@ -642,35 +681,39 @@ func (s *Application) UpdateGroup(ctx context.Context, req *models.UpdateGroupRe
 
 // NOT GRPC
 func (s *Application) userInRelationToGroup(ctx context.Context, req models.GeneralGroupReq) (resp userInRelationToGroup, err error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return userInRelationToGroup{}, err
+		return userInRelationToGroup{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	resp.isOwner, err = s.isGroupOwner(ctx, req)
 	if err != nil {
-		return userInRelationToGroup{}, err
+		return userInRelationToGroup{}, ce.Wrap(nil, err)
 	}
 	resp.isMember, err = s.IsGroupMember(ctx, req)
 	if err != nil {
-		return userInRelationToGroup{}, err
+		return userInRelationToGroup{}, ce.Wrap(nil, err)
 	}
 	resp.isPending, err = s.isGroupMembershipPending(ctx, req)
 	if err != nil {
-		return userInRelationToGroup{}, err
+		return userInRelationToGroup{}, ce.Wrap(nil, err)
 	}
 	return resp, nil
 }
 
 // NOT GRPC
 func (s *Application) isGroupOwner(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return false, err
+		return false, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 	isOwner, err := s.db.IsUserGroupOwner(ctx, ds.IsUserGroupOwnerParams{
 		ID:         req.GroupId.Int64(),
 		GroupOwner: req.UserId.Int64(),
 	})
 	if err != nil {
-		return false, err
+		return false, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if !isOwner {
 		return false, nil
@@ -679,15 +722,18 @@ func (s *Application) isGroupOwner(ctx context.Context, req models.GeneralGroupR
 }
 
 func (s *Application) IsGroupMember(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return false, err
+		return false, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
+
 	isMember, err := s.db.IsUserGroupMember(ctx, ds.IsUserGroupMemberParams{
 		GroupID: req.GroupId.Int64(),
 		UserID:  req.UserId.Int64(),
 	})
 	if err != nil {
-		return false, err
+		return false, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if !isMember {
 		return false, nil
@@ -697,15 +743,18 @@ func (s *Application) IsGroupMember(ctx context.Context, req models.GeneralGroup
 
 // NOT GRPC
 func (s *Application) isGroupMembershipPending(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return false, err
+		return false, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
+
 	isPending, err := s.db.IsGroupMembershipPending(ctx, ds.IsGroupMembershipPendingParams{
 		GroupID: req.GroupId.Int64(),
 		UserID:  req.UserId.Int64(),
 	})
 	if err != nil {
-		return false, err
+		return false, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	if !isPending.Valid { //should never happen
 		return false, nil
