@@ -24,7 +24,7 @@ import (
 
 // AUTH
 func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
-	tele.Info(ctx, "RegisterUser gRPC method called.")
+	tele.Info(ctx, "RegisterUser gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -41,7 +41,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 		Public:      req.GetPublic(),
 	})
 	if err != nil {
-		tele.Warn(ctx, "Error in RegisterUser. @1", "error", err.Error(), "req", req)
+		tele.Warn(ctx, "Error in RegisterUser. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -52,7 +52,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 }
 
 func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm.User, error) {
-	tele.Info(ctx, "LoginUser gRPC method called with.")
+	tele.Info(ctx, "LoginUser gRPC method called with @1", "request", req)
 
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "LoginUser: request is nil")
@@ -73,7 +73,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 		Password:   ct.HashedPassword(Password),
 	})
 	if err != nil {
-		tele.Warn(ctx, "Error in LoginUser. @1", "error", err.Error(), "req", req)
+		tele.Warn(ctx, "Error in LoginUser. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -86,7 +86,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 }
 
 func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePasswordRequest) (*emptypb.Empty, error) {
-	tele.Info(ctx, "UpdateUserPassword gRPC method called.")
+	tele.Info(ctx, "UpdateUserPassword gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UpdateUserPassword: request is nil")
 	}
@@ -107,13 +107,14 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 		NewPassword: ct.HashedPassword(req.NewPassword),
 	})
 	if err != nil {
+		tele.Warn(ctx, "Error in UpdateUserPassword. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailRequest) (*emptypb.Empty, error) {
-	tele.Info(ctx, "UpdateUserEmail gRPC method called.")
+	tele.Info(ctx, "UpdateUserEmail gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UpdateUserEmail: request is nil")
 	}
@@ -141,7 +142,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 
 // FOLLOW
 func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagination) (*cm.ListUsers, error) {
-	tele.Info(ctx, "GetFollowersPaginated gRPC method called.")
+	tele.Info(ctx, "GetFollowersPaginated gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowersPaginated: request is nil")
 	}
@@ -165,13 +166,14 @@ func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagina
 
 	resp, err := s.Application.GetFollowersPaginated(ctx, pag)
 	if err != nil {
+		tele.Error(ctx, "Error in GetFollowersPaginated. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return usersToPB(resp), nil
 }
 
 func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagination) (*cm.ListUsers, error) {
-	tele.Info(ctx, "GetFollowingPaginated gRPC method called.")
+	tele.Info(ctx, "GetFollowingPaginated gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowingPaginated: request is nil")
 	}
@@ -195,13 +197,14 @@ func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagina
 
 	resp, err := s.Application.GetFollowingPaginated(ctx, pag)
 	if err != nil {
+		tele.Warn(ctx, "Error in GetFollowingPaginated. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return usersToPB(resp), nil
 }
 
 func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest) (*pb.FollowUserResponse, error) {
-	tele.Info(ctx, "FollowUser gRPC method called.")
+	tele.Info(ctx, "FollowUser gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "FollowUser: request is nil")
 	}
@@ -221,6 +224,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in FollowUser. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -231,7 +235,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 }
 
 func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserRequest) (*emptypb.Empty, error) {
-	tele.Info(ctx, "UnFollowUser gRPC method called.")
+	tele.Info(ctx, "UnFollowUser gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UnFollowUser: request is nil")
 	}
@@ -251,6 +255,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
+		tele.Warn(ctx, "Error in UnFollowUser. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -258,7 +263,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 }
 
 func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFollowRequestRequest) (*emptypb.Empty, error) {
-	tele.Info(ctx, "HandleFollowRequest gRPC method called.")
+	tele.Info(ctx, "HandleFollowRequest gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "HandleFollowRequest: request is nil")
 	}
@@ -281,13 +286,14 @@ func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFo
 		Accept:      acc,
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in HandleFollowRequest. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int64Value) (*cm.UserIds, error) {
-	tele.Info(ctx, "GetFollowingIds gRPC method called.")
+	tele.Info(ctx, "GetFollowingIds gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowingIds: request is nil")
 	}
@@ -298,13 +304,14 @@ func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int6
 
 	resp, err := s.Application.GetFollowingIds(ctx, ct.Id(userId))
 	if err != nil {
+		tele.Error(ctx, "Error in GetFollowingIds. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &cm.UserIds{Values: resp}, nil
 }
 
 func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb.Int64Value) (*cm.ListUsers, error) {
-	tele.Info(ctx, "GetFollowSuggestions gRPC method called.")
+	tele.Info(ctx, "GetFollowSuggestions gRPC method called with @1", "request", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetFollowSuggestions: request is nil")
 	}
@@ -316,6 +323,7 @@ func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb
 
 	resp, err := s.Application.GetFollowSuggestions(ctx, ct.Id(userId))
 	if err != nil {
+		tele.Error(ctx, "Error in GetFollowSuggestions. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -323,6 +331,8 @@ func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb
 }
 
 func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.IsFollowingRequest) (*wrapperspb.BoolValue, error) {
+	tele.Info(ctx, "IsFollowing called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "IsFollowing: request is nil")
 	}
@@ -342,6 +352,7 @@ func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.IsFollowingReque
 		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in IsFollowing. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -349,6 +360,8 @@ func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.IsFollowingReque
 }
 
 func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.FollowUserRequest) (*wrapperspb.BoolValue, error) {
+	tele.Info(ctx, "AreFollowingEachOther called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "AreFollowingEachOther: request is nil")
 	}
@@ -368,6 +381,7 @@ func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.Follow
 		TargetUserId: ct.Id(userBId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in AreFollowingEachOther. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &wrapperspb.BoolValue{Value: *resp}, nil
@@ -375,6 +389,8 @@ func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.Follow
 
 // GROUPS
 func (s *UsersHandler) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagination) (*pb.GroupArr, error) {
+	tele.Info(ctx, "GetAllGroupsPaginated called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetAllGroupsPaginated: request is nil")
 	}
@@ -398,12 +414,15 @@ func (s *UsersHandler) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagina
 
 	resp, err := s.Application.GetAllGroupsPaginated(ctx, pag)
 	if err != nil {
+		tele.Error(ctx, "Error in GetAllGroupsPaginated. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return groupsToPb(resp), nil
 }
 
 func (s *UsersHandler) GetUserGroupsPaginated(ctx context.Context, req *pb.Pagination) (*pb.GroupArr, error) {
+	tele.Info(ctx, "GetUserGroupsPaginated called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetUserGroupsPaginated: request is nil")
 	}
@@ -427,12 +446,15 @@ func (s *UsersHandler) GetUserGroupsPaginated(ctx context.Context, req *pb.Pagin
 
 	resp, err := s.Application.GetUserGroupsPaginated(ctx, pag)
 	if err != nil {
+		tele.Error(ctx, "Error in GetUserGroupsPaginated. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return groupsToPb(resp), nil
 }
 
 func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupRequest) (*pb.Group, error) {
+	tele.Info(ctx, "GetGroupInfo called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetGroupInfo: request is nil")
 	}
@@ -452,6 +474,7 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in GetGroupInfo. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -470,6 +493,8 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 }
 
 func (s *UsersHandler) GetGroupMembers(ctx context.Context, req *pb.GroupMembersRequest) (*pb.GroupUserArr, error) {
+	tele.Info(ctx, "GetGroupMembers called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "GetGroupMembers: request is nil")
 	}
@@ -496,12 +521,15 @@ func (s *UsersHandler) GetGroupMembers(ctx context.Context, req *pb.GroupMembers
 		Offset:  ct.Offset(offset),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in GetGroupMembers. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return groupUsersToPB(resp), nil
 }
 
 func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequest) (*pb.GroupArr, error) {
+	tele.Info(ctx, "SearchGroups called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "SearchGroups: request is nil")
 	}
@@ -528,6 +556,7 @@ func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequ
 		Offset:     ct.Offset(offset),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in SearchGroups. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -535,6 +564,8 @@ func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequ
 }
 
 func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "InviteToGroup called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "InviteToGroup: request is nil")
 	}
@@ -555,6 +586,7 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 		GroupId:    ct.Id(groupId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in InviteToGroup. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -562,6 +594,8 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 }
 
 func (s *UsersHandler) IsGroupMember(ctx context.Context, req *pb.GeneralGroupRequest) (*wrapperspb.BoolValue, error) {
+	tele.Info(ctx, "IsGroupMember called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "IsGroupMember: request is nil")
 	}
@@ -578,12 +612,15 @@ func (s *UsersHandler) IsGroupMember(ctx context.Context, req *pb.GeneralGroupRe
 		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in IsGroupMember. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return wrapperspb.Bool(resp), nil
 }
 
 func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "RequestJoinGroup called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "RequestJoinGroupOrCancel: request is nil")
 	}
@@ -603,12 +640,15 @@ func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRe
 		RequesterId: ct.Id(requesterId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in RequestJoinGroup. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *UsersHandler) RespondToGroupInvite(ctx context.Context, req *pb.HandleGroupInviteRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "RespondToGroupInvite called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "RespondToGroupInvite: request is nil")
 	}
@@ -631,6 +671,7 @@ func (s *UsersHandler) RespondToGroupInvite(ctx context.Context, req *pb.HandleG
 		Accepted:  acc,
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in RespondToGroupInvite. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -638,6 +679,8 @@ func (s *UsersHandler) RespondToGroupInvite(ctx context.Context, req *pb.HandleG
 }
 
 func (s *UsersHandler) HandleGroupJoinRequest(ctx context.Context, req *pb.HandleJoinRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "HandleGroupJoinRequest called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "HandleGroupJoinRequest: request is nil")
 	}
@@ -666,12 +709,15 @@ func (s *UsersHandler) HandleGroupJoinRequest(ctx context.Context, req *pb.Handl
 		Accepted:    acc,
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in HandleGroupJoinRequest. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *UsersHandler) LeaveGroup(ctx context.Context, req *pb.GeneralGroupRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "LeaveGroup called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "LeaveGroup: request is nil")
 	}
@@ -691,12 +737,15 @@ func (s *UsersHandler) LeaveGroup(ctx context.Context, req *pb.GeneralGroupReque
 		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in LeaveGroup. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*wrapperspb.Int64Value, error) {
+	tele.Info(ctx, "CreateGroup called @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "CreateGroup: request is nil")
 	}
@@ -728,12 +777,15 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 		GroupImage:       ct.Id(GroupImage),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in CreateGroup. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return wrapperspb.Int64(int64(resp)), nil
 }
 
 func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "UpdateGroup called @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "CreateGroup: request is nil")
 	}
@@ -767,6 +819,7 @@ func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupReque
 		GroupImage:       ct.Id(groupImage),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in UpdateGroup. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
@@ -774,6 +827,8 @@ func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupReque
 
 // PROFILE
 func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*cm.User, error) {
+	tele.Info(ctx, "GetBasicUserInfo called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -785,6 +840,7 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 
 	u, err := s.Application.GetBasicUserInfo(ctx, ct.Id(req.GetValue()))
 	if err != nil {
+		tele.Error(ctx, "Error in GetBasicUserInfo. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -797,6 +853,8 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 }
 
 func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetBatchBasicUserInfo called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -809,6 +867,7 @@ func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserId
 	ids := ct.FromInt64s(userIds)
 	users, err := s.Application.GetBatchBasicUserInfo(ctx, ids)
 	if err != nil {
+		tele.Error(ctx, "Error in GetBatchBasicUserInfo. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -826,7 +885,8 @@ func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserId
 }
 
 func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.UserProfileResponse, error) {
-	tele.Info(ctx, "GetUserProfile gRPC method called")
+	tele.Info(ctx, "GetUserProfile gRPC method called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
@@ -847,7 +907,7 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 
 	profile, err := s.Application.GetUserProfile(ctx, userProfileRequest)
 	if err != nil {
-		tele.Warn(ctx, "Error in GetUserProfile. @1", "error", err)
+		tele.Error(ctx, "Error in GetUserProfile. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -876,6 +936,8 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 }
 
 func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchRequest) (*cm.ListUsers, error) {
+	tele.Info(ctx, "SearchUsers called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "SearchUsers: request is nil")
 	}
@@ -895,12 +957,15 @@ func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchReques
 		Limit:      ct.Limit(limit),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in SearchUsers. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return usersToPB(resp), nil
 }
 
 func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UserProfileResponse, error) {
+	tele.Info(ctx, "UpdateUserProfile called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UpdateUserProfile: request is nil")
 	}
@@ -920,6 +985,7 @@ func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProf
 		About:       ct.About(req.GetAbout()),
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in UpdateUserProfile. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -941,6 +1007,8 @@ func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProf
 }
 
 func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateProfilePrivacyRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "UpdateProfilePrivacy called with @1", "request", req)
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "UpdateProfilePrivacy: request is nil")
 	}
@@ -957,6 +1025,7 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 		Public: public,
 	})
 	if err != nil {
+		tele.Error(ctx, "Error in UpdateProfilePrivacy. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
