@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"social-network/shared/go/ct"
 	utils "social-network/shared/go/http-utils"
@@ -46,9 +45,9 @@ var upgrader = websocket.Upgrader{
 
 func (h *Handlers) Connect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("start websocket handler called")
 
 		ctx := r.Context()
+		tele.Info(ctx, "start websocket handler called")
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
 		if !ok {
 			tele.Error(ctx, "failed to fetch claims")
@@ -57,7 +56,7 @@ func (h *Handlers) Connect() http.HandlerFunc {
 		clientId := claims.UserId
 
 		// UPGRADE
-		websocketConn, cancelConn, err := upgradeConnection(w, r)
+		websocketConn, cancelConn, err := upgradeConnection(ctx, w, r)
 		if err != nil {
 			tele.Error(ctx, "failed to upgrade connection to websocket")
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Something went wrong. Error: E314759")
@@ -75,30 +74,32 @@ func (h *Handlers) Connect() http.HandlerFunc {
 
 		var wg sync.WaitGroup
 		wg.Go(func() { websocketSender(ctx, connectionId, clientId, channel, websocketConn) })
-		websocketListener(websocketConn, clientId, connectionId)
+		websocketListener(ctx, websocketConn, clientId, connectionId)
 		wg.Wait()
 
-		fmt.Println("ws handler closing")
+		tele.Info(ctx, "ws handler closing")
 	}
 }
 
 // routine that reads data coming from this client connection
-func websocketListener(websocketConn *websocket.Conn, clientId int64, connectionId string) {
+func websocketListener(ctx context.Context, websocketConn *websocket.Conn, clientId int64, connectionId string) {
 	for {
 		_, msg, err := websocketConn.ReadMessage()
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 				break
 			}
-			log.Printf("clientId: %d, Start websocket error: unexpected read error: %v\n", clientId, err)
+			tele.Error(ctx, "@1, Start websocket error: unexpected read \n", "clientId", clientId, "error", err.Error())
 			return
 		}
 
 		messageString := string(msg)
 		if len(messageString) < 2 {
-			fmt.Println("invalid message received:", messageString)
+			tele.Error(ctx, "invalid message received: @1 from @2", "message", messageString, "connection", connectionId)
 			return
 		}
+
+		tele.Info(ctx, "received: @1 from @2", "message", messageString, "connection", connectionId)
 
 		//do something with message received
 		//forward to chat service
@@ -111,6 +112,7 @@ func websocketSender(ctx context.Context, connectionid string, clientId int64, c
 	timer := time.NewTimer(time.Hour)
 	timer.Stop()
 	timerOn := false
+
 	lastFlushTimeStamp := time.Now().Add(-time.Hour)
 	poolingDuration := time.Millisecond * 500
 
@@ -120,14 +122,13 @@ func websocketSender(ctx context.Context, connectionid string, clientId int64, c
 	for {
 		select {
 		case message := <-channel:
+			//======== BATCHING =========================================================
 			// message arrived, adding it to bucket
 			messageBucket = append(messageBucket, json.RawMessage(message))
-
 			if timerOn {
 				// timer is already activated, therefore we just gather messages until the timer fires
 				continue
 			}
-
 			//check if more than 'poolingDuration' amount of time has passed after the last flush
 			if time.Since(lastFlushTimeStamp) <= poolingDuration {
 				//new message came too soon, so we'll just start the timer and wait it to ring before we flush
@@ -135,13 +136,15 @@ func websocketSender(ctx context.Context, connectionid string, clientId int64, c
 				timerOn = true
 				continue
 			}
+			//========= BATCHING ==========================================================
 
+			//
+			//
 			// timer is off, and it's been a while since the last message, lets sending it immediately
-
 			// preparing message
 			payloadBytes, err = json.Marshal(messageBucket)
 			if err != nil {
-				fmt.Println("ERROR")
+				tele.Info(ctx, "ERROR")
 				return
 			}
 
@@ -171,7 +174,7 @@ func websocketSender(ctx context.Context, connectionid string, clientId int64, c
 			//preparing message
 			payloadBytes, err = json.Marshal(messageBucket)
 			if err != nil {
-				fmt.Println("ERROR")
+				tele.Info(ctx, "ERROR")
 				return
 			}
 
@@ -193,22 +196,23 @@ func websocketSender(ctx context.Context, connectionid string, clientId int64, c
 	}
 }
 
-func sendErrorToWS(websocketConn *websocket.Conn, payload string) {
+func sendErrorToWS(ctx context.Context, websocketConn *websocket.Conn, payload string) {
+
 	errorMessage := []string{}
 
 	bundledMessage, err := json.Marshal(errorMessage)
 	if err != nil {
-		fmt.Println("this isn't supposed to happen")
+		tele.Info(ctx, "this isn't supposed to happen")
 		panic(1)
 	}
 
 	err = websocketConn.WriteMessage(websocket.TextMessage, bundledMessage)
 	if err != nil {
-		fmt.Println("failed to inform user that they have too many tabs open")
+		tele.Info(ctx, "failed to inform user that they have too many tabs open")
 	}
 }
 
-func upgradeConnection(w http.ResponseWriter, r *http.Request) (*websocket.Conn, func(), error) {
+func upgradeConnection(ctx context.Context, w http.ResponseWriter, r *http.Request) (*websocket.Conn, func(), error) {
 	websocketConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		utils.ErrorJSON(r.Context(), w, http.StatusInternalServerError, "failed websocket upgrade")
@@ -217,7 +221,7 @@ func upgradeConnection(w http.ResponseWriter, r *http.Request) (*websocket.Conn,
 	deferMe := func() {
 		err := websocketConn.Close()
 		if err != nil {
-			fmt.Println("failed to close websocket connection")
+			tele.Info(ctx, "failed to close websocket connection")
 		}
 	}
 	return websocketConn, deferMe, nil
