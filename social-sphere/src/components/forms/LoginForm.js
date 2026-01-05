@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { login } from "@/actions/auth/login";
 import { useStore } from "@/store/store";
+import LoadingThreeDotsJumping from '@/components/ui/LoadingDots';
 
 export default function LoginForm() {
 
@@ -45,6 +46,7 @@ export default function LoginForm() {
             // Store user data directly from login response
             setUser({
                 id: resp.user_id,
+                username: resp.username,
                 avatar_url: resp.avatar_url || ""
             });
 
@@ -140,9 +142,9 @@ export default function LoginForm() {
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-1/2 mx-auto flex justify-center btn btn-primary mt-12"
+                className="w-1/2 mx-auto flex justify-center items-center btn btn-primary mt-12"
             >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? <LoadingThreeDotsJumping /> : "Sign In"}
             </button>
         </form>
     );
