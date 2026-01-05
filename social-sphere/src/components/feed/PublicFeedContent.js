@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import PostCard from "@/components/ui/PostCard";
 import CreatePost from "@/components/ui/CreatePost";
 import Container from "@/components/layout/Container";
@@ -13,6 +14,13 @@ export default function PublicFeedContent({ initialPosts }) {
     const [hasMore, setHasMore] = useState((initialPosts || []).length >= 10);
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
+
+    const handleNewPost = (newPost) => {
+        if (newPost.audience !== "everyone") {
+            return;
+        }
+        setPosts(prev => [newPost, ...prev]);
+    }
 
     const loadMorePosts = useCallback(async () => {
         if (loading || !hasMore) return;
@@ -64,7 +72,7 @@ export default function PublicFeedContent({ initialPosts }) {
         <div className="w-full">
             {/* Create Post Section */}
             <Container className="pt-6 md:pt-10">
-                <CreatePost />
+                <CreatePost onPostCreated={handleNewPost} />
             </Container>
 
             {/* Feed Header */}
@@ -79,9 +87,26 @@ export default function PublicFeedContent({ initialPosts }) {
             <Container className="pt-6 pb-12">
                 {posts?.length > 0 ? (
                     <div className="flex flex-col">
-                        {posts.map((post, index) => (
-                            <PostCard key={`${post.post_id}-${index}`} post={post} />
-                        ))}
+                        <AnimatePresence mode="popLayout">
+                            {posts.map((post, index) => (
+                                <motion.div
+                                    key={post.post_id}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{
+                                        duration: 0.3,
+                                        ease: "easeOut"
+                                    }}
+                                    layout
+                                >
+                                    <PostCard
+                                        post={post}
+                                        onDelete={(postId) => setPosts(prev => prev.filter(p => p.post_id !== postId))}
+                                    />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
 
                         {/* Loading indicator */}
                         {hasMore && (

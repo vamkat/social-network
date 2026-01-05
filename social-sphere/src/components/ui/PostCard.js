@@ -20,7 +20,7 @@ import { getComments } from "@/actions/posts/get-comments";
 import { createComment } from "@/actions/posts/create-comment";
 import Tooltip from "./Tooltip";
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onDelete }) {
     const user = useStore((state) => state.user);
     const [image, setImage] = useState(post.image_url);
     const [comments, setComments] = useState([]);
@@ -373,9 +373,17 @@ export default function PostCard({ post }) {
                 return;
             }
 
-            // Successfully deleted - force reload
-            window.location.reload();
+            // Successfully deleted
+            setShowDeleteModal(false);
+            setIsDeleting(false);
 
+            // If onDelete callback is provided (from feed), use it for smooth animation
+            // Otherwise reload the page (for single post page)
+            if (onDelete) {
+                onDelete(post.post_id);
+            } else {
+                window.location.reload();
+            }
 
         } catch (err) {
             console.error("Failed to delete post:", err);

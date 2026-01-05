@@ -9,7 +9,7 @@ import { validateUpload } from "@/actions/auth/validate-upload";
 import { getFollowers } from "@/actions/users/get-followers";
 import { useStore } from "@/store/store";
 
-export default function CreatePost() {
+export default function CreatePost({ onPostCreated=null }) {
     const user = useStore((state) => state.user);
     const [content, setContent] = useState("");
     const [privacy, setPrivacy] = useState("everyone");
@@ -206,6 +206,7 @@ export default function CreatePost() {
             }
 
             // Step 2: Upload image if needed
+            let imageUrl = null;
             if (imageFile && resp.FileId && resp.UploadUrl) {
                 const uploadRes = await fetch(resp.UploadUrl, {
                     method: "PUT",
@@ -223,6 +224,26 @@ export default function CreatePost() {
                     setError("Failed to validate image upload");
                     return;
                 }
+                imageUrl = validateResp.download_url;
+            }
+
+            const now = new Date().toISOString();
+
+            const newPost = {
+                audience: privacy,
+                comments_count: 0,
+                image: resp.FileId,
+                image_url: imageUrl,
+                liked_by_user: false,
+                post_body: content,
+                post_id: 1412445,
+                reactions_count: 0,
+                created_at: now,
+                post_user: {
+                    avatar_url: user.avatar_url,
+                    id: user.id,
+                    username: user.username
+                }
             }
 
             // Reset form
@@ -232,7 +253,10 @@ export default function CreatePost() {
             handleRemoveImage();
 
             // Refresh the page to show the new post
-            window.location.reload();
+            if (onPostCreated) {
+                onPostCreated(newPost);
+            }
+            
 
         } catch (err) {
             console.error("Failed to create post:", err);

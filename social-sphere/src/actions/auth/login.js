@@ -23,6 +23,7 @@ export async function login(credentials) {
         return {
             success: true,
             user_id: apiResp.id,
+            username: apiResp.username,
             avatar_url: apiResp.avatar_url || ""
         };
 

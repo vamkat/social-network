@@ -6,6 +6,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import { register } from "@/actions/auth/register";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { useStore } from "@/store/store";
+import LoadingThreeDotsJumping from '@/components/ui/LoadingDots';
 
 export default function RegisterForm() {
     const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +63,7 @@ export default function RegisterForm() {
             // Prepare store data
             const userStoreData = {
                 id: resp.UserId,
+                username: resp.Username,
                 avatar_url: ""
             };
 
@@ -425,8 +427,9 @@ export default function RegisterForm() {
                 disabled={isLoading}
                 className="w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-12"
             >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? <LoadingThreeDotsJumping /> : "Create Account"}
             </button>
+
         </form>
     );
 }

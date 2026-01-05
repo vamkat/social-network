@@ -1,6 +1,8 @@
 package main
 
-import "social-network/services/live/internal/entry"
+import (
+	"social-network/services/live/internal/entry"
+)
 
 func main() {
 	entry.Run()
