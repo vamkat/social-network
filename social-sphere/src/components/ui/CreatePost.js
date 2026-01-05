@@ -236,7 +236,7 @@ export default function CreatePost({ onPostCreated=null }) {
                 image_url: imageUrl,
                 liked_by_user: false,
                 post_body: content,
-                post_id: 1412445,
+                post_id: resp.PostId,
                 reactions_count: 0,
                 created_at: now,
                 post_user: {
