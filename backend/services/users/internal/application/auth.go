@@ -3,17 +3,25 @@ package application
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const genericPublic = "users service error"
+
 func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserRequest) (ct.Id, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	if err := ct.ValidateStruct(req); err != nil {
-		return 0, err
+		return 0, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	//if no username assign full name
@@ -42,7 +50,7 @@ func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserR
 			ProfilePublic: req.Public,
 		})
 		if err != nil {
-			return err //TODO check how to return correct error
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 		newId = ct.Id(userId)
 
@@ -55,7 +63,13 @@ func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserR
 	})
 
 	if err != nil {
-		return 0, err //TODO check how to return correct error
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return 0, ce.New(ce.ErrAlreadyExists, err, input).WithPublic("email already exists")
+			}
+		}
+		return 0, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	return newId, nil
@@ -63,10 +77,12 @@ func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserR
 }
 
 func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (models.User, error) {
+	input := fmt.Sprintf("%#v", req)
+
 	var u models.User
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return u, err
+		return models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	err := s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
@@ -76,7 +92,7 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 		})
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return ErrWrongCredentials
+				return ce.New(ce.ErrInvalidArgument, err, input).WithPublic("wrong credentials")
 			}
 			return err
 		}
@@ -87,13 +103,10 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 			AvatarId: ct.Id(row.AvatarID),
 		}
 
-		// if !checkPassword(row.PasswordHash, req.Password.String()) {
-		// 	return ErrWrongCredentials
-		// }
 		if u.AvatarId > 0 {
 			images, _, err := s.mediaRetriever.GetImages(ctx, ct.Ids{u.AvatarId}, media.FileVariant_THUMBNAIL)
 			if err != nil {
-				return err
+				return ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 			}
 
 			if url, ok := images[u.AvatarId.Int64()]; ok {
@@ -105,27 +118,27 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 	})
 
 	if err != nil {
-		return models.User{}, ErrWrongCredentials
+		return models.User{}, ce.Wrap(nil, err)
 	}
 
 	return u, nil
 }
 
 func (s *Application) UpdateUserPassword(ctx context.Context, req models.UpdatePasswordRequest) error {
+	input := fmt.Sprintf("%#v", req)
 
-	//TODO think whether transaction is needed here
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
-	return s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
+	err := s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		row, err := q.GetUserPassword(ctx, req.UserId.Int64())
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 
 		if !checkPassword(row, req.OldPassword.String()) {
-			return ErrNotAuthorized
+			return ce.New(ce.ErrPermissionDenied, fmt.Errorf("wrong previous password"), input).WithPublic("wrong previous password")
 		}
 
 		err = q.UpdateUserPassword(ctx, ds.UpdateUserPasswordParams{
@@ -133,18 +146,22 @@ func (s *Application) UpdateUserPassword(ctx context.Context, req models.UpdateP
 			PasswordHash: req.NewPassword.String(),
 		})
 		if err != nil {
-			return err
+			return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 		}
 
 		return nil
 	})
+	if err != nil {
+		return ce.Wrap(nil, err)
+	}
+	return nil
 }
 
 func (s *Application) UpdateUserEmail(ctx context.Context, req models.UpdateEmailRequest) error {
+	input := fmt.Sprintf("%#v", req)
 
-	//TODO validate email
 	if err := ct.ValidateStruct(req); err != nil {
-		return err
+		return ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
 
 	err := s.db.UpdateUserEmail(ctx, ds.UpdateUserEmailParams{
@@ -152,7 +169,7 @@ func (s *Application) UpdateUserEmail(ctx context.Context, req models.UpdateEmai
 		Email:  req.Email.String(),
 	})
 	if err != nil {
-		return err
+		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	return nil
 }

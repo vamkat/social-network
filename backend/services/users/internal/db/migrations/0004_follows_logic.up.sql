@@ -12,7 +12,8 @@ DECLARE
 BEGIN
     -- Validate: cannot follow yourself
     IF p_follower = p_target THEN
-        RAISE EXCEPTION 'Cannot follow yourself';
+        RAISE EXCEPTION 'Cannot follow yourself'
+        USING ERRCODE = '22023';
     END IF;
 
     -- Check if target user exists and get privacy setting
@@ -23,7 +24,8 @@ BEGIN
       AND current_status = 'active';
 
     IF v_is_public IS NULL THEN
-        RAISE EXCEPTION 'User not found, deleted, or not active';
+        RAISE EXCEPTION 'User not found, deleted, or not active'
+        USING ERRCODE = 'P0002';
     END IF;
 
     -- Check if already following

@@ -10,6 +10,7 @@ import (
 	"runtime"
 	cm "social-network/shared/gen-go/common"
 	pb "social-network/shared/gen-go/users"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
@@ -41,7 +42,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in RegisterUser. @1", "error", err)
-		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &pb.RegisterUserResponse{
@@ -72,7 +73,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in LoginUser. @1", "error", err)
-		return nil, status.Errorf(codes.Internal, "LoginUser: failed to login user: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &cm.User{
@@ -105,7 +106,7 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 		NewPassword: ct.HashedPassword(req.NewPassword),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "UpdateUserPassword: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -132,7 +133,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in UpdateUserEmail. @1", "error", err)
-		return nil, status.Errorf(codes.Internal, "UpdateUserEmail: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -163,7 +164,7 @@ func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagina
 
 	resp, err := s.Application.GetFollowersPaginated(ctx, pag)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetFollowersPaginated: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -193,7 +194,7 @@ func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagina
 
 	resp, err := s.Application.GetFollowingPaginated(ctx, pag)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetFollowingPaginated: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -219,7 +220,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "FollowUser: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &pb.FollowUserResponse{
@@ -249,7 +250,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "UnFollowUser: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -279,7 +280,7 @@ func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFo
 		Accept:      acc,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "HandleFollowRequest: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -296,7 +297,7 @@ func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int6
 
 	resp, err := s.Application.GetFollowingIds(ctx, ct.Id(userId))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetFollowingIds: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &cm.UserIds{Values: resp}, nil
 }
@@ -314,7 +315,7 @@ func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb
 
 	resp, err := s.Application.GetFollowSuggestions(ctx, ct.Id(userId))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetFollowSuggestions: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return usersToPB(resp), nil
@@ -340,7 +341,7 @@ func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.IsFollowingReque
 		TargetUserId: ct.Id(targetUserId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "IsFollowing: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return wrapperspb.Bool(resp), nil
@@ -366,7 +367,7 @@ func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.Follow
 		TargetUserId: ct.Id(userBId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AreFollowingEachOther: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &wrapperspb.BoolValue{Value: *resp}, nil
 }
@@ -396,7 +397,7 @@ func (s *UsersHandler) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagina
 
 	resp, err := s.Application.GetAllGroupsPaginated(ctx, pag)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetAllGroupsPaginated: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return groupsToPb(resp), nil
 }
@@ -425,7 +426,7 @@ func (s *UsersHandler) GetUserGroupsPaginated(ctx context.Context, req *pb.Pagin
 
 	resp, err := s.Application.GetUserGroupsPaginated(ctx, pag)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetUserGroupsPaginated: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return groupsToPb(resp), nil
 }
@@ -450,7 +451,7 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetGroupInfo: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &pb.Group{
@@ -494,7 +495,7 @@ func (s *UsersHandler) GetGroupMembers(ctx context.Context, req *pb.GroupMembers
 		Offset:  ct.Offset(offset),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetGroupMembers: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return groupUsersToPB(resp), nil
 }
@@ -526,7 +527,7 @@ func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequ
 		Offset:     ct.Offset(offset),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "SearchGroups: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return groupsToPb(resp), nil
@@ -553,7 +554,7 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 		GroupId:    ct.Id(groupId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "InviteToGroup: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -576,7 +577,7 @@ func (s *UsersHandler) IsGroupMember(ctx context.Context, req *pb.GeneralGroupRe
 		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "IsGroupMember: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return wrapperspb.Bool(resp), nil
 }
@@ -601,7 +602,7 @@ func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRe
 		RequesterId: ct.Id(requesterId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "RequestJoinGroupOrCancel: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -629,7 +630,7 @@ func (s *UsersHandler) RespondToGroupInvite(ctx context.Context, req *pb.HandleG
 		Accepted:  acc,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "RespondToGroupInvite: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -664,7 +665,7 @@ func (s *UsersHandler) HandleGroupJoinRequest(ctx context.Context, req *pb.Handl
 		Accepted:    acc,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "HandleGroupJoinRequest: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -689,7 +690,7 @@ func (s *UsersHandler) LeaveGroup(ctx context.Context, req *pb.GeneralGroupReque
 		GroupId: ct.Id(groupId),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "LeaveGroup: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -726,7 +727,7 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 		GroupImage:       ct.Id(GroupImage),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "CreateGroup: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return wrapperspb.Int64(int64(resp)), nil
 }
@@ -765,7 +766,7 @@ func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupReque
 		GroupImage:       ct.Id(groupImage),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "CreateGroup: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -783,7 +784,7 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 
 	u, err := s.Application.GetBasicUserInfo(ctx, ct.Id(req.GetValue()))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetBasicUserInfo: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	return &cm.User{
@@ -807,7 +808,7 @@ func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserId
 	ids := ct.FromInt64s(userIds)
 	users, err := s.Application.GetBatchBasicUserInfo(ctx, ids)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetBatchBasicUserInfo: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	pbUsers := make([]*cm.User, 0, len(users))
@@ -846,7 +847,7 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 	profile, err := s.Application.GetUserProfile(ctx, userProfileRequest)
 	if err != nil {
 		tele.Warn(ctx, "Error in GetUserProfile. @1", "error", err)
-		return nil, status.Errorf(codes.Internal, "GetUserProfile: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	tele.Debug(ctx, "get user profile @1", "profile", profile)
@@ -893,7 +894,7 @@ func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchReques
 		Limit:      ct.Limit(limit),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "SearchUsers: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -918,7 +919,7 @@ func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProf
 		About:       ct.About(req.GetAbout()),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "UpdateUserProfile: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 
 	dob := timestamppb.New(resp.DateOfBirth.Time())
@@ -955,7 +956,7 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 		Public: public,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "UpdateProfilePrivacy: %v", err)
+		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
 }

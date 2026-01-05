@@ -132,7 +132,7 @@ func (s *Application) EditComment(ctx context.Context, req models.EditCommentReq
 				return ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("comment id: %v", req.CommentId)).WithPublic(genericPublic)
 			}
 			if rowsAffected != 1 {
-				tele.Warn(ctx, "image @1 for comment @2 could not be deleted: not found.", "image id", req.ImageId, "comment id", req.CommentId)
+				tele.Warn(ctx, "image @1 for comment @2 could not be deleted: not found.", "imageId", req.ImageId, "commenId", req.CommentId)
 			}
 		}
 		return nil
