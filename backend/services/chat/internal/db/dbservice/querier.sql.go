@@ -10,17 +10,18 @@ type Querier interface {
 	// Add UserIDs to ConvID.
 	AddConversationMembers(ctx context.Context, arg md.AddConversationMembersParams) error
 
-	// Find a conversation by group_id and insert the given user_ids into conversation_members.
-	// existing members are ignored, new members are added.
-	AddMembersToGroupConversation(ctx context.Context, arg md.AddMembersToGroupConversationParams) (convId ct.Id, err error)
-
 	// Initiates the conversation by groupId. Group Id should be a not null value.
-	// Use as a preparation for adding members
+	// Use as a preparation for adding members.
 	CreateGroupConv(ctx context.Context, groupID ct.Id) (convId ct.Id, err error)
 
-	// Creates a message row with conversation id if user is a memeber.
-	// Returns error if user match of conversation_id and user_id fails.
-	CreateMessage(ctx context.Context, arg md.CreateMessageParams) (md.MessageResp, error)
+	// Creates a message with message body sender id and conversation Id.
+	// Returns message and classified error using commonerrors classification.
+	CreateMessage(ctx context.Context,
+		arg md.CreateMessageParams) (msg md.MessageResp, err error)
+
+	// Creates a message row with conversation id if user is a member.
+	// Returns message and classified error using commonerrors classification.
+	CreateMessageWithMembersJoin(ctx context.Context, arg md.CreateMessageParams) (md.MessageResp, error)
 
 	// Returns a descending-ordered page of messages that appear chronologically
 	// BEFORE a given message in a conversation. This query is used for backwards

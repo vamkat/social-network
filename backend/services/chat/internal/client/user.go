@@ -4,6 +4,7 @@ import (
 	"context"
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
+	"social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
@@ -44,4 +45,13 @@ func (c *Clients) GetImages(ctx context.Context, req *media.GetImagesRequest) (*
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (c *Clients) IsGroupMember(ctx context.Context,
+	groupId ct.Id, userId ct.Id) (bool, error) {
+	resp, err := c.UserClient.IsGroupMember(ctx, &users.GeneralGroupRequest{
+		GroupId: groupId.Int64(),
+		UserId:  userId.Int64(),
+	})
+	return resp.GetValue(), err
 }

@@ -30,6 +30,10 @@ type Clients interface {
 	// Converts a slice of ct.Ids representing users to models.User slice.
 	UserIdsToUsers(ctx context.Context,
 		ids ct.Ids) (userInfo []md.User, err error)
+
+	// Verifies that user with userId is a member of group with groupId.
+	IsGroupMember(ctx context.Context,
+		groupId ct.Id, userId ct.Id) (bool, error)
 }
 
 func NewChatService(pool *pgxpool.Pool, clients *client.Clients, queries dbservice.Querier, userRetriever *retrieveusers.UserRetriever) (*ChatService, error) {
