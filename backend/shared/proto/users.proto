@@ -87,23 +87,32 @@ service UserService {
   // Calls users and media service for user info and avatar urls.
   rpc GetGroupMembers (GroupMembersRequest) returns (GroupUserArr);
 
+  //Returns all pending group requests with user information for group owner. 
+  //Includes pagination, results are sorted by ascending join request date
+  //Returns permission denied if requester is not the group owner.
+  // Calls users and media service for user info and avatar urls.
   rpc GetPendingGroupJoinRequests (GroupMembersRequest) returns (common.ListUsers);
 
+  //Returns paginated user's followers who have not yet been invited to join the group.
+  //Results are sorted by descending follow date.
+  //Returns permission denied if requester is not a group member.
+  // Calls users and media service for user info and avatar urls.
   rpc GetFollowersNotInvitedToGroup (GroupMembersRequest) returns (common.ListUsers);
 
-// Searches active groups by title and description using substring and fuzzy
-// matching, ranks results by relevance, and annotates whether the requesting
-// user is a member or owner. Results are ordered by score and popularity and
-// support pagination.
-// Score is computed from the search query’s similarity to a group’s title and
-// description: for queries of length 3 or more, fuzzy similarity is used with
-// higher weight on title matches; for shorter queries, simple substring matches
-// are scored instead. Popularity is measured by the group’s members_count, with
-// groups the user already belongs to ranked ahead of others.
+  // Searches active groups by title and description using substring and fuzzy
+  // matching, ranks results by relevance, and annotates whether the requesting
+  // user is a member or owner. Results are ordered by score and popularity and
+  // support pagination.
+  // Score is computed from the search query’s similarity to a group’s title and
+  // description: for queries of length 3 or more, fuzzy similarity is used with
+  // higher weight on title matches; for shorter queries, simple substring matches
+  // are scored instead. Popularity is measured by the group’s members_count, with
+  // groups the user already belongs to ranked ahead of others.
   rpc SearchGroups (GroupSearchRequest) returns (GroupArr);
 
   // Invites a list of users to join a group.
   // Returns permission denied if inviter is not a group member.
+  // If invite already exists it's update to "pending".
   rpc InviteToGroup (InviteToGroupRequest) returns (google.protobuf.Empty);
 
   // Checks if the requester is a member of the given group.
@@ -114,6 +123,7 @@ service UserService {
   // If the request already exists it updates to "pending".
   rpc RequestJoinGroup (GroupJoinRequest) returns (google.protobuf.Empty);
 
+  // Cancels a request to join the group.
   rpc CancelJoinGroupRequest(GroupJoinRequest) returns (google.protobuf.Empty);
 
   // Accepts or declines a received group invite.
@@ -127,6 +137,9 @@ service UserService {
   // Returns permission denied if user wasn't a member of the group.
   rpc LeaveGroup (GeneralGroupRequest) returns (google.protobuf.Empty);
 
+  // Removes a group member from the group.
+  // Returns permission denied if requester is not the owner of the group.
+  // Owner cannot be removed.
   rpc RemoveFromGroup (RemoveFromGroupRequest) returns (google.protobuf.Empty);
 
   // Creates a new group with requester as owner and returns its id.

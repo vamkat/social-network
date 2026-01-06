@@ -775,6 +775,19 @@ func (s *Application) GetFollowersNotInvitedToGroup(ctx context.Context, req mod
 	if err := ct.ValidateStruct(req); err != nil {
 		return []models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
+
+	//check request comes from member
+	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.UserId,
+	})
+	if err != nil {
+		return nil, ce.Wrap(nil, err)
+	}
+	if !isMember {
+		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not a member of group %v", req.UserId, req.GroupId), input).WithPublic("permission denied")
+	}
+
 	//paginated, sorted by newest first
 	rows, err := s.db.GetFollowersNotInvitedToGroup(ctx, ds.GetFollowersNotInvitedToGroupParams{
 		UserId:  req.UserId.Int64(),
