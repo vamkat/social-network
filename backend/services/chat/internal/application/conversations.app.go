@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"social-network/services/chat/internal/db/dbservice"
 	ce "social-network/shared/go/commonerrors"
@@ -22,7 +23,7 @@ func (c *ChatService) CreatePrivateConversation(ctx context.Context,
 	}
 
 	convId, err = c.Queries.CreatePrivateConv(ctx, params)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, ce.Wrap(ce.ErrInvalidArgument, err, errMsg).WithPublic("conversation already exists")
 	} else if err != nil {
 		return 0, ce.Wrap(ce.ErrInternal, err, errMsg)

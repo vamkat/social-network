@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"social-network/shared/go/ct"
-	utils "social-network/shared/go/http-utils"
 	tele "social-network/shared/go/telemetry"
 )
 
@@ -12,15 +10,14 @@ func (h *Handlers) testHandler() http.HandlerFunc {
 		ctx := r.Context()
 		tele.Info(ctx, "test handler called")
 
-		err := utils.WriteJSON(ctx, w, http.StatusOK, map[string]string{
-			"message": "this request id is: " + r.Context().Value(ct.ReqID).(string),
-		})
-
-		if err != nil {
-			tele.Warn(ctx, "failed to send test ACK. @1", "error", err.Error())
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send logout ACK")
-			return
-		}
+		// err := utils.WriteJSON(ctx, w, http.StatusOK, map[string]string{
+		// 	"message": "this request id is: " + r.Context().Value(ct.ReqID).(string),
+		// })
+		// if err != nil {
+		// 	tele.Warn(ctx, "failed to send test ACK. @1", "error", err.Error())
+		// 	utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send logout ACK")
+		// 	return
+		// }
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
@@ -37,22 +34,22 @@ var htmlPage = `<!DOCTYPE html>
 	<h1>Hello</h1>
 </body>
 <script>
-const socket = new WebSocket("ws://IP_ADDRESS:PORT");
+	const socket = new WebSocket("ws://localhost:8082/live");
 
-socket.onopen = () => {
-	console.log("WebSocket connected");
-};
+	socket.onopen = () => {
+		console.log("WebSocket connected");
+	};
 
-socket.onmessage = (event) => {
-	console.log(event.data);
-};
+	socket.onmessage = (event) => {
+		console.log(event.data);
+	};
 
-socket.onerror = (error) => {
-	console.error("WebSocket error:", error);
-};
+	socket.onerror = (error) => {
+		console.error("WebSocket error:", error);
+	};
 
-socket.onclose = (event) => {
-	console.log("WebSocket closed:", event.code, event.reason);
-};
+	socket.onclose = (event) => {
+		console.log("WebSocket closed:", event.code, event.reason);
+	};
 </script>
 </html>`
