@@ -80,7 +80,8 @@ func (h *Handlers) createEvent() http.HandlerFunc {
 
 		eventId, err := h.PostsService.CreateEvent(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -168,7 +169,8 @@ func (h *Handlers) editEvent() http.HandlerFunc {
 
 		_, err := h.PostsService.EditEvent(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -209,7 +211,8 @@ func (h *Handlers) deleteEvent() http.HandlerFunc {
 
 		_, err = h.PostsService.DeleteEvent(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 
@@ -241,7 +244,8 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetEventsByGroupId(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get events for group %v: %v ", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get events for group %v: %v ", body.EntityId, err.Error()))
 			return
 		}
 
@@ -301,7 +305,8 @@ func (s *Handlers) respondToEvent() http.HandlerFunc {
 
 		_, err = s.PostsService.RespondToEvent(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not respond to event with id %v: %v ", body.EventId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not respond to event with id %v: %v ", body.EventId, err.Error()))
 			return
 		}
 
@@ -330,7 +335,8 @@ func (s *Handlers) RemoveEventResponse() http.HandlerFunc {
 
 		_, err = s.PostsService.RemoveEventResponse(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not remove response from event with id %v: %v ", body.EventId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not remove response from event with id %v: %v ", body.EventId, err.Error()))
 			return
 		}
 

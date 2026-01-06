@@ -61,28 +61,30 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // UserService covers auth, follow, group, and profile operations.
-// Current behavior: handlers return INVALID_ARGUMENT for nil/failed validation and INTERNAL for all other errors.
-// Desired (not yet implemented): surface UNAUTHENTICATED, PERMISSION_DENIED, NOT_FOUND, ALREADY_EXISTS, FAILED_PRECONDITION where appropriate.
 type UserServiceClient interface {
-	// Registers a new account and returns the created user profile.
-	// Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
+	// Registers a new account and returns userId and Username.
+	// Returns already exists if email is already in the database.
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
-	// Authenticates by username/email identifier and password.
-	// Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
+	// Authenticates by username/email identifier and hashed password.
+	// Avoid using username as it's not unique, only email is.
+	// Returns basic user info (id, username, avatar url).
+	// Calls users and media service for user info and avatar url.
+	// Returns invalid argument if identifier and password don't return any rows.
 	LoginUser(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*common.User, error)
 	// Updates a user's password after verifying the current password.
-	// Current: INVALID_ARGUMENT on bad ids/password; INTERNAL otherwise. Desired: UNAUTHENTICATED/PERMISSION_DENIED on mismatch.
+	// Returns permission denied if given old password doesn't match the one in the db.
 	UpdateUserPassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Updates the account email address.
-	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: ALREADY_EXISTS for duplicate email.
 	UpdateUserEmail(ctx context.Context, in *UpdateEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Returns followers of a user with pagination.
-	// Current: INVALID_ARGUMENT on bad pagination; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED for hidden users.
+	// Returns followers of a user with pagination, ordered by most recent follow first.
+	// Calls users and media service for user info and avatar url.
 	GetFollowersPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*common.ListUsers, error)
-	// Returns accounts the user is following with pagination.
+	// Returns accounts the user is following with pagination, ordered my most recent follow first.
+	// Calls users and media service for user info and avatar url.
 	GetFollowingPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*common.ListUsers, error)
-	// Follows a target user; may create a pending request for private profiles.
-	// Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
+	// Follows a target user if profile is public, or creates a pending request for private profiles.
+	// Returns invalid argument if user tries to follow self, not found if target user doesn't exist or isn't marked active.
+	// Returns two mutually exclusive booleans, IsPending and ViewerIsFollowing, to show whether the follow was pending or completed.
 	FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*FollowUserResponse, error)
 	// Unfollows a target user or cancels a pending follow request.
 	UnFollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -90,49 +92,91 @@ type UserServiceClient interface {
 	HandleFollowRequest(ctx context.Context, in *HandleFollowRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Returns ids that the user is following.
 	GetFollowingIds(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.UserIds, error)
-	// Suggests users to follow based on the caller's network.
+	// Returns a ranked list of user follow suggestions for the given user, based on
+	// second-degree follows (people followed by users you follow) and shared group
+	// memberships. Suggestions are weighted by interaction type, exclude the user
+	// themself and users already followed, and return the top results with slight
+	// randomization to avoid deterministic ordering.
 	GetFollowSuggestions(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.ListUsers, error)
 	// Returns whether follower_id currently follows target_user_id.
 	IsFollowing(ctx context.Context, in *IsFollowingRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
-	// Returns whether both users follow each other.
+	// Returns the following relationship between two users.
+	// Nil: neither is following the other.
+	// False: One is following the other.
+	// True: Both follow each other.
 	AreFollowingEachOther(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
-	// Lists all groups with pagination (visibility filtered for requester).
+	// Returns all available groups paginated, ordered by most members first.
+	// Includes owner id, members count, and requester's group role if any (member, owner, pending)
+	// Calls media service for image urls
 	GetAllGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
-	// Lists groups the user belongs to with pagination.
+	// Returns groups the user belongs to with pagination, ordered by latest joined first
+	// Includes owner id, members count, and requester's group role if any (member, owner, pending)
+	// Calls media service for image urls
 	GetUserGroupsPaginated(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*GroupArr, error)
-	// Returns details for a single group visible to the requester.
+	// Returns details for a single group.
+	// Includes owner id, members count, and requester's group role if any (member, owner, pending)
+	// Calls media service for image urls.
 	GetGroupInfo(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*Group, error)
-	// Returns members of a group with pagination.
+	// Returns members of a group with pagination, ordered by latest joined first
+	// Returns permission denied if requester is not a group member.
+	// Calls users and media service for user info and avatar urls.
 	GetGroupMembers(ctx context.Context, in *GroupMembersRequest, opts ...grpc.CallOption) (*GroupUserArr, error)
-	// Searches for groups matching the search term for the requester.
+	// Searches active groups by title and description using substring and fuzzy
+	// matching, ranks results by relevance, and annotates whether the requesting
+	// user is a member or owner. Results are ordered by score and popularity and
+	// support pagination.
+	// Score is computed from the search query’s similarity to a group’s title and
+	// description: for queries of length 3 or more, fuzzy similarity is used with
+	// higher weight on title matches; for shorter queries, simple substring matches
+	// are scored instead. Popularity is measured by the group’s members_count, with
+	// groups the user already belongs to ranked ahead of others.
 	SearchGroups(ctx context.Context, in *GroupSearchRequest, opts ...grpc.CallOption) (*GroupArr, error)
-	// Invites a user to join a group.
+	// Invites a list of users to join a group.
+	// Returns permission denied if inviter is not a group member.
 	InviteToGroup(ctx context.Context, in *InviteToGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Checks if the requester is a member of the given group.
+	// The onwer is also treated as a member.
 	IsGroupMember(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
-	// Creates or cancels a join request for the group.
+	// Creates a join request for the group.
+	// If the request already exists it updates to "pending".
 	RequestJoinGroup(ctx context.Context, in *GroupJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Accepts or declines a received group invite.
 	RespondToGroupInvite(ctx context.Context, in *HandleGroupInviteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Approves or rejects a user's join request.
+	// Returns permission declined if user handling the request is not owner of the group.
 	HandleGroupJoinRequest(ctx context.Context, in *HandleJoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Leaves the specified group.
+	// Removes user as member of the specified group.
+	// Returns permission denied if user wasn't a member of the group.
 	LeaveGroup(ctx context.Context, in *GeneralGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Creates a new group and returns its id.
+	// Creates a new group with requester as owner and returns its id.
 	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*wrapperspb.Int64Value, error)
-	// Updates group info (title, description, image)
+	// Updates group info (title, description, image).
+	// Returns permission denied if requester is not group owner.
+	// All fields must be included even if they remain unchanged or they will be deleted.
 	UpdateGroup(ctx context.Context, in *UpdateGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Retrieves basic public info for a user.
+	// Retrieves basic public info for a user (id, username, avatar id).
+	// Does not call media service for avatar url
 	GetBasicUserInfo(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*common.User, error)
-	// Retrieves basic info for multiple users.
+	// Retrieves basic info for multiple users (id, username, avatar id).
+	// Does not call media service for avatar url
 	GetBatchBasicUserInfo(ctx context.Context, in *common.UserIds, opts ...grpc.CallOption) (*common.ListUsers, error)
-	// Returns the full profile visible to the requester.
+	// Returns the full profile
+	// Includes following, followers and group counts.
+	// Also includes viewer specific info: whether it's own profile and whether the viewer is following or has pending follow request.
+	// Calls media service for avatar url.
 	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
-	// Searches users by term for the requester.
+	// Searches active users by username, first name, or last name using prefix
+	// matching for short queries and fuzzy similarity for longer queries. Results
+	// are ordered by relevance and limited to at most the requested limit,
+	// with username-based alphabetical ordering used to ensure consistent ordering
+	// when relevance scores are equal.
 	SearchUsers(ctx context.Context, in *UserSearchRequest, opts ...grpc.CallOption) (*common.ListUsers, error)
-	// Updates profile fields for the given user.
+	// Updates profile fields for the given user and returns it.
+	// All fields must be included even if unchanged or they will be deleted.
+	// Calls media service for avatar url.
+	// Sets/updates cached basic user info to avoid outdated data.
 	UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
-	// Toggles public/private profile visibility.
+	// Toggles public/private profile visibility (public/private).
 	UpdateProfilePrivacy(ctx context.Context, in *UpdateProfilePrivacyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -469,28 +513,30 @@ func (c *userServiceClient) UpdateProfilePrivacy(ctx context.Context, in *Update
 // for forward compatibility.
 //
 // UserService covers auth, follow, group, and profile operations.
-// Current behavior: handlers return INVALID_ARGUMENT for nil/failed validation and INTERNAL for all other errors.
-// Desired (not yet implemented): surface UNAUTHENTICATED, PERMISSION_DENIED, NOT_FOUND, ALREADY_EXISTS, FAILED_PRECONDITION where appropriate.
 type UserServiceServer interface {
-	// Registers a new account and returns the created user profile.
-	// Current: INVALID_ARGUMENT on bad input; INTERNAL on other failures. Desired: ALREADY_EXISTS when username/email is taken.
+	// Registers a new account and returns userId and Username.
+	// Returns already exists if email is already in the database.
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
-	// Authenticates by username/email identifier and password.
-	// Current: INVALID_ARGUMENT on missing fields; INTERNAL otherwise. Desired: UNAUTHENTICATED for wrong credentials.
+	// Authenticates by username/email identifier and hashed password.
+	// Avoid using username as it's not unique, only email is.
+	// Returns basic user info (id, username, avatar url).
+	// Calls users and media service for user info and avatar url.
+	// Returns invalid argument if identifier and password don't return any rows.
 	LoginUser(context.Context, *LoginRequest) (*common.User, error)
 	// Updates a user's password after verifying the current password.
-	// Current: INVALID_ARGUMENT on bad ids/password; INTERNAL otherwise. Desired: UNAUTHENTICATED/PERMISSION_DENIED on mismatch.
+	// Returns permission denied if given old password doesn't match the one in the db.
 	UpdateUserPassword(context.Context, *UpdatePasswordRequest) (*emptypb.Empty, error)
 	// Updates the account email address.
-	// Current: INVALID_ARGUMENT on bad input; INTERNAL otherwise. Desired: ALREADY_EXISTS for duplicate email.
 	UpdateUserEmail(context.Context, *UpdateEmailRequest) (*emptypb.Empty, error)
-	// Returns followers of a user with pagination.
-	// Current: INVALID_ARGUMENT on bad pagination; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED for hidden users.
+	// Returns followers of a user with pagination, ordered by most recent follow first.
+	// Calls users and media service for user info and avatar url.
 	GetFollowersPaginated(context.Context, *Pagination) (*common.ListUsers, error)
-	// Returns accounts the user is following with pagination.
+	// Returns accounts the user is following with pagination, ordered my most recent follow first.
+	// Calls users and media service for user info and avatar url.
 	GetFollowingPaginated(context.Context, *Pagination) (*common.ListUsers, error)
-	// Follows a target user; may create a pending request for private profiles.
-	// Desired: ALREADY_EXISTS when already following, NOT_FOUND for missing users (not currently surfaced).
+	// Follows a target user if profile is public, or creates a pending request for private profiles.
+	// Returns invalid argument if user tries to follow self, not found if target user doesn't exist or isn't marked active.
+	// Returns two mutually exclusive booleans, IsPending and ViewerIsFollowing, to show whether the follow was pending or completed.
 	FollowUser(context.Context, *FollowUserRequest) (*FollowUserResponse, error)
 	// Unfollows a target user or cancels a pending follow request.
 	UnFollowUser(context.Context, *FollowUserRequest) (*emptypb.Empty, error)
@@ -498,49 +544,91 @@ type UserServiceServer interface {
 	HandleFollowRequest(context.Context, *HandleFollowRequestRequest) (*emptypb.Empty, error)
 	// Returns ids that the user is following.
 	GetFollowingIds(context.Context, *wrapperspb.Int64Value) (*common.UserIds, error)
-	// Suggests users to follow based on the caller's network.
+	// Returns a ranked list of user follow suggestions for the given user, based on
+	// second-degree follows (people followed by users you follow) and shared group
+	// memberships. Suggestions are weighted by interaction type, exclude the user
+	// themself and users already followed, and return the top results with slight
+	// randomization to avoid deterministic ordering.
 	GetFollowSuggestions(context.Context, *wrapperspb.Int64Value) (*common.ListUsers, error)
 	// Returns whether follower_id currently follows target_user_id.
 	IsFollowing(context.Context, *IsFollowingRequest) (*wrapperspb.BoolValue, error)
-	// Returns whether both users follow each other.
+	// Returns the following relationship between two users.
+	// Nil: neither is following the other.
+	// False: One is following the other.
+	// True: Both follow each other.
 	AreFollowingEachOther(context.Context, *FollowUserRequest) (*wrapperspb.BoolValue, error)
-	// Lists all groups with pagination (visibility filtered for requester).
+	// Returns all available groups paginated, ordered by most members first.
+	// Includes owner id, members count, and requester's group role if any (member, owner, pending)
+	// Calls media service for image urls
 	GetAllGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
-	// Lists groups the user belongs to with pagination.
+	// Returns groups the user belongs to with pagination, ordered by latest joined first
+	// Includes owner id, members count, and requester's group role if any (member, owner, pending)
+	// Calls media service for image urls
 	GetUserGroupsPaginated(context.Context, *Pagination) (*GroupArr, error)
-	// Returns details for a single group visible to the requester.
+	// Returns details for a single group.
+	// Includes owner id, members count, and requester's group role if any (member, owner, pending)
+	// Calls media service for image urls.
 	GetGroupInfo(context.Context, *GeneralGroupRequest) (*Group, error)
-	// Returns members of a group with pagination.
+	// Returns members of a group with pagination, ordered by latest joined first
+	// Returns permission denied if requester is not a group member.
+	// Calls users and media service for user info and avatar urls.
 	GetGroupMembers(context.Context, *GroupMembersRequest) (*GroupUserArr, error)
-	// Searches for groups matching the search term for the requester.
+	// Searches active groups by title and description using substring and fuzzy
+	// matching, ranks results by relevance, and annotates whether the requesting
+	// user is a member or owner. Results are ordered by score and popularity and
+	// support pagination.
+	// Score is computed from the search query’s similarity to a group’s title and
+	// description: for queries of length 3 or more, fuzzy similarity is used with
+	// higher weight on title matches; for shorter queries, simple substring matches
+	// are scored instead. Popularity is measured by the group’s members_count, with
+	// groups the user already belongs to ranked ahead of others.
 	SearchGroups(context.Context, *GroupSearchRequest) (*GroupArr, error)
-	// Invites a user to join a group.
+	// Invites a list of users to join a group.
+	// Returns permission denied if inviter is not a group member.
 	InviteToGroup(context.Context, *InviteToGroupRequest) (*emptypb.Empty, error)
 	// Checks if the requester is a member of the given group.
+	// The onwer is also treated as a member.
 	IsGroupMember(context.Context, *GeneralGroupRequest) (*wrapperspb.BoolValue, error)
-	// Creates or cancels a join request for the group.
+	// Creates a join request for the group.
+	// If the request already exists it updates to "pending".
 	RequestJoinGroup(context.Context, *GroupJoinRequest) (*emptypb.Empty, error)
 	// Accepts or declines a received group invite.
 	RespondToGroupInvite(context.Context, *HandleGroupInviteRequest) (*emptypb.Empty, error)
 	// Approves or rejects a user's join request.
+	// Returns permission declined if user handling the request is not owner of the group.
 	HandleGroupJoinRequest(context.Context, *HandleJoinRequest) (*emptypb.Empty, error)
-	// Leaves the specified group.
+	// Removes user as member of the specified group.
+	// Returns permission denied if user wasn't a member of the group.
 	LeaveGroup(context.Context, *GeneralGroupRequest) (*emptypb.Empty, error)
-	// Creates a new group and returns its id.
+	// Creates a new group with requester as owner and returns its id.
 	CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error)
-	// Updates group info (title, description, image)
+	// Updates group info (title, description, image).
+	// Returns permission denied if requester is not group owner.
+	// All fields must be included even if they remain unchanged or they will be deleted.
 	UpdateGroup(context.Context, *UpdateGroupRequest) (*emptypb.Empty, error)
-	// Retrieves basic public info for a user.
+	// Retrieves basic public info for a user (id, username, avatar id).
+	// Does not call media service for avatar url
 	GetBasicUserInfo(context.Context, *wrapperspb.Int64Value) (*common.User, error)
-	// Retrieves basic info for multiple users.
+	// Retrieves basic info for multiple users (id, username, avatar id).
+	// Does not call media service for avatar url
 	GetBatchBasicUserInfo(context.Context, *common.UserIds) (*common.ListUsers, error)
-	// Returns the full profile visible to the requester.
+	// Returns the full profile
+	// Includes following, followers and group counts.
+	// Also includes viewer specific info: whether it's own profile and whether the viewer is following or has pending follow request.
+	// Calls media service for avatar url.
 	GetUserProfile(context.Context, *GetUserProfileRequest) (*UserProfileResponse, error)
-	// Searches users by term for the requester.
+	// Searches active users by username, first name, or last name using prefix
+	// matching for short queries and fuzzy similarity for longer queries. Results
+	// are ordered by relevance and limited to at most the requested limit,
+	// with username-based alphabetical ordering used to ensure consistent ordering
+	// when relevance scores are equal.
 	SearchUsers(context.Context, *UserSearchRequest) (*common.ListUsers, error)
-	// Updates profile fields for the given user.
+	// Updates profile fields for the given user and returns it.
+	// All fields must be included even if unchanged or they will be deleted.
+	// Calls media service for avatar url.
+	// Sets/updates cached basic user info to avoid outdated data.
 	UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error)
-	// Toggles public/private profile visibility.
+	// Toggles public/private profile visibility (public/private).
 	UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
 }

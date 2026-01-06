@@ -35,7 +35,8 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPublicFeed(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
 			return
 		}
 
@@ -99,7 +100,8 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPersonalizedFeed(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 
@@ -164,7 +166,8 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetUserPostsPaginated(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 

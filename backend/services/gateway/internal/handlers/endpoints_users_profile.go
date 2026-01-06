@@ -45,7 +45,8 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 
 		grpcResp, err := h.UsersService.GetUserProfile(r.Context(), &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get user info: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get user info: "+err.Error())
 			return
 		}
 
@@ -126,7 +127,8 @@ func (s *Handlers) searchUsers() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.SearchUsers(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not search users: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not search users: "+err.Error())
 			return
 		}
 
@@ -174,7 +176,8 @@ func (s *Handlers) updateProfilePrivacy() http.HandlerFunc {
 
 		_, err = s.UsersService.UpdateProfilePrivacy(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update privacy: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update privacy: "+err.Error())
 			return
 		}
 
@@ -249,7 +252,8 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.UpdateUserProfile(ctx, grpcRequest)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update profile: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update profile: "+err.Error())
 			return
 		}
 

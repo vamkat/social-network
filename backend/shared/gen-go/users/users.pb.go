@@ -25,6 +25,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Response message describing a user's full profile
+// along with viewer specific information
 type UserProfileResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	UserId            int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -32,19 +34,19 @@ type UserProfileResponse struct {
 	FirstName         string                 `protobuf:"bytes,3,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	LastName          string                 `protobuf:"bytes,4,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	DateOfBirth       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`
-	Avatar            int64                  `protobuf:"varint,6,opt,name=avatar,proto3" json:"avatar,omitempty"`
-	AvatarUrl         string                 `protobuf:"bytes,7,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	About             string                 `protobuf:"bytes,8,opt,name=about,proto3" json:"about,omitempty"`
-	Public            bool                   `protobuf:"varint,9,opt,name=public,proto3" json:"public,omitempty"`
+	Avatar            int64                  `protobuf:"varint,6,opt,name=avatar,proto3" json:"avatar,omitempty"`                       //can be 0 if no avatar set
+	AvatarUrl         string                 `protobuf:"bytes,7,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"` //can be empty string if avatar=0
+	About             string                 `protobuf:"bytes,8,opt,name=about,proto3" json:"about,omitempty"`                          //can be empty string
+	Public            bool                   `protobuf:"varint,9,opt,name=public,proto3" json:"public,omitempty"`                       //public allows automatic follows, not public requires a follow request
 	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	Email             string                 `protobuf:"bytes,11,opt,name=email,proto3" json:"email,omitempty"`
 	FollowersCount    int64                  `protobuf:"varint,12,opt,name=followers_count,json=followersCount,proto3" json:"followers_count,omitempty"`
 	FollowingCount    int64                  `protobuf:"varint,13,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
-	GroupsCount       int64                  `protobuf:"varint,14,opt,name=groups_count,json=groupsCount,proto3" json:"groups_count,omitempty"`
+	GroupsCount       int64                  `protobuf:"varint,14,opt,name=groups_count,json=groupsCount,proto3" json:"groups_count,omitempty"` //includes groups where user is owner
 	OwnedGroupsCount  int64                  `protobuf:"varint,15,opt,name=owned_groups_count,json=ownedGroupsCount,proto3" json:"owned_groups_count,omitempty"`
-	ViewerIsFollowing bool                   `protobuf:"varint,16,opt,name=viewer_is_following,json=viewerIsFollowing,proto3" json:"viewer_is_following,omitempty"`
-	OwnProfile        bool                   `protobuf:"varint,17,opt,name=own_profile,json=ownProfile,proto3" json:"own_profile,omitempty"`
-	IsPending         bool                   `protobuf:"varint,18,opt,name=is_pending,json=isPending,proto3" json:"is_pending,omitempty"`
+	ViewerIsFollowing bool                   `protobuf:"varint,16,opt,name=viewer_is_following,json=viewerIsFollowing,proto3" json:"viewer_is_following,omitempty"` //the viewer is already following the user
+	OwnProfile        bool                   `protobuf:"varint,17,opt,name=own_profile,json=ownProfile,proto3" json:"own_profile,omitempty"`                        //the profile belongs to the viewer
+	IsPending         bool                   `protobuf:"varint,18,opt,name=is_pending,json=isPending,proto3" json:"is_pending,omitempty"`                           //the viewer has a pending follow request to the user
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -205,18 +207,18 @@ func (x *UserProfileResponse) GetIsPending() bool {
 	return false
 }
 
-// REGISTER USER
+// Request message for user registration
 type RegisterUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"` //can be empty string
 	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	DateOfBirth   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`
-	Avatar        int64                  `protobuf:"varint,5,opt,name=avatar,proto3" json:"avatar,omitempty"`
-	About         string                 `protobuf:"bytes,6,opt,name=about,proto3" json:"about,omitempty"`
-	Public        bool                   `protobuf:"varint,7,opt,name=public,proto3" json:"public,omitempty"`
+	Avatar        int64                  `protobuf:"varint,5,opt,name=avatar,proto3" json:"avatar,omitempty"` //can be 0 if no avatar is set
+	About         string                 `protobuf:"bytes,6,opt,name=about,proto3" json:"about,omitempty"`    //can be empty string
+	Public        bool                   `protobuf:"varint,7,opt,name=public,proto3" json:"public,omitempty"` //public allows automatic follows, not public requires a follow request
 	Email         string                 `protobuf:"bytes,8,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,9,opt,name=password,proto3" json:"password,omitempty"`
+	Password      string                 `protobuf:"bytes,9,opt,name=password,proto3" json:"password,omitempty"` //already hashed
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,10 +316,11 @@ func (x *RegisterUserRequest) GetPassword() string {
 	return ""
 }
 
+// Response message for successful registration
 type RegisterUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"` //generated automatically if not given by user
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -366,11 +369,11 @@ func (x *RegisterUserResponse) GetUsername() string {
 	return ""
 }
 
-// LOGIN
+// Request message for user login
 type LoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Identifier    string                 `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Identifier    string                 `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"` //email or username (avoid username as it's not unique)
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`     //already hashed
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -419,12 +422,12 @@ func (x *LoginRequest) GetPassword() string {
 	return ""
 }
 
-// UPDATE PASSWORD
+// Request message for updating user password
 type UpdatePasswordRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	OldPassword   string                 `protobuf:"bytes,2,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"`
-	NewPassword   string                 `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	OldPassword   string                 `protobuf:"bytes,2,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"` //already hashed
+	NewPassword   string                 `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"` //already hashed
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -480,7 +483,7 @@ func (x *UpdatePasswordRequest) GetNewPassword() string {
 	return ""
 }
 
-// UPDATE USER EMAIL
+// Request message for updating user email
 type UpdateEmailRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -533,7 +536,7 @@ func (x *UpdateEmailRequest) GetEmail() string {
 	return ""
 }
 
-// GET FOLLOWERS
+// Generic request message for paginated info
 type Pagination struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -594,7 +597,7 @@ func (x *Pagination) GetOffset() int32 {
 	return 0
 }
 
-// FOLLOW USER
+// Request message for following a target user
 type FollowUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FollowerId    int64                  `protobuf:"varint,1,opt,name=follower_id,json=followerId,proto3" json:"follower_id,omitempty"`
@@ -647,10 +650,11 @@ func (x *FollowUserRequest) GetTargetUserId() int64 {
 	return 0
 }
 
+// Response message for following a target user
 type FollowUserResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	IsPending         bool                   `protobuf:"varint,1,opt,name=is_pending,json=isPending,proto3" json:"is_pending,omitempty"`
-	ViewerIsFollowing bool                   `protobuf:"varint,2,opt,name=viewer_is_following,json=viewerIsFollowing,proto3" json:"viewer_is_following,omitempty"`
+	IsPending         bool                   `protobuf:"varint,1,opt,name=is_pending,json=isPending,proto3" json:"is_pending,omitempty"`                           //a pending follow request was created
+	ViewerIsFollowing bool                   `protobuf:"varint,2,opt,name=viewer_is_following,json=viewerIsFollowing,proto3" json:"viewer_is_following,omitempty"` //follow was successful immediately (profile was public)
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -699,11 +703,12 @@ func (x *FollowUserResponse) GetViewerIsFollowing() bool {
 	return false
 }
 
+// Request message for handing a follow request
 type HandleFollowRequestRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	RequesterId   int64                  `protobuf:"varint,2,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"`
-	Accept        bool                   `protobuf:"varint,3,opt,name=accept,proto3" json:"accept,omitempty"`
+	Accept        bool                   `protobuf:"varint,3,opt,name=accept,proto3" json:"accept,omitempty"` //true for accepting, false for rejecting
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -759,6 +764,7 @@ func (x *HandleFollowRequestRequest) GetAccept() bool {
 	return false
 }
 
+// Request message to check if user is following target user
 type IsFollowingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FollowerId    int64                  `protobuf:"varint,1,opt,name=follower_id,json=followerId,proto3" json:"follower_id,omitempty"`
@@ -811,7 +817,8 @@ func (x *IsFollowingRequest) GetTargetUserId() int64 {
 	return 0
 }
 
-// GROUPS
+// Response message describing a group
+// including viewer specific information in relation to group
 type Group struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	GroupId          int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -928,6 +935,7 @@ func (x *Group) GetIsPending() bool {
 	return false
 }
 
+// Response message including multiple groups
 type GroupArr struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupArr      []*Group               `protobuf:"bytes,1,rep,name=group_arr,json=groupArr,proto3" json:"group_arr,omitempty"`
@@ -972,6 +980,7 @@ func (x *GroupArr) GetGroupArr() []*Group {
 	return nil
 }
 
+// Generic request message pertaining to groups
 type GeneralGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -1024,6 +1033,7 @@ func (x *GeneralGroupRequest) GetUserId() int64 {
 	return 0
 }
 
+// Request message for getting paginated members of a group
 type GroupMembersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -1092,13 +1102,14 @@ func (x *GroupMembersRequest) GetOffset() int32 {
 	return 0
 }
 
+// Response message describing a group member
 type GroupUser struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Avatar        int64                  `protobuf:"varint,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
 	AvatarUrl     string                 `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	GroupRole     string                 `protobuf:"bytes,5,opt,name=group_role,json=groupRole,proto3" json:"group_role,omitempty"`
+	GroupRole     string                 `protobuf:"bytes,5,opt,name=group_role,json=groupRole,proto3" json:"group_role,omitempty"` //owner or member
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1168,6 +1179,7 @@ func (x *GroupUser) GetGroupRole() string {
 	return ""
 }
 
+// Response message describing multiple group members
 type GroupUserArr struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupUserArr  []*GroupUser           `protobuf:"bytes,1,rep,name=group_user_arr,json=groupUserArr,proto3" json:"group_user_arr,omitempty"`
@@ -1212,6 +1224,7 @@ func (x *GroupUserArr) GetGroupUserArr() []*GroupUser {
 	return nil
 }
 
+// Request message for searching for groups
 type GroupSearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SearchTerm    string                 `protobuf:"bytes,1,opt,name=search_term,json=searchTerm,proto3" json:"search_term,omitempty"`
@@ -1280,6 +1293,7 @@ func (x *GroupSearchRequest) GetOffset() int32 {
 	return 0
 }
 
+// Request message for inviting users to a group
 type InviteToGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	InviterId     int64                  `protobuf:"varint,1,opt,name=inviter_id,json=inviterId,proto3" json:"inviter_id,omitempty"`
@@ -1340,6 +1354,7 @@ func (x *InviteToGroupRequest) GetGroupId() int64 {
 	return 0
 }
 
+// Request message for requesting to join a group
 type GroupJoinRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -1392,11 +1407,12 @@ func (x *GroupJoinRequest) GetRequesterId() int64 {
 	return 0
 }
 
+// Request message for accepting or declining an invite to a group
 type HandleGroupInviteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	InvitedId     int64                  `protobuf:"varint,2,opt,name=invited_id,json=invitedId,proto3" json:"invited_id,omitempty"`
-	Accepted      bool                   `protobuf:"varint,3,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	Accepted      bool                   `protobuf:"varint,3,opt,name=accepted,proto3" json:"accepted,omitempty"` // true for accepting, false for declining
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1452,12 +1468,13 @@ func (x *HandleGroupInviteRequest) GetAccepted() bool {
 	return false
 }
 
+// Request message for accepting or rejecting a group join request
 type HandleJoinRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	RequesterId   int64                  `protobuf:"varint,2,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"`
-	OwnerId       int64                  `protobuf:"varint,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
-	Accepted      bool                   `protobuf:"varint,4,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	RequesterId   int64                  `protobuf:"varint,2,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"` //the user who sent the join request
+	OwnerId       int64                  `protobuf:"varint,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`             //the user handling the request (must be owner)
+	Accepted      bool                   `protobuf:"varint,4,opt,name=accepted,proto3" json:"accepted,omitempty"`                          //true for accepting, false for rejecting
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1520,6 +1537,7 @@ func (x *HandleJoinRequest) GetAccepted() bool {
 	return false
 }
 
+// Request for removing user from group (can be used for self)
 type RemoveFromGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -1580,12 +1598,13 @@ func (x *RemoveFromGroupRequest) GetOwnerId() int64 {
 	return 0
 }
 
+// Request message for creating a group
 type CreateGroupRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	OwnerId          int64                  `protobuf:"varint,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	GroupTitle       string                 `protobuf:"bytes,2,opt,name=group_title,json=groupTitle,proto3" json:"group_title,omitempty"`
 	GroupDescription string                 `protobuf:"bytes,3,opt,name=group_description,json=groupDescription,proto3" json:"group_description,omitempty"`
-	GroupImageId     int64                  `protobuf:"varint,4,opt,name=group_image_id,json=groupImageId,proto3" json:"group_image_id,omitempty"`
+	GroupImageId     int64                  `protobuf:"varint,4,opt,name=group_image_id,json=groupImageId,proto3" json:"group_image_id,omitempty"` //can be 0 if no image
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1648,13 +1667,14 @@ func (x *CreateGroupRequest) GetGroupImageId() int64 {
 	return 0
 }
 
+// Request message for updating a group's info
 type UpdateGroupRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	RequesterId      int64                  `protobuf:"varint,1,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"`
 	GroupId          int64                  `protobuf:"varint,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	GroupTitle       string                 `protobuf:"bytes,3,opt,name=group_title,json=groupTitle,proto3" json:"group_title,omitempty"`
 	GroupDescription string                 `protobuf:"bytes,4,opt,name=group_description,json=groupDescription,proto3" json:"group_description,omitempty"`
-	GroupImageId     int64                  `protobuf:"varint,5,opt,name=group_image_id,json=groupImageId,proto3" json:"group_image_id,omitempty"`
+	GroupImageId     int64                  `protobuf:"varint,5,opt,name=group_image_id,json=groupImageId,proto3" json:"group_image_id,omitempty"` //can be 0 if no image
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1724,7 +1744,7 @@ func (x *UpdateGroupRequest) GetGroupImageId() int64 {
 	return 0
 }
 
-// GET USER PROFILE
+// Request message for retrieving a user's profile
 type GetUserProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -1777,6 +1797,7 @@ func (x *GetUserProfileRequest) GetRequesterId() int64 {
 	return 0
 }
 
+// Request message for searching for users
 type UserSearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SearchTerm    string                 `protobuf:"bytes,1,opt,name=search_term,json=searchTerm,proto3" json:"search_term,omitempty"`
@@ -1829,6 +1850,7 @@ func (x *UserSearchRequest) GetLimit() int32 {
 	return 0
 }
 
+// Request message for updating own profile
 type UpdateProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -1836,8 +1858,8 @@ type UpdateProfileRequest struct {
 	FirstName     string                 `protobuf:"bytes,3,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	LastName      string                 `protobuf:"bytes,4,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	DateOfBirth   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`
-	Avatar        int64                  `protobuf:"varint,6,opt,name=avatar,proto3" json:"avatar,omitempty"`
-	About         string                 `protobuf:"bytes,7,opt,name=about,proto3" json:"about,omitempty"`
+	Avatar        int64                  `protobuf:"varint,6,opt,name=avatar,proto3" json:"avatar,omitempty"` //can be 0 if no image
+	About         string                 `protobuf:"bytes,7,opt,name=about,proto3" json:"about,omitempty"`    //can be empty string
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1921,10 +1943,11 @@ func (x *UpdateProfileRequest) GetAbout() string {
 	return ""
 }
 
+// Request message for updating own profile privacy
 type UpdateProfilePrivacyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Public        bool                   `protobuf:"varint,2,opt,name=public,proto3" json:"public,omitempty"`
+	Public        bool                   `protobuf:"varint,2,opt,name=public,proto3" json:"public,omitempty"` //public allows automatic follows, not public requires a follow request
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

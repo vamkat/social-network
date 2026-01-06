@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { Users, UserPlus, Settings, LogOut, Clock, UserRoundPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, UserPlus, Settings, LogOut, Clock, UserRoundPlus, User, Check, Loader2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
 import { requestJoinGroup } from "@/actions/groups/request-join-group";
 import { leaveGroup } from "@/actions/groups/leave-group";
+import { inviteToGroup } from "@/actions/groups/invite-to-group";
+import { getFollowers } from "@/actions/users/get-followers";
 import Tooltip from "../ui/Tooltip";
 import UpdateGroupModal from "./UpdateGroupModal";
 import { useRouter } from "next/navigation";
+import { useStore } from "@/store/store";
 
 export function GroupHeader({ group }) {
     const router = useRouter();
+    const user = useStore((state) => state.user);
     const [isMember, setIsMember] = useState(group.is_member);
     const [isOwner] = useState(group.is_owner);
     const [isPending, setIsPending] = useState(group.is_pending);
@@ -19,6 +23,13 @@ export function GroupHeader({ group }) {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+    // Invite modal state
+    const [followers, setFollowers] = useState([]);
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
+    const [isInviting, setIsInviting] = useState(false);
+    const [inviteSuccess, setInviteSuccess] = useState(false);
 
     const handleJoinRequest = async () => {
         if (isLoading) return;
@@ -58,8 +69,67 @@ export function GroupHeader({ group }) {
         }
     };
 
-    const handleInviteMembers = () => {
+    const handleInviteMembers = async () => {
         setShowInviteModal(true);
+        setInviteSuccess(false);
+        setSelectedUsers([]);
+
+        if (user?.id) {
+            setIsLoadingFollowers(true);
+            try {
+                const result = await getFollowers({ userId: user.id });
+                if (Array.isArray(result)) {
+                    setFollowers(result);
+                } else {
+                    setFollowers([]);
+                }
+            } catch (error) {
+                console.error("Error fetching followers:", error);
+                setFollowers([]);
+            } finally {
+                setIsLoadingFollowers(false);
+            }
+        }
+    };
+
+    const handleCloseInviteModal = () => {
+        setShowInviteModal(false);
+        setSelectedUsers([]);
+        setFollowers([]);
+        setInviteSuccess(false);
+    };
+
+    const toggleUserSelection = (userId) => {
+        setSelectedUsers((prev) =>
+            prev.includes(userId)
+                ? prev.filter((id) => id !== userId)
+                : [...prev, userId]
+        );
+    };
+
+    const handleSendInvites = async () => {
+        if (selectedUsers.length === 0 || isInviting) return;
+
+        setIsInviting(true);
+        try {
+            const response = await inviteToGroup({
+                groupId: group.group_id,
+                invitedIds: selectedUsers,
+            });
+
+            if (response.success) {
+                setInviteSuccess(true);
+                setTimeout(() => {
+                    handleCloseInviteModal();
+                }, 1500);
+            } else {
+                console.error("Error inviting users:", response.error);
+            }
+        } catch (error) {
+            console.error("Error inviting users:", error);
+        } finally {
+            setIsInviting(false);
+        }
     };
 
     const handleUpdateSuccess = () => {
@@ -224,23 +294,80 @@ export function GroupHeader({ group }) {
                 loadingText="Leaving..."
             />
 
-            {/* Invite Members Modal - Placeholder */}
+            {/* Invite Members Modal */}
             {showInviteModal && (
                 <Modal
                     isOpen={showInviteModal}
-                    onClose={() => setShowInviteModal(false)}
+                    onClose={handleCloseInviteModal}
                     title="Invite Members"
-                    description="Select friends to invite to this group."
-                    onConfirm={() => {
-                        // TODO: Implement invite logic
-                        setShowInviteModal(false);
-                    }}
-                    confirmText="Send Invites"
+                    description={inviteSuccess ? "" : "Select followers to invite to this group."}
+                    onConfirm={inviteSuccess ? undefined : handleSendInvites}
+                    confirmText={`Send Invites${selectedUsers.length > 0 ? ` (${selectedUsers.length})` : ""}`}
                     cancelText="Cancel"
+                    isLoading={isInviting}
+                    loadingText="Sending..."
                 >
-                    <div className="p-4 text-center text-(--muted)">
-                        <p>Invite functionality coming soon...</p>
-                    </div>
+                    {inviteSuccess ? (
+                        <div className="py-8 text-center">
+                            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-(--accent)/5 flex items-center justify-center">
+                                <Check className="w-6 h-6 text-(--accent)" />
+                            </div>
+                            <p className="text-(--accent) font-medium">Users have been successfully invited!</p>
+                        </div>
+                    ) : isLoadingFollowers ? (
+                        <div className="py-8 flex flex-col items-center gap-3">
+                            <Loader2 className="w-6 h-6 text-(--accent) animate-spin" />
+                            <p className="text-sm text-(--muted)">Loading followers...</p>
+                        </div>
+                    ) : followers.length === 0 ? (
+                        <div className="py-8 text-center text-(--muted)">
+                            <p>No followers to invite.</p>
+                        </div>
+                    ) : (
+                        <div className="max-h-64 overflow-y-auto -mx-5 px-5">
+                            <div className="space-y-1">
+                                {followers.map((follower) => {
+                                    const isSelected = selectedUsers.includes(follower.id);
+                                    return (
+                                        <button
+                                            key={follower.id}
+                                            type="button"
+                                            onClick={() => toggleUserSelection(follower.id)}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors cursor-pointer ${
+                                                isSelected
+                                                    ? "bg-(--accent)/10 border border-(--accent)/30"
+                                                    : "hover:bg-(--muted)/5 border border-transparent"
+                                            }`}
+                                        >
+                                            <div className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                {follower.avatar_url ? (
+                                                    <img
+                                                        src={follower.avatar_url}
+                                                        alt={follower.username}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <User className="w-5 h-5 text-(--muted)" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <p className="text-sm font-medium text-foreground truncate">
+                                                    {follower.username}
+                                                </p>
+                                            </div>
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                                isSelected
+                                                    ? "bg-(--accent) border-(--accent)"
+                                                    : "border-(--border)"
+                                            }`}>
+                                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </Modal>
             )}
 

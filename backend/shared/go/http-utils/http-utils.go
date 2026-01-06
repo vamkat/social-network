@@ -7,9 +7,11 @@ import (
 	"errors"
 	"net/http"
 	"social-network/shared/go/ct"
+	"social-network/shared/go/gorpc"
 	tele "social-network/shared/go/telemetry"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/status"
 )
 
 // Adds value val to r context with key 'key'
@@ -84,6 +86,15 @@ func B64urlDecode(s string) ([]byte, error) {
 func GenUUID() string {
 	uuid := uuid.New()
 	return uuid.String()
+}
+
+func ReturnHttpError(ctx context.Context, w http.ResponseWriter, err error) {
+	httpStatus, class := gorpc.Classify(err)
+	msg := class.GRPCCode.String()
+	if s, ok := status.FromError(err); ok {
+		msg = s.Message()
+	}
+	ErrorJSON(ctx, w, httpStatus, msg)
 }
 
 // var (

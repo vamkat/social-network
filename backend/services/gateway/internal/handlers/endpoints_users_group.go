@@ -75,7 +75,8 @@ func (s *Handlers) createGroup() http.HandlerFunc {
 
 		groupId, err := s.UsersService.CreateGroup(ctx, &createGroupRequest)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not create group: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not create group: "+err.Error())
 			return
 		}
 
@@ -158,7 +159,8 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 
 		_, err := s.UsersService.UpdateGroup(ctx, &updateGroupRequest)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update group: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update group: "+err.Error())
 			return
 		}
 
@@ -205,7 +207,8 @@ func (s *Handlers) getAllGroupsPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetAllGroupsPaginated(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch groups: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch groups: "+err.Error())
 			return
 		}
 
@@ -255,7 +258,8 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetGroupInfo(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group info: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group info: "+err.Error())
 			return
 		}
 
@@ -305,7 +309,8 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetGroupMembers(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group members: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group members: "+err.Error())
 			return
 		}
 
@@ -353,7 +358,8 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetUserGroupsPaginated(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch user groups: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch user groups: "+err.Error())
 			return
 		}
 
@@ -378,6 +384,7 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 	}
 }
 
+// owner to accept or decline requests
 func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -401,7 +408,8 @@ func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 
 		_, err = s.UsersService.HandleGroupJoinRequest(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not handle group join request: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not handle group join request: "+err.Error())
 			return
 		}
 
@@ -433,7 +441,8 @@ func (s *Handlers) inviteToGroup() http.HandlerFunc {
 
 		_, err = s.UsersService.InviteToGroup(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not invite user to group: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not invite user to group: "+err.Error())
 			return
 		}
 
@@ -462,7 +471,8 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 
 		_, err = s.UsersService.LeaveGroup(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not leave group: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not leave group: "+err.Error())
 			return
 		}
 
@@ -470,7 +480,8 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
+// request to join a group
+func (s *Handlers) requestJoinGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
@@ -491,7 +502,8 @@ func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
 
 		_, err = s.UsersService.RequestJoinGroup(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not process join request: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not process join request: "+err.Error())
 			return
 		}
 
@@ -499,6 +511,7 @@ func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
 	}
 }
 
+// accept or decline an invitation to 
 func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -526,7 +539,8 @@ func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 
 		_, err = s.UsersService.RespondToGroupInvite(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not respond to invite: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not respond to invite: "+err.Error())
 			return
 		}
 
@@ -563,7 +577,8 @@ func (s *Handlers) searchGroups() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.SearchGroups(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not search groups: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not search groups: "+err.Error())
 			return
 		}
 

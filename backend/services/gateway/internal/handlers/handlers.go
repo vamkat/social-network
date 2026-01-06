@@ -246,7 +246,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			Auth().
 			EnrichContext().
 			RateLimit(USERID, 20, 5).
-			Finalize(h.requestJoinGroupOrCancel()))
+			Finalize(h.requestJoinGroup()))
 
 	mux.HandleFunc("/group/invite/response",
 		Chain("/group/invite/response").
