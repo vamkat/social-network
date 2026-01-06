@@ -384,6 +384,7 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 	}
 }
 
+// owner to accept or decline requests
 func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -479,7 +480,8 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 	}
 }
 
-func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
+// request to join a group
+func (s *Handlers) requestJoinGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
@@ -509,6 +511,7 @@ func (s *Handlers) requestJoinGroupOrCancel() http.HandlerFunc {
 	}
 }
 
+// accept or decline an invitation to 
 func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
