@@ -83,7 +83,7 @@ export default function FriendsFeedContent({ initialPosts }) {
                         <AnimatePresence mode="popLayout">
                             {posts.map((post, index) => (
                                 <motion.div
-                                    key={post.post_id}
+                                    key={post.post_id + index}
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
