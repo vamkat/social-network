@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Image as ImageIcon, ChevronDown } from "lucide-react";
+import { X, Image as ImageIcon, ChevronDown, User, Check } from "lucide-react";
 import Tooltip from "@/components/ui/Tooltip";
 import { isValidImage } from "@/lib/validation";
 import { createPost } from "@/actions/posts/create-post";
@@ -330,32 +330,55 @@ export default function CreatePost({ onPostCreated=null }) {
 
                 {/* Follower Multi-Select for Selected */}
                 {privacy === "selected" && (
-                    <div className="border border-(--border) rounded-xl p-4 space-y-2 bg-(--muted)/5">
+                    <div className="border border-(--border) rounded-xl p-4 space-y-2 bg-(--muted)/5 mt-3">
                         <p className="text-xs font-medium text-(--muted)">
                             Select followers who can see this post:
                         </p>
                         <div
                             ref={followersListRef}
-                            className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar"
+                            className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar"
                         >
                             {followers.length > 0 ? (
                                 <>
-                                    {followers.map((follower, index) => (
-                                        <label
-                                            key={follower.id || `follower-${index}`}
-                                            className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedFollowers.includes(String(follower.id))}
-                                                onChange={() => toggleFollower(follower.id)}
-                                                className="rounded border-gray-300"
-                                            />
-                                            <span className="text-sm">
-                                                @{follower.username}
-                                            </span>
-                                        </label>
-                                    ))}
+                                    {followers.map((follower, index) => {
+                                        const isSelected = selectedFollowers.includes(String(follower.id));
+                                        return (
+                                            <button
+                                                key={follower.id || `follower-${index}`}
+                                                type="button"
+                                                onClick={() => toggleFollower(follower.id)}
+                                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors cursor-pointer ${
+                                                    isSelected
+                                                        ? "bg-(--accent)/10 border border-(--accent)/30"
+                                                        : "hover:bg-(--muted)/10 border border-transparent"
+                                                }`}
+                                            >
+                                                <div className="w-9 h-9 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                    {follower.avatar_url ? (
+                                                        <img
+                                                            src={follower.avatar_url}
+                                                            alt={follower.username}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <User className="w-4 h-4 text-(--muted)" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0 text-left">
+                                                    <p className="text-sm font-medium text-foreground truncate">
+                                                        {follower.username}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                                    isSelected
+                                                        ? "bg-(--accent) border-(--accent)"
+                                                        : "border-(--border)"
+                                                }`}>
+                                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                     {isLoadingFollowers && (
                                         <div className="flex justify-center py-2">
                                             <div className="w-4 h-4 border-2 border-(--accent) border-t-transparent rounded-full animate-spin"></div>
