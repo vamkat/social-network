@@ -9,7 +9,6 @@ export async function getGroup(groupId) {
             body: JSON.stringify({
                 group_id: groupId,
             }),
-            forwardCookies: true,
             headers: {
                 "Content-Type": "application/json"
             }

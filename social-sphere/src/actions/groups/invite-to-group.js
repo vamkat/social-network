@@ -4,13 +4,12 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function inviteToGroup({ groupId, invitedIds }) {
     try {
-        const response = await serverApiRequest("/group/invite", {
+        const response = await serverApiRequest("/group/invite/user", {
             method: "POST",
             body: JSON.stringify({
                 group_id: groupId,
-                invited_ids: invitedIds,
+                invited_id: invitedIds,
             }),
-            forwardCookies: true,
             headers: {
                 "Content-Type": "application/json"
             }
