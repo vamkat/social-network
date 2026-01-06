@@ -65,8 +65,8 @@ func randomLogin(ctx context.Context) error {
 	for range 100 {
 		req := newLoginReq()
 		_, err := UsersService.LoginUser(ctx, req)
-		if err != nil && !strings.Contains(err.Error(), "invalid identifier or password") {
-			return errors.New(fail + "wrong type of error!")
+		if err != nil && !strings.Contains(err.Error(), "wrong credentials") {
+			return errors.New(fail + "wrong type of error!: " + err.Error())
 		}
 		if err == nil {
 			return errors.New(fail + "expected error! cause these random logins should all be failing!")

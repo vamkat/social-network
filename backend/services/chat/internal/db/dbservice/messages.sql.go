@@ -2,15 +2,26 @@ package dbservice
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
-// Creates a message row with conversation id if user is a memeber.
+// Creates a message row with conversation id if user is a member.
 // If user match of conversation id and user id fails no rows are returned.
-func (q *Queries) CreateMessage(ctx context.Context,
+func (q *Queries) CreateMessageWithMembersJoin(ctx context.Context,
 	arg md.CreateMessageParams) (msg md.MessageResp, err error) {
-	row := q.db.QueryRow(ctx, createMessage, arg.ConversationId, arg.SenderId, arg.MessageText)
+	input := fmt.Sprintf("arg: %#v", arg)
+	row := q.db.QueryRow(ctx,
+		createMessageWithMembersJoin,
+		arg.ConversationId,
+		arg.SenderId,
+		arg.MessageText,
+	)
 	err = row.Scan(
 		&msg.Id,
 		&msg.ConversationID,
@@ -20,6 +31,41 @@ func (q *Queries) CreateMessage(ctx context.Context,
 		&msg.UpdatedAt,
 		&msg.DeletedAt,
 	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return msg, ce.New(ce.ErrPermissionDenied, err, input)
+		}
+		return msg, ce.New(ce.ErrInternal, err, input)
+	}
+	return msg, err
+}
+
+func (q *Queries) CreateMessage(ctx context.Context,
+	arg md.CreateMessageParams) (msg md.MessageResp, err error) {
+	input := fmt.Sprintf("arg: %#v", arg)
+
+	row := q.db.QueryRow(ctx,
+		createMessage,
+		arg.ConversationId,
+		arg.SenderId,
+		arg.MessageText,
+	)
+
+	err = row.Scan(
+		&msg.Id,
+		&msg.ConversationID,
+		&msg.Sender.UserId,
+		&msg.MessageText,
+		&msg.CreatedAt,
+		&msg.UpdatedAt,
+		&msg.DeletedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return msg, ce.New(ce.ErrInvalidArgument, err, input)
+		}
+		return msg, ce.New(ce.ErrInternal, err, input)
+	}
 	return msg, err
 }
 
