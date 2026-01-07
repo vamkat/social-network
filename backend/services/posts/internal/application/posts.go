@@ -27,6 +27,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 	if req.GroupId == 0 {
 		groupId.Valid = false
 	}
+	groupId.Valid = true
 
 	audience := ds.IntendedAudience(req.Audience.String())
 

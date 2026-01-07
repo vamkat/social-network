@@ -8,6 +8,8 @@ import (
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagination) ([]models.Group, error) {
@@ -631,6 +633,11 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 		GroupImageID:     req.GroupImage.Int64(),
 	})
 	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.Code == "23505" { // unique_violation
+				return 0, ce.New(ce.ErrAlreadyExists, err, input).WithPublic("group already exists")
+			}
+		}
 		return 0, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
