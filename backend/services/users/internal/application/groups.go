@@ -879,6 +879,36 @@ func (s *Application) GetPendingGroupJoinRequests(ctx context.Context, req model
 
 }
 
+func (s *Application) GetPendingGroupJoinRequestsCount(ctx context.Context, req models.GroupJoinRequest) (int64, error) {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateStruct(req); err != nil {
+		return 0, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
+	}
+
+	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.RequesterId,
+	})
+	if err != nil {
+		return 0, ce.Wrap(nil, err)
+	}
+	if !isOwner {
+		return 0, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not the owner of group %v", req.RequesterId, req.GroupId), input).WithPublic("permission denied")
+	}
+
+	//paginated, sorted by newest first
+	count, err := s.db.GetPendingGroupJoinRequestsCount(ctx, ds.GetPendingGroupJoinRequestsCountParams{
+		GroupId: req.GroupId.Int64(),
+	})
+	if err != nil {
+		return 0, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+
+	return count, nil
+
+}
+
 // ---------------------------------------------------------------------
 // low priority
 // ---------------------------------------------------------------------

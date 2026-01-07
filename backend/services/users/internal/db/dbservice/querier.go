@@ -36,6 +36,7 @@ type Querier interface {
 	GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error)
 	GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error)
 	GetPendingGroupJoinRequests(ctx context.Context, arg GetPendingGroupJoinRequestsParams) ([]GetPendingGroupJoinRequestsRow, error)
+	GetPendingGroupJoinRequestsCount(ctx context.Context, arg GetPendingGroupJoinRequestsCountParams) (int64, error)
 	GetUserBasic(ctx context.Context, id int64) (GetUserBasicRow, error)
 	GetUserForLogin(ctx context.Context, arg GetUserForLoginParams) (GetUserForLoginRow, error)
 	GetUserGroupRole(ctx context.Context, arg GetUserGroupRoleParams) (NullGroupRole, error)

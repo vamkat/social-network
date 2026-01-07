@@ -284,6 +284,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.getPendingGroupJoinRequests()))
 
+	mux.HandleFunc("/group/pending-count",
+		Chain("/group/pending-count").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.getPendingGroupJoinRequestsCount()))
+
 	mux.HandleFunc("/group/notinvited",
 		Chain("/group/notinvited").
 			AllowedMethod("POST").

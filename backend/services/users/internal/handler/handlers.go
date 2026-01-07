@@ -563,6 +563,33 @@ func (s *UsersHandler) GetPendingGroupJoinRequests(ctx context.Context, req *pb.
 	return usersToPB(resp), nil
 }
 
+func (s *UsersHandler) GetPendingGroupJoinRequestsCount(ctx context.Context, req *pb.GeneralGroupRequest) (*pb.CountResp, error) {
+	tele.Info(ctx, "GetPendingGroupJoinRequestsCount called with @1", "request", req)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "GetPendingGroupJoinRequestsCount: request is nil")
+	}
+	userId := req.GetUserId()
+	if err := invalidId("userId", userId); err != nil {
+		return nil, err
+	}
+
+	groupId := req.GetGroupId()
+	if err := invalidId("groupId", groupId); err != nil {
+		return nil, err
+	}
+
+	resp, err := s.Application.GetPendingGroupJoinRequestsCount(ctx, models.GroupJoinRequest{
+		GroupId:     ct.Id(groupId),
+		RequesterId: ct.Id(userId),
+	})
+	if err != nil {
+		tele.Error(ctx, "Error in GetPendingGroupJoinRequestsCount. @1", "error", err.Error(), "request", req)
+		return nil, ce.GRPCStatus(err)
+	}
+	return &pb.CountResp{Id: resp}, nil
+}
+
 func (s *UsersHandler) GetFollowersNotInvitedToGroup(ctx context.Context, req *pb.GroupMembersRequest) (*cm.ListUsers, error) {
 	tele.Info(ctx, "GetFollowersNotInvitedToGroup called with @1", "request", req)
 

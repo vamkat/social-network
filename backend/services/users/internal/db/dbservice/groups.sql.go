@@ -973,3 +973,35 @@ func (q *Queries) GetPendingGroupJoinRequests(ctx context.Context, arg GetPendin
 	}
 	return items, nil
 }
+
+const getPendingGroupJoinRequestsCount = `-- name: GetPendingGroupJoinRequestsCount :one
+SELECT COUNT(*)
+FROM group_join_requests gjr
+JOIN users u
+    ON u.id = gjr.user_id
+WHERE gjr.group_id = $1
+  AND gjr.status = 'pending'
+  AND gjr.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.current_status = 'active';
+`
+
+type GetPendingGroupJoinRequestsCountParams struct {
+	GroupId int64
+}
+
+func (q *Queries) GetPendingGroupJoinRequestsCount(
+	ctx context.Context,
+	arg GetPendingGroupJoinRequestsCountParams,
+) (int64, error) {
+	var count int64
+	err := q.db.QueryRow(
+		ctx,
+		getPendingGroupJoinRequestsCount,
+		arg.GroupId,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

@@ -93,6 +93,10 @@ service UserService {
   // Calls users and media service for user info and avatar urls.
   rpc GetPendingGroupJoinRequests (GroupMembersRequest) returns (common.ListUsers);
 
+  //Returns the total count of all pending group requests for group owner.
+  //Returns permission denied if requester is not the group owner.
+  rpc GetPendingGroupJoinRequestsCount (GeneralGroupRequest) returns (CountResp);
+
   //Returns paginated user's followers who have not yet been invited to join the group.
   //Results are sorted by descending follow date.
   //Returns permission denied if requester is not a group member.
@@ -179,6 +183,13 @@ service UserService {
 
   // Toggles public/private profile visibility (public/private).
   rpc UpdateProfilePrivacy (UpdateProfilePrivacyRequest) returns (google.protobuf.Empty);
+}
+
+// GENERAL
+
+//Generic response message with int64 (can be id or count)
+message CountResp{
+    int64 id=1;
 }
 
 // PROFILE

@@ -721,6 +721,42 @@ func (s *Handlers) getPendingGroupJoinRequests() http.HandlerFunc {
 	}
 }
 
+func (s *Handlers) getPendingGroupJoinRequestsCount() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		type reqBody struct {
+			GroupId ct.Id `json:"group_id"`
+		}
+
+		body, err := utils.JSON2Struct(&reqBody{}, r)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		req := &users.GeneralGroupRequest{
+			GroupId: body.GroupId.Int64(),
+			UserId:  claims.UserId,
+		}
+
+		grpcResp, err := s.UsersService.GetPendingGroupJoinRequestsCount(ctx, req)
+		if err != nil {
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch group members: "+err.Error())
+			return
+		}
+
+		resp := grpcResp.Id
+
+		utils.WriteJSON(ctx, w, http.StatusOK, resp)
+	}
+}
+
 func (s *Handlers) GetFollowersNotInvitedToGroup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
