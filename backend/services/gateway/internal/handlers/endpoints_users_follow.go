@@ -27,13 +27,15 @@ func (s *Handlers) getFollowSuggestions() http.HandlerFunc {
 
 		part1, err := s.UsersService.GetFollowSuggestions(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch suggestions from users: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch suggestions from users: "+err.Error())
 			return
 		}
 
 		part2, err := s.PostsService.SuggestUsersByPostActivity(ctx, &posts.SimpleIdReq{Id: requesterId})
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch suggestions from posts: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch suggestions from posts: "+err.Error())
 			return
 		}
 
@@ -91,7 +93,8 @@ func (s *Handlers) getFollowersPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetFollowersPaginated(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch followers: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch followers: "+err.Error())
 			return
 		}
 
@@ -138,7 +141,8 @@ func (s *Handlers) getFollowingPaginated() http.HandlerFunc {
 
 		grpcResp, err := s.UsersService.GetFollowingPaginated(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch following users: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not fetch following users: "+err.Error())
 			return
 		}
 
@@ -179,7 +183,8 @@ func (s *Handlers) followUser() http.HandlerFunc {
 
 		resp, err := s.UsersService.FollowUser(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not follow user: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not follow user: "+err.Error())
 			return
 		}
 
@@ -213,8 +218,9 @@ func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 		}
 
 		_, err = s.UsersService.HandleFollowRequest(ctx, req)
-		if err != nil { //soft TODO better error?
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not handle follow request: "+err.Error())
+		if err != nil {
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not handle follow request: "+err.Error())
 			return
 		}
 
@@ -243,7 +249,8 @@ func (s *Handlers) unFollowUser() http.HandlerFunc {
 
 		_, err = s.UsersService.UnFollowUser(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not unfollow user: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not unfollow user: "+err.Error())
 			return
 		}
 

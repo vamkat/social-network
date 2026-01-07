@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// TODO: Rename these to ErrCode... for clarity
 var (
 	// ErrOK indicates successful completion.
 	// This error should generally not be returned; use nil instead.
@@ -60,7 +61,7 @@ var (
 	ErrUnauthenticated = errors.New("unauthenticated")
 )
 
-var errorToGRPC = map[error]codes.Code{
+var classToGRPC = map[error]codes.Code{
 	ErrOK:                 codes.OK,
 	ErrCanceled:           codes.Canceled,
 	ErrUnknown:            codes.Unknown,
@@ -80,7 +81,7 @@ var errorToGRPC = map[error]codes.Code{
 	ErrUnauthenticated:    codes.Unauthenticated,
 }
 
-var grpcToError = map[codes.Code]error{
+var grpcToErrorClass = map[codes.Code]error{
 	codes.OK:                 ErrOK,
 	codes.Canceled:           ErrCanceled,
 	codes.Unknown:            ErrUnknown,

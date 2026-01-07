@@ -2,8 +2,6 @@ package dbservice
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -28,6 +26,7 @@ type Querier interface {
 	GetFollowSuggestions(ctx context.Context, followerID int64) ([]GetFollowSuggestionsRow, error)
 	GetFollowerCount(ctx context.Context, followingID int64) (int64, error)
 	GetFollowers(ctx context.Context, arg GetFollowersParams) ([]GetFollowersRow, error)
+	GetFollowersNotInvitedToGroup(ctx context.Context, arg GetFollowersNotInvitedToGroupParams) ([]GetFollowersNotInvitedToGroupRow, error)
 	GetFollowing(ctx context.Context, arg GetFollowingParams) ([]GetFollowingRow, error)
 	GetFollowingCount(ctx context.Context, followerID int64) (int64, error)
 	GetFollowingIds(ctx context.Context, followerID int64) ([]int64, error)
@@ -36,6 +35,7 @@ type Querier interface {
 	GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupInfoRow, error)
 	GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error)
 	GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error)
+	GetPendingGroupJoinRequests(ctx context.Context, arg GetPendingGroupJoinRequestsParams) ([]GetPendingGroupJoinRequestsRow, error)
 	GetUserBasic(ctx context.Context, id int64) (GetUserBasicRow, error)
 	GetUserForLogin(ctx context.Context, arg GetUserForLoginParams) (GetUserForLoginRow, error)
 	GetUserGroupRole(ctx context.Context, arg GetUserGroupRoleParams) (NullGroupRole, error)
@@ -46,7 +46,7 @@ type Querier interface {
 	InsertNewUserAuth(ctx context.Context, arg InsertNewUserAuthParams) error
 	IsFollowRequestPending(ctx context.Context, arg IsFollowRequestPendingParams) (bool, error)
 	IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error)
-	IsGroupMembershipPending(ctx context.Context, arg IsGroupMembershipPendingParams) (pgtype.Bool, error)
+	IsGroupMembershipPending(ctx context.Context, arg IsGroupMembershipPendingParams) (IsGroupMembershipPendingRow, error)
 	IsUserGroupMember(ctx context.Context, arg IsUserGroupMemberParams) (bool, error)
 	IsUserGroupOwner(ctx context.Context, arg IsUserGroupOwnerParams) (bool, error)
 	LeaveGroup(ctx context.Context, arg LeaveGroupParams) error

@@ -12,7 +12,7 @@ import (
 // Error represents a custom error type that includes classification, cause, and context.
 // It implements the error interface and supports error wrapping and classification.
 type Error struct {
-	code      error  // Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil
+	class     error  // Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil
 	input     string // The input given to the func returning or wraping: args, structs.
 	stack     string // The stack starting from the most undeliyng error and three levels up.
 	err       error  // Cause: wrapped original error.
@@ -29,10 +29,9 @@ func (e *Error) Error() string {
 	}
 
 	var builder strings.Builder
-
-	if e.code != nil {
+	if e.class != nil {
 		builder.WriteString("\nCode: ")
-		builder.WriteString(e.code.Error())
+		builder.WriteString(e.class.Error())
 	}
 
 	if e.input != "" {
@@ -49,6 +48,7 @@ func (e *Error) Error() string {
 		builder.WriteString(" || ")
 		builder.WriteString(e.err.Error())
 	}
+
 	return builder.String()
 }
 
@@ -68,9 +68,9 @@ func GetSource(err error) string {
 	}
 }
 
-// Method for errors.Is parsing. Returns `Error.code` match.
-func (e *Error) Is(target error) bool {
-	return e.code == target
+// Method for errors.IsClass parsing. Returns `Error.code` match.
+func (e *Error) IsClass(target error) bool {
+	return e.class == target
 }
 
 // Method for error.As parsing. Returns the `MediaError.Err`.
@@ -78,19 +78,17 @@ func (e *Error) Unwrap() error {
 	return e.err
 }
 
-// TODO vagelis make wrap embed the stack trace into the error it receives, ex. "(<package_name>)<function_name>: <error_message> "(application)DeleteComment: request validation failed"
-// TODO New function
 // Creates a new Error with code
-func New(code error, err error, msg ...string) *Error {
+func New(class error, err error, input ...string) *Error {
 	if err == nil {
 		return nil
 	}
 
 	e := &Error{
-		code:  parseCode(code),
+		class: parseCode(class),
 		err:   err,
 		stack: getStack(1, 3),
-		input: getInput(msg...),
+		input: getInput(input...),
 	}
 	return e
 }
@@ -109,7 +107,7 @@ func New(code error, err error, msg ...string) *Error {
 //   - If kind is nil and the err is not media error or lacks kind then kind is set to ErrUnknownClass.
 //
 // It is recommended to only use nil kind if the underlying error is of type Error and its kind is not nil.
-func Wrap(code error, err error, msg ...string) *Error {
+func Wrap(class error, err error, input ...string) *Error {
 	if err == nil {
 		return nil
 	}
@@ -118,35 +116,31 @@ func Wrap(code error, err error, msg ...string) *Error {
 	if errors.As(err, &ce) {
 		// Wrapping an existing custom error
 		e := &Error{
-			code:      ce.code,
+			class:     ce.class,
 			err:       err,
 			stack:     getStack(1, 3),
 			publicMsg: ce.publicMsg, // retain public message by default
 		}
 
-		if code != nil {
-			e.code = parseCode(code)
+		if class != nil {
+			e.class = parseCode(class)
 		}
-		if e.code == nil {
-			e.code = ErrUnknown
+		if e.class == nil {
+			e.class = ErrUnknown
 		}
 
-		e.input = getInput(msg...)
+		e.input = getInput(input...)
 
 		return e
 	}
 
-	if code == nil {
-		code = ErrUnknown
-	}
-
 	e := &Error{
-		code:  code,
+		class: parseCode(class),
 		err:   err,
 		stack: getStack(1, 3),
 	}
 
-	e.input = getInput(msg...)
+	e.input = getInput(input...)
 
 	return e
 }
@@ -164,7 +158,7 @@ func (e *Error) WithPublic(msg string) *Error {
 
 // Returns *Error e  with error code c. If c fails validation e's code becomes ErrUnknown.
 func (e *Error) WithCode(c error) *Error {
-	e.code = parseCode(c)
+	e.class = parseCode(c)
 	return e
 }
 
@@ -190,7 +184,7 @@ func ToGRPCCode(err error) codes.Code {
 	// Handle your domain error
 	var e *Error
 	if errors.As(err, &e) {
-		if code, ok := errorToGRPC[e.code]; ok {
+		if code, ok := classToGRPC[e.class]; ok {
 			return code
 		}
 	}
@@ -216,7 +210,7 @@ func ParseGrpcErr(err error, input ...string) error {
 	code := st.Code() // codes.NotFound, codes.Internal, etc.
 	message := st.Message()
 
-	if domainErr, ok := grpcToError[code]; ok {
+	if domainErr, ok := grpcToErrorClass[code]; ok {
 		return New(domainErr, errors.New(message), getInput(input...))
 	}
 	return New(ErrUnknown, err, getInput(input...))
@@ -250,7 +244,7 @@ func GRPCStatus(err error) error {
 			msg = "missing error message"
 		}
 
-		if code, ok := errorToGRPC[e.code]; ok {
+		if code, ok := classToGRPC[e.class]; ok {
 			return status.Errorf(code, "service error: %v", msg)
 		}
 	}

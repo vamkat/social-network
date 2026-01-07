@@ -35,7 +35,8 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPublicFeed(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
 			return
 		}
 
@@ -99,7 +100,8 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPersonalizedFeed(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 
@@ -164,7 +166,8 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetUserPostsPaginated(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 
@@ -198,6 +201,72 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send user %v posts: %v", body.CreatorId, err.Error()))
+			return
+		}
+
+	}
+}
+
+func (h *Handlers) getGroupPostsPaginated() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		tele.Info(ctx, "getGroupPostsPaginated handler called")
+
+		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		if !ok {
+			panic(1)
+		}
+
+		body, err := utils.JSON2Struct(&models.GetGroupPostsReq{}, r)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		grpcReq := posts.GetGroupPostsReq{
+			RequesterId: claims.UserId,
+			GroupId:     body.GroupId.Int64(),
+			Limit:       body.Limit.Int32(),
+			Offset:      body.Offset.Int32(),
+		}
+
+		grpcResp, err := h.PostsService.GetGroupPostsPaginated(ctx, &grpcReq)
+		if err != nil {
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get group feed: "+err.Error())
+			return
+		}
+
+		tele.Info(ctx, "retrieved group feed. @1", "grpcResp", grpcResp)
+
+		postsResponse := []models.Post{}
+		for _, p := range grpcResp.Posts {
+			post := models.Post{
+				PostId: ct.Id(p.PostId),
+				Body:   ct.PostBody(p.PostBody),
+				User: models.User{
+					UserId:    ct.Id(p.User.UserId),
+					Username:  ct.Username(p.User.Username),
+					AvatarId:  ct.Id(p.User.Avatar),
+					AvatarURL: p.User.AvatarUrl,
+				},
+				GroupId:         ct.Id(p.GroupId),
+				Audience:        ct.Audience(p.Audience),
+				CommentsCount:   int(p.CommentsCount),
+				ReactionsCount:  int(p.ReactionsCount),
+				LastCommentedAt: ct.GenDateTime(p.LastCommentedAt.AsTime()),
+				CreatedAt:       ct.GenDateTime(p.CreatedAt.AsTime()),
+				UpdatedAt:       ct.GenDateTime(p.UpdatedAt.AsTime()),
+				LikedByUser:     p.LikedByUser,
+				ImageId:         ct.Id(p.ImageId),
+				ImageUrl:        p.ImageUrl,
+			}
+			postsResponse = append(postsResponse, post)
+		}
+
+		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send group %v posts: %v", body.GroupId, err.Error()))
 			return
 		}
 

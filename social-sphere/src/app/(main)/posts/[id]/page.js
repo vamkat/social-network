@@ -6,8 +6,6 @@ export default async function PostPage({ params }) {
     const { id } = await params;
     const post = await getPost(id);
 
-    console.log("Post by id: ", post);
-
     if (!post) {
         notFound();
     }

@@ -19,27 +19,27 @@ func TestError_Error(t *testing.T) {
 	}{
 		{
 			name:     "nil kind defaults to ErrUnknownClass",
-			err:      &Error{code: nil, input: "test"},
+			err:      &Error{class: nil, input: "test"},
 			expected: ": test",
 		},
 		{
 			name:     "kind, msg, and wrapped error",
-			err:      &Error{code: ErrNotFound, input: "user not found", err: errors.New("db error")},
+			err:      &Error{class: ErrNotFound, input: "user not found", err: errors.New("db error")},
 			expected: "not found: user not found: db error",
 		},
 		{
 			name:     "kind and msg only",
-			err:      &Error{code: ErrInternal, input: "internal error"},
+			err:      &Error{class: ErrInternal, input: "internal error"},
 			expected: "internal error: internal error",
 		},
 		{
 			name:     "kind and wrapped error only",
-			err:      &Error{code: ErrInvalidArgument, err: errors.New("invalid input")},
+			err:      &Error{class: ErrInvalidArgument, err: errors.New("invalid input")},
 			expected: "invalid argument: invalid input",
 		},
 		{
 			name:     "kind only",
-			err:      &Error{code: ErrPermissionDenied},
+			err:      &Error{class: ErrPermissionDenied},
 			expected: "permission denied",
 		},
 	}
@@ -52,7 +52,7 @@ func TestError_Error(t *testing.T) {
 }
 
 func TestError_Is(t *testing.T) {
-	err := &Error{code: ErrNotFound}
+	err := &Error{class: ErrNotFound}
 
 	assert.True(t, errors.Is(err, ErrNotFound))
 	assert.False(t, errors.Is(err, ErrInternal))
@@ -75,27 +75,27 @@ func TestWrap(t *testing.T) {
 	t.Run("wrap with kind and msg", func(t *testing.T) {
 		err := Wrap(ErrNotFound, underlying, "not found")
 		require.NotNil(t, err)
-		assert.Equal(t, ErrNotFound, err.code)
+		assert.Equal(t, ErrNotFound, err.class)
 		assert.Equal(t, underlying, err.err)
 		assert.Equal(t, "not found", err.input)
 		assert.Equal(t, "", err.publicMsg)
 	})
 
 	t.Run("wrap existing Error with new kind and msg", func(t *testing.T) {
-		existing := &Error{code: ErrInternal, err: underlying, publicMsg: "public"}
+		existing := &Error{class: ErrInternal, err: underlying, publicMsg: "public"}
 		wrapped := Wrap(ErrNotFound, existing, "updated")
 		require.NotNil(t, wrapped)
-		assert.Equal(t, ErrNotFound, wrapped.code)
+		assert.Equal(t, ErrNotFound, wrapped.class)
 		assert.Equal(t, existing, wrapped.err)
 		assert.Equal(t, "updated", wrapped.input)
 		assert.Equal(t, "public", wrapped.publicMsg)
 	})
 
 	t.Run("wrap existing Error preserving kind when new kind nil", func(t *testing.T) {
-		existing := &Error{code: ErrInternal, err: underlying}
+		existing := &Error{class: ErrInternal, err: underlying}
 		wrapped := Wrap(nil, existing, "preserved")
 		require.NotNil(t, wrapped)
-		assert.Equal(t, ErrInternal, wrapped.code)
+		assert.Equal(t, ErrInternal, wrapped.class)
 		assert.Equal(t, existing, wrapped.err)
 		assert.Equal(t, "preserved", wrapped.input)
 	})
@@ -103,12 +103,12 @@ func TestWrap(t *testing.T) {
 	t.Run("wrap with nil kind defaults to ErrUnknownClass", func(t *testing.T) {
 		err := Wrap(nil, underlying)
 		require.NotNil(t, err)
-		assert.Equal(t, ErrUnknown, err.code)
+		assert.Equal(t, ErrUnknown, err.class)
 	})
 }
 
 func TestWithPublic(t *testing.T) {
-	err := &Error{code: ErrInternal}
+	err := &Error{class: ErrInternal}
 	result := err.WithPublic("public message")
 
 	assert.Equal(t, err, result) // returns same instance
@@ -122,14 +122,14 @@ func TestToGRPCCode(t *testing.T) {
 		expected codes.Code
 	}{
 		{name: "nil error", err: nil, expected: codes.OK},
-		{name: "ErrOK", err: &Error{code: ErrOK}, expected: codes.OK},
-		{name: "ErrNotFound", err: &Error{code: ErrNotFound}, expected: codes.NotFound},
-		{name: "ErrInternal", err: &Error{code: ErrInternal}, expected: codes.Internal},
-		{name: "ErrInvalidArgument", err: &Error{code: ErrInvalidArgument}, expected: codes.InvalidArgument},
-		{name: "ErrAlreadyExists", err: &Error{code: ErrAlreadyExists}, expected: codes.AlreadyExists},
-		{name: "ErrPermissionDenied", err: &Error{code: ErrPermissionDenied}, expected: codes.PermissionDenied},
-		{name: "ErrUnauthenticated", err: &Error{code: ErrUnauthenticated}, expected: codes.Unauthenticated},
-		{name: "unknown kind", err: &Error{code: errors.New("custom")}, expected: codes.Unknown},
+		{name: "ErrOK", err: &Error{class: ErrOK}, expected: codes.OK},
+		{name: "ErrNotFound", err: &Error{class: ErrNotFound}, expected: codes.NotFound},
+		{name: "ErrInternal", err: &Error{class: ErrInternal}, expected: codes.Internal},
+		{name: "ErrInvalidArgument", err: &Error{class: ErrInvalidArgument}, expected: codes.InvalidArgument},
+		{name: "ErrAlreadyExists", err: &Error{class: ErrAlreadyExists}, expected: codes.AlreadyExists},
+		{name: "ErrPermissionDenied", err: &Error{class: ErrPermissionDenied}, expected: codes.PermissionDenied},
+		{name: "ErrUnauthenticated", err: &Error{class: ErrUnauthenticated}, expected: codes.Unauthenticated},
+		{name: "unknown kind", err: &Error{class: errors.New("custom")}, expected: codes.Unknown},
 	}
 
 	for _, tt := range tests {
@@ -150,7 +150,7 @@ func TestIntegration(t *testing.T) {
 	// Test errors.As works
 	var target *Error
 	assert.True(t, errors.As(customErr, &target))
-	assert.Equal(t, ErrInternal, target.code)
+	assert.Equal(t, ErrInternal, target.class)
 
 	// Test unwrapping chain
 	assert.Equal(t, underlying, errors.Unwrap(customErr))
@@ -194,7 +194,7 @@ func TestAs_ReturnsOutermostError(t *testing.T) {
 
 	var ce *Error
 	require.True(t, errors.As(e2, &ce))
-	assert.Equal(t, ErrUnavailable, ce.code)
+	assert.Equal(t, ErrUnavailable, ce.class)
 	assert.Equal(t, e2, ce)
 }
 

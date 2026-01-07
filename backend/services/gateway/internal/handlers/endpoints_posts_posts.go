@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
@@ -37,8 +36,8 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetPostById(ctx, &grpcReq)
 		if err != nil {
-			//TODO add error for not found
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
 			return
 		}
 
@@ -155,7 +154,8 @@ func (h *Handlers) createPost() http.HandlerFunc {
 
 		postId, err := h.PostsService.CreatePost(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -245,7 +245,8 @@ func (h *Handlers) editPost() http.HandlerFunc {
 
 		_, err := h.PostsService.EditPost(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -286,7 +287,8 @@ func (h *Handlers) deletePost() http.HandlerFunc {
 
 		_, err = h.PostsService.DeletePost(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete post with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 

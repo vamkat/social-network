@@ -80,7 +80,8 @@ func (h *Handlers) createComment() http.HandlerFunc {
 
 		commentId, err := h.PostsService.CreateComment(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -124,7 +125,8 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 		grpcResp, err := h.PostsService.GetCommentsByParentId(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get comments for post id %v: %v: ", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get comments for post id %v: %v: ", body.EntityId, err.Error()))
 			return
 		}
 
@@ -226,7 +228,8 @@ func (h *Handlers) editComment() http.HandlerFunc {
 
 		_, err := h.PostsService.EditComment(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {
@@ -266,7 +269,8 @@ func (h *Handlers) deleteComment() http.HandlerFunc {
 
 		_, err = h.PostsService.DeleteComment(ctx, &grpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete comment with id %v: %v", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to delete comment with id %v: %v", body.EntityId, err.Error()))
 			return
 		}
 

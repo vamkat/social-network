@@ -94,32 +94,6 @@ func TestCreatePrivateConv_AddMembers_GetConversationMembers(t *testing.T) {
 	cleanupConversation(t, ctx, int64(convId))
 }
 
-func TestCreateGroupConv_AddMembersToGroupConversation_GetConversationMembers(t *testing.T) {
-	ctx := context.Background()
-	q := New(testPool)
-
-	groupId := ct.Id(2001)
-	// Create group conversation
-	convId, err := q.CreateGroupConv(ctx, groupId)
-	require.NoError(t, err)
-	require.True(t, convId > 0)
-
-	// Add members to group conversation
-	users := ct.Ids{ct.Id(3001), ct.Id(3002), ct.Id(3003)}
-	convFromAdd, err := q.AddMembersToGroupConversation(ctx, md.AddMembersToGroupConversationParams{GroupId: groupId, UserIds: users})
-	require.NoError(t, err)
-	require.True(t, convFromAdd > 0)
-
-	// Use one member to fetch the other members
-	members, err := q.GetConversationMembers(ctx, md.GetConversationMembersParams{ConversationId: convFromAdd, UserID: users[0]})
-	require.NoError(t, err)
-	// members should include the other two users
-	// length may be 2 since GetConversationMembers excludes the caller
-	assert.Len(t, members, 2)
-
-	cleanupConversation(t, ctx, int64(convFromAdd))
-}
-
 func TestGetUserConversations_Basic(t *testing.T) {
 	ctx := context.Background()
 	q := New(testPool)
@@ -163,7 +137,7 @@ func TestUpdateLastReadMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a message as userA
-	msg, err := q.CreateMessage(ctx, md.CreateMessageParams{ConversationId: convId, SenderId: userA, MessageText: "hello"})
+	msg, err := q.CreateMessageWithMembersJoin(ctx, md.CreateMessageParams{ConversationId: convId, SenderId: userA, MessageText: "hello"})
 	require.NoError(t, err)
 
 	// Update last read for userB

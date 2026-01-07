@@ -7,6 +7,7 @@ import (
 	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,7 +31,10 @@ type PgxTxRunner[T HasWithTx[T]] struct {
 	db   T
 }
 
-var ErrNilPassed = errors.New("Passed nil argument")
+var (
+	ErrNilPassed     = errors.New("Passed nil argument")
+	ErrNoMoreRetries = errors.New("maximum retries exceeded for serializable transaction")
+)
 
 // NewPgxTxRunner creates a new transaction runner.
 func NewPgxTxRunner[T HasWithTx[T]](pool *pgxpool.Pool, db T) (*PgxTxRunner[T], error) {
@@ -44,7 +48,6 @@ func NewPgxTxRunner[T HasWithTx[T]](pool *pgxpool.Pool, db T) (*PgxTxRunner[T], 
 }
 
 // RunTx runs a function inside a database transaction.
-// The function receives a sqlc.Querier interface, not *sqlc.Queries.
 func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	// start tx.
 	tele.Info(ctx, "starting transaction")
@@ -72,6 +75,60 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 		return ce.Wrap(ce.ErrInternal, err, "transaction commit error")
 	}
 	return nil
+}
+
+// RunTxSerializable runs a function inside a serializable transaction.
+func (r *PgxTxRunner[T]) RunTxSerializable(
+	ctx context.Context,
+	fn func(T) error,
+) error {
+	const maxRetries = 3
+
+	for attempt := range maxRetries {
+		tele.Info(ctx, "starting serializable transaction", "attempt", attempt+1)
+
+		// start tx with serializable isolation
+		tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
+		if err != nil {
+			tele.Error(ctx, "failed to begin serializable transaction", "error", err)
+			return ce.Wrap(ce.ErrInternal, err, "run serializable tx error")
+		}
+
+		// ensure rollback in case of early exit
+		defer tx.Rollback(ctx)
+
+		// create sqlc queries tied to transaction
+		qtx := r.db.WithTx(tx)
+
+		// run user function
+		err = fn(qtx)
+		if err != nil {
+			// log and return other errors
+			tele.Error(ctx, "serializable tx function failed", "error", err)
+			return err
+		}
+
+		// attempt to commit
+		err = tx.Commit(ctx)
+		if err != nil {
+			// check for serialization failure (Postgres code 40001)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "40001" {
+				tele.Warn(ctx, "serialization failure, retrying transaction", "attempt", attempt+1)
+				// retry loop
+				continue
+			}
+			return ce.Wrap(ce.ErrInternal, err, "serializable transaction commit error")
+		}
+
+		// success
+		tele.Info(ctx, "serializable transaction committed successfully", "attempt", attempt+1)
+		return nil
+	}
+
+	return ce.New(ce.ErrInternal, ErrNoMoreRetries)
 }
 
 // NewPool creates a pgx connection pool.

@@ -31,28 +31,21 @@ func (c *ChatService) CreatePrivateConversation(ctx context.Context,
 	return convId, nil
 }
 
+// Returns a conversation id of a newly created or an existing conversation.
 func (c *ChatService) CreateGroupConversation(ctx context.Context,
 	params md.CreateGroupConvParams) (convId ct.Id, err error) {
 
-	errMsg := fmt.Sprintf("create group conversation: group id: %d, user ids: %d", params.GroupId, params.UserIds)
+	input := fmt.Sprintf("group id: %d, user ids: %d", params.GroupId, params.UserIds)
 
 	if err := ct.ValidateStruct(params); err != nil {
-		return 0, ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
+		return 0, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	err = c.txRunner.RunTx(ctx,
-		func(q *dbservice.Queries) error {
-			convId, err = q.CreateGroupConv(ctx, params.GroupId)
-			if err != nil {
-				return err
-			}
+	convId, err = c.Queries.CreateGroupConv(ctx, params.GroupId)
+	if err != nil {
+		return 0, ce.Wrap(ce.ErrInternal, err, input)
+	}
 
-			return q.AddConversationMembers(ctx,
-				md.AddConversationMembersParams{
-					ConversationId: ct.Id(convId),
-					UserIds:        params.UserIds,
-				})
-		})
 	return ct.Id(convId), err
 }
 
@@ -86,20 +79,20 @@ func (c *ChatService) GetUserConversations(ctx context.Context,
 	arg md.GetUserConversationsParams,
 ) (conversations []md.GetUserConversationsResp, err error) {
 
-	errMsg := fmt.Sprintf("get user conversations: arg: %#v", arg)
+	input := fmt.Sprintf("arg: %#v", arg)
 
 	if err := ct.ValidateStruct(arg); err != nil {
-		return nil, ce.Wrap(ce.ErrInvalidArgument, err, errMsg)
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
 	resp, err := c.Queries.GetUserConversations(ctx, arg)
 	if err != nil {
-		return conversations, ce.Wrap(ce.ErrInternal, err, errMsg)
+		return conversations, ce.Wrap(ce.ErrInternal, err, input)
 	}
 
 	if !arg.HydrateUsers {
 		// Calling with nil usersMap. No hydration just conversion
-		return ConvertConversations(ctx, nil, resp)
+		return ConvertConversations(ctx, nil, resp), nil
 	}
 
 	allMemberIDs := make(ct.Ids, 0)
@@ -109,10 +102,10 @@ func (c *ChatService) GetUserConversations(ctx context.Context,
 	// TODO: Check error return
 	usersMap, err := c.RetriveUsers.GetUsers(ctx, allMemberIDs)
 	if err != nil {
-		return nil, ce.Wrap(ce.ErrUnavailable, err, errMsg)
+		return nil, ce.Wrap(nil, err, input)
 	}
 
-	return ConvertConversations(ctx, usersMap, resp)
+	return ConvertConversations(ctx, usersMap, resp), nil
 }
 
 // Helper to convert a slice of GetUserConversationsRow containing userIds
@@ -122,7 +115,7 @@ func ConvertConversations(
 	ctx context.Context,
 	usersMap map[ct.Id]md.User,
 	rows []dbservice.GetUserConversationsRow,
-) ([]md.GetUserConversationsResp, error) {
+) []md.GetUserConversationsResp {
 	conversations := make([]md.GetUserConversationsResp, len(rows))
 
 	// Convert unhydrated
@@ -141,7 +134,7 @@ func ConvertConversations(
 				LastReadMessageId: r.LastReadMessageId,
 			}
 		}
-		return conversations, nil
+		return conversations
 	}
 
 	// Convert with hydration from map
@@ -165,5 +158,5 @@ func ConvertConversations(
 		}
 	}
 
-	return conversations, nil
+	return conversations
 }

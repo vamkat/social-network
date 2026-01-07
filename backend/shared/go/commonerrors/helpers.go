@@ -6,9 +6,10 @@ import (
 	"strings"
 )
 
-// Returns c error if c is not nil and is a defined error in commonerrors else returns ErrUnknown
+// Returns c error if c is not nil and is a defined error
+// in commonerrors else returns ErrUnknown
 func parseCode(c error) error {
-	_, ok := errorToGRPC[c]
+	_, ok := classToGRPC[c]
 	if c == nil || !ok {
 		c = ErrUnknown
 	}
@@ -40,7 +41,6 @@ func getStack(depth int, skip int) string {
 		builder.WriteString(name[start+1:])
 		builder.WriteString(" at ")
 		builder.WriteString(strconv.Itoa(frame.Line))
-		// builder.WriteString(" -> ")
 		if !more {
 			break
 		}

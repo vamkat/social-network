@@ -3,6 +3,8 @@ package application
 import (
 	"context"
 	"fmt"
+	"social-network/services/chat/internal/db/dbservice"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
@@ -12,18 +14,67 @@ import (
 // TODO: Implement call to live service
 func (c *ChatService) CreateMessage(ctx context.Context,
 	params md.CreateMessageParams) (msg md.MessageResp, err error) {
+
+	input := fmt.Sprintf("params: %#v", params)
 	if err := ct.ValidateStruct(params); err != nil {
-		return msg, err
-	}
-	if (msg == md.MessageResp{}) {
-		return msg, fmt.Errorf("user is not a member of conversation id: %v", params.ConversationId)
+		return msg, ce.New(ce.ErrInvalidArgument, err, input)
 	}
 
-	_, err = c.Queries.CreateMessage(ctx, params)
+	msg, err = c.Queries.CreateMessageWithMembersJoin(ctx, params)
+
 	if err != nil {
-		return msg, err
+		return msg, ce.Wrap(nil, err, input)
 	}
 	return msg, err
+}
+
+type CreateMessageInGroupReq struct {
+	GroupId     ct.Id
+	SenderId    ct.Id
+	MessageBody ct.MsgBody
+}
+
+func (c *ChatService) CreateMessageInGroup(ctx context.Context,
+	params CreateMessageInGroupReq) (msg md.MessageResp, err error) {
+	input := fmt.Sprintf("params: %#v", params)
+
+	if err := ct.ValidateStruct(params); err != nil {
+		return msg, ce.New(ce.ErrInvalidArgument, err, input)
+	}
+
+	// Call UserService to check if sender is a member of group
+	isMember, err := c.Clients.IsGroupMember(ctx, params.GroupId, params.SenderId)
+	if err != nil {
+		return msg, ce.ParseGrpcErr(err, input)
+	}
+	if !isMember {
+		return msg,
+			ce.New(ce.ErrPermissionDenied,
+				fmt.Errorf("user id: %d not a member of group id: %d", params.SenderId, params.GroupId),
+				input,
+			)
+	}
+
+	err = c.txRunner.RunTx(ctx,
+		func(q *dbservice.Queries) error {
+			// Create or get conversation
+			convId, err := q.CreateGroupConv(ctx, params.GroupId)
+			if err != nil {
+				return ce.Wrap(nil, err, input)
+			}
+			// Add message
+			msg, err = c.Queries.CreateMessage(ctx, md.CreateMessageParams{
+				ConversationId: convId,
+				SenderId:       params.SenderId,
+				MessageText:    params.MessageBody,
+			})
+
+			if err != nil {
+				return ce.Wrap(nil, err, input)
+			}
+			return nil
+		})
+	return msg, nil
 }
 
 // Returns messages with id smaller that BoundaryMessageId. If BoundaryMessageId is null

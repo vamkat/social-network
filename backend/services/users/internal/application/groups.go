@@ -46,7 +46,8 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 			MembersCount:     r.MembersCount,
 			IsMember:         userInfo.isMember,
 			IsOwner:          userInfo.isOwner,
-			IsPending:        userInfo.isPending,
+			PendingRequest:   userInfo.pendingRequest,
+			PendingInvite:    userInfo.pendingInvite,
 		})
 		if r.GroupImageID > 0 {
 			imageIds = append(imageIds, ct.Id(r.GroupImageID))
@@ -88,7 +89,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 	var imageIds ct.Ids
 
 	for _, r := range rows {
-		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
+		pendingInfo, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.GroupID),
 			UserId:  req.UserId,
 		})
@@ -104,7 +105,8 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 			MembersCount:     r.MembersCount,
 			IsMember:         r.IsMember,
 			IsOwner:          r.IsOwner,
-			IsPending:        isPending,
+			PendingRequest:   pendingInfo.pendingRequest,
+			PendingInvite:    pendingInfo.pendingInvite,
 		})
 		if r.GroupImageID > 0 {
 			imageIds = append(imageIds, ct.Id(r.GroupImageID))
@@ -152,7 +154,8 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	}
 	group.IsMember = userInfo.isMember
 	group.IsOwner = userInfo.isOwner
-	group.IsPending = userInfo.isPending
+	group.PendingRequest = userInfo.pendingRequest
+	group.PendingInvite = userInfo.pendingInvite
 
 	if group.GroupImage > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant(1))
@@ -278,7 +281,7 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 	var imageIds ct.Ids
 
 	for _, r := range rows {
-		isPending, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
+		pendingInfo, err := s.isGroupMembershipPending(ctx, models.GeneralGroupReq{
 			GroupId: ct.Id(r.ID),
 			UserId:  req.UserId,
 		})
@@ -294,7 +297,8 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 			MembersCount:     r.MembersCount,
 			IsMember:         r.IsMember,
 			IsOwner:          r.IsOwner,
-			IsPending:        isPending,
+			PendingRequest:   pendingInfo.pendingRequest,
+			PendingInvite:    pendingInfo.pendingInvite,
 		})
 		if r.GroupImageID > 0 {
 			imageIds = append(imageIds, ct.Id(r.GroupImageID))
@@ -405,7 +409,6 @@ func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoin
 	return nil
 }
 
-// SKIP GRPC FOR NOW
 func (s *Application) CancelJoinGroupRequest(ctx context.Context, req models.GroupJoinRequest) error {
 	input := fmt.Sprintf("%#v", req)
 
@@ -586,7 +589,6 @@ func (s *Application) LeaveGroup(ctx context.Context, req models.GeneralGroupReq
 	return nil
 }
 
-// SKIP GRPC FOR NOW
 func (s *Application) RemoveFromGroup(ctx context.Context, req models.RemoveFromGroupRequest) error {
 	input := fmt.Sprintf("%#v", req)
 
@@ -694,10 +696,14 @@ func (s *Application) userInRelationToGroup(ctx context.Context, req models.Gene
 	if err != nil {
 		return userInRelationToGroup{}, ce.Wrap(nil, err)
 	}
-	resp.isPending, err = s.isGroupMembershipPending(ctx, req)
+	pendingInfo, err := s.isGroupMembershipPending(ctx, req)
 	if err != nil {
 		return userInRelationToGroup{}, ce.Wrap(nil, err)
 	}
+
+	resp.pendingRequest = pendingInfo.pendingRequest
+	resp.pendingInvite = pendingInfo.pendingInvite
+
 	return resp, nil
 }
 
@@ -742,24 +748,135 @@ func (s *Application) IsGroupMember(ctx context.Context, req models.GeneralGroup
 }
 
 // NOT GRPC
-func (s *Application) isGroupMembershipPending(ctx context.Context, req models.GeneralGroupReq) (bool, error) {
+func (s *Application) isGroupMembershipPending(ctx context.Context, req models.GeneralGroupReq) (isMembershipPending, error) {
 	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
-		return false, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
+		return isMembershipPending{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
-	isPending, err := s.db.IsGroupMembershipPending(ctx, ds.IsGroupMembershipPendingParams{
+	row, err := s.db.IsGroupMembershipPending(ctx, ds.IsGroupMembershipPendingParams{
 		GroupID: req.GroupId.Int64(),
 		UserID:  req.UserId.Int64(),
 	})
 	if err != nil {
-		return false, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+		return isMembershipPending{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
-	if !isPending.Valid { //should never happen
-		return false, nil
+
+	return isMembershipPending{
+		pendingRequest: row.HasPendingJoinRequest,
+		pendingInvite:  row.HasPendingInvite,
+	}, nil
+}
+
+func (s *Application) GetFollowersNotInvitedToGroup(ctx context.Context, req models.GroupMembersReq) ([]models.User, error) {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateStruct(req); err != nil {
+		return []models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
-	return isPending.Bool, nil
+
+	//check request comes from member
+	isMember, err := s.IsGroupMember(ctx, models.GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.UserId,
+	})
+	if err != nil {
+		return nil, ce.Wrap(nil, err)
+	}
+	if !isMember {
+		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not a member of group %v", req.UserId, req.GroupId), input).WithPublic("permission denied")
+	}
+
+	//paginated, sorted by newest first
+	rows, err := s.db.GetFollowersNotInvitedToGroup(ctx, ds.GetFollowersNotInvitedToGroupParams{
+		UserId:  req.UserId.Int64(),
+		GroupId: req.GroupId.Int64(),
+		Limit:   int(req.Limit),
+		Offset:  int(req.Offset),
+	})
+	if err != nil {
+		return []models.User{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+	users := make([]models.User, 0, len(rows))
+	var imageIds ct.Ids
+	for _, r := range rows {
+		users = append(users, models.User{
+			UserId:   ct.Id(r.Id),
+			Username: ct.Username(r.Username),
+			AvatarId: ct.Id(r.AvatarId),
+		})
+		if r.AvatarId > 0 {
+			imageIds = append(imageIds, ct.Id(r.AvatarId))
+		}
+	}
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
+		if err != nil {
+			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		}
+		for i := range users {
+			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+		}
+	}
+
+	return users, nil
+
+}
+
+func (s *Application) GetPendingGroupJoinRequests(ctx context.Context, req models.GroupMembersReq) ([]models.User, error) {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateStruct(req); err != nil {
+		return []models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
+	}
+
+	isOwner, err := s.isGroupOwner(ctx, models.GeneralGroupReq{
+		GroupId: req.GroupId,
+		UserId:  req.UserId,
+	})
+	if err != nil {
+		return []models.User{}, ce.Wrap(nil, err)
+	}
+	if !isOwner {
+		return []models.User{}, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not the owner of group %v", req.UserId, req.GroupId), input).WithPublic("permission denied")
+	}
+
+	//paginated, sorted by newest first
+	rows, err := s.db.GetPendingGroupJoinRequests(ctx, ds.GetPendingGroupJoinRequestsParams{
+		GroupId: req.GroupId.Int64(),
+		Limit:   int(req.Limit),
+		Offset:  int(req.Offset),
+	})
+	if err != nil {
+		return []models.User{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+	users := make([]models.User, 0, len(rows))
+	var imageIds ct.Ids
+	for _, r := range rows {
+		users = append(users, models.User{
+			UserId:   ct.Id(r.Id),
+			Username: ct.Username(r.Username),
+			AvatarId: ct.Id(r.AvatarId),
+		})
+		if r.AvatarId > 0 {
+			imageIds = append(imageIds, ct.Id(r.AvatarId))
+		}
+	}
+	//get avatar urls
+	if len(imageIds) > 0 {
+		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
+		if err != nil {
+			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		}
+		for i := range users {
+			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+		}
+	}
+
+	return users, nil
+
 }
 
 // ---------------------------------------------------------------------

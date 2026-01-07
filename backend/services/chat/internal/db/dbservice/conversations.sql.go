@@ -2,18 +2,11 @@ package dbservice
 
 import (
 	"context"
+	"fmt"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
-
-// Initiates the conversation by groupId. Group Id should be a not null value.
-// Use as a preparation for adding members
-func (q *Queries) CreateGroupConv(ctx context.Context,
-	groupId ct.Id) (convId ct.Id, err error) {
-	row := q.db.QueryRow(ctx, createGroupConv, groupId)
-	err = row.Scan(&convId)
-	return convId, err
-}
 
 // Add UserIDs to ConvID
 func (q *Queries) AddConversationMembers(ctx context.Context,
@@ -29,6 +22,23 @@ func (q *Queries) CreatePrivateConv(ctx context.Context,
 ) (convId ct.Id, err error) {
 	row := q.db.QueryRow(ctx, createPrivateConv, arg.UserA, arg.UserB)
 	err = row.Scan(&convId)
+	return convId, err
+}
+
+// Initiates the conversation by groupId. Group Id should be a not null value.
+// If conversation already exists then the conversation id is returned.
+// Use as a preparation for adding members on conversation or adding messages in
+// in group conversations.
+func (q *Queries) CreateGroupConv(ctx context.Context,
+	groupId ct.Id) (convId ct.Id, err error) {
+	row := q.db.QueryRow(ctx, createGroupConv, groupId)
+	err = row.Scan(&convId)
+	if err != nil {
+		return 0, ce.New(ce.ErrInternal,
+			fmt.Errorf("failed to create group conversation: %w", err),
+			fmt.Sprintf("conversation id: %d", convId),
+		)
+	}
 	return convId, err
 }
 

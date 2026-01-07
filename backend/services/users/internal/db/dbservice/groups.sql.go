@@ -469,22 +469,25 @@ func (q *Queries) GetUserGroups(ctx context.Context, arg GetUserGroupsParams) ([
 	return items, nil
 }
 
-const isGroupMembershipPending = `-- name: IsGroupMembershipPending :one
-SELECT (
-    EXISTS(
-        SELECT 1 FROM group_join_requests gjr
+const isGroupMembershipPending = `-- name: GetPendingGroupMembershipState :one
+SELECT
+    EXISTS (
+        SELECT 1
+        FROM group_join_requests gjr
         WHERE gjr.group_id = $1
           AND gjr.user_id = $2
           AND gjr.status = 'pending'
-    ) 
-    OR 
-    EXISTS(
-        SELECT 1 FROM group_invites gi
+          AND gjr.deleted_at IS NULL
+    ) AS has_pending_join_request,
+
+    EXISTS (
+        SELECT 1
+        FROM group_invites gi
         WHERE gi.group_id = $1
           AND gi.receiver_id = $2
           AND gi.status = 'pending'
-    )
-) AS has_pending_membership
+          AND gi.deleted_at IS NULL
+    ) AS has_pending_invite;
 `
 
 type IsGroupMembershipPendingParams struct {
@@ -492,11 +495,25 @@ type IsGroupMembershipPendingParams struct {
 	UserID  int64
 }
 
-func (q *Queries) IsGroupMembershipPending(ctx context.Context, arg IsGroupMembershipPendingParams) (pgtype.Bool, error) {
+type IsGroupMembershipPendingRow struct {
+	HasPendingJoinRequest bool
+	HasPendingInvite      bool
+}
+
+func (q *Queries) IsGroupMembershipPending(
+	ctx context.Context,
+	arg IsGroupMembershipPendingParams,
+) (IsGroupMembershipPendingRow, error) {
+
 	row := q.db.QueryRow(ctx, isGroupMembershipPending, arg.GroupID, arg.UserID)
-	var has_pending_membership pgtype.Bool
-	err := row.Scan(&has_pending_membership)
-	return has_pending_membership, err
+
+	var result IsGroupMembershipPendingRow
+	err := row.Scan(
+		&result.HasPendingJoinRequest,
+		&result.HasPendingInvite,
+	)
+
+	return result, err
 }
 
 const isUserGroupMember = `-- name: IsUserGroupMember :one
@@ -845,4 +862,114 @@ func (q *Queries) UserGroupCountsPerRole(ctx context.Context, groupOwner int64) 
 	var i UserGroupCountsPerRoleRow
 	err := row.Scan(&i.OwnerCount, &i.MemberOnlyCount, &i.TotalMemberships)
 	return i, err
+}
+
+const getFollowersNotInvitedToGroup = `-- name: GetFollowersNotInvitedToGroup :many
+SELECT
+    u.id,
+    u.username,
+    u.avatar_id
+FROM follows f
+JOIN users u
+    ON u.id = f.follower_id
+LEFT JOIN group_invites gi
+    ON gi.group_id = $2
+   AND gi.receiver_id = u.id
+   AND gi.deleted_at IS NULL
+WHERE f.following_id = $1          -- people who follow the given user
+  AND u.deleted_at IS NULL
+  AND u.current_status = 'active'
+  AND gi.receiver_id IS NULL      -- exclude anyone already invited
+  ORDER BY f.created_at DESC
+  LIMIT $3 OFFSET $4;
+  `
+
+type GetFollowersNotInvitedToGroupParams struct {
+	UserId  int64
+	GroupId int64
+	Limit   int
+	Offset  int
+}
+
+type GetFollowersNotInvitedToGroupRow struct {
+	Id       int64
+	Username string
+	AvatarId int64
+}
+
+func (q *Queries) GetFollowersNotInvitedToGroup(ctx context.Context, arg GetFollowersNotInvitedToGroupParams) ([]GetFollowersNotInvitedToGroupRow, error) {
+	rows, err := q.db.Query(ctx, getFollowersNotInvitedToGroup, arg.UserId, arg.GroupId, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetFollowersNotInvitedToGroupRow{}
+	for rows.Next() {
+		var i GetFollowersNotInvitedToGroupRow
+		if err := rows.Scan(
+			&i.Id,
+			&i.Username,
+			&i.AvatarId,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPendingGroupJoinRequests = `-- name: GetPendingGroupJoinRequests :many
+SELECT
+    u.id,
+    u.username,
+    u.avatar_id
+FROM group_join_requests gjr
+JOIN users u
+    ON u.id = gjr.user_id
+WHERE gjr.group_id = $1
+  AND gjr.status = 'pending'
+  AND gjr.deleted_at IS NULL
+  AND u.deleted_at IS NULL
+  AND u.current_status = 'active'
+ORDER BY gjr.created_at ASC
+LIMIT $2 OFFSET $3;
+`
+
+type GetPendingGroupJoinRequestsParams struct {
+	GroupId int64
+	Limit   int
+	Offset  int
+}
+
+type GetPendingGroupJoinRequestsRow struct {
+	Id       int64
+	Username string
+	AvatarId int64
+}
+
+func (q *Queries) GetPendingGroupJoinRequests(ctx context.Context, arg GetPendingGroupJoinRequestsParams) ([]GetPendingGroupJoinRequestsRow, error) {
+	rows, err := q.db.Query(ctx, getPendingGroupJoinRequests, arg.GroupId, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPendingGroupJoinRequestsRow{}
+	for rows.Next() {
+		var i GetPendingGroupJoinRequestsRow
+		if err := rows.Scan(
+			&i.Id,
+			&i.Username,
+			&i.AvatarId,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

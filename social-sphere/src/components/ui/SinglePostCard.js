@@ -306,8 +306,6 @@ export default function SinglePostCard({ post }) {
                 editData.delete_image = true;
             }
 
-            console.log("SENDING DATA TO EDIT: ", editData);
-
             const resp = await editPost(editData);
 
             if (!resp.success) {

@@ -58,7 +58,8 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 		resp, err := h.UsersService.LoginUser(r.Context(), &gRpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -193,7 +194,8 @@ func (h *Handlers) registerHandler() http.HandlerFunc {
 
 		resp, err := h.UsersService.RegisterUser(r.Context(), &gRpcReq)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -298,7 +300,8 @@ func (s *Handlers) updateUserEmail() http.HandlerFunc {
 
 		_, err = s.UsersService.UpdateUserEmail(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update email: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update email: "+err.Error())
 			return
 		}
 
@@ -353,7 +356,8 @@ func (s *Handlers) updateUserPassword() http.HandlerFunc {
 
 		_, err = s.UsersService.UpdateUserPassword(ctx, req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update password: "+err.Error())
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update password: "+err.Error())
 			return
 		}
 

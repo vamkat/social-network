@@ -154,7 +154,8 @@ type Group struct {
 	MembersCount     int32    `json:"members_count"`
 	IsMember         bool     `json:"is_member"`
 	IsOwner          bool     `json:"is_owner"`
-	IsPending        bool     `json:"is_pending"`
+	PendingRequest   bool     `json:"pending_request"`
+	PendingInvite    bool     `json:"pending_invite"`
 }
 
 type Groups struct {

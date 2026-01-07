@@ -36,9 +36,9 @@ ErrUnavailable
 // ...
 ```
 
-These sentinels are used as **error codes**, not typically returned directly.
+These sentinels are used as **error classes**, not typically returned directly.
 
-Each error code maps 1:1 to a gRPC `codes.Code` via internal maps.
+Each error class maps 1:1 to a gRPC `codes.Code` via internal maps.
 
 ---
 
@@ -46,7 +46,7 @@ Each error code maps 1:1 to a gRPC `codes.Code` via internal maps.
 
 ```go
 type Error struct {
-	code      error  // Classification (never nil)
+	class      error  // Classification (never nil)
 	input     string // Input / context at the wrapping site
 	stack     string // Stack trace (captured only at origin)
 	err       error  // Wrapped cause
@@ -56,7 +56,7 @@ type Error struct {
 
 ### Invariants
 
-* `code` is **guaranteed to be non-nil**
+* `class` is **guaranteed to be non-nil**
 * Stack traces are captured **only at the root cause**
 * Wrapping preserves the **original causal chain**
 * Errors are fully compatible with `errors.Is` and `errors.As`
@@ -67,18 +67,16 @@ type Error struct {
 
 Calling `Error()` (or logging the error) produces a **recursive, flattened string** containing:
 
-* The error code
+* The error class
 * The input/context at each wrapping level
-* The stack trace (only once, at the origin)
+* The stack trace (only the origin func per linked error)
 * The full wrapped error chain
 
 ```go
 log.Println(err)
 ```
 
-This prints the **entire causal chain**, because `Error()` recursively calls `err.Error()` on wrapped errors.
-
-This behavior is **intentional** and meant for **internal logging and debugging**.
+This prints the **entire causal chain**. This behavior is **intentional** and meant for **internal logging and debugging**.
 
 ---
 
@@ -91,7 +89,7 @@ err := New(ErrInternal, sqlErr, "query users")
 ```
 
 * Captures a stack trace
-* Sets the classification code
+* Sets the error class
 * Records input/context
 
 ---
@@ -103,12 +101,12 @@ err = Wrap(ErrNotFound, err, "GetUser")
 ```
 
 * Preserves the original stack trace
-* Updates or inherits the error code
+* Updates or inherits the error class
 * Adds contextual input
 
 ---
 
-### Wrapping without changing the code
+### Wrapping without changing the class
 
 ```go
 err = Wrap(nil, err, "repository layer")
@@ -116,6 +114,8 @@ err = Wrap(nil, err, "repository layer")
 
 * Keeps the existing classification
 * Adds context only
+
+#### It is not recommended to use a `commonerrors` type as a wraped error.
 
 ---
 
@@ -140,6 +140,8 @@ if errors.Is(err, ErrNotFound) {
 	// handle not found
 }
 ```
+The `Is()` custom method only checks the outer most error `commonerrors.class`. The intention is each error to effectivelly contain only one clasification.
+
 
 ### Accessing the custom error (`errors.As`)
 
@@ -189,7 +191,7 @@ return GRPCStatus(err)
 Behavior:
 
 * Existing gRPC status errors are propagated
-* Most outer error code prevails over nested error codes
+* Most outer error class prevails over nested error classes
 * Context errors are mapped first
 * Domain errors use `publicMsg` when present
 * Empty public messages fall back to a safe default

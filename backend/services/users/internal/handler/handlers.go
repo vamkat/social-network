@@ -488,7 +488,8 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 		MembersCount:     resp.MembersCount,
 		IsMember:         resp.IsMember,
 		IsOwner:          resp.IsOwner,
-		IsPending:        resp.IsPending,
+		PendingRequest:   resp.PendingRequest,
+		PendingInvite:    resp.PendingInvite,
 	}, nil
 }
 
@@ -525,6 +526,76 @@ func (s *UsersHandler) GetGroupMembers(ctx context.Context, req *pb.GroupMembers
 		return nil, ce.GRPCStatus(err)
 	}
 	return groupUsersToPB(resp), nil
+}
+
+func (s *UsersHandler) GetPendingGroupJoinRequests(ctx context.Context, req *pb.GroupMembersRequest) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetPendingGroupJoinRequests called with @1", "request", req)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "GetPendingGroupJoinRequests: request is nil")
+	}
+	userId := req.GetUserId()
+	if err := invalidId("userId", userId); err != nil {
+		return nil, err
+	}
+
+	groupId := req.GetGroupId()
+	if err := invalidId("groupId", groupId); err != nil {
+		return nil, err
+	}
+
+	limit := req.Limit
+	offset := req.Offset
+	if err := checkLimOff(limit, offset); err != nil {
+		return nil, err
+	}
+
+	resp, err := s.Application.GetPendingGroupJoinRequests(ctx, models.GroupMembersReq{
+		UserId:  ct.Id(userId),
+		GroupId: ct.Id(groupId),
+		Limit:   ct.Limit(limit),
+		Offset:  ct.Offset(offset),
+	})
+	if err != nil {
+		tele.Error(ctx, "Error in GetPendingGroupJoinRequests. @1", "error", err.Error(), "request", req)
+		return nil, ce.GRPCStatus(err)
+	}
+	return usersToPB(resp), nil
+}
+
+func (s *UsersHandler) GetFollowersNotInvitedToGroup(ctx context.Context, req *pb.GroupMembersRequest) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetFollowersNotInvitedToGroup called with @1", "request", req)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "GetFollowersNotInvitedToGroup: request is nil")
+	}
+	userId := req.GetUserId()
+	if err := invalidId("userId", userId); err != nil {
+		return nil, err
+	}
+
+	groupId := req.GetGroupId()
+	if err := invalidId("groupId", groupId); err != nil {
+		return nil, err
+	}
+
+	limit := req.Limit
+	offset := req.Offset
+	if err := checkLimOff(limit, offset); err != nil {
+		return nil, err
+	}
+
+	resp, err := s.Application.GetFollowersNotInvitedToGroup(ctx, models.GroupMembersReq{
+		UserId:  ct.Id(userId),
+		GroupId: ct.Id(groupId),
+		Limit:   ct.Limit(limit),
+		Offset:  ct.Offset(offset),
+	})
+	if err != nil {
+		tele.Error(ctx, "Error in GetFollowersNotInvitedToGroup. @1", "error", err.Error(), "request", req)
+		return nil, ce.GRPCStatus(err)
+	}
+	return usersToPB(resp), nil
 }
 
 func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequest) (*pb.GroupArr, error) {
@@ -622,7 +693,7 @@ func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRe
 	tele.Info(ctx, "RequestJoinGroup called with @1", "request", req)
 
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "RequestJoinGroupOrCancel: request is nil")
+		return nil, status.Error(codes.InvalidArgument, "RequestJoinGroup: request is nil")
 	}
 
 	groupId := req.GroupId
@@ -641,6 +712,34 @@ func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRe
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in RequestJoinGroup. @1", "error", err.Error(), "request", req)
+		return nil, ce.GRPCStatus(err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (s *UsersHandler) CancelGroupJoinRequest(ctx context.Context, req *pb.GroupJoinRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "CancelGroupJoinRequest called with @1", "request", req)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "CancelGroupJoinRequest: request is nil")
+	}
+
+	groupId := req.GroupId
+	if err := invalidId("groupId", groupId); err != nil {
+		return nil, err
+	}
+
+	requesterId := req.RequesterId
+	if err := invalidId("RequesterId", requesterId); err != nil {
+		return nil, err
+	}
+
+	err := s.Application.CancelJoinGroupRequest(ctx, models.GroupJoinRequest{
+		GroupId:     ct.Id(groupId),
+		RequesterId: ct.Id(requesterId),
+	})
+	if err != nil {
+		tele.Error(ctx, "Error in CancelJoinGroupRequest. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
@@ -738,6 +837,40 @@ func (s *UsersHandler) LeaveGroup(ctx context.Context, req *pb.GeneralGroupReque
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in LeaveGroup. @1", "error", err.Error(), "request", req)
+		return nil, ce.GRPCStatus(err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (s *UsersHandler) RemoveFromGroup(ctx context.Context, req *pb.RemoveFromGroupRequest) (*emptypb.Empty, error) {
+	tele.Info(ctx, "RemoveFromGroup called with @1", "request", req)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "RemoveFromGroup: request is nil")
+	}
+
+	groupId := req.GetGroupId()
+	if err := invalidId("groupId", groupId); err != nil {
+		return nil, err
+	}
+
+	memberId := req.GetMemberId()
+	if err := invalidId("memberId", memberId); err != nil {
+		return nil, err
+	}
+
+	ownerId := req.GetOwnerId()
+	if err := invalidId("ownerId", ownerId); err != nil {
+		return nil, err
+	}
+
+	err := s.Application.RemoveFromGroup(ctx, models.RemoveFromGroupRequest{
+		GroupId:  ct.Id(groupId),
+		MemberId: ct.Id(memberId),
+		OwnerId:  ct.Id(ownerId),
+	})
+	if err != nil {
+		tele.Error(ctx, "Error in RemoveFromGroup. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
 	return &emptypb.Empty{}, nil
@@ -1060,7 +1193,8 @@ func groupsToPb(groups []models.Group) *pb.GroupArr {
 			MembersCount:     g.MembersCount,
 			IsMember:         g.IsMember,
 			IsOwner:          g.IsOwner,
-			IsPending:        g.IsPending,
+			PendingRequest:   g.PendingRequest,
+			PendingInvite:    g.PendingInvite,
 		})
 	}
 

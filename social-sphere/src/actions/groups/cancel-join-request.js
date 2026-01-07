@@ -2,21 +2,20 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function requestJoinGroup({ groupId }) {
+export async function cancelJoinRequest({ groupId }) {
     try {
-        const response = await serverApiRequest("/group/join", {
+        const response = await serverApiRequest("/group/cancel-request", {
             method: "POST",
             body: JSON.stringify({
                 group_id: groupId,
             }),
-            forwardCookies: true,
             headers: {
                 "Content-Type": "application/json"
             }
         });
         return { success: true, data: response };
     } catch (error) {
-        console.error("Error requesting to join group:", error);
+        console.error("Error canceling join request:", error);
         return { success: false, error: error.message };
     }
 }

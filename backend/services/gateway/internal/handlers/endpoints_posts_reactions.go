@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/ct"
@@ -31,7 +30,8 @@ func (s *Handlers) toggleOrInsertReaction() http.HandlerFunc {
 
 		_, err = s.PostsService.ToggleOrInsertReaction(ctx, &req)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not toggle or insert reaction to entity with id %v: %v ", body.EntityId, err.Error()))
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("Could not toggle or insert reaction to entity with id %v: %v ", body.EntityId, err.Error()))
 			return
 		}
 
