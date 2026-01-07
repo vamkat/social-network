@@ -291,7 +291,7 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 		}
 
 		type reqBody struct {
-			GroupId int64 `json:"group_id"`
+			GroupId ct.Id `json:"group_id"`
 			Limit   int32 `json:"limit"`
 			Offset  int32 `json:"offset"`
 		}
@@ -304,7 +304,7 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 
 		req := &users.GroupMembersRequest{
 			UserId:  claims.UserId,
-			GroupId: body.GroupId,
+			GroupId: body.GroupId.Int64(),
 			Limit:   body.Limit,
 			Offset:  body.Offset,
 		}
