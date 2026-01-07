@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { Users, UserPlus, Settings, LogOut, Clock, UserRoundPlus, User, Check, Loader2, X, UserCheck } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Users, UserPlus, Settings, LogOut, Clock, UserRoundPlus, User, Check, Loader2, X, UserCheck, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
 import { requestJoinGroup } from "@/actions/groups/request-join-group";
@@ -10,8 +10,11 @@ import { leaveGroup } from "@/actions/groups/leave-group";
 import { inviteToGroup } from "@/actions/groups/invite-to-group";
 import { respondToGroupInvite } from "@/actions/groups/respond-to-invite";
 import { getPendingRequests } from "@/actions/groups/get-pending-requests";
+import { getPendingRequestsCount } from "@/actions/groups/get-pening-count";
 import { handleJoinRequest as handleJoinRequestAction } from "@/actions/groups/handle-join-request";
 import { getNotInvited } from "@/actions/users/get-not-invited";
+import { getGroupMembers } from "@/actions/groups/group-members";
+import { removeFromGroup } from "@/actions/groups/remove-from-group";
 import Tooltip from "../ui/Tooltip";
 import UpdateGroupModal from "./UpdateGroupModal";
 import { useRouter } from "next/navigation";
@@ -53,8 +56,43 @@ export function GroupHeader({ group }) {
     const [pendingOffset, setPendingOffset] = useState(0);
     const PENDING_LIMIT = 10;
     const pendingScrollRef = useRef(null);
+    const [pendingCount, setPendingCount] = useState(null);
 
-    
+    // Members modal state
+    const [showMembersModal, setShowMembersModal] = useState(false);
+    const [members, setMembers] = useState([]);
+    const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+    const [isLoadingMoreMembers, setIsLoadingMoreMembers] = useState(false);
+    const [hasMoreMembers, setHasMoreMembers] = useState(true);
+    const [membersOffset, setMembersOffset] = useState(0);
+    const [removingMember, setRemovingMember] = useState(null);
+    const MEMBERS_LIMIT = 10;
+    const membersScrollRef = useRef(null);
+
+    // Fetch count on mount (for owners only)
+    useEffect(() => {
+        if (!isOwner) return;
+
+        const fetchPendingCount = async () => {
+            try {
+                const result = await getPendingRequestsCount({
+                    groupId: group.group_id
+                });
+                if (result.success && result.data) {
+                    setPendingCount(result.data);
+                } else {
+                    setPendingCount(null);
+                }
+            } catch (error) {
+                console.error("Error fetching pending count:", error);
+                setPendingCount(null);
+            }
+        };
+
+        fetchPendingCount();
+    }, [group.group_id, isOwner]);
+
+
     const handleJoinRequest = async () => {
         if (isLoading) return;
         setIsLoading(true);
@@ -328,9 +366,16 @@ export function GroupHeader({ group }) {
             if (response.success) {
                 // Remove user from pending list
                 setPendingUsers((prev) => prev.filter((u) => u.id !== requesterId));
+
+                setPendingCount((prev) => {
+                    if (prev <= 1) return null;
+                    return prev - 1;
+                });
+
                 if (accepted) {
                     setMembersCount((prev) => prev + 1);
                 }
+
             } else {
                 console.error("Error handling request:", response.error);
             }
@@ -338,6 +383,97 @@ export function GroupHeader({ group }) {
             console.error("Error handling request:", error);
         } finally {
             setProcessingUser(null);
+        }
+    };
+
+    // Members modal handlers
+    const handleOpenMembersModal = async () => {
+        if (!isMember && !isOwner) return; // Non-members cannot open
+
+        setShowMembersModal(true);
+        setIsLoadingMembers(true);
+        setMembers([]);
+        setMembersOffset(0);
+        setHasMoreMembers(true);
+        try {
+            const result = await getGroupMembers({
+                group_id: group.group_id,
+                limit: MEMBERS_LIMIT,
+                offset: 0
+            });
+            if (result.success && result.data?.group_users) {
+                setMembers(result.data.group_users);
+                setHasMoreMembers(result.data.group_users.length === MEMBERS_LIMIT);
+                setMembersOffset(MEMBERS_LIMIT);
+            } else {
+                setMembers([]);
+                setHasMoreMembers(false);
+            }
+        } catch (error) {
+            console.error("Error fetching members:", error);
+            setMembers([]);
+            setHasMoreMembers(false);
+        } finally {
+            setIsLoadingMembers(false);
+        }
+    };
+
+    const handleCloseMembersModal = () => {
+        setShowMembersModal(false);
+        setMembers([]);
+        setRemovingMember(null);
+        setMembersOffset(0);
+        setHasMoreMembers(true);
+    };
+
+    const loadMoreMembers = useCallback(async () => {
+        if (isLoadingMoreMembers || !hasMoreMembers) return;
+
+        setIsLoadingMoreMembers(true);
+        try {
+            const result = await getGroupMembers({
+                group_id: group.group_id,
+                limit: MEMBERS_LIMIT,
+                offset: membersOffset
+            });
+            if (result.success && result.data?.group_users?.length > 0) {
+                setMembers((prev) => [...prev, ...result.data.group_users]);
+                setHasMoreMembers(result.data.group_users.length === MEMBERS_LIMIT);
+                setMembersOffset((prev) => prev + MEMBERS_LIMIT);
+            } else {
+                setHasMoreMembers(false);
+            }
+        } catch (error) {
+            console.error("Error loading more members:", error);
+        } finally {
+            setIsLoadingMoreMembers(false);
+        }
+    }, [isLoadingMoreMembers, hasMoreMembers, membersOffset, group.group_id]);
+
+    const handleMembersScroll = useCallback((e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollHeight - scrollTop - clientHeight < 50 && hasMoreMembers && !isLoadingMoreMembers) {
+            loadMoreMembers();
+        }
+    }, [hasMoreMembers, isLoadingMoreMembers, loadMoreMembers]);
+
+    const handleRemoveMember = async (memberId) => {
+        setRemovingMember(memberId);
+        try {
+            const response = await removeFromGroup({
+                groupId: group.group_id,
+                memberId: memberId
+            });
+            if (response.success) {
+                setMembers((prev) => prev.filter((m) => m.user_id !== memberId));
+                setMembersCount((prev) => prev - 1);
+            } else {
+                console.error("Error removing member:", response.error);
+            }
+        } catch (error) {
+            console.error("Error removing member:", error);
+        } finally {
+            setRemovingMember(null);
         }
     };
 
@@ -369,7 +505,7 @@ export function GroupHeader({ group }) {
                             <div className="flex-1 min-w-0 flex flex-col sm:flex-row justify-between items-start gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-2">
-                                    {isOwner && (
+                                        {isOwner && (
                                             <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-[10px] bg-(--accent) text-white shadow-sm">
                                                 {/* <Shield className="w-3 h-3" /> */}
                                                 Owner
@@ -385,15 +521,27 @@ export function GroupHeader({ group }) {
                                         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
                                             {group.group_title}
                                         </h1>
-                                        
+
                                     </div>
-                                    
-                                    <div className="flex items-center gap-2 text-(--muted)">
-                                        <Users className="w-4 h-4" />
-                                        <span className="text-base">
-                                            {membersCount || 0} {membersCount === 1 ? "Member" : "Members"}
-                                        </span>
-                                    </div>
+
+                                    {(isMember || isOwner) ? (
+                                        <button
+                                            onClick={handleOpenMembersModal}
+                                            className="flex items-center gap-2 text-(--muted) hover:text-(--accent) transition-colors cursor-pointer"
+                                        >
+                                            <Users className="w-4 h-4" />
+                                            <span className="text-base">
+                                                {membersCount || 0} {membersCount === 1 ? "Member" : "Members"}
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-(--muted)">
+                                            <Users className="w-4 h-4" />
+                                            <span className="text-base">
+                                                {membersCount || 0} {membersCount === 1 ? "Member" : "Members"}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Action Buttons */}
@@ -401,12 +549,17 @@ export function GroupHeader({ group }) {
                                     {isOwner ? (
                                         <>
                                             {/* Pending Requests */}
-                                            <Tooltip content="Join Requests">
+                                            <Tooltip content="View Requests">
                                                 <button
                                                     onClick={handleOpenPendingModal}
                                                     className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--border) text-foreground hover:bg-(--muted)/5 transition-colors cursor-pointer"
                                                 >
                                                     <UserCheck className="w-4 h-4" />
+                                                    {pendingCount && (
+                                                        <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
+                                                            {pendingCount}
+                                                        </span>
+                                                    )}
                                                 </button>
                                             </Tooltip>
                                             {/* Invite Members */}
@@ -432,21 +585,21 @@ export function GroupHeader({ group }) {
                                         <>
                                             {/* Invite Members */}
                                             <Tooltip content="Invite Members">
-                                            <button
-                                                onClick={handleInviteMembers}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--accent) text-(--accent) hover:bg-(--accent)/5 transition-colors cursor-pointer"
-                                            >
-                                                <UserPlus className="w-4 h-4" />
-                                            </button>
+                                                <button
+                                                    onClick={handleInviteMembers}
+                                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--accent) text-(--accent) hover:bg-(--accent)/5 transition-colors cursor-pointer"
+                                                >
+                                                    <UserPlus className="w-4 h-4" />
+                                                </button>
                                             </Tooltip>
                                             {/* Leave Group */}
                                             <Tooltip content="Leave">
-                                            <button
-                                                onClick={() => setShowLeaveModal(true)}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--border) text-(--muted) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-colors cursor-pointer"
-                                            >
-                                                <LogOut className="w-4 h-4" />
-                                            </button>
+                                                <button
+                                                    onClick={() => setShowLeaveModal(true)}
+                                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-(--border) text-(--muted) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-colors cursor-pointer"
+                                                >
+                                                    <LogOut className="w-4 h-4" />
+                                                </button>
                                             </Tooltip>
                                         </>
                                     ) : pendingInvite ? (
@@ -458,11 +611,10 @@ export function GroupHeader({ group }) {
                                                     <button
                                                         onClick={() => handleInviteResponse(false)}
                                                         disabled={isLoading}
-                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
-                                                            isLoading
-                                                                ? "opacity-70 cursor-wait"
-                                                                : "bg-(--muted)/10 text-(--muted) border border-(--border) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
-                                                        }`}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${isLoading
+                                                            ? "opacity-70 cursor-wait"
+                                                            : "bg-(--muted)/10 text-(--muted) border border-(--border) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
+                                                            }`}
                                                     >
                                                         <X className="w-4 h-4" />
                                                     </button>
@@ -471,11 +623,10 @@ export function GroupHeader({ group }) {
                                                     <button
                                                         onClick={() => handleInviteResponse(true)}
                                                         disabled={isLoading}
-                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
-                                                            isLoading
-                                                                ? "opacity-70 cursor-wait"
-                                                                : "bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20"
-                                                        }`}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${isLoading
+                                                            ? "opacity-70 cursor-wait"
+                                                            : "bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20"
+                                                            }`}
                                                     >
                                                         <Check className="w-4 h-4" />
                                                     </button>
@@ -488,11 +639,10 @@ export function GroupHeader({ group }) {
                                             <button
                                                 onClick={handleCancelRequest}
                                                 disabled={isLoading}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
-                                                    isLoading
-                                                        ? "opacity-70 cursor-wait"
-                                                        : "bg-(--muted)/10 text-(--muted) border border-(--border) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
-                                                }`}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${isLoading
+                                                    ? "opacity-70 cursor-wait"
+                                                    : "bg-(--muted)/10 text-(--muted) border border-(--border) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
+                                                    }`}
                                             >
                                                 <Clock className="w-4 h-4" />
                                                 <span className="hidden sm:inline">Pending</span>
@@ -504,11 +654,10 @@ export function GroupHeader({ group }) {
                                             <button
                                                 onClick={handleJoinRequest}
                                                 disabled={isLoading}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
-                                                    isLoading
-                                                        ? "opacity-70 cursor-wait"
-                                                        : "bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20"
-                                                }`}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${isLoading
+                                                    ? "opacity-70 cursor-wait"
+                                                    : "bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20"
+                                                    }`}
                                             >
                                                 <UserRoundPlus className="w-4 h-4" />
                                             </button>
@@ -576,7 +725,7 @@ export function GroupHeader({ group }) {
                         <div
                             ref={scrollContainerRef}
                             onScroll={handleScroll}
-                            className="h-20 overflow-y-auto -mx-5 px-5"
+                            className="max-h-60 overflow-y-auto -mx-5 px-5"
                         >
                             <div className="space-y-1">
                                 {followers.map((follower) => {
@@ -586,11 +735,10 @@ export function GroupHeader({ group }) {
                                             key={follower.id}
                                             type="button"
                                             onClick={() => toggleUserSelection(follower.id)}
-                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors cursor-pointer ${
-                                                isSelected
-                                                    ? "bg-(--accent)/10 border border-(--accent)/30"
-                                                    : "hover:bg-(--muted)/5 border border-transparent"
-                                            }`}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors cursor-pointer ${isSelected
+                                                ? "bg-(--accent)/10 border border-(--accent)/30"
+                                                : "hover:bg-(--muted)/5 border border-transparent"
+                                                }`}
                                         >
                                             <Link
                                                 href={`/profile/${follower.id}`}
@@ -616,11 +764,10 @@ export function GroupHeader({ group }) {
                                                     {follower.username}
                                                 </p>
                                             </Link>
-                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                                                isSelected
-                                                    ? "bg-(--accent) border-(--accent)"
-                                                    : "border-(--border)"
-                                            }`}>
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected
+                                                ? "bg-(--accent) border-(--accent)"
+                                                : "border-(--border)"
+                                                }`}>
                                                 {isSelected && <Check className="w-3 h-3 text-white" />}
                                             </div>
                                         </button>
@@ -704,11 +851,10 @@ export function GroupHeader({ group }) {
                                                     <button
                                                         onClick={() => handleRequest(pendingUser.id, false)}
                                                         disabled={isProcessing}
-                                                        className={`p-2 rounded-full transition-colors cursor-pointer ${
-                                                            isProcessing
-                                                                ? "opacity-50 cursor-wait"
-                                                                : "text-(--muted) hover:bg-red-500/10 hover:text-red-500"
-                                                        }`}
+                                                        className={`p-2 rounded-full transition-colors cursor-pointer ${isProcessing
+                                                            ? "opacity-50 cursor-wait"
+                                                            : "text-(--muted) hover:bg-red-500/10 hover:text-red-500"
+                                                            }`}
                                                     >
                                                         <X className="w-4 h-4" />
                                                     </button>
@@ -717,11 +863,10 @@ export function GroupHeader({ group }) {
                                                     <button
                                                         onClick={() => handleRequest(pendingUser.id, true)}
                                                         disabled={isProcessing}
-                                                        className={`p-2 rounded-full transition-colors cursor-pointer ${
-                                                            isProcessing
-                                                                ? "opacity-50 cursor-wait"
-                                                                : "text-(--muted) hover:bg-green-500/10 hover:text-green-500"
-                                                        }`}
+                                                        className={`p-2 rounded-full transition-colors cursor-pointer ${isProcessing
+                                                            ? "opacity-50 cursor-wait"
+                                                            : "text-(--muted) hover:bg-green-500/10 hover:text-green-500"
+                                                            }`}
                                                     >
                                                         <Check className="w-4 h-4" />
                                                     </button>
@@ -731,6 +876,102 @@ export function GroupHeader({ group }) {
                                     );
                                 })}
                                 {isLoadingMorePending && (
+                                    <div className="py-3 flex justify-center">
+                                        <Loader2 className="w-5 h-5 text-(--accent) animate-spin" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </Modal>
+            )}
+
+            {/* Members Modal */}
+            {showMembersModal && (
+                <Modal
+                    isOpen={showMembersModal}
+                    onClose={handleCloseMembersModal}
+                    title="Group Members"
+                    description={`${membersCount || 0} ${membersCount === 1 ? "member" : "members"} in this group.`}
+                    cancelText="Close"
+                >
+                    {isLoadingMembers ? (
+                        <div className="py-8 flex flex-col items-center gap-3">
+                            <Loader2 className="w-6 h-6 text-(--accent) animate-spin" />
+                            <p className="text-sm text-(--muted)">Loading members...</p>
+                        </div>
+                    ) : members.length === 0 ? (
+                        <div className="py-8 text-center text-(--muted)">
+                            <p>No members found.</p>
+                        </div>
+                    ) : (
+                        <div
+                            ref={membersScrollRef}
+                            onScroll={handleMembersScroll}
+                            className="max-h-64 overflow-y-auto -mx-5 px-5"
+                        >
+                            <div className="space-y-1">
+                                {members.map((member) => {
+                                    const isRemoving = removingMember === member.user_id;
+                                    const isCurrentUser = member.user_id === user?.id;
+                                    const isMemberOwner = member.group_role === "owner";
+                                    return (
+                                        <div
+                                            key={member.user_id}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:bg-(--muted)/5"
+                                        >
+                                            <Link
+                                                href={`/profile/${member.user_id}`}
+                                                className="w-10 h-10 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden shrink-0 hover:ring-2 hover:ring-(--accent)/50 transition-all"
+                                            >
+                                                {member.avatar_url ? (
+                                                    <img
+                                                        src={member.avatar_url}
+                                                        alt={member.username}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <User className="w-5 h-5 text-(--muted)" />
+                                                )}
+                                            </Link>
+                                            <Link
+                                                href={`/profile/${member.user_id}`}
+                                                className="flex-1 min-w-0 text-left"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-medium text-foreground truncate hover:text-(--accent) transition-colors">
+                                                        {member.username}
+                                                    </p>
+                                                    {isMemberOwner && (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-(--accent) text-white">
+                                                            Owner
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </Link>
+                                            {/* Owner can remove members (but not themselves or other owners) */}
+                                            {isOwner && !isCurrentUser && !isMemberOwner && (
+                                                <Tooltip content="Remove member">
+                                                    <button
+                                                        onClick={() => handleRemoveMember(member.user_id)}
+                                                        disabled={isRemoving}
+                                                        className={`p-2 rounded-full transition-colors cursor-pointer ${isRemoving
+                                                            ? "opacity-50 cursor-wait"
+                                                            : "text-(--muted) hover:bg-red-500/10 hover:text-red-500"
+                                                            }`}
+                                                    >
+                                                        {isRemoving ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                {isLoadingMoreMembers && (
                                     <div className="py-3 flex justify-center">
                                         <Loader2 className="w-5 h-5 text-(--accent) animate-spin" />
                                     </div>

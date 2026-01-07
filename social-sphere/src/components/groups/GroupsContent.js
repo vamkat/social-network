@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import CreateGroup from "@/components/groups/CreateGroup";
 import GroupCard from "@/components/groups/GroupCard";
 import GroupsPagination from "@/components/groups/GroupsPagination";
+import { motion } from "motion/react";
 
 export default function GroupsContent() {
     const router = useRouter();
@@ -246,8 +247,20 @@ export default function GroupsContent() {
                                 <h2 className="text-xl font-bold text-foreground">My Groups</h2>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {userGroups.map((group) => (
-                                    <GroupCard key={group.group_id} group={group} />
+                                {userGroups.map((group, index) => (
+                                    <motion.div
+                                        key={group.group_id + index}
+                                        initial={{ opacity: 0, scale: 0.7 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{
+                                            duration: 0.6,
+                                            delay: index * 0.3,
+                                            ease: "easeOut"
+                                        }}
+                                        layout
+                                    >
+                                        <GroupCard key={group.group_id} group={group} />
+                                    </motion.div>
                                 ))}
                             </div>
                             <GroupsPagination
@@ -268,8 +281,20 @@ export default function GroupsContent() {
                         {allGroups.length > 0 ? (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {allGroups.map((group) => (
-                                        <GroupCard key={group.group_id} group={group} />
+                                    {allGroups.map((group, index) => (
+                                        <motion.div
+                                            key={group.group_id + index}
+                                            initial={{ opacity: 0, scale: 0.7 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{
+                                                duration: 0.6,
+                                                delay: index * 0.4,
+                                                ease: "easeOut"
+                                            }}
+                                            layout
+                                        >
+                                            <GroupCard key={group.group_id} group={group} />
+                                        </motion.div>
                                     ))}
                                 </div>
                                 <GroupsPagination
