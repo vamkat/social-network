@@ -89,6 +89,7 @@ export default function FriendsFeedContent({ initialPosts }) {
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{
                                         duration: 0.3,
+                                        delay: index * 0.1,
                                         ease: "easeOut"
                                     }}
                                     layout
