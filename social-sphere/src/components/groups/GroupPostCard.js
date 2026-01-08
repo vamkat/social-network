@@ -2,24 +2,25 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, Pencil, Trash2,  User, ChevronDown } from "lucide-react";
-import PostImage from "./PostImage";
-import Modal from "./Modal";
+import { Heart, MessageCircle, Pencil, Trash2, User, ChevronDown } from "lucide-react";
+import PostImage from "@/components/ui/PostImage";
+import Modal from "@/components/ui/Modal";
 import { useStore } from "@/store/store";
 import { editPost } from "@/actions/posts/edit-post";
 import { deletePost } from "@/actions/posts/delete-post";
 import { editComment } from "@/actions/posts/edit-comment";
 import { deleteComment } from "@/actions/posts/delete-comment";
 import { validateUpload } from "@/actions/auth/validate-upload";
-import { getFollowers } from "@/actions/users/get-followers";
-import { getPost } from "@/actions/posts/get-post";
 import { getRelativeTime } from "@/lib/time";
 import { toggleReaction } from "@/actions/posts/toggle-reaction";
 import { getComments } from "@/actions/posts/get-comments";
 import { createComment } from "@/actions/posts/create-comment";
-import Tooltip from "./Tooltip";
+import Tooltip from "@/components/ui/Tooltip";
 
-export default function GroupPostCard({ post, onDelete }) {
+export default function GroupPostCard({ post, onDelete, allowed = true }) {
+    if (!post) {
+        return;
+    }
     const user = useStore((state) => state.user);
     const [image, setImage] = useState(post.image_url);
     const [comments, setComments] = useState([]);
@@ -39,11 +40,6 @@ export default function GroupPostCard({ post, onDelete }) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [removeExistingImage, setRemoveExistingImage] = useState(false);
-    const [privacy, setPrivacy] = useState(post.audience || "everyone");
-    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-    const [selectedFollowers, setSelectedFollowers] = useState([]);
-    const [followers, setFollowers] = useState([]);
-    const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
     const [relativeTime, setRelativeTime] = useState("");
     const [likedByUser, setLikedByUser] = useState(post.liked_by_user);
     const [reactionsCount, setReactionsCount] = useState(post.reactions_count);
@@ -63,26 +59,13 @@ export default function GroupPostCard({ post, onDelete }) {
     const fileInputRef = useRef(null);
     const commentFileInputRef = useRef(null);
     const editingCommentFileInputRef = useRef(null);
-    const dropdownRef = useRef(null);
+    const privacy = "group";
 
     const isOwnPost = Boolean(
         user &&
         post?.post_user?.id &&
         String(post.post_user.id) === String(user.id)
     );
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsPrivacyOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
 
     // Update relative time on client side to avoid hydration mismatch
     useEffect(() => {
@@ -178,64 +161,11 @@ export default function GroupPostCard({ post, onDelete }) {
         }
     };
 
-    const fetchFollowers = async () => {
-        if (!user?.id || isLoadingFollowers) return;
-
-        setIsLoadingFollowers(true);
-        const followersData = await getFollowers({
-            userId: user.id,
-            limit: 100,
-            offset: 0
-        });
-        setFollowers(followersData || []);
-        setIsLoadingFollowers(false);
-    };
-
-    const handlePrivacySelect = (newPrivacy) => {
-        setPrivacy(newPrivacy);
-        setIsPrivacyOpen(false);
-        if (newPrivacy !== "selected") {
-            setSelectedFollowers([]);
-        } else {
-            fetchFollowers();
-        }
-    };
-
-    const toggleFollower = (followerId) => {
-        // Ensure followerId is a string for consistent comparison
-        const followerIdStr = String(followerId);
-        setSelectedFollowers((prev) =>
-            prev.includes(followerIdStr)
-                ? prev.filter((id) => id !== followerIdStr)
-                : [...prev, followerIdStr]
-        );
-    };
-
     const handleStartEditPost = async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        // Fetch full post data to get selected_audience_users
-        const fetchedPost = await getPost(post.post_id);
-        if (!fetchedPost) {
-            setError("Failed to load post data");
-            return;
-        }
-
         setPostDraft(postContent);
-        const postPrivacy = fetchedPost.audience || "everyone";
-        setPrivacy(postPrivacy);
-
-        // If privacy is "selected", load the followers and set the selected ones
-        if (postPrivacy === "selected") {
-            await fetchFollowers();
-            // Set selected followers from fetched post's selected_audience_users
-            if (fetchedPost.selected_audience_users && Array.isArray(fetchedPost.selected_audience_users)) {
-                // Ensure IDs are strings for consistent comparison
-                setSelectedFollowers(fetchedPost.selected_audience_users.map(user => String(user.id)));
-            }
-        }
-
         setIsEditingPost(true);
         setError("");
         setRemoveExistingImage(false);
@@ -245,8 +175,6 @@ export default function GroupPostCard({ post, onDelete }) {
         e.preventDefault();
         e.stopPropagation();
         setPostDraft(postContent);
-        setPrivacy(post.audience || "everyone");
-        setSelectedFollowers([]);
         setIsEditingPost(false);
         setImageFile(null);
         setImagePreview(null);
@@ -288,12 +216,6 @@ export default function GroupPostCard({ post, onDelete }) {
         e.stopPropagation();
         if (!postDraft.trim()) return;
 
-        // Validate selected privacy
-        if (privacy === "selected" && selectedFollowers.length === 0) {
-            setError("Please select at least one follower for selected posts");
-            return;
-        }
-
         try {
             setError("");
 
@@ -301,7 +223,6 @@ export default function GroupPostCard({ post, onDelete }) {
                 post_id: post.post_id,
                 post_body: postDraft.trim(),
                 audience: privacy,
-                audience_ids: privacy === "selected" ? selectedFollowers : []
             };
 
             // Handle new image upload
@@ -323,6 +244,7 @@ export default function GroupPostCard({ post, onDelete }) {
             }
 
             if (imageFile && resp.FileId && resp.UploadUrl) {
+                // User uploaded a new image
                 const uploadRes = await fetch(resp.UploadUrl, {
                     method: "PUT",
                     body: imageFile,
@@ -339,12 +261,25 @@ export default function GroupPostCard({ post, onDelete }) {
                     return;
                 }
 
-                setImage(validateResp.download_url)
+                // Optimistically set the new image URL
+                setImage(validateResp?.download_url);
+            } else if (removeExistingImage) {
+                // User removed the existing image
+                setImage(null);
+                setImagePreview(null);
             }
 
+            // Optimistically update the content
             setPostContent(postDraft);
             setIsEditingPost(false);
-            window.location.reload();
+
+            // Reset edit-related state
+            setImageFile(null);
+            setImagePreview(null);
+            setRemoveExistingImage(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
 
         } catch (err) {
             console.error("Failed to edit post:", err);
@@ -790,7 +725,7 @@ export default function GroupPostCard({ post, onDelete }) {
                         <Tooltip content="Delete Post">
                             <button
                                 onClick={handleDeleteClick}
-                                className="p-2 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors cursor-pointer" 
+                                className="p-2 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors cursor-pointer"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -809,78 +744,6 @@ export default function GroupPostCard({ post, onDelete }) {
                             value={postDraft}
                             onChange={(e) => setPostDraft(e.target.value)}
                         />
-
-                        {/* Privacy Selector */}
-                        <div className="relative" ref={dropdownRef}>
-                            <button
-                                type="button"
-                                onClick={() => setIsPrivacyOpen(!isPrivacyOpen)}
-                                className="flex items-center gap-1.5 bg-(--muted)/5 border border-(--border) rounded-full px-3 py-1.5 text-sm text-foreground hover:border-foreground focus:border-(--accent) transition-colors cursor-pointer"
-                            >
-                                <span className="capitalize">{privacy}</span>
-                                <ChevronDown size={14} className={`transition-transform duration-200 ${isPrivacyOpen ? "rotate-180" : ""}`} />
-                            </button>
-                            {isPrivacyOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-32 bg-background border border-(--border) rounded-xl z-50 shadow-lg">
-                                    <div className="flex flex-col p-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => handlePrivacySelect("everyone")}
-                                            className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "everyone" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"}`}
-                                        >
-                                            Everyone
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handlePrivacySelect("followers")}
-                                            className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "followers" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"}`}
-                                        >
-                                            Followers
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handlePrivacySelect("selected")}
-                                            className={`w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${privacy === "selected" ? "bg-(--muted)/10 font-medium" : "hover:bg-(--muted)/5 cursor-pointer"}`}
-                                        >
-                                            Selected
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Follower Selection for "Selected" Privacy */}
-                        {privacy === "selected" && (
-                            <div className="border border-(--border) rounded-xl p-4 space-y-2 bg-(--muted)/5">
-                                <p className="text-xs font-medium text-(--muted)">
-                                    Select followers who can see this post:
-                                </p>
-                                <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                                    {followers.length > 0 ? (
-                                        followers.map((follower, index) => (
-                                            <label
-                                                key={follower.id || `follower-${index}`}
-                                                className="flex items-center gap-2 cursor-pointer hover:bg-(--muted)/10 rounded-lg px-2 py-1.5 transition-colors"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedFollowers.includes(String(follower.id))}
-                                                    onChange={() => toggleFollower(follower.id)}
-                                                    className="rounded border-gray-300"
-                                                />
-                                                <span className="text-sm">
-                                                    @{follower.username}
-                                                </span>
-                                            </label>
-                                        ))
-                                    ) : (
-                                        <p className="text-xs text-(--muted) text-center py-2">
-                                            {isLoadingFollowers ? "Loading followers..." : "No followers to select"}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
 
                         {/* Image Preview for Edit - New Image */}
                         {imagePreview && (
@@ -901,7 +764,7 @@ export default function GroupPostCard({ post, onDelete }) {
                         )}
 
                         {/* Existing Image in Edit Mode */}
-                        {!imagePreview && post?.image_url && !removeExistingImage && (
+                        {!imagePreview && image && !removeExistingImage && (
                             <div className="relative inline-block">
                                 <img
                                     src={image}
@@ -960,12 +823,16 @@ export default function GroupPostCard({ post, onDelete }) {
                             </div>
                         </div>
                     </div>
-                ) : (
+                ) : allowed ? (
                     <Link href={`/posts/${post.post_id}`} prefetch={false}>
                         <p className="text-[15px] leading-relaxed text-(--foreground)/90 whitespace-pre-wrap">
                             {postContent}
                         </p>
                     </Link>
+                ) : (
+                    <p className="text-[15px] leading-relaxed text-(--foreground)/90 whitespace-pre-wrap">
+                        {postContent}
+                    </p>
                 )}
 
                 {/* Error Message (for non-edit operations like delete) */}
@@ -987,25 +854,36 @@ export default function GroupPostCard({ post, onDelete }) {
             {!isEditingPost && (
                 <div className="px-5 py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <button
-                                onClick={handleHeartClick}
-                                disabled={isReactionPending}
-                                className="flex items-center gap-2 text-(--muted) hover:text-red-500 cursor-pointer transition-colors group/heart disabled:opacity-50"
-                            >
-                                <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110  ${likedByUser ? "fill-red-500 text-red-500" : ""}`} />
-                                <span className="text-sm font-medium">{reactionsCount}</span>
-                            </button>
+                        
+                            {!allowed ? (
+                                <div className="flex items-center gap-1">
+                                    <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 "fill-(--accent)/10"`} />
+                                <span className="text-sm font-medium">{commentsCount}</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-6">
+                                <button
+                                    onClick={handleHeartClick}
+                                    disabled={isReactionPending}
+                                    className="flex items-center gap-2 text-(--muted) hover:text-red-500 cursor-pointer transition-colors group/heart disabled:opacity-50"
+                                >
+                                    <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110  ${likedByUser ? "fill-red-500 text-red-500" : ""}`} />
+                                    <span className="text-sm font-medium">{reactionsCount}</span>
+                                </button>
 
-                            <button
+                                <button
                                 onClick={handleToggleComments}
                                 className={`flex items-center gap-2 transition-colors group/comment cursor-pointer ${isExpanded ? "text-(--accent)" : "text-(--muted) hover:text-(--accent)"}`}
                             >
                                 <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 ${isExpanded ? "fill-(--accent)/10" : ""}`} />
                                 <span className="text-sm font-medium">{commentsCount}</span>
                             </button>
+                            </div>
+                            )}
+
+                            
                         </div>
-                    </div>
+                    
                 </div>
             )}
 
