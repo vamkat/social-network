@@ -113,8 +113,8 @@ export default function FriendsFeedContent({ initialPosts }) {
 
                         {/* End of feed message */}
                         {!hasMore && posts.length > 0 && (
-                            <div className="text-center py-8 text-sm text-(--muted)">
-                                You've reached the end of the feed
+                            <div className="text-center py-8 text-xl font-bold text-(--muted)">
+                                .
                             </div>
                         )}
                     </div>
