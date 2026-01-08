@@ -114,11 +114,11 @@ func (h *Handlers) getMostPopularPostInGroup() http.HandlerFunc {
 
 		tele.Info(ctx, "retrieved most popular post in group @1", "grpcResp", grpcResp)
 
-		var post models.Post
-		if grpcResp == nil {
-			post = models.Post{}
-		} else {
-			post = models.Post{
+		var post *models.Post
+
+		if grpcResp.PostId != 0 {
+
+			post = &models.Post{
 				PostId: ct.Id(grpcResp.PostId),
 				Body:   ct.PostBody(grpcResp.PostBody),
 				User: models.User{
