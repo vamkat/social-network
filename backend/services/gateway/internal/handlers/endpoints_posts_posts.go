@@ -86,6 +86,64 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 	}
 }
 
+func (h *Handlers) getMostPopularPostInGroup() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		tele.Info(ctx, "getMostPopularPostInGroup handler called")
+
+		// claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		// if !ok {
+		// 	panic(1)
+		// }
+		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		grpcReq := posts.SimpleIdReq{
+			Id: body.EntityId.Int64(),
+		}
+
+		grpcResp, err := h.PostsService.GetMostPopularPostInGroup(ctx, &grpcReq)
+		if err != nil {
+			utils.ReturnHttpError(ctx, w, err)
+			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to get post with id %v: %s", body.EntityId, err.Error()))
+			return
+		}
+
+		tele.Info(ctx, "retrieved most popular post in group @1", "grpcResp", grpcResp)
+
+		post := models.Post{
+			PostId: ct.Id(grpcResp.PostId),
+			Body:   ct.PostBody(grpcResp.PostBody),
+			User: models.User{
+				UserId:    ct.Id(grpcResp.User.UserId),
+				Username:  ct.Username(grpcResp.User.Username),
+				AvatarId:  ct.Id(grpcResp.User.Avatar),
+				AvatarURL: grpcResp.User.AvatarUrl,
+			},
+			GroupId:         ct.Id(grpcResp.GroupId),
+			Audience:        ct.Audience(grpcResp.Audience),
+			CommentsCount:   int(grpcResp.CommentsCount),
+			ReactionsCount:  int(grpcResp.ReactionsCount),
+			LastCommentedAt: ct.GenDateTime(grpcResp.LastCommentedAt.AsTime()),
+			CreatedAt:       ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
+			UpdatedAt:       ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
+			LikedByUser:     grpcResp.LikedByUser,
+			ImageId:         ct.Id(grpcResp.ImageId),
+			ImageUrl:        grpcResp.ImageUrl,
+		}
+
+		err = utils.WriteJSON(ctx, w, http.StatusOK, post)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to send most popular post in group")
+			return
+		}
+
+	}
+}
+
 func (h *Handlers) createPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

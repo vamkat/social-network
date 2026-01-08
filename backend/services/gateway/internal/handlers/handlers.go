@@ -130,6 +130,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 5, 5).
 			Finalize(h.updateGroup()))
 
+	mux.HandleFunc("/groups/popular",
+		Chain("/groups/popular").
+			AllowedMethod("POST").
+			RateLimit(IP, 5, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 5, 5).
+			Finalize(h.getMostPopularPostInGroup()))
+
 	mux.HandleFunc("/groups/paginated",
 		Chain("/groups/paginated").
 			AllowedMethod("POST").
