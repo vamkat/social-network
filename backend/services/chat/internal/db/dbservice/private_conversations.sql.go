@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type NewPC struct {
+type NewPrivateConversation struct {
 	Id                 ct.Id
 	UserA              ct.Id
 	UserB              ct.Id
@@ -25,11 +25,11 @@ type NewPC struct {
 
 // Creates a private conversation if a conversation between the same 2 users does not exist.
 func (q *Queries) GetOrCreatePrivateConv(ctx context.Context,
-	arg md.GetOrCreatePCRec,
-) (res NewPC, err error) {
+	arg md.GetOrCreatePrivateConvReq,
+) (res NewPrivateConversation, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
-	var pm NewPC
-	row := q.db.QueryRow(ctx, getOrCreatePrivateConv, arg.User, arg.OtherUser)
+	var pm NewPrivateConversation
+	row := q.db.QueryRow(ctx, getOrCreatePrivateConv, arg.UserId, arg.OtherUserId)
 	err = row.Scan(
 		&pm.Id,
 		// TODO: Check if the order is correct
@@ -48,7 +48,7 @@ func (q *Queries) GetOrCreatePrivateConv(ctx context.Context,
 }
 
 func (q *Queries) GetPrivateConvs(ctx context.Context,
-	arg md.GetPCsReq) (res []md.PCsPreview, err error) {
+	arg md.GetPrivateConvsReq) (res []md.PrivateConvsPreview, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	if err := ct.ValidateStruct(arg); err != nil {
@@ -62,7 +62,7 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 	defer rows.Close()
 
 	for rows.Next() {
-		var pc md.PCsPreview
+		var pc md.PrivateConvsPreview
 		err := rows.Scan(
 			&pc.ConversationId,
 			&pc.UpdatedAt,
@@ -83,7 +83,7 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 	return res, nil
 }
 
-func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePMParams) (msg md.PM, err error) {
+func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePrivatMsgReq) (msg md.PrivateMsg, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	row := q.db.QueryRow(ctx,
@@ -112,7 +112,7 @@ func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePMPa
 }
 
 func (q *Queries) GetPrevPrivateMsgs(ctx context.Context,
-	arg md.GetPMsParams) (res md.GetPMsResp, err error) {
+	arg md.GetPrivatMsgsReq) (res md.GetPrivateMsgsResp, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	if err := ct.ValidateStruct(arg); err != nil {
@@ -136,7 +136,7 @@ func (q *Queries) GetPrevPrivateMsgs(ctx context.Context,
 	defer rows.Close()
 
 	for rows.Next() {
-		var message md.PM
+		var message md.PrivateMsg
 		if err := rows.Scan(
 			&message.Id,
 			&message.ConversationID,
@@ -160,7 +160,7 @@ func (q *Queries) GetPrevPrivateMsgs(ctx context.Context,
 }
 
 func (q *Queries) GetNextPrivateMsgs(ctx context.Context,
-	arg md.GetPMsParams) (res md.GetPMsResp, err error) {
+	arg md.GetPrivatMsgsReq) (res md.GetPrivateMsgsResp, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	if err := ct.ValidateStruct(arg); err != nil {
@@ -184,7 +184,7 @@ func (q *Queries) GetNextPrivateMsgs(ctx context.Context,
 	defer rows.Close()
 
 	for rows.Next() {
-		var message md.PM
+		var message md.PrivateMsg
 		if err := rows.Scan(
 			&message.Id,
 			&message.ConversationID,

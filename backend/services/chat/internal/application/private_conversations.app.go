@@ -16,15 +16,15 @@ var (
 // Creates new conversation between two users or fetches an existing.
 // Returns convesation id, last read message id (if existing) and other user basic info if opted via RetrieveOther.
 func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
-	params md.GetOrCreatePCRec) (res md.GetOrCreatePCResp, err error) {
+	params md.GetOrCreatePrivateConvReq) (res md.GetOrCreatePrivateConvResp, err error) {
 
-	input := fmt.Sprintf("user ids: %d, %d", params.User, params.OtherUser)
+	input := fmt.Sprintf("user ids: %d, %d", params.UserId, params.OtherUserId)
 
 	if err := ct.ValidateStruct(params); err != nil {
 		return res, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	connected, err := c.Clients.AreConnected(ctx, params.User, params.OtherUser)
+	connected, err := c.Clients.AreConnected(ctx, params.UserId, params.OtherUserId)
 	if err != nil {
 		return res, ce.ParseGrpcErr(err)
 	}
@@ -44,22 +44,22 @@ func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
 	}
 
 	var lastRead ct.Id
-	if newPC.UserA == params.User {
+	if newPC.UserA == params.UserId {
 		lastRead = newPC.LastReadMessageIdA
 	} else {
 		lastRead = newPC.LastReadMessageIdB
 	}
 
-	var otherUser md.User = md.User{UserId: params.OtherUser}
+	var otherUser md.User = md.User{UserId: params.OtherUserId}
 	if params.RetrieveOtherUser {
-		receiver, err := c.RetriveUsers.GetUsers(ctx, ct.Ids{params.OtherUser})
+		receiver, err := c.RetriveUsers.GetUser(ctx, params.OtherUserId)
 		if err != nil {
 			return res, ce.Wrap(nil, err, input)
 		}
-		otherUser = receiver[params.OtherUser]
+		otherUser = receiver
 	}
 
-	res = md.GetOrCreatePCResp{
+	res = md.GetOrCreatePrivateConvResp{
 		ConversationId:  newPC.Id,
 		OtherUser:       otherUser,
 		LastReadMessage: lastRead,
@@ -72,8 +72,8 @@ func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
 // older that the given BeforeDate where user with UserId is a member.
 // Respose per PC includes last message and unread count from users side.
 func (c *ChatService) GetPrivateConversations(ctx context.Context,
-	arg md.GetPCsReq,
-) (conversations []md.PCsPreview, err error) {
+	arg md.GetPrivateConvsReq,
+) (conversations []md.PrivateConvsPreview, err error) {
 
 	input := fmt.Sprintf("arg: %#v", arg)
 
@@ -110,7 +110,7 @@ func (c *ChatService) GetPrivateConversations(ctx context.Context,
 // If user match of conversation_id and user_id fails returns error.
 // TODO: Implement call to live service
 func (c *ChatService) CreatePrivateMessage(ctx context.Context,
-	params md.CreatePMParams) (msg md.PM, err error) {
+	params md.CreatePrivatMsgReq) (msg md.PrivateMsg, err error) {
 
 	input := fmt.Sprintf("params: %#v", params)
 	if err := ct.ValidateStruct(params); err != nil {
@@ -126,8 +126,9 @@ func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 }
 
 func (c *ChatService) GetPreviousPMs(ctx context.Context,
-	arg md.GetPMsParams) (res md.GetPMsResp, err error) {
+	arg md.GetPrivatMsgsReq) (res md.GetPrivateMsgsResp, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
+
 	if err := ct.ValidateStruct(arg); err != nil {
 		return res, ce.New(ce.ErrInvalidArgument, err, input)
 	}
@@ -135,19 +136,27 @@ func (c *ChatService) GetPreviousPMs(ctx context.Context,
 }
 
 func (c *ChatService) GetNextPMs(ctx context.Context,
-	arg md.GetPMsParams) (res md.GetPMsResp, err error) {
+	arg md.GetPrivatMsgsReq) (res md.GetPrivateMsgsResp, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
+
 	if err := ct.ValidateStruct(arg); err != nil {
 		return res, ce.New(ce.ErrInvalidArgument, err, input)
 	}
-	return c.Queries.GetNextPrivateMsgs(ctx, arg)
+
+	res, err = c.Queries.GetNextPrivateMsgs(ctx, arg)
+	if err != nil {
+		return res, ce.Wrap(nil, err, input)
+	}
+	return res, nil
 }
 
 func (c *ChatService) UpdateLastReadPrivateMsg(ctx context.Context, arg md.UpdateLastReadMsgParams) error {
 	input := fmt.Sprintf("arg: %#v", arg)
+
 	if err := ct.ValidateStruct(arg); err != nil {
 		return ce.New(ce.ErrInvalidArgument, err, input)
 	}
+
 	err := c.Queries.UpdateLastReadPrivateMsg(ctx, arg)
 	if err != nil {
 		return ce.Wrap(nil, err, input)

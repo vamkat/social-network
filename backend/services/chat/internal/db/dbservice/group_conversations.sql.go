@@ -29,7 +29,7 @@ func (q *Queries) CreateGroupConv(ctx context.Context,
 }
 
 func (q *Queries) CreateNewGroupMessage(ctx context.Context,
-	arg md.CreateGMParams) (msg md.PM, err error) {
+	arg md.CreateGroupMsgReq) (msg md.PrivateMsg, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	row := q.db.QueryRow(ctx,

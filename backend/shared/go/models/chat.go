@@ -4,37 +4,37 @@ import (
 	ct "social-network/shared/go/ct"
 )
 
-type GetOrCreatePCRec struct {
-	User              ct.Id `json:"user"`
-	OtherUser         ct.Id `json:"other_user"`
+type GetOrCreatePrivateConvReq struct {
+	UserId            ct.Id `json:"user"`
+	OtherUserId       ct.Id `json:"other_user"`
 	RetrieveOtherUser bool  `json:"retrieve_other_user"`
 }
 
-type GetOrCreatePCResp struct {
+type GetOrCreatePrivateConvResp struct {
 	ConversationId  ct.Id
 	OtherUser       User
 	LastReadMessage ct.Id `validation:"nullable"`
 	IsNew           bool
 }
 
-type CreateGCParams struct {
+type CreateGroupConvReq struct {
 	GroupId ct.Id  `json:"group_id"`
 	UserIds ct.Ids `json:"user_ids"`
 }
 
-type CreateGMParams struct {
+type CreateGroupMsgReq struct {
 	GroupId     ct.Id      `json:"group_id"`
 	SenderId    ct.Id      `json:"sender_id"`
 	MessageText ct.MsgBody `json:"message_text"`
 }
 
-type CreatePMParams struct {
+type CreatePrivatMsgReq struct {
 	ConversationId ct.Id      `json:"conversation_id"`
 	SenderId       ct.Id      `json:"sender_id"`
 	MessageText    ct.MsgBody `json:"message_text"`
 }
 
-type GetPMsParams struct {
+type GetPrivatMsgsReq struct {
 	ConversationId    ct.Id    `json:"conversation_id"`
 	UserId            ct.Id    `json:"user_id"`
 	BoundaryMessageId ct.Id    `json:"boundary_message_id" validation:"nullable"`
@@ -42,26 +42,26 @@ type GetPMsParams struct {
 	RetrieveUsers     bool     `json:"retrieve_users"`
 }
 
-type GetPMsResp struct {
+type GetPrivateMsgsResp struct {
 	HaveMore bool
-	Messages []PM
+	Messages []PrivateMsg
 }
 
-type GetPCsReq struct {
+type GetPrivateConvsReq struct {
 	UserId     ct.Id          `json:"user_id"`
 	BeforeDate ct.GenDateTime `json:"before_date"`
 	Limit      ct.Limit       `json:"limit"`
 }
 
-type PCsPreview struct {
+type PrivateConvsPreview struct {
 	ConversationId ct.Id
 	UpdatedAt      ct.GenDateTime
 	OtherUser      User
-	LastMessage    PM
+	LastMessage    PrivateMsg
 	UnreadCount    int
 }
 
-type PM struct {
+type PrivateMsg struct {
 	Id             ct.Id
 	ConversationID ct.Id
 	Sender         User

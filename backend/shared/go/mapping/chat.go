@@ -2,10 +2,11 @@ package mapping
 
 import (
 	pb "social-network/shared/gen-go/chat"
+	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
 )
 
-func MapPMToProto(m md.PM) *pb.PrivateMessage {
+func MapPMToProto(m md.PrivateMsg) *pb.PrivateMessage {
 	return &pb.PrivateMessage{
 		Id:             m.Id.Int64(),
 		ConversationId: m.ConversationID.Int64(),
@@ -17,7 +18,23 @@ func MapPMToProto(m md.PM) *pb.PrivateMessage {
 	}
 }
 
-func MapGetPMsResp(res md.GetPMsResp) *pb.GetPrivateMessagesResponse {
+func MapPMFromProto(p *pb.PrivateMessage) md.PrivateMsg {
+	if p == nil {
+		return md.PrivateMsg{}
+	}
+
+	return md.PrivateMsg{
+		Id:             ct.Id(p.Id),
+		ConversationID: ct.Id(p.ConversationId),
+		Sender:         MapUserFromProto(p.Sender),
+		MessageText:    ct.MsgBody(p.MessageText),
+		CreatedAt:      ct.GenDateTime(p.CreatedAt.AsTime()),
+		UpdatedAt:      ct.GenDateTime(p.UpdatedAt.AsTime()),
+		DeletedAt:      ct.GenDateTime(p.DeletedAt.AsTime()),
+	}
+}
+
+func MapGetPMsResp(res md.GetPrivateMsgsResp) *pb.GetPrivateMessagesResponse {
 	msgs := make([]*pb.PrivateMessage, 0, len(res.Messages))
 	for _, m := range res.Messages {
 		msgs = append(msgs, MapPMToProto(m))
@@ -25,6 +42,22 @@ func MapGetPMsResp(res md.GetPMsResp) *pb.GetPrivateMessagesResponse {
 
 	return &pb.GetPrivateMessagesResponse{
 		HaveMore: res.HaveMore,
+		Messages: msgs,
+	}
+}
+
+func MapGetPMsRespFromProto(p *pb.GetPrivateMessagesResponse) md.GetPrivateMsgsResp {
+	if p == nil {
+		return md.GetPrivateMsgsResp{}
+	}
+
+	msgs := make([]md.PrivateMsg, 0, len(p.Messages))
+	for _, m := range p.Messages {
+		msgs = append(msgs, MapPMFromProto(m))
+	}
+
+	return md.GetPrivateMsgsResp{
+		HaveMore: p.HaveMore,
 		Messages: msgs,
 	}
 }

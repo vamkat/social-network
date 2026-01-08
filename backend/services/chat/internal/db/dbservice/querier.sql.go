@@ -15,11 +15,11 @@ type Querier interface {
 	// Creates a message with message body sender id and conversation Id.
 	// Returns message and classified error using commonerrors classification.
 	CreateNewGroupMessage(ctx context.Context,
-		arg md.CreateGMParams) (msg md.PM, err error)
+		arg md.CreateGroupMsgReq) (msg md.PrivateMsg, err error)
 
 	// Creates a new PM if the conversation exist and sender is a member.
 	CreateNewPrivateMessage(ctx context.Context,
-		arg md.CreatePMParams) (msg md.PM, err error)
+		arg md.CreatePrivatMsgReq) (msg md.PrivateMsg, err error)
 
 	// Returns a descending-ordered page of messages that appear chronologically
 	// BEFORE a given message in a conversation. This query is used for backwards
@@ -47,7 +47,7 @@ type Querier interface {
 	// 	 args md.GetPrevMessagesParams,
 	//  ) (resp md.GetPrevMessagesResp, err error)
 	GetPrevPrivateMsgs(ctx context.Context,
-		arg md.GetPMsParams) (res md.GetPMsResp, err error)
+		arg md.GetPrivatMsgsReq) (res md.GetPrivateMsgsResp, err error)
 
 	// Returns an ascending-ordered page of messages that appear chronologically
 	// AFTER a given message in a conversation. This query is used for forward
@@ -77,18 +77,18 @@ type Querier interface {
 	//  GetNextMessages(ctx context.Context, args md.GetPMsParams,
 	//  ) (resp md.GetPMsResp, err error)
 	GetNextPrivateMsgs(ctx context.Context,
-		arg md.GetPMsParams) (res md.GetPMsResp, err error)
+		arg md.GetPrivatMsgsReq) (res md.GetPrivateMsgsResp, err error)
 
 	// Creates new conversation between two users or fetches an existing.
 	// Returns conversation Id and conversations last message id.
 	GetOrCreatePrivateConv(ctx context.Context,
-		arg md.GetOrCreatePCRec,
-	) (res NewPC, err error)
+		arg md.GetOrCreatePrivateConvReq,
+	) (res NewPrivateConversation, err error)
 
 	// Fetches paginated conversation details, conversation members,
 	// Ids and unread messages count for a user and a group.
 	GetPrivateConvs(ctx context.Context,
-		arg md.GetPCsReq) (res []md.PCsPreview, err error)
+		arg md.GetPrivateConvsReq) (res []md.PrivateConvsPreview, err error)
 
 	// Updates the given user's last read message in given private conversation to given message id.
 	UpdateLastReadPrivateMsg(ctx context.Context, arg md.UpdateLastReadMsgParams) error

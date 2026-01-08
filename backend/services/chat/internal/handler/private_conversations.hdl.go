@@ -25,9 +25,9 @@ func (h *ChatHandler) GetOrCreatePrivateConv(
 	tele.Info(ctx, "get or create private conversation called @1", "request", params)
 
 	// Call application layer
-	res, err := h.Application.GetOrCreatePrivateConv(ctx, md.GetOrCreatePCRec{
-		User:              ct.Id(params.User),
-		OtherUser:         ct.Id(params.OtherUser),
+	res, err := h.Application.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{
+		UserId:            ct.Id(params.User),
+		OtherUserId:       ct.Id(params.OtherUser),
 		RetrieveOtherUser: params.RetrieveOtherUser,
 	})
 	if err != nil {
@@ -62,7 +62,7 @@ func (h *ChatHandler) CreatePrivateMessage(
 	tele.Info(ctx, "create private message called @1", "request", params)
 
 	// Call application layer
-	msg, err := h.Application.CreatePrivateMessage(ctx, md.CreatePMParams{
+	msg, err := h.Application.CreatePrivateMessage(ctx, md.CreatePrivatMsgReq{
 		ConversationId: ct.Id(params.ConversationId),
 		SenderId:       ct.Id(params.SenderId),
 		MessageText:    ct.MsgBody(params.MessageText),
@@ -94,7 +94,7 @@ func (h *ChatHandler) GetPreviousPrivateMessages(
 	tele.Info(ctx, "get previous private messages called @1", "request", params)
 
 	// Call application layer
-	res, err := h.Application.GetPreviousPMs(ctx, md.GetPMsParams{
+	res, err := h.Application.GetPreviousPMs(ctx, md.GetPrivatMsgsReq{
 		ConversationId:    ct.Id(params.ConversationId),
 		UserId:            ct.Id(params.UserId),
 		BoundaryMessageId: ct.Id(params.BoundaryMessageId),
@@ -128,7 +128,7 @@ func (h *ChatHandler) GetNextPrivateMessages(
 	tele.Info(ctx, "get next private messages called @1", "request", params)
 
 	// Call application layer
-	res, err := h.Application.GetNextPMs(ctx, md.GetPMsParams{
+	res, err := h.Application.GetNextPMs(ctx, md.GetPrivatMsgsReq{
 		ConversationId:    ct.Id(params.ConversationId),
 		UserId:            ct.Id(params.UserId),
 		BoundaryMessageId: ct.Id(params.BoundaryMessageId),

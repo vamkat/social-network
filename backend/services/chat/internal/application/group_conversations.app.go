@@ -11,7 +11,7 @@ import (
 
 // Returns a conversation id of a newly created or an existing conversation.
 func (c *ChatService) CreateGroupConversation(ctx context.Context,
-	params md.CreateGCParams) (convId ct.Id, err error) {
+	params md.CreateGroupConvReq) (convId ct.Id, err error) {
 
 	input := fmt.Sprintf("group id: %d, user ids: %d", params.GroupId, params.UserIds)
 
@@ -34,7 +34,7 @@ type CreateMessageInGroupReq struct {
 }
 
 func (c *ChatService) CreateMessageInGroup(ctx context.Context,
-	params CreateMessageInGroupReq) (msg md.PM, err error) {
+	params CreateMessageInGroupReq) (msg md.PrivateMsg, err error) {
 	input := fmt.Sprintf("params: %#v", params)
 
 	if err := ct.ValidateStruct(params); err != nil {
@@ -63,7 +63,7 @@ func (c *ChatService) CreateMessageInGroup(ctx context.Context,
 				return ce.Wrap(nil, err, input)
 			}
 			// Add message
-			msg, err = c.Queries.CreateNewGroupMessage(ctx, md.CreateGMParams{
+			msg, err = c.Queries.CreateNewGroupMessage(ctx, md.CreateGroupMsgReq{
 				GroupId:     convId,
 				SenderId:    params.SenderId,
 				MessageText: params.MessageBody,
