@@ -132,7 +132,7 @@ func (m *MediaService) GetImage(
 			fm, err = tx.GetFileById(ctx, imgId)
 		} else {
 			fm, err = tx.GetVariant(ctx, imgId, variant)
-			if errors.Is(err, sql.ErrNoRows) {
+			if errors.Is(err, sql.ErrNoRows) || fm.Status == "pending" || fm.Status == "processing" {
 				fm, err = tx.GetFileById(ctx, imgId)
 			}
 		}

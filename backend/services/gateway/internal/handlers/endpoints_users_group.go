@@ -55,7 +55,7 @@ func (s *Handlers) createGroup() http.HandlerFunc {
 				MimeType:          httpReq.GroupImageType,
 				SizeBytes:         httpReq.GroupImageSize,
 				Visibility:        media.FileVisibility_PUBLIC,
-				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				Variants:          []media.FileVariant{media.FileVariant_SMALL},
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {
@@ -138,7 +138,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 				MimeType:          httpReq.GroupImageType,
 				SizeBytes:         httpReq.GroupImageSize,
 				Visibility:        media.FileVisibility_PUBLIC,
-				Variants:          []media.FileVariant{media.FileVariant_THUMBNAIL},
+				Variants:          []media.FileVariant{media.FileVariant_SMALL},
 				ExpirationSeconds: int64(exp),
 			})
 			if err != nil {

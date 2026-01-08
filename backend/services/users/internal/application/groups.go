@@ -59,7 +59,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 
 	//get image urls
 	if len(imageIds) > 0 {
-		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
+		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
 			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		}
@@ -117,7 +117,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 
 	//get image urls
 	if len(imageIds) > 0 {
-		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
+		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
 			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		}
@@ -160,7 +160,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	group.PendingInvite = userInfo.pendingInvite
 
 	if group.GroupImage > 0 {
-		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant(1))
+		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant_SMALL)
 		if err != nil {
 			return models.Group{}, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		}
@@ -309,7 +309,7 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 
 	//get image urls
 	if len(imageIds) > 0 {
-		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
+		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
 			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		}
