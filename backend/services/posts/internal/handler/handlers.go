@@ -141,6 +141,10 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 		tele.Error(ctx, "Error in GetMostPopularPostInGroup. @1 @2", "request", req, "error", err.Error())
 		return nil, ce.GRPCStatus(err)
 	}
+	if post.PostId == 0 {
+		return nil, nil
+	}
+
 	return &pb.Post{
 		PostId:   int64(post.PostId),
 		PostBody: string(post.Body),

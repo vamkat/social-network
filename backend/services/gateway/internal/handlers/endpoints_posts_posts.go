@@ -114,25 +114,30 @@ func (h *Handlers) getMostPopularPostInGroup() http.HandlerFunc {
 
 		tele.Info(ctx, "retrieved most popular post in group @1", "grpcResp", grpcResp)
 
-		post := models.Post{
-			PostId: ct.Id(grpcResp.PostId),
-			Body:   ct.PostBody(grpcResp.PostBody),
-			User: models.User{
-				UserId:    ct.Id(grpcResp.User.UserId),
-				Username:  ct.Username(grpcResp.User.Username),
-				AvatarId:  ct.Id(grpcResp.User.Avatar),
-				AvatarURL: grpcResp.User.AvatarUrl,
-			},
-			GroupId:         ct.Id(grpcResp.GroupId),
-			Audience:        ct.Audience(grpcResp.Audience),
-			CommentsCount:   int(grpcResp.CommentsCount),
-			ReactionsCount:  int(grpcResp.ReactionsCount),
-			LastCommentedAt: ct.GenDateTime(grpcResp.LastCommentedAt.AsTime()),
-			CreatedAt:       ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
-			UpdatedAt:       ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
-			LikedByUser:     grpcResp.LikedByUser,
-			ImageId:         ct.Id(grpcResp.ImageId),
-			ImageUrl:        grpcResp.ImageUrl,
+		var post models.Post
+		if grpcResp == nil {
+			post = models.Post{}
+		} else {
+			post = models.Post{
+				PostId: ct.Id(grpcResp.PostId),
+				Body:   ct.PostBody(grpcResp.PostBody),
+				User: models.User{
+					UserId:    ct.Id(grpcResp.User.UserId),
+					Username:  ct.Username(grpcResp.User.Username),
+					AvatarId:  ct.Id(grpcResp.User.Avatar),
+					AvatarURL: grpcResp.User.AvatarUrl,
+				},
+				GroupId:         ct.Id(grpcResp.GroupId),
+				Audience:        ct.Audience(grpcResp.Audience),
+				CommentsCount:   int(grpcResp.CommentsCount),
+				ReactionsCount:  int(grpcResp.ReactionsCount),
+				LastCommentedAt: ct.GenDateTime(grpcResp.LastCommentedAt.AsTime()),
+				CreatedAt:       ct.GenDateTime(grpcResp.CreatedAt.AsTime()),
+				UpdatedAt:       ct.GenDateTime(grpcResp.UpdatedAt.AsTime()),
+				LikedByUser:     grpcResp.LikedByUser,
+				ImageId:         ct.Id(grpcResp.ImageId),
+				ImageUrl:        grpcResp.ImageUrl,
+			}
 		}
 
 		err = utils.WriteJSON(ctx, w, http.StatusOK, post)
