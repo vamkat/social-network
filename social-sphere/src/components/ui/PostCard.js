@@ -340,12 +340,17 @@ export default function PostCard({ post, onDelete }) {
                     return;
                 }
 
-                setImage(validateResp.download_url)
+                console.log("url: ", validateResp.download_url);
+                setImage(validateResp.download_url);
+            } else if (removeExistingImage) {
+                // User removed the existing image
+                setImage(null);
+                setImagePreview(null);
             }
 
             setPostContent(postDraft);
             setIsEditingPost(false);
-            window.location.reload();
+            // window.location.reload();
 
         } catch (err) {
             console.error("Failed to edit post:", err);
@@ -902,7 +907,7 @@ export default function PostCard({ post, onDelete }) {
                         )}
 
                         {/* Existing Image in Edit Mode */}
-                        {!imagePreview && post?.image_url && !removeExistingImage && (
+                        {!imagePreview && image && !removeExistingImage && (
                             <div className="relative inline-block">
                                 <img
                                     src={image}
@@ -980,7 +985,7 @@ export default function PostCard({ post, onDelete }) {
             </div>
 
 
-            {post?.image_url && !isEditingPost && (
+            {image && !isEditingPost && (
                 <PostImage src={image} alt="He" />
             )}
 
