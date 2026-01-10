@@ -384,6 +384,10 @@ func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.Follow
 		tele.Error(ctx, "Error in AreFollowingEachOther. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
+	if resp == nil {
+		return nil, nil
+	}
+
 	return &wrapperspb.BoolValue{Value: *resp}, nil
 }
 
