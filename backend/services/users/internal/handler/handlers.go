@@ -359,7 +359,7 @@ func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.IsFollowingReque
 	return wrapperspb.Bool(resp), nil
 }
 
-func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.FollowUserRequest) (*wrapperspb.BoolValue, error) {
+func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.FollowUserRequest) (*pb.AreFollowingEachOtherResponse, error) {
 	tele.Info(ctx, "AreFollowingEachOther called with @1", "request", req)
 
 	if req == nil {
@@ -384,11 +384,12 @@ func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.Follow
 		tele.Error(ctx, "Error in AreFollowingEachOther. @1", "error", err.Error(), "request", req)
 		return nil, ce.GRPCStatus(err)
 	}
-	if resp == nil {
-		return nil, nil
-	}
 
-	return &wrapperspb.BoolValue{Value: *resp}, nil
+	return &pb.AreFollowingEachOtherResponse{
+			FollowerFollowsTarget: resp.FollowerFollowsTarget,
+			TargetFollowsFollower: resp.TargetFollowsFollower,
+		},
+		nil
 }
 
 // GROUPS

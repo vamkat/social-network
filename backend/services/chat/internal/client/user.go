@@ -66,5 +66,6 @@ func (c *Clients) AreConnected(ctx context.Context, userA, userB ct.Id) (bool, e
 		return false, err
 	}
 
-	return resp != nil, nil
+	connected := resp.FollowerFollowsTarget || resp.TargetFollowsFollower
+	return connected, nil
 }

@@ -342,13 +342,11 @@ func (s *Application) IsFollowing(ctx context.Context, req models.FollowUserReq)
 	return isfollowing, nil
 }
 
-// returns a bool pointer. Nil: neither is following the other, false: one is following the other, true: both are following each other
-func (s *Application) AreFollowingEachOther(ctx context.Context, req models.FollowUserReq) (*bool, error) {
+func (s *Application) AreFollowingEachOther(ctx context.Context, req models.FollowUserReq) (models.FollowRelationship, error) {
 	input := fmt.Sprintf("%#v", req)
 
-	var mutualFollow *bool // default: nil
 	if err := ct.ValidateStruct(req); err != nil {
-		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
+		return models.FollowRelationship{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
 	row, err := s.db.AreFollowingEachOther(ctx, ds.AreFollowingEachOtherParams{
@@ -356,22 +354,15 @@ func (s *Application) AreFollowingEachOther(ctx context.Context, req models.Foll
 		FollowingID: req.TargetUserId.Int64(),
 	})
 	if err != nil {
-		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
-	}
-	if row.User1FollowsUser2 && row.User2FollowsUser1 { //both follow each other
-
-		v := true
-		mutualFollow = &v
-		return mutualFollow, nil
+		return models.FollowRelationship{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
-	if row.User1FollowsUser2 || row.User2FollowsUser1 { //one follows the other
-
-		v := false
-		mutualFollow = &v
-		return mutualFollow, nil
+	followRelationship := models.FollowRelationship{
+		FollowerFollowsTarget: row.User1FollowsUser2,
+		TargetFollowsFollower: row.User2FollowsUser1,
 	}
-	return nil, nil //neither follows the other
+
+	return followRelationship, nil //neither follows the other
 }
 
 // func (s *Application) createPrivateConversation(ctx context.Context, req models.FollowUserReq) error {

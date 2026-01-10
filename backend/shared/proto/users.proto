@@ -61,11 +61,8 @@ service UserService {
   // Returns whether follower_id currently follows target_user_id.
   rpc IsFollowing (IsFollowingRequest) returns (google.protobuf.BoolValue);
 
-  // Returns the following relationship between two users.
-  // Nil: neither is following the other.
-  // False: One is following the other.
-  // True: Both follow each other.
-  rpc AreFollowingEachOther (FollowUserRequest) returns (google.protobuf.BoolValue);
+  // Returns two booleans indicating whether follower_id follows target_user_id and vice versa.
+  rpc AreFollowingEachOther (FollowUserRequest) returns (AreFollowingEachOtherResponse);
 
   // Returns all available groups paginated, ordered by most members first.
   // Includes owner id, members count, and requester's group role if any (member, owner, pending)
@@ -297,6 +294,11 @@ message HandleFollowRequestRequest {
 message IsFollowingRequest {
     int64 follower_id = 1;
     int64 target_user_id = 2;
+}
+//Response message for checking if two users follow each other
+message AreFollowingEachOtherResponse{
+    bool follower_follows_target = 1;
+    bool target_follows_follower = 2;
 }
 
 // GROUPS

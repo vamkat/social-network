@@ -231,3 +231,8 @@ type HandleFollowRequestReq struct {
 	RequesterId ct.Id `json:"requester_id"`
 	Accept      bool  `json:"accept"`
 }
+
+type FollowRelationship struct {
+	FollowerFollowsTarget bool `json:"follower_follows_target"`
+	TargetFollowsFollower bool `json:"target_follows_follower"`
+}
