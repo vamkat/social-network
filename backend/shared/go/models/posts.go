@@ -135,7 +135,7 @@ type Event struct {
 	ImageUrl      string           `json:"image_url"`
 	CreatedAt     ct.GenDateTime   `json:"created_at"`
 	UpdatedAt     ct.GenDateTime   `json:"updated_at" validate:"nullable"`
-	UserResponse  *bool            `json:"user_response"`
+	UserResponse  *bool            `json:"user_response,omitempty"`
 }
 
 type CreateEventReq struct {

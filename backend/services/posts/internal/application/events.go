@@ -203,6 +203,10 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 	for _, r := range rows {
 		uid := r.EventCreatorID
 		userIDs = append(userIDs, ct.Id(uid))
+		var ur *bool
+		if r.UserResponse.Valid {
+			ur = &r.UserResponse.Bool
+		}
 
 		events = append(events, models.Event{
 			EventId: ct.Id(r.ID),
@@ -218,7 +222,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 			ImageId:       ct.Id(r.Image),
 			CreatedAt:     ct.GenDateTime(r.CreatedAt.Time),
 			UpdatedAt:     ct.GenDateTime(r.UpdatedAt.Time),
-			UserResponse:  &r.UserResponse.Bool,
+			UserResponse:  ur,
 		})
 		if r.Image > 0 {
 			EventImageIds = append(EventImageIds, ct.Id(r.Image))
