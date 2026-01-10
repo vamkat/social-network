@@ -239,15 +239,16 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, EventImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-	}
-
-	for i := range events {
-		uid := events[i].User.UserId
-		if u, ok := userMap[uid]; ok {
-			events[i].User = u
+		tele.Error(ctx, "media retriever failed for @1", "request", EventImageIds, "error", err) //log error instead of returning
+		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+	} else {
+		for i := range events {
+			uid := events[i].User.UserId
+			if u, ok := userMap[uid]; ok {
+				events[i].User = u
+			}
+			events[i].ImageUrl = imageMap[events[i].ImageId.Int64()]
 		}
-		events[i].ImageUrl = imageMap[events[i].ImageId.Int64()]
 	}
 
 	return events, nil

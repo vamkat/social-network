@@ -8,6 +8,7 @@ import (
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -61,10 +62,12 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
-			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
-		}
-		for i := range groups {
-			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
+		} else {
+			for i := range groups {
+				groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+			}
 		}
 	}
 
@@ -119,10 +122,12 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
-			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-		}
-		for i := range groups {
-			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+		} else {
+			for i := range groups {
+				groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+			}
 		}
 	}
 
@@ -162,10 +167,11 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	if group.GroupImage > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant_SMALL)
 		if err != nil {
-			return models.Group{}, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
+			tele.Error(ctx, "media retriever failed for @1", "request", group.GroupImage, "error", err) //log error instead of returning
+			//return models.Group{}, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
+		} else {
+			group.GroupImageURL = imageUrl
 		}
-
-		group.GroupImageURL = imageUrl
 	}
 
 	return group, nil
@@ -223,10 +229,12 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.GroupUser{}, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-		}
-		for i := range members {
-			members[i].AvatarUrl = avatarMap[members[i].AvatarId.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return []models.GroupUser{}, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+		} else {
+			for i := range members {
+				members[i].AvatarUrl = avatarMap[members[i].AvatarId.Int64()]
+			}
 		}
 	}
 
@@ -311,10 +319,12 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
-			return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-		}
-		for i := range groups {
-			groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+		} else {
+			for i := range groups {
+				groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
+			}
 		}
 	}
 
@@ -821,10 +831,12 @@ func (s *Application) GetFollowersNotInvitedToGroup(ctx context.Context, req mod
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
-		}
-		for i := range users {
-			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		} else {
+			for i := range users {
+				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			}
 		}
 	}
 
@@ -875,10 +887,12 @@ func (s *Application) GetPendingGroupJoinRequests(ctx context.Context, req model
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
-		}
-		for i := range users {
-			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		} else {
+			for i := range users {
+				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			}
 		}
 	}
 

@@ -247,15 +247,17 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, commentImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-	}
+		tele.Error(ctx, "media retriever failed for @1", "request", commentImageIds, "error", err) //log error instead of returning
+		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+	} else {
 
-	for i := range comments {
-		uid := comments[i].User.UserId
-		if u, ok := userMap[uid]; ok {
-			comments[i].User = u
+		for i := range comments {
+			uid := comments[i].User.UserId
+			if u, ok := userMap[uid]; ok {
+				comments[i].User = u
+			}
+			comments[i].ImageUrl = imageMap[comments[i].ImageId.Int64()]
 		}
-		comments[i].ImageUrl = imageMap[comments[i].ImageId.Int64()]
 	}
 
 	return comments, nil

@@ -11,6 +11,7 @@ import (
 	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
+	tele "social-network/shared/go/telemetry"
 	"time"
 
 	"google.golang.org/grpc"
@@ -108,13 +109,15 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 		// Use shared MediaRetriever for images (handles caching and fetching)
 		imageMap, _, err := h.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
-			return nil, ce.Wrap(nil, err, input) // keep the code from retrieve media by wrapping the error and add errMsg for context
-		}
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return nil, ce.Wrap(nil, err, input) // keep the code from retrieve media by wrapping the error and add errMsg for context
+		} else {
 
-		for id, u := range users {
-			if url, ok := imageMap[u.AvatarId.Int64()]; ok {
-				u.AvatarURL = url
-				users[id] = u
+			for id, u := range users {
+				if url, ok := imageMap[u.AvatarId.Int64()]; ok {
+					u.AvatarURL = url
+					users[id] = u
+				}
 			}
 		}
 	}

@@ -45,10 +45,12 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
-		}
-		for i := range users {
-			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		} else {
+			for i := range users {
+				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			}
 		}
 	}
 
@@ -91,10 +93,12 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
-		}
-		for i := range users {
-			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		} else {
+			for i := range users {
+				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			}
 		}
 	}
 
@@ -299,10 +303,12 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
-		}
-		for i := range users {
-			users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
+		} else {
+			for i := range users {
+				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
+			}
 		}
 	}
 

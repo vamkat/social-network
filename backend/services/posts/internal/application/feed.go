@@ -8,6 +8,7 @@ import (
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -40,7 +41,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 
 	posts := make([]models.Post, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
-	PostImageIds := make(ct.Ids, 0, len(rows))
+	postImageIds := make(ct.Ids, 0, len(rows))
 
 	for _, r := range rows {
 		uid := r.CreatorID
@@ -63,7 +64,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 		})
 
 		if r.Image > 0 {
-			PostImageIds = append(PostImageIds, ct.Id(r.Image))
+			postImageIds = append(postImageIds, ct.Id(r.Image))
 		}
 
 	}
@@ -74,19 +75,21 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 	}
 
 	var imageMap map[int64]string
-	if len(PostImageIds) > 0 {
-		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+	if len(postImageIds) > 0 {
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-	}
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+	} else {
 
-	for i := range posts {
-		uid := posts[i].User.UserId
-		if u, ok := userMap[uid]; ok {
-			posts[i].User = u
+		for i := range posts {
+			uid := posts[i].User.UserId
+			if u, ok := userMap[uid]; ok {
+				posts[i].User = u
+			}
+			posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 		}
-		posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 	}
 
 	return posts, nil
@@ -151,15 +154,17 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-	}
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+	} else {
 
-	for i := range posts {
-		uid := posts[i].User.UserId
-		if u, ok := userMap[uid]; ok {
-			posts[i].User = u
+		for i := range posts {
+			uid := posts[i].User.UserId
+			if u, ok := userMap[uid]; ok {
+				posts[i].User = u
+			}
+			posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 		}
-		posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 	}
 
 	return posts, nil
@@ -194,7 +199,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 
 	posts := make([]models.Post, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
-	PostImageIds := make(ct.Ids, 0, len(rows))
+	postImageIds := make(ct.Ids, 0, len(rows))
 
 	for _, r := range rows {
 		uid := r.CreatorID
@@ -215,7 +220,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 			ImageId:         ct.Id(r.Image),
 		})
 		if r.Image > 0 {
-			PostImageIds = append(PostImageIds, ct.Id(r.Image))
+			postImageIds = append(postImageIds, ct.Id(r.Image))
 		}
 
 	}
@@ -226,19 +231,21 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 	}
 
 	var imageMap map[int64]string
-	if len(PostImageIds) > 0 {
-		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+	if len(postImageIds) > 0 {
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-	}
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+	} else {
 
-	for i := range posts {
-		uid := posts[i].User.UserId
-		if u, ok := userMap[uid]; ok {
-			posts[i].User = u
+		for i := range posts {
+			uid := posts[i].User.UserId
+			if u, ok := userMap[uid]; ok {
+				posts[i].User = u
+			}
+			posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 		}
-		posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 	}
 
 	return posts, nil
@@ -281,7 +288,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 	}
 	posts := make([]models.Post, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
-	PostImageIds := make(ct.Ids, 0, len(rows))
+	postImageIds := make(ct.Ids, 0, len(rows))
 
 	for _, r := range rows {
 		uid := r.CreatorID
@@ -305,7 +312,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 		})
 
 		if r.Image > 0 {
-			PostImageIds = append(PostImageIds, ct.Id(r.Image))
+			postImageIds = append(postImageIds, ct.Id(r.Image))
 		}
 	}
 
@@ -315,19 +322,21 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 	}
 
 	var imageMap map[int64]string
-	if len(PostImageIds) > 0 {
-		imageMap, _, err = s.mediaRetriever.GetImages(ctx, PostImageIds, media.FileVariant_MEDIUM)
+	if len(postImageIds) > 0 {
+		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-	}
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+	} else {
 
-	for i := range posts {
-		uid := posts[i].User.UserId
-		if u, ok := userMap[uid]; ok {
-			posts[i].User = u
+		for i := range posts {
+			uid := posts[i].User.UserId
+			if u, ok := userMap[uid]; ok {
+				posts[i].User = u
+			}
+			posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 		}
-		posts[i].ImageUrl = imageMap[posts[i].ImageId.Int64()]
 	}
 
 	return posts, nil

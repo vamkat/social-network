@@ -10,6 +10,7 @@ import (
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -110,11 +111,12 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 		if u.AvatarId > 0 {
 			images, _, err := s.mediaRetriever.GetImages(ctx, ct.Ids{u.AvatarId}, media.FileVariant_THUMBNAIL)
 			if err != nil {
-				return ce.Wrap(nil, err, input).WithPublic("error retrieving images")
-			}
-
-			if url, ok := images[u.AvatarId.Int64()]; ok {
-				u.AvatarURL = url
+				tele.Error(ctx, "media retriever failed for @1", "request", u.AvatarId, "error", err) //log error instead of returning it
+				//return ce.Wrap(nil, err, input).WithPublic("error retrieving images")
+			} else {
+				if url, ok := images[u.AvatarId.Int64()]; ok {
+					u.AvatarURL = url
+				}
 			}
 		}
 

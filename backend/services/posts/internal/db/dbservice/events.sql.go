@@ -139,12 +139,17 @@ SELECT
     e.going_count,
     e.not_going_count,
 
-    (SELECT i.id
-     FROM images i
-     WHERE i.parent_id = e.id AND i.deleted_at IS NULL
-     ORDER BY i.sort_order ASC
-     LIMIT 1
-    ) AS image,
+    COALESCE(
+        (
+            SELECT i.id
+            FROM images i
+            WHERE i.parent_id = e.id
+              AND i.deleted_at IS NULL
+            ORDER BY i.sort_order ASC
+            LIMIT 1
+        ),
+        0
+    )::bigint AS image,
 
     -- user response (NULL if no response)
     er.going AS user_response
