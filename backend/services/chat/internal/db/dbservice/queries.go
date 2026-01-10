@@ -9,19 +9,19 @@ const (
 	INSERT INTO group_conversations (group_id)
 	VALUES ($1)
 	ON CONFLICT (group_id)
-	DO UPDATE SET updated_at = conversations.updated_at
-	RETURNING id;
+	DO UPDATE SET updated_at = group_conversations.updated_at
+	RETURNING group_id;
 	`
 
 	createGroupMessage = `
-	INSERT INTO group_messages (conversation_id, sender_id, message_text)
-	SELECT c.id, $2, $3
+	INSERT INTO group_messages (group_id, sender_id, message_text)
+	SELECT c.group_id, $2, $3
 	FROM group_conversations c
 	WHERE c.group_id = $1
 	AND c.deleted_at IS NULL
 	RETURNING
 		id,
-		conversation_id,
+		group_id,
 		sender_id,
 		message_text,
 		created_at,
@@ -29,62 +29,70 @@ const (
 		deleted_at;
 	`
 
-	getNextGroupMsgs = `
-    SELECT
-        gm.id,
-        gm.conversation_id,
-        gm.sender_id,
-        gm.message_text,
-        gm.created_at,
-        gm.updated_at,
-        gm.deleted_at,
-
-        -- from group_conversations
-        gc.group_id
-    FROM group_conversations gc
-    JOIN group_messages gm
-        ON gm.conversation_id = gc.id
-    WHERE gc.group_id = $1
-      AND gm.deleted_at IS NULL
-      AND gm.id > $3
-    ORDER BY gm.id ASC
-    LIMIT $4;
-	`
 	getPrevGroupMsgs = `
     SELECT
         gm.id,
-        gm.conversation_id,
+        gm.group_id,
         gm.sender_id,
         gm.message_text,
         gm.created_at,
         gm.updated_at,
-        gm.deleted_at,
+        gm.deleted_at
 
-        -- from group_conversations
-        gc.group_id
     FROM group_conversations gc
     JOIN group_messages gm
-        ON gm.conversation_id = gc.id
+        ON gm.group_id = gc.group_id
     WHERE gc.group_id = $1
       AND gm.deleted_at IS NULL
+	  AND gc.deleted_at IS NULL
       AND gm.id < $3
     ORDER BY gm.id DESC
+    LIMIT $4;
+	`
+
+	getNextGroupMsgs = `
+    SELECT
+        gm.id,
+        gm.group_id,
+        gm.sender_id,
+        gm.message_text,
+        gm.created_at,
+        gm.updated_at,
+        gm.deleted_at
+
+    FROM group_conversations gc
+    JOIN group_messages gm
+        ON gm.group_id = gc.group_id
+    WHERE gc.group_id = $1
+      AND gm.deleted_at IS NULL
+	  AND gc.deleted_at IS NULL
+      AND gm.id > $3
+    ORDER BY gm.id ASC
     LIMIT $4;
 	`
 
 	// ====================================
 	// PRIVATE_CONVERSATIONS
 	// ====================================
-	// alex: added casting to least and greatest cause there was an error, as suggested by the clanker, haven't tested it though
 	getOrCreatePrivateConv = `
-    INSERT INTO private_conversations (user_a, user_b)
-    VALUES (
-		LEAST($1::bigint, $2::bigint),
-		GREATEST($1::bigint, $2::bigint)
+	WITH ins AS (
+		INSERT INTO private_conversations (user_a, user_b)
+		VALUES (
+			LEAST($1::bigint, $2::bigint),
+			GREATEST($1::bigint, $2::bigint)
+		)
+		ON CONFLICT (user_a, user_b) DO NOTHING
+		RETURNING *
 	)
-    ON CONFLICT (user_a, user_b) DO UPDATE
-    SET updated_at = private_conversations.updated_at
-    RETURNING *;
+	SELECT *
+	FROM ins
+	UNION ALL
+	SELECT *
+	FROM private_conversations c
+	WHERE user_a = LEAST($1, $2)
+		AND user_b = GREATEST($1, $2)
+		AND c.deleted_at IS NULL 
+		AND NOT EXISTS (SELECT 1 FROM ins);
 	`
 
 	newPrivateMessage = `

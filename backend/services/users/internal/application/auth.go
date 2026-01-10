@@ -42,7 +42,7 @@ func (s *Application) RegisterUser(ctx context.Context, req models.RegisterUserR
 
 		// Insert user
 		userId, err := q.InsertNewUser(ctx, ds.InsertNewUserParams{
-			Username:      req.Username.String(),
+			Username:      username.String(),
 			FirstName:     req.FirstName.String(),
 			LastName:      req.LastName.String(),
 			DateOfBirth:   dob,

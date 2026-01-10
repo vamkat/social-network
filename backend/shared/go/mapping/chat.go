@@ -61,3 +61,30 @@ func MapGetPMsRespFromProto(p *pb.GetPrivateMessagesResponse) md.GetPrivateMsgsR
 		Messages: msgs,
 	}
 }
+
+// MapGroupMessagesToProto maps group message models to proto messages.
+func MapGroupMessagesToProto(msgs []md.GroupMsg) []*pb.GroupMessage {
+	if len(msgs) == 0 {
+		return []*pb.GroupMessage{}
+	}
+
+	out := make([]*pb.GroupMessage, 0, len(msgs))
+	for _, m := range msgs {
+		out = append(out, MapGroupMessageToProto(m))
+	}
+
+	return out
+}
+
+func MapGroupMessageToProto(m md.GroupMsg) *pb.GroupMessage {
+	return &pb.GroupMessage{
+		Id:             m.Id.Int64(),
+		ConversationId: m.ConvesationId.Int64(),
+		GroupId:        m.GroupId.Int64(),
+		Sender:         MapUserToProto(m.Sender),
+		MessageText:    string(m.MessageText),
+		CreatedAt:      m.CreatedAt.ToProto(),
+		UpdatedAt:      m.UpdatedAt.ToProto(),
+		DeletedAt:      m.DeletedAt.ToProto(),
+	}
+}

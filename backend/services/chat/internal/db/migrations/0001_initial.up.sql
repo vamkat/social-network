@@ -2,16 +2,15 @@
 -- 1. GROUP CONVERSATIONS
 ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS group_conversations (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    group_id BIGINT NOT NULL,
+    group_id BIGINT PRIMARY KEY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
 );
 
--- One conversation per group (group chat)
-CREATE UNIQUE INDEX IF NOT EXISTS uq_group_conversations_group_id
-    ON group_conversations(group_id);
+CREATE INDEX idx_group_conversations_updated_at_active
+ON group_conversations (updated_at DESC)
+WHERE deleted_at IS NULL;
 
 ------------------------------------------------------------
 -- 2. GROUP MESSAGES
@@ -19,7 +18,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_group_conversations_group_id
 
 CREATE TABLE IF NOT EXISTS group_messages (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    conversation_id BIGINT NOT NULL REFERENCES group_conversations(id),
+    group_id BIGINT NOT NULL REFERENCES group_conversations(group_id),
     sender_id BIGINT NOT NULL,
     message_text TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,11 +26,10 @@ CREATE TABLE IF NOT EXISTS group_messages (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_group_messages_conversation ON group_messages(conversation_id);
 CREATE INDEX idx_group_messages_sender ON group_messages(sender_id);
 CREATE INDEX idx_group_messages_created_at ON group_messages(created_at);
-CREATE INDEX idx_group_messages_conversation_id_id
-    ON group_messages(conversation_id, id);
+CREATE INDEX idx_group_messages_group_id_id
+    ON group_messages(group_id, id);
 
 
 
@@ -53,6 +51,10 @@ CREATE TABLE IF NOT EXISTS private_conversations (
 
 CREATE UNIQUE INDEX uq_private_conversation_users
 ON private_conversations(user_a, user_b);
+
+CREATE INDEX idx_private_conversations_updated_at_active
+ON private_conversations (updated_at DESC)
+WHERE deleted_at IS NULL;
 
 
 
@@ -130,7 +132,8 @@ RETURNS TRIGGER AS $$
 BEGIN
     UPDATE group_conversations
     SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.conversation_id;
+    WHERE group_id = NEW.group_id
+        AND deleted_at IS NULL;
 
     RETURN NEW;
 END;
@@ -147,7 +150,8 @@ RETURNS TRIGGER AS $$
 BEGIN
     UPDATE private_conversations
     SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.conversation_id;
+    WHERE id = NEW.conversation_id
+        AND deleted_at IS NULL;
 
     RETURN NEW;
 END;

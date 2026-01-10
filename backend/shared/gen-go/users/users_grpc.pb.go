@@ -781,13 +781,13 @@ func (UnimplementedUserServiceServer) GetGroupMembers(context.Context, *GroupMem
 	return nil, status.Error(codes.Unimplemented, "method GetGroupMembers not implemented")
 }
 func (UnimplementedUserServiceServer) GetPendingGroupJoinRequests(context.Context, *GroupMembersRequest) (*common.ListUsers, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetPendingGroupJoinRequests not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetPendingGroupJoinRequests not implemented")
 }
 func (UnimplementedUserServiceServer) GetPendingGroupJoinRequestsCount(context.Context, *GeneralGroupRequest) (*CountResp, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetPendingGroupJoinRequestsCount not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetPendingGroupJoinRequestsCount not implemented")
 }
 func (UnimplementedUserServiceServer) GetFollowersNotInvitedToGroup(context.Context, *GroupMembersRequest) (*common.ListUsers, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetFollowersNotInvitedToGroup not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetFollowersNotInvitedToGroup not implemented")
 }
 func (UnimplementedUserServiceServer) SearchGroups(context.Context, *GroupSearchRequest) (*GroupArr, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchGroups not implemented")
@@ -802,7 +802,7 @@ func (UnimplementedUserServiceServer) RequestJoinGroup(context.Context, *GroupJo
 	return nil, status.Error(codes.Unimplemented, "method RequestJoinGroup not implemented")
 }
 func (UnimplementedUserServiceServer) CancelJoinGroupRequest(context.Context, *GroupJoinRequest) (*emptypb.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method CancelJoinGroupRequest not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method CancelJoinGroupRequest not implemented")
 }
 func (UnimplementedUserServiceServer) RespondToGroupInvite(context.Context, *HandleGroupInviteRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RespondToGroupInvite not implemented")
@@ -814,7 +814,7 @@ func (UnimplementedUserServiceServer) LeaveGroup(context.Context, *GeneralGroupR
 	return nil, status.Error(codes.Unimplemented, "method LeaveGroup not implemented")
 }
 func (UnimplementedUserServiceServer) RemoveFromGroup(context.Context, *RemoveFromGroupRequest) (*emptypb.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveFromGroup not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromGroup not implemented")
 }
 func (UnimplementedUserServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroup not implemented")

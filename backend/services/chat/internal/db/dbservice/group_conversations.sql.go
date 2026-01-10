@@ -17,20 +17,21 @@ import (
 // Use as a preparation for adding members on conversation or adding messages in
 // in group conversations.
 func (q *Queries) CreateGroupConv(ctx context.Context,
-	groupId ct.Id) (convId ct.Id, err error) {
-	row := q.db.QueryRow(ctx, createGroupConv, groupId)
-	err = row.Scan(&convId)
+	groupId ct.Id) (err error) {
+	input := fmt.Sprintf("group id: %d", groupId)
+
+	_, err = q.db.Exec(ctx, createGroupConv, groupId)
 	if err != nil {
-		return 0, ce.New(ce.ErrInternal,
+		return ce.New(ce.ErrInternal,
 			fmt.Errorf("failed to create group conversation: %w", err),
-			fmt.Sprintf("conversation id: %d", convId),
+			input,
 		)
 	}
-	return convId, err
+	return err
 }
 
 func (q *Queries) CreateNewGroupMessage(ctx context.Context,
-	arg md.CreateGroupMsgReq) (msg md.PrivateMsg, err error) {
+	arg md.CreateGroupMsgReq) (msg md.GroupMsg, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	row := q.db.QueryRow(ctx,
@@ -42,7 +43,7 @@ func (q *Queries) CreateNewGroupMessage(ctx context.Context,
 
 	err = row.Scan(
 		&msg.Id,
-		&msg.ConversationID,
+		&msg.GroupId,
 		&msg.Sender.UserId,
 		&msg.MessageText,
 		&msg.CreatedAt,
@@ -51,7 +52,8 @@ func (q *Queries) CreateNewGroupMessage(ctx context.Context,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return msg, ce.New(ce.ErrInvalidArgument, err, input)
+			return msg, ce.New(ce.ErrInvalidArgument, err, input).
+				WithPublic("conversation does not exist or is deleted")
 		}
 		return msg, ce.New(ce.ErrInternal, err, input)
 	}
@@ -86,15 +88,12 @@ func (q *Queries) GetPrevGroupMessages(ctx context.Context,
 		var message md.GroupMsg
 		if err := rows.Scan(
 			&message.Id,
-			&message.ConvesationId,
-			&message.Sender,
+			&message.GroupId,
+			&message.Sender.UserId,
 			&message.MessageText,
 			&message.CreatedAt,
 			&message.UpdatedAt,
 			&message.DeletedAt,
-
-			// Join from conversation
-			&message.GroupId,
 		); err != nil {
 			return res, ce.New(ce.ErrInternal, err, input)
 		}
@@ -136,15 +135,12 @@ func (q *Queries) GetNextGroupMessages(ctx context.Context,
 		var message md.GroupMsg
 		if err := rows.Scan(
 			&message.Id,
-			&message.ConvesationId,
-			&message.Sender,
+			&message.GroupId,
+			&message.Sender.UserId,
 			&message.MessageText,
 			&message.CreatedAt,
 			&message.UpdatedAt,
 			&message.DeletedAt,
-
-			// Join from conversation
-			&message.GroupId,
 		); err != nil {
 			return res, ce.New(ce.ErrInternal, err, input)
 		}

@@ -4,6 +4,48 @@ import (
 	ct "social-network/shared/go/ct"
 )
 
+// ================================
+// PMs
+// ================================
+
+type CreateGroupConvReq struct {
+	GroupId ct.Id  `json:"group_id"`
+	UserIds ct.Ids `json:"user_ids"`
+}
+
+type CreateGroupMsgReq struct {
+	GroupId     ct.Id      `json:"group_id"`
+	SenderId    ct.Id      `json:"sender_id"`
+	MessageText ct.MsgBody `json:"message_text"`
+}
+
+type GetGroupMsgsReq struct {
+	GroupId           ct.Id    `json:"user_id"`
+	MemberId          ct.Id    `json:"member_id"`
+	BoundaryMessageId ct.Id    `json:"boundary_message_id" validation:"nullable"`
+	Limit             ct.Limit `json:"limit"`
+}
+
+type GroupMsg struct {
+	Id            ct.Id
+	ConvesationId ct.Id
+	GroupId       ct.Id
+	Sender        User
+	MessageText   ct.MsgBody
+	CreatedAt     ct.GenDateTime `validation:"nullable"`
+	UpdatedAt     ct.GenDateTime `validation:"nullable"`
+	DeletedAt     ct.GenDateTime `validation:"nullable"`
+}
+
+type GetGetGroupMsgsResp struct {
+	HaveMore bool
+	Messages []GroupMsg
+}
+
+// ================================
+// PMs
+// ================================
+
 type GetOrCreatePrivateConvReq struct {
 	UserId            ct.Id `json:"user"`
 	OtherUserId       ct.Id `json:"other_user"`
@@ -15,17 +57,6 @@ type GetOrCreatePrivateConvResp struct {
 	OtherUser       User
 	LastReadMessage ct.Id `validation:"nullable"`
 	IsNew           bool
-}
-
-type CreateGroupConvReq struct {
-	GroupId ct.Id  `json:"group_id"`
-	UserIds ct.Ids `json:"user_ids"`
-}
-
-type CreateGroupMsgReq struct {
-	GroupId     ct.Id      `json:"group_id"`
-	SenderId    ct.Id      `json:"sender_id"`
-	MessageText ct.MsgBody `json:"message_text"`
 }
 
 type CreatePrivatMsgReq struct {
@@ -69,29 +100,6 @@ type PrivateMsg struct {
 	CreatedAt      ct.GenDateTime `validation:"nullable"`
 	UpdatedAt      ct.GenDateTime `validation:"nullable"`
 	DeletedAt      ct.GenDateTime `validation:"nullable"`
-}
-
-type GetGroupMsgsReq struct {
-	GroupId           ct.Id    `json:"user_id"`
-	MemberId          ct.Id    `json:"member_id"`
-	BoundaryMessageId ct.Id    `json:"boundary_message_id" validation:"nullable"`
-	Limit             ct.Limit `json:"limit"`
-}
-
-type GroupMsg struct {
-	Id            ct.Id
-	ConvesationId ct.Id
-	GroupId       ct.Id
-	Sender        User
-	MessageText   ct.MsgBody
-	CreatedAt     ct.GenDateTime `validation:"nullable"`
-	UpdatedAt     ct.GenDateTime `validation:"nullable"`
-	DeletedAt     ct.GenDateTime `validation:"nullable"`
-}
-
-type GetGetGroupMsgsResp struct {
-	HaveMore bool
-	Messages []GroupMsg
 }
 
 type UpdateLastReadMsgParams struct {

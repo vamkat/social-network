@@ -20,6 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ChatService_CreateGroupConversation_FullMethodName      = "/chat.ChatService/CreateGroupConversation"
+	ChatService_CreateGroupMessage_FullMethodName           = "/chat.ChatService/CreateGroupMessage"
+	ChatService_GetPreviousGroupMessages_FullMethodName     = "/chat.ChatService/GetPreviousGroupMessages"
+	ChatService_GetNextGroupMessages_FullMethodName         = "/chat.ChatService/GetNextGroupMessages"
 	ChatService_GetOrCreatePrivateConv_FullMethodName       = "/chat.ChatService/GetOrCreatePrivateConv"
 	ChatService_GetPrivateConversations_FullMethodName      = "/chat.ChatService/GetPrivateConversations"
 	ChatService_CreatePrivateMessage_FullMethodName         = "/chat.ChatService/CreatePrivateMessage"
@@ -32,6 +36,14 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatServiceClient interface {
+	// Creates or fetches a group conversation
+	CreateGroupConversation(ctx context.Context, in *CreateGroupConversationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Creates a group message
+	CreateGroupMessage(ctx context.Context, in *CreateGroupMessageRequest, opts ...grpc.CallOption) (*GroupMessage, error)
+	// Fetch previous group messages (older than boundary)
+	GetPreviousGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error)
+	// Fetch next group messages (newer than boundary)
+	GetNextGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error)
 	// Creates or fetches a private conversation
 	GetOrCreatePrivateConv(ctx context.Context, in *GetOrCreatePrivateConvRequest, opts ...grpc.CallOption) (*GetOrCreatePrivateConvResponse, error)
 	// Returns paginated list of private conversations
@@ -52,6 +64,46 @@ type chatServiceClient struct {
 
 func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
 	return &chatServiceClient{cc}
+}
+
+func (c *chatServiceClient) CreateGroupConversation(ctx context.Context, in *CreateGroupConversationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ChatService_CreateGroupConversation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) CreateGroupMessage(ctx context.Context, in *CreateGroupMessageRequest, opts ...grpc.CallOption) (*GroupMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GroupMessage)
+	err := c.cc.Invoke(ctx, ChatService_CreateGroupMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) GetPreviousGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetGroupMessagesResponse)
+	err := c.cc.Invoke(ctx, ChatService_GetPreviousGroupMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) GetNextGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetGroupMessagesResponse)
+	err := c.cc.Invoke(ctx, ChatService_GetNextGroupMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *chatServiceClient) GetOrCreatePrivateConv(ctx context.Context, in *GetOrCreatePrivateConvRequest, opts ...grpc.CallOption) (*GetOrCreatePrivateConvResponse, error) {
@@ -118,6 +170,14 @@ func (c *chatServiceClient) UpdateLastReadPrivateMessage(ctx context.Context, in
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
 type ChatServiceServer interface {
+	// Creates or fetches a group conversation
+	CreateGroupConversation(context.Context, *CreateGroupConversationRequest) (*emptypb.Empty, error)
+	// Creates a group message
+	CreateGroupMessage(context.Context, *CreateGroupMessageRequest) (*GroupMessage, error)
+	// Fetch previous group messages (older than boundary)
+	GetPreviousGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error)
+	// Fetch next group messages (newer than boundary)
+	GetNextGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error)
 	// Creates or fetches a private conversation
 	GetOrCreatePrivateConv(context.Context, *GetOrCreatePrivateConvRequest) (*GetOrCreatePrivateConvResponse, error)
 	// Returns paginated list of private conversations
@@ -140,6 +200,18 @@ type ChatServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedChatServiceServer struct{}
 
+func (UnimplementedChatServiceServer) CreateGroupConversation(context.Context, *CreateGroupConversationRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateGroupConversation not implemented")
+}
+func (UnimplementedChatServiceServer) CreateGroupMessage(context.Context, *CreateGroupMessageRequest) (*GroupMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateGroupMessage not implemented")
+}
+func (UnimplementedChatServiceServer) GetPreviousGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPreviousGroupMessages not implemented")
+}
+func (UnimplementedChatServiceServer) GetNextGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNextGroupMessages not implemented")
+}
 func (UnimplementedChatServiceServer) GetOrCreatePrivateConv(context.Context, *GetOrCreatePrivateConvRequest) (*GetOrCreatePrivateConvResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrCreatePrivateConv not implemented")
 }
@@ -177,6 +249,78 @@ func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ChatService_ServiceDesc, srv)
+}
+
+func _ChatService_CreateGroupConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateGroupConversationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).CreateGroupConversation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_CreateGroupConversation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).CreateGroupConversation(ctx, req.(*CreateGroupConversationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_CreateGroupMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateGroupMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).CreateGroupMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_CreateGroupMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).CreateGroupMessage(ctx, req.(*CreateGroupMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_GetPreviousGroupMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGroupMessagesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).GetPreviousGroupMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_GetPreviousGroupMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).GetPreviousGroupMessages(ctx, req.(*GetGroupMessagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_GetNextGroupMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGroupMessagesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).GetNextGroupMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_GetNextGroupMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).GetNextGroupMessages(ctx, req.(*GetGroupMessagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatService_GetOrCreatePrivateConv_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -294,6 +438,22 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "chat.ChatService",
 	HandlerType: (*ChatServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateGroupConversation",
+			Handler:    _ChatService_CreateGroupConversation_Handler,
+		},
+		{
+			MethodName: "CreateGroupMessage",
+			Handler:    _ChatService_CreateGroupMessage_Handler,
+		},
+		{
+			MethodName: "GetPreviousGroupMessages",
+			Handler:    _ChatService_GetPreviousGroupMessages_Handler,
+		},
+		{
+			MethodName: "GetNextGroupMessages",
+			Handler:    _ChatService_GetNextGroupMessages_Handler,
+		},
 		{
 			MethodName: "GetOrCreatePrivateConv",
 			Handler:    _ChatService_GetOrCreatePrivateConv_Handler,
