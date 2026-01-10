@@ -251,6 +251,10 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 
 		eventsResponse := []models.Event{}
 		for _, e := range grpcResp.Events {
+			var userResponse *bool
+			if e.UserResponse != nil {
+				userResponse = &e.UserResponse.Value
+			}
 			event := models.Event{
 				EventId: ct.Id(e.EventId),
 				Title:   ct.Title(e.Title),
@@ -269,7 +273,7 @@ func (h *Handlers) getEventsByGroupId() http.HandlerFunc {
 				ImageUrl:      e.ImageUrl,
 				CreatedAt:     ct.GenDateTime(e.CreatedAt.AsTime()),
 				UpdatedAt:     ct.GenDateTime(e.UpdatedAt.AsTime()),
-				UserResponse:  &e.UserResponse.Value,
+				UserResponse:  userResponse,
 			}
 			eventsResponse = append(eventsResponse, event)
 		}
