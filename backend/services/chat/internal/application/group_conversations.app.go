@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"social-network/services/chat/internal/db/dbservice"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
@@ -11,20 +10,20 @@ import (
 
 // Returns a conversation id of a newly created or an existing conversation.
 func (c *ChatService) CreateGroupConversation(ctx context.Context,
-	params md.CreateGroupConvReq) (convId ct.Id, err error) {
+	params md.CreateGroupConvReq) (err error) {
 
 	input := fmt.Sprintf("group id: %d, user ids: %d", params.GroupId, params.UserIds)
 
 	if err := ct.ValidateStruct(params); err != nil {
-		return 0, ce.Wrap(ce.ErrInvalidArgument, err, input)
+		return ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	convId, err = c.Queries.CreateGroupConv(ctx, params.GroupId)
+	err = c.Queries.CreateGroupConv(ctx, params.GroupId)
 	if err != nil {
-		return 0, ce.Wrap(ce.ErrInternal, err, input)
+		return ce.Wrap(ce.ErrInternal, err, input)
 	}
 
-	return ct.Id(convId), err
+	return nil
 }
 
 type CreateMessageInGroupReq struct {
@@ -34,7 +33,7 @@ type CreateMessageInGroupReq struct {
 }
 
 func (c *ChatService) CreateMessageInGroup(ctx context.Context,
-	req CreateMessageInGroupReq) (res md.PrivateMsg, err error) {
+	req CreateMessageInGroupReq) (res md.GroupMsg, err error) {
 	input := fmt.Sprintf("params: %#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
@@ -45,25 +44,17 @@ func (c *ChatService) CreateMessageInGroup(ctx context.Context,
 		return res, ce.Wrap(nil, err)
 	}
 
-	err = c.txRunner.RunTx(ctx,
-		func(q *dbservice.Queries) error {
-			// Create or get conversation
-			convId, err := q.CreateGroupConv(ctx, req.GroupId)
-			if err != nil {
-				return ce.Wrap(nil, err, input)
-			}
-			// Add message
-			res, err = c.Queries.CreateNewGroupMessage(ctx, md.CreateGroupMsgReq{
-				GroupId:     convId,
-				SenderId:    req.SenderId,
-				MessageText: req.MessageBody,
-			})
+	// Add message
+	res, err = c.Queries.CreateNewGroupMessage(ctx, md.CreateGroupMsgReq{
+		GroupId:     req.GroupId,
+		SenderId:    req.SenderId,
+		MessageText: req.MessageBody,
+	})
 
-			if err != nil {
-				return ce.Wrap(nil, err, input)
-			}
-			return nil
-		})
+	if err != nil {
+		return res, ce.Wrap(nil, err, input)
+	}
+
 	return res, nil
 }
 

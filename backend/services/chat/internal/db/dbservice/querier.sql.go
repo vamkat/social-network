@@ -10,12 +10,12 @@ type Querier interface {
 	// Initiates the conversation by groupId. Group Id should be a not null value.
 	// Use as a preparation for adding members.
 	CreateGroupConv(ctx context.Context,
-		groupID ct.Id) (convId ct.Id, err error)
+		groupID ct.Id) (err error)
 
 	// Creates a message with message body sender id and conversation Id.
 	// Returns message and classified error using commonerrors classification.
 	CreateNewGroupMessage(ctx context.Context,
-		arg md.CreateGroupMsgReq) (msg md.PrivateMsg, err error)
+		arg md.CreateGroupMsgReq) (msg md.GroupMsg, err error)
 
 	// Creates a new PM if the conversation exist and sender is a member.
 	CreateNewPrivateMessage(ctx context.Context,

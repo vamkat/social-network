@@ -10,6 +10,55 @@ import "common.proto";
 
 
 // =====================
+// Group Conversations
+// =====================
+
+message CreateGroupConversationRequest {
+  int64 group_id = 1;
+}
+
+
+// =====================
+// Group Messages
+// =====================
+
+message CreateGroupMessageRequest {
+  int64 group_id = 1;
+  int64 sender_id = 2;
+  string message_text = 3;
+}
+
+message GroupMessage {
+  int64 id = 1;
+  int64 conversation_id = 2;
+  int64 group_id = 3;
+  common.User sender = 4;
+  string message_text = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp deleted_at = 8;
+}
+
+message GetGroupMessagesRequest {
+  int64 group_id = 1;
+  int64 member_id = 2;
+  int64 boundary_message_id = 3;
+  int32 limit = 4;
+}
+
+message GetGroupMessagesResponse {
+  bool have_more = 1;
+  repeated GroupMessage messages = 2;
+}
+
+
+// =====================
+// Chat Service (Group)
+// =====================
+
+
+
+// =====================
 // Private Conversations
 // =====================
 
@@ -90,6 +139,34 @@ message UpdateLastReadPrivateMessageRequest {
 // =====================
 
 service ChatService {
+
+    // Creates or fetches a group conversation
+  rpc CreateGroupConversation(
+    CreateGroupConversationRequest
+  ) returns (
+    google.protobuf.Empty
+  );
+
+  // Creates a group message
+  rpc CreateGroupMessage(
+    CreateGroupMessageRequest
+  ) returns (
+    GroupMessage
+  );
+
+  // Fetch previous group messages (older than boundary)
+  rpc GetPreviousGroupMessages(
+    GetGroupMessagesRequest
+  ) returns (
+    GetGroupMessagesResponse
+  );
+
+  // Fetch next group messages (newer than boundary)
+  rpc GetNextGroupMessages(
+    GetGroupMessagesRequest
+  ) returns (
+    GetGroupMessagesResponse
+  );
 
   // Creates or fetches a private conversation
   rpc GetOrCreatePrivateConv(
