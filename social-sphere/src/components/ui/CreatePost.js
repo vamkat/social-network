@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Image as ImageIcon, ChevronDown, User, Check } from "lucide-react";
 import Tooltip from "@/components/ui/Tooltip";
-import { isValidImage } from "@/lib/validation";
+import { validateImage } from "@/lib/validation";
 import { createPost } from "@/actions/posts/create-post";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { getFollowers } from "@/actions/users/get-followers";
@@ -103,12 +103,12 @@ export default function CreatePost({ onPostCreated=null }) {
     const MAX_CHARS = 5000;
     const MIN_CHARS = 1;
 
-    const handleImageSelect = (e) => {
+    const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate image file
-        const validation = isValidImage(file);
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
         if (!validation.valid) {
             setError(validation.error);
             return;
@@ -458,7 +458,7 @@ export default function CreatePost({ onPostCreated=null }) {
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/jpeg,image/png,image/gif"
+                            accept="image/jpeg,image/png,image/gif,image/webp"
                             onChange={handleImageSelect}
                             className="hidden"
                         />

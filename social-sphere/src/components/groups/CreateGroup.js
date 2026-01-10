@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { X, Image as ImageIcon } from "lucide-react";
 import { createGroup } from "@/actions/groups/create-group";
 import { validateUpload } from "@/actions/auth/validate-upload";
+import { validateImage } from "@/lib/validation";
 import Modal from "@/components/ui/Modal";
 
 export default function CreateGroup({ isOpen, onClose, onSuccess }) {
@@ -15,19 +16,14 @@ export default function CreateGroup({ isOpen, onClose, onSuccess }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
 
-    const handleImageSelect = (e) => {
+    const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file type
-        if (!file.type.startsWith("image/")) {
-            setError("Please select an image file");
-            return;
-        }
-
-        // Validate file size (e.g., 5MB max)
-        if (file.size > 5 * 1024 * 1024) {
-            setError("Image size must be less than 5MB");
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setError(validation.error);
             return;
         }
 
@@ -197,7 +193,7 @@ export default function CreateGroup({ isOpen, onClose, onSuccess }) {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/jpeg,image/png,image/gif"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
                                 onChange={handleImageSelect}
                                 disabled={isSubmitting}
                                 className="hidden"

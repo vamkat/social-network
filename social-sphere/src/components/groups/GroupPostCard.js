@@ -11,6 +11,7 @@ import { deletePost } from "@/actions/posts/delete-post";
 import { editComment } from "@/actions/posts/edit-comment";
 import { deleteComment } from "@/actions/posts/delete-comment";
 import { validateUpload } from "@/actions/auth/validate-upload";
+import { validateImage } from "@/lib/validation";
 import { getRelativeTime } from "@/lib/time";
 import { toggleReaction } from "@/actions/posts/toggle-reaction";
 import { getComments } from "@/actions/posts/get-comments";
@@ -50,6 +51,8 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
     const [editingCommentImageFile, setEditingCommentImageFile] = useState(null);
     const [editingCommentImagePreview, setEditingCommentImagePreview] = useState(null);
     const [removeCommentExistingImage, setRemoveCommentExistingImage] = useState(false);
+    const [errorCreateComImage, setErrorCreateComImage] = useState(null);
+    const [errorEditComImage, setErrorEditComImge] = useState(null);
     const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [isDeletingComment, setIsDeletingComment] = useState(false);
@@ -185,9 +188,16 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         }
     };
 
-    const handleImageSelect = (e) => {
+    const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setError(validation.error);
+            return;
+        }
 
         setImageFile(file);
         setError("");
@@ -434,6 +444,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         e.preventDefault();
         e.stopPropagation();
         setDraftComment("");
+        setErrorCreateComImage(null);
         setCommentImageFile(null);
         setCommentImagePreview(null);
         if (commentFileInputRef.current) {
@@ -441,11 +452,19 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         }
     };
 
-    const handleCommentImageSelect = (e) => {
+    const handleCommentImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setErrorCreateComImage(validation.error);
+            return;
+        }
+
         setCommentImageFile(file);
+        setErrorCreateComImage(null);
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -485,12 +504,19 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         }
     };
 
-    const handleEditingCommentImageSelect = (e) => {
+    const handleEditingCommentImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setErrorEditComImge(validation.error);
+            return;
+        }
+
         setEditingCommentImageFile(file);
-        setError("");
+        setErrorEditComImge(null);
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -792,7 +818,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/jpeg,image/png,image/gif"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
                                 onChange={handleImageSelect}
                                 className="hidden"
                             />
@@ -854,14 +880,14 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             {!isEditingPost && (
                 <div className="px-5 py-4">
                     <div className="flex items-center justify-between">
-                        
-                            {!allowed ? (
-                                <div className="flex items-center gap-1">
-                                    <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 "fill-(--accent)/10"`} />
+
+                        {!allowed ? (
+                            <div className="flex items-center gap-1">
+                                <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 "fill-(--accent)/10"`} />
                                 <span className="text-sm font-medium">{commentsCount}</span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-6">
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-6">
                                 <button
                                     onClick={handleHeartClick}
                                     disabled={isReactionPending}
@@ -872,18 +898,18 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                 </button>
 
                                 <button
-                                onClick={handleToggleComments}
-                                className={`flex items-center gap-2 transition-colors group/comment cursor-pointer ${isExpanded ? "text-(--accent)" : "text-(--muted) hover:text-(--accent)"}`}
-                            >
-                                <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 ${isExpanded ? "fill-(--accent)/10" : ""}`} />
-                                <span className="text-sm font-medium">{commentsCount}</span>
-                            </button>
+                                    onClick={handleToggleComments}
+                                    className={`flex items-center gap-2 transition-colors group/comment cursor-pointer ${isExpanded ? "text-(--accent)" : "text-(--muted) hover:text-(--accent)"}`}
+                                >
+                                    <MessageCircle className={`w-5 h-5 transition-transform group-hover/comment:scale-110 ${isExpanded ? "fill-(--accent)/10" : ""}`} />
+                                    <span className="text-sm font-medium">{commentsCount}</span>
+                                </button>
                             </div>
-                            )}
+                        )}
 
-                            
-                        </div>
-                    
+
+                    </div>
+
                 </div>
             )}
 
@@ -973,7 +999,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                                             <input
                                                                 ref={editingCommentFileInputRef}
                                                                 type="file"
-                                                                accept="image/jpeg,image/png,image/gif"
+                                                                accept="image/jpeg,image/png,image/gif,image/webp"
                                                                 onChange={handleEditingCommentImageSelect}
                                                                 className="hidden"
                                                             />
@@ -984,6 +1010,10 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                                             >
                                                                 {editingCommentImagePreview || comment.image_url ? "Change Image" : "Add Image"}
                                                             </button>
+
+                                                            {errorEditComImage ? (
+                                                                <span className="text-sm text-red-500">{errorEditComImage}</span>
+                                                            ) : <></>}
 
                                                             <div className="flex items-center gap-2">
                                                                 <button
@@ -1116,7 +1146,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                     <input
                                         ref={commentFileInputRef}
                                         type="file"
-                                        accept="image/jpeg,image/png,image/gif"
+                                        accept="image/jpeg,image/png,image/gif,image/webp"
                                         onChange={handleCommentImageSelect}
                                         className="hidden"
                                     />
@@ -1127,6 +1157,10 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                     >
                                         {commentImageFile ? "Change Image" : "Add Image"}
                                     </button>
+
+                                    {errorCreateComImage ? (
+                                        <span className="text-sm text-red-500">{errorCreateComImage}</span>
+                                    ) : <></>}
 
                                     <div className="flex gap-2">
                                         <button

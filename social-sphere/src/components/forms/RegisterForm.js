@@ -7,10 +7,12 @@ import { register } from "@/actions/auth/register";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { useStore } from "@/store/store";
 import LoadingThreeDotsJumping from '@/components/ui/LoadingDots';
+import { validateRegistrationForm, validateImage } from "@/lib/validation";
 
 export default function RegisterForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [imageError, setImageError] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -51,7 +53,14 @@ export default function RegisterForm() {
             userData.avatar_type = avatarFile.type;
         }
         try {
-            // Step 1: Register with metadata
+
+            const validation = await validateRegistrationForm(rawFormData, avatarFile);
+            if (!validation.valid) {
+                setError(validation.error || "Registration Failed");
+                setIsLoading(false);
+                return;
+            }
+            // Register with metadata
             const resp = await register(userData);
 
             if (!resp.success || resp.error) {
@@ -78,15 +87,24 @@ export default function RegisterForm() {
                     if (!uploadRes.ok) {
                         const errorText = await uploadRes.text();
                         console.error(`Storage error (${uploadRes.status}): ${errorText}`);
-                    } else {
-                        // Step 3: Validate upload
-                        const validateResp = await validateUpload(resp.FileId);
-                        if (validateResp.success && validateResp.download_url) {
-                            userStoreData.avatar_url = validateResp.download_url;
-                        }
+                        setError("Failed to upload avatar");
+                        setIsLoading(false);
+                        return;
                     }
+
+                    // Step 3: Validate upload
+                    const validateResp = await validateUpload(resp.FileId);
+                    if (!validateResp.success) {
+                        setError(validateResp.error || "Failed to validate upload");
+                        setIsLoading(false);
+                        return;
+                    }
+                    userStoreData.avatar_url = validateResp.download_url;
                 } catch (uploadError) {
                     console.error("Avatar upload error:", uploadError);
+                    setError("Avatar upload failed");
+                    setIsLoading(false);
+                    return;
                 }
             }
 
@@ -101,17 +119,25 @@ export default function RegisterForm() {
         }
     }
 
-    function handleAvatarChange(event) {
+    async function handleAvatarChange(event) {
         const file = event.target.files[0];
-        if (file) {
-            setAvatarName(file.name);
-            setAvatarFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAvatarPreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setImageError(validation.error);
+            return;
         }
+
+        setImageError(null);
+        setAvatarName(file.name);
+        setAvatarFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAvatarPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
     }
 
     function removeAvatar() {
@@ -351,7 +377,7 @@ export default function RegisterForm() {
                                 <input
                                     type="file"
                                     name="avatar"
-                                    accept="image/png, image/jpeg"
+                                    accept="image/jpeg,image/png,image/gif,image/webp"
                                     onChange={handleAvatarChange}
                                     className="avatar-input"
                                 />
@@ -369,9 +395,16 @@ export default function RegisterForm() {
                             )}
                         </div>
 
-                        <span className="text-sm text-muted">
-                            {avatarName || "Upload Avatar (Optional)"}
-                        </span>
+                        {!imageError ? (
+                            <span className="text-sm text-muted">
+                                {avatarName || "Upload Avatar (Optional)"}
+                            </span>
+                        ) : (
+                            <span className="text-sm text-red-500">
+                                {imageError}
+                            </span>
+                        )}
+
                     </div>
 
                     {/* Username */}

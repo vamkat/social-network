@@ -94,7 +94,7 @@ func (h *Handlers) Connect() http.HandlerFunc {
 	}
 }
 
-// routine that reads data coming from this client connection
+// routine that reads data coming from this client connection, reads the message and decides what to do with it
 func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websocket.Conn, clientId int64, connectionId string, handler nats.MsgHandler) {
 	subcriptions := make(map[string]*nats.Subscription)
 	tele.Info(ctx, "websocket listener started for connection @1", "connection", connectionId)
@@ -167,7 +167,7 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 
 			_, err = h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
 				User:              clientId,
-				OtherUser:         3,
+				OtherUser:         2,
 				RetrieveOtherUser: false,
 			})
 			if err != nil {
@@ -203,6 +203,7 @@ func (h *Handlers) websocketSender(ctx context.Context, channel <-chan []byte, c
 	//handler is given to batcher, so that the batcher calls it with many accumulated messages at once
 	handler := func(messages []json.RawMessage) error {
 		var err error
+		tele.Info(ctx, "about to marshal and send @1 messages to websocket, @2", "count", len(messages), "rawBody", messages)
 		payloadBytes, err = json.Marshal(messages)
 		if err != nil {
 			return err

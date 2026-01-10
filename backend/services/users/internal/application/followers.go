@@ -361,7 +361,7 @@ func (s *Application) AreFollowingEachOther(ctx context.Context, req models.Foll
 		FollowerFollowsTarget: row.User1FollowsUser2,
 		TargetFollowsFollower: row.User2FollowsUser1,
 	}
-
+	tele.Info(ctx, "are following each other: @1", "response", followRelationship)
 	return followRelationship, nil //neither follows the other
 }
 

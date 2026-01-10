@@ -11,9 +11,12 @@ export const STRONG_PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w
 // username pattern: letters, numbers, dots, underscores, dashes
 export const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
-// File validation constants
-export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-export const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif"];
+// File validation constants (matching backend FileConstraints)
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_IMAGE_WIDTH = 4096;
+export const MAX_IMAGE_HEIGHT = 4096;
+export const ALLOWED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+export const ALLOWED_FILE_ACCEPT = "image/jpeg,image/png,image/gif,image/webp";
 
 /**
  * Calculate age from date of birth
@@ -65,9 +68,9 @@ export function isValidUsername(username) {
  * Validate registration form data (client-side)
  * @param {FormData} formData - Form data to validate
  * @param {File|null} avatarFile - Avatar file object
- * @returns {{valid: boolean, error: string}} Validation result
+ * @returns {Promise<{valid: boolean, error: string}>} Validation result
  */
-export function validateRegistrationForm(formData, avatarFile = null) {
+export async function validateRegistrationForm(formData, avatarFile = null) {
     // First name validation
     const firstName = formData.get("first_name")?.trim() || "";
     if (!firstName) {
@@ -135,9 +138,72 @@ export function validateRegistrationForm(formData, avatarFile = null) {
         return { valid: false, error: "About me must be at most 400 characters." };
     }
 
-    // Avatar validation (optional)
+    // Avatar validation (optional) - includes dimension check
     if (avatarFile) {
-        const avatarValidation = isValidImage(avatarFile);
+        const avatarValidation = await validateImage(avatarFile);
+        if (!avatarValidation.valid) {
+            return avatarValidation;
+        }
+    }
+
+    return { valid: true, error: "" };
+}
+
+/**
+ * Validate profile update form data (client-side)
+ * @param {Object} profileData - Profile data object
+ * @param {File|null} avatarFile - Avatar file object
+ * @returns {Promise<{valid: boolean, error: string}>} Validation result
+ */
+export async function validateProfileForm(profileData, avatarFile = null) {
+    // First name validation
+    const firstName = profileData.first_name?.trim() || "";
+    if (!firstName) {
+        return { valid: false, error: "First name is required." };
+    }
+    if (firstName.length < 2) {
+        return { valid: false, error: "First name must be at least 2 characters." };
+    }
+
+    // Last name validation
+    const lastName = profileData.last_name?.trim() || "";
+    if (!lastName) {
+        return { valid: false, error: "Last name is required." };
+    }
+    if (lastName.length < 2) {
+        return { valid: false, error: "Last name must be at least 2 characters." };
+    }
+
+    // Date of birth validation
+    const dateOfBirth = profileData.date_of_birth?.trim() || "";
+    if (!dateOfBirth) {
+        return { valid: false, error: "Date of birth is required." };
+    }
+    const age = calculateAge(dateOfBirth);
+    if (age < 13 || age > 111) {
+        return { valid: false, error: "You must be between 13 and 111 years old." };
+    }
+
+    // Username validation (optional)
+    const username = profileData.username?.trim() || "";
+    if (username) {
+        if (username.length < 4) {
+            return { valid: false, error: "Username must be at least 4 characters." };
+        }
+        if (!USERNAME_PATTERN.test(username)) {
+            return { valid: false, error: "Username can only use letters, numbers, dots, underscores, or dashes." };
+        }
+    }
+
+    // About me validation (optional)
+    const about = profileData.about?.trim() || "";
+    if (about && about.length > 400) {
+        return { valid: false, error: "About me must be at most 400 characters." };
+    }
+
+    // Avatar validation (optional) - includes dimension check
+    if (avatarFile) {
+        const avatarValidation = await validateImage(avatarFile);
         if (!avatarValidation.valid) {
             return avatarValidation;
         }
@@ -204,13 +270,63 @@ export function isValidImage(file) {
     }
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        return { valid: false, error: "Image must be JPEG, PNG, or GIF." };
+        return { valid: false, error: "Image must be JPEG, PNG, GIF, or WebP." };
     }
 
     if (file.size > MAX_FILE_SIZE) {
-        return { valid: false, error: "Image must be less than 20MB." };
+        return { valid: false, error: "Image must be less than 5MB." };
     }
 
     return { valid: true, error: "" };
+}
+
+/**
+ * Validate image file including dimensions (async)
+ * @param {File} file - File object to validate
+ * @returns {Promise<{valid: boolean, error: string}>} Validation result
+ */
+export async function validateImage(file) {
+    // Run sync validations first
+    const syncResult = isValidImage(file);
+    if (!syncResult.valid) {
+        return syncResult;
+    }
+
+    // If no file, skip dimension check
+    if (!file || file.size === 0) {
+        return { valid: true, error: "" };
+    }
+
+    // Check dimensions
+    try {
+        const dimensions = await getImageDimensions(file);
+        if (dimensions.width > MAX_IMAGE_WIDTH || dimensions.height > MAX_IMAGE_HEIGHT) {
+            return { valid: false, error: `Image dimensions must be at most ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.` };
+        }
+    } catch {
+        return { valid: false, error: "Could not read image dimensions." };
+    }
+
+    return { valid: true, error: "" };
+}
+
+/**
+ * Get image dimensions from a File object
+ * @param {File} file - Image file
+ * @returns {Promise<{width: number, height: number}>}
+ */
+function getImageDimensions(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            resolve({ width: img.naturalWidth, height: img.naturalHeight });
+            URL.revokeObjectURL(img.src);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(img.src);
+            reject(new Error("Failed to load image"));
+        };
+        img.src = URL.createObjectURL(file);
+    });
 }
 

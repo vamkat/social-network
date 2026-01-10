@@ -15,6 +15,8 @@ export default function PublicFeedContent({ initialPosts }) {
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
 
+    console.log("POSTS: ", posts);
+
     const handleNewPost = (newPost) => {
         if (newPost.audience !== "everyone") {
             return;

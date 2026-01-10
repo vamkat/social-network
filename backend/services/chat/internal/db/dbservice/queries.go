@@ -74,11 +74,13 @@ const (
 	// ====================================
 	// PRIVATE_CONVERSATIONS
 	// ====================================
-
 	getOrCreatePrivateConv = `
 	WITH ins AS (
 		INSERT INTO private_conversations (user_a, user_b)
-		VALUES (LEAST($1, $2), GREATEST($1, $2))
+		VALUES (
+			LEAST($1::bigint, $2::bigint),
+			GREATEST($1::bigint, $2::bigint)
+		)
 		ON CONFLICT (user_a, user_b) DO NOTHING
 		RETURNING *
 	)
