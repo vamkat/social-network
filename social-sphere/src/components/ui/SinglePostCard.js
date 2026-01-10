@@ -54,6 +54,8 @@ export default function SinglePostCard({ post }) {
     const [editingCommentImageFile, setEditingCommentImageFile] = useState(null);
     const [editingCommentImagePreview, setEditingCommentImagePreview] = useState(null);
     const [removeCommentExistingImage, setRemoveCommentExistingImage] = useState(false);
+    const [errorEditComImage, setErrorEditComImage] = useState(null);
+    const [errorCreateComImage, setErrorCreateComImage] = useState(null);
     const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [isDeletingComment, setIsDeletingComment] = useState(false);
@@ -483,6 +485,7 @@ export default function SinglePostCard({ post }) {
         e.preventDefault();
         e.stopPropagation();
         setDraftComment("");
+        setErrorCreateComImage(null);
         setCommentImageFile(null);
         setCommentImagePreview(null);
         if (commentFileInputRef.current) {
@@ -490,11 +493,19 @@ export default function SinglePostCard({ post }) {
         }
     };
 
-    const handleCommentImageSelect = (e) => {
+    const handleCommentImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate image file (type, size, dimensions)
+                const validation = await validateImage(file);
+                if (!validation.valid) {
+                    setErrorCreateComImage(validation.error);
+                    return;
+                }
+
         setCommentImageFile(file);
+        setErrorCreateComImage(null);
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -534,12 +545,19 @@ export default function SinglePostCard({ post }) {
         }
     };
 
-    const handleEditingCommentImageSelect = (e) => {
+    const handleEditingCommentImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setErrorEditComImage(validation.error);
+            return;
+        }
+
         setEditingCommentImageFile(file);
-        setError("");
+        setErrorEditComImage(null);
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -1088,6 +1106,10 @@ export default function SinglePostCard({ post }) {
                                                             {editingCommentImagePreview || comment.image_url ? "Change Image" : "Add Image"}
                                                         </button>
 
+                                                        {errorEditComImage ? (
+                                                                <span className="text-sm text-red-500">{errorEditComImage}</span>
+                                                            ) : <></>}
+
                                                         <div className="flex items-center gap-2">
                                                             <button
                                                                 type="button"
@@ -1230,6 +1252,10 @@ export default function SinglePostCard({ post }) {
                                 >
                                     {commentImageFile ? "Change Image" : "Add Image"}
                                 </button>
+
+                                {errorCreateComImage ? (
+                                        <span className="text-sm text-red-500">{errorCreateComImage}</span>
+                                    ) : <></>}
 
                                 <div className="flex gap-2">
                                     <button

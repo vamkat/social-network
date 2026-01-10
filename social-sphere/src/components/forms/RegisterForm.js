@@ -7,11 +7,12 @@ import { register } from "@/actions/auth/register";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { useStore } from "@/store/store";
 import LoadingThreeDotsJumping from '@/components/ui/LoadingDots';
-import {validateRegistrationForm} from "@/lib/validation";
+import { validateRegistrationForm, validateImage } from "@/lib/validation";
 
 export default function RegisterForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [imageError, setImageError] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -118,17 +119,25 @@ export default function RegisterForm() {
         }
     }
 
-    function handleAvatarChange(event) {
+    async function handleAvatarChange(event) {
         const file = event.target.files[0];
-        if (file) {
-            setAvatarName(file.name);
-            setAvatarFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAvatarPreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setImageError(validation.error);
+            return;
         }
+
+        setImageError(null);
+        setAvatarName(file.name);
+        setAvatarFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAvatarPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
     }
 
     function removeAvatar() {
@@ -386,9 +395,16 @@ export default function RegisterForm() {
                             )}
                         </div>
 
-                        <span className="text-sm text-muted">
-                            {avatarName || "Upload Avatar (Optional)"}
-                        </span>
+                        {!imageError ? (
+                            <span className="text-sm text-muted">
+                                {avatarName || "Upload Avatar (Optional)"}
+                            </span>
+                        ) : (
+                            <span className="text-sm text-red-500">
+                                {imageError}
+                            </span>
+                        )}
+
                     </div>
 
                     {/* Username */}

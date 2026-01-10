@@ -1,30 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, X } from "lucide-react";
 import { updateProfileInfo } from "@/actions/profile/update-profile";
 import { validateUpload } from "@/actions/auth/validate-upload";
-import { validateProfileForm } from "@/lib/validation";
+import { validateProfileForm, validateImage } from "@/lib/validation";
 import { useStore } from "@/store/store";
 
 export default function ProfileForm({ user }) {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ success: false, text: null });
+    const [imageErr, setImageErr] = useState(null);
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar_url || null);
     const setUser = useStore((state) => state.setUser);
     const currentUser = useStore((state) => state.user);
 
-    const handleAvatarChange = (e) => {
+    const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
-        if (file) {
-            setAvatarFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAvatarPreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setImageErr(validation.error);
+            return;
         }
+
+        setImageErr(null);
+        setAvatarFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAvatarPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeAvatar = () => {
+        setAvatarFile(null);
+        setAvatarPreview(null);
     };
 
     const handleSubmit = async (e) => {
@@ -66,7 +80,7 @@ export default function ProfileForm({ user }) {
                 return;
             }
 
-            let newAvatarUrl = currentUser?.avatar_url || "";
+            let newAvatarUrl = null;
 
             // Step 2: If avatar was provided, upload and validate
             if (avatarFile && resp.FileId && resp.UploadUrl) {
@@ -104,7 +118,7 @@ export default function ProfileForm({ user }) {
             }
 
             setMessage({ success: true, text: "Profile updated successfully!" });
-            setAvatarFile(null); // Clear the file input
+            setAvatarFile(null);
 
         } catch (error) {
             console.error("Profile update error:", error);
@@ -119,12 +133,16 @@ export default function ProfileForm({ user }) {
             {/* Avatar Section */}
             <div className="flex flex-col items-center gap-4">
                 <div className="relative group cursor-pointer">
-                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-background shadow-xl">
-                        <img
-                            src={avatarPreview}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                        />
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-background shadow-xl flex items-center justify-center bg-gray-100">
+                        {avatarPreview ? (
+                            <img
+                                src={avatarPreview}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <Camera className="w-8 h-8 text-gray-400" />
+                        )}
                     </div>
                     <label htmlFor="avatar-input" className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                         <Camera className="w-8 h-8 text-white" />
@@ -137,8 +155,24 @@ export default function ProfileForm({ user }) {
                         className="hidden"
                         accept="image/jpeg,image/png,image/gif,image/webp"
                     />
+
+                    {/* X button - only show when avatar exists */}
+                    {avatarPreview && (
+                        <button
+                            type="button"
+                            onClick={removeAvatar}
+                            className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
                 </div>
-                <p className="text-sm text-(--muted)">Click to change avatar</p>
+                {!imageErr ? (
+                    <p className="text-sm text-(--muted)">Click to change avatar</p>
+                ) : (
+                    <p className="text-sm text-red-500">{imageErr}</p>
+                )}
+                
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">

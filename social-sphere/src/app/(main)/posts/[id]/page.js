@@ -12,7 +12,7 @@ export default async function PostPage({ params }) {
 
     return (
         <div className="min-h-screen">
-            <div className="max-w-2xl mx-auto px-4 py-8">
+            <div className="max-w-full mx-auto px-60 py-8">
                 <SinglePostCard post={post} />
             </div>
         </div>

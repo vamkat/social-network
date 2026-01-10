@@ -55,6 +55,8 @@ export default function PostCard({ post, onDelete }) {
     const [commentImagePreview, setCommentImagePreview] = useState(null);
     const [editingCommentImageFile, setEditingCommentImageFile] = useState(null);
     const [editingCommentImagePreview, setEditingCommentImagePreview] = useState(null);
+    const [errorEditComImage, setErrorEditComImage] = useState(null);
+    const [errorCreateComImage, setErrorCreateComImage] = useState(null);
     const [removeCommentExistingImage, setRemoveCommentExistingImage] = useState(false);
     const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
@@ -513,6 +515,7 @@ export default function PostCard({ post, onDelete }) {
         e.preventDefault();
         e.stopPropagation();
         setDraftComment("");
+        setErrorCreateComImage(null);
         setCommentImageFile(null);
         setCommentImagePreview(null);
         if (commentFileInputRef.current) {
@@ -520,11 +523,19 @@ export default function PostCard({ post, onDelete }) {
         }
     };
 
-    const handleCommentImageSelect = (e) => {
+    const handleCommentImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setErrorCreateComImage(validation.error);
+            return;
+        }
+
         setCommentImageFile(file);
+        setErrorCreateComImage(null);
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -564,12 +575,19 @@ export default function PostCard({ post, onDelete }) {
         }
     };
 
-    const handleEditingCommentImageSelect = (e) => {
+    const handleEditingCommentImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate image file (type, size, dimensions)
+        const validation = await validateImage(file);
+        if (!validation.valid) {
+            setErrorEditComImage(validation.error);
+            return;
+        }
+
         setEditingCommentImageFile(file);
-        setError("");
+        setErrorEditComImage(null);
 
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -804,7 +822,7 @@ export default function PostCard({ post, onDelete }) {
                         <Tooltip content="Delete Post">
                             <button
                                 onClick={handleDeleteClick}
-                                className="p-2 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors cursor-pointer" 
+                                className="p-2 text-(--muted) hover:text-red-500 hover:bg-red-500/5 rounded-full transition-colors cursor-pointer"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -1121,6 +1139,10 @@ export default function PostCard({ post, onDelete }) {
                                                                 {editingCommentImagePreview || comment.image_url ? "Change Image" : "Add Image"}
                                                             </button>
 
+                                                            {errorEditComImage ? (
+                                                                <span className="text-sm text-red-500">{errorEditComImage}</span>
+                                                            ) : <></>}
+
                                                             <div className="flex items-center gap-2">
                                                                 <button
                                                                     type="button"
@@ -1263,6 +1285,10 @@ export default function PostCard({ post, onDelete }) {
                                     >
                                         {commentImageFile ? "Change Image" : "Add Image"}
                                     </button>
+
+                                    {errorCreateComImage ? (
+                                        <span className="text-sm text-red-500">{errorCreateComImage}</span>
+                                    ) : <></>}
 
                                     <div className="flex gap-2">
                                         <button
