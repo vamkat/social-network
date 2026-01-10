@@ -109,7 +109,7 @@ export default function RegisterForm() {
 
             // Step 4: Store user data and redirect
             setUser(userStoreData);
-            //window.location.href = "/feed/public";
+            window.location.href = "/feed/public";
 
         } catch (error) {
             console.error("Registration exception:", error);
