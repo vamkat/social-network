@@ -46,7 +46,7 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request or file_meta is nil")
 	}
-	tele.Info(ctx, "upload image called @1", "request", req)
+	tele.Info(ctx, "upload image called @1", "request", req.String())
 
 	// Convert variants
 	variants := make([]ct.FileVariant, len(req.Variants))
@@ -67,14 +67,14 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 		variants,
 	)
 	if err != nil {
-		tele.Error(ctx, "failed to generate upload image url. @1 @2", "request:", req, "error:", err.(*ce.Error).Error())
+		tele.Error(ctx, "failed to generate upload image url. @1 @2", "request:", req.String(), "error:", err.(*ce.Error).Error())
 		return nil, ce.GRPCStatus(err)
 	}
 	res := &pb.UploadImageResponse{
 		FileId:    int64(fileId),
 		UploadUrl: upUrl,
 	}
-	tele.Info(ctx, "upload image url generation success. @1 @2", "request", appReq, "response", res)
+	tele.Info(ctx, "upload image url generation success. @1 @2", "request", appReq, "response", res.String())
 	return res, nil
 }
 
@@ -96,19 +96,19 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	tele.Info(ctx, "get image called @1", "request", req)
+	tele.Info(ctx, "get image called @1", "request", req.String())
 
 	// Call application
 	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
-		tele.Error(ctx, "get image error", "request", req, "error", err.Error())
+		tele.Error(ctx, "get image error", "request", req.String(), "error", err.Error())
 		return nil, ce.GRPCStatus(err)
 	}
 
 	res := &pb.GetImageResponse{
 		DownloadUrl: downUrl,
 	}
-	tele.Info(ctx, "get image success. @1 @2", "request", req, "response", res)
+	tele.Info(ctx, "get image success. @1 @2", "request", req.String(), "response", res.String())
 	return res, nil
 }
 
@@ -118,7 +118,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	if req == nil || req.ImgIds == nil {
 		return nil, status.Error(codes.InvalidArgument, "request or img_ids is nil")
 	}
-	tele.Info(ctx, "get images called. @1", "request", req)
+	tele.Info(ctx, "get images called. @1", "request", req.String())
 	// Convert img_ids to ct.Ids
 	ids := make(ct.Ids, len(req.ImgIds.ImgIds))
 	for i, id := range req.ImgIds.ImgIds {
@@ -128,7 +128,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	// Call application
 	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
-		tele.Error(ctx, "get images error", "request", req, "error", err.Error())
+		tele.Error(ctx, "get images error", "request", req.String(), "error", err.Error())
 		return nil, ce.GRPCStatus(err)
 	}
 
@@ -149,7 +149,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 		DownloadUrls: downloadUrls,
 		FailedIds:    pbFailedIds,
 	}
-	tele.Info(ctx, "get images success. @1 @2", "request", req, "response", res)
+	tele.Info(ctx, "get images success. @1 @2", "request", req.String(), "response", res.String())
 	return res, nil
 }
 
@@ -163,15 +163,15 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "request or upload is nil")
 	}
 
-	tele.Info(ctx, "validate image called. @1", "request", req)
+	tele.Info(ctx, "validate image called. @1", "request", req.String())
 
 	// Call application
 	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
-		tele.Error(ctx, "validate image error", "request", req, "error", err.Error())
+		tele.Error(ctx, "validate image error", "request", req.String(), "error", err.Error())
 		return nil, ce.GRPCStatus(err)
 	}
 	res := &pb.ValidateUploadResponse{DownloadUrl: url}
-	tele.Info(ctx, "validate image success. @1 @2", "request", req, "response", res)
+	tele.Info(ctx, "validate image success. @1 @2", "request", req.String(), "response", res.String())
 	return res, nil
 }

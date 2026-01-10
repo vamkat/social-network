@@ -19,7 +19,7 @@ func (h *ChatHandler) CreateGroupConversation(
 ) (*emptypb.Empty, error) {
 
 	tele.Info(ctx, "create group conversation called",
-		"request", params,
+		"request", params.String(),
 	)
 
 	err := h.Application.CreateGroupConversation(
@@ -30,7 +30,7 @@ func (h *ChatHandler) CreateGroupConversation(
 	)
 	if err != nil {
 		tele.Error(ctx, "create group conversation error",
-			"request", params,
+			"request", params.String(),
 			"error", err.Error(),
 		)
 		return nil, ce.GRPCStatus(err)
@@ -50,7 +50,7 @@ func (h *ChatHandler) CreateGroupMessage(
 ) (*pb.GroupMessage, error) {
 
 	tele.Info(ctx, "create group message called",
-		"request", params,
+		"request", params.String(),
 	)
 
 	res, err := h.Application.CreateMessageInGroup(ctx,
@@ -62,7 +62,7 @@ func (h *ChatHandler) CreateGroupMessage(
 	)
 	if err != nil {
 		tele.Error(ctx, "create group message error",
-			"request", params,
+			"request", params.String(),
 			"error", err.Error(),
 		)
 		return nil, ce.GRPCStatus(err)
@@ -79,7 +79,7 @@ func (h *ChatHandler) CreateGroupMessage(
 	}
 
 	tele.Info(ctx, "create group message success",
-		"response", resp,
+		"response", resp.String(),
 	)
 
 	return resp, nil
@@ -91,7 +91,7 @@ func (h *ChatHandler) GetPreviousGroupMessages(
 ) (*pb.GetGroupMessagesResponse, error) {
 
 	tele.Info(ctx, "get previous group messages called",
-		"request", params,
+		"request", params.String(),
 	)
 
 	res, err := h.Application.GetPrevGroupMessages(ctx,
@@ -104,7 +104,7 @@ func (h *ChatHandler) GetPreviousGroupMessages(
 	)
 	if err != nil {
 		tele.Error(ctx, "get previous group messages error",
-			"request", params,
+			"request", params.String(),
 			"error", err.Error(),
 		)
 		return nil, ce.GRPCStatus(err)
@@ -124,7 +124,7 @@ func (h *ChatHandler) GetNextGroupMessages(
 ) (*pb.GetGroupMessagesResponse, error) {
 
 	tele.Info(ctx, "get next group messages called",
-		"request", params,
+		"request", params.String(),
 	)
 
 	res, err := h.Application.GetNextGroupMessages(ctx,
@@ -137,7 +137,7 @@ func (h *ChatHandler) GetNextGroupMessages(
 	)
 	if err != nil {
 		tele.Error(ctx, "get next group messages error",
-			"request", params,
+			"request", params.String(),
 			"error", err.Error(),
 		)
 		return nil, ce.GRPCStatus(err)
