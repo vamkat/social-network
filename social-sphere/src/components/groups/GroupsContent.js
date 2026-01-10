@@ -16,8 +16,12 @@ export default function GroupsContent() {
     const router = useRouter();
     const [userGroups, setUserGroups] = useState([]);
     const [allGroups, setAllGroups] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+
+    // Separate loading states for each section
+    const [isLoadingUserGroups, setIsLoadingUserGroups] = useState(true);
+    const [isLoadingAllGroups, setIsLoadingAllGroups] = useState(true);
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
 
     // Pagination state
     const [userGroupsPage, setUserGroupsPage] = useState(1);
@@ -42,7 +46,7 @@ export default function GroupsContent() {
     }, [allGroupsPage]);
 
     const fetchUserGroups = async () => {
-        setIsLoading(true);
+        setIsLoadingUserGroups(true);
         try {
             const offset = (userGroupsPage - 1) * groupsPerPage;
             // Fetch one extra to check if there are more
@@ -64,12 +68,12 @@ export default function GroupsContent() {
         } catch (error) {
             console.error("Error fetching user groups:", error);
         } finally {
-            setIsLoading(false);
+            setIsLoadingUserGroups(false);
         }
     };
 
     const fetchAllGroups = async () => {
-        setIsLoading(true);
+        setIsLoadingAllGroups(true);
         try {
             const offset = (allGroupsPage - 1) * groupsPerPage;
             // Fetch one extra to check if there are more
@@ -91,7 +95,8 @@ export default function GroupsContent() {
         } catch (error) {
             console.error("Error fetching all groups:", error);
         } finally {
-            setIsLoading(false);
+            setIsLoadingAllGroups(false);
+            setInitialLoadDone(true);
         }
     };
 
@@ -233,42 +238,50 @@ export default function GroupsContent() {
                 </div>
             </div>
 
-            {isLoading ? (
+            {/* Initial full page loading */}
+            {!initialLoadDone ? (
                 <div className="flex items-center justify-center py-20">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-(--accent)"></div>
                 </div>
             ) : (
                 <>
                     {/* My Groups Section */}
-                    {userGroups.length > 0 && (
+                    {(userGroups.length > 0 || isLoadingUserGroups) && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-2">
                                 <Users className="w-5 h-5 text-(--accent)" />
                                 <h2 className="text-xl font-bold text-foreground">My Groups</h2>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {userGroups.map((group, index) => (
-                                    <motion.div
-                                        key={group.group_id + index}
-                                        initial={{ opacity: 0, scale: 0.7 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{
-                                            duration: 0.6,
-                                            delay: index * 0.3,
-                                            ease: "easeOut"
-                                        }}
-                                        layout
-                                    >
-                                        <GroupCard key={group.group_id} group={group} />
-                                    </motion.div>
-                                ))}
-                            </div>
-                            <GroupsPagination
-                                currentPage={userGroupsPage}
-                                totalItems={userGroupsTotal}
-                                itemsPerPage={groupsPerPage}
-                                onPageChange={setUserGroupsPage}
-                            />
+                            {isLoadingUserGroups ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-(--accent)"></div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {userGroups.map((group, index) => (
+                                            <motion.div
+                                                key={group.group_id}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{
+                                                    duration: 0.3,
+                                                    delay: index * 0.05,
+                                                    ease: "easeOut"
+                                                }}
+                                            >
+                                                <GroupCard group={group} />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                    <GroupsPagination
+                                        currentPage={userGroupsPage}
+                                        totalItems={userGroupsTotal}
+                                        itemsPerPage={groupsPerPage}
+                                        onPageChange={setUserGroupsPage}
+                                    />
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -278,22 +291,25 @@ export default function GroupsContent() {
                             <Globe className="w-5 h-5 text-(--accent)" />
                             <h2 className="text-xl font-bold text-foreground">Discover</h2>
                         </div>
-                        {allGroups.length > 0 ? (
+                        {isLoadingAllGroups ? (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-(--accent)"></div>
+                            </div>
+                        ) : allGroups.length > 0 ? (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {allGroups.map((group, index) => (
                                         <motion.div
-                                            key={group.group_id + index}
-                                            initial={{ opacity: 0, scale: 0.7 }}
+                                            key={group.group_id}
+                                            initial={{ opacity: 0, scale: 0.9 }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             transition={{
-                                                duration: 0.6,
-                                                delay: index * 0.4,
+                                                duration: 0.3,
+                                                delay: index * 0.05,
                                                 ease: "easeOut"
                                             }}
-                                            layout
                                         >
-                                            <GroupCard key={group.group_id} group={group} />
+                                            <GroupCard group={group} />
                                         </motion.div>
                                     ))}
                                 </div>

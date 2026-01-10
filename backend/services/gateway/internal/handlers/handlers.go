@@ -528,6 +528,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.respondToEvent()))
 
+	mux.HandleFunc("/events/remove-response",
+		Chain("/events/remove-response").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.RemoveEventResponse()))
+
 	mux.HandleFunc("/reactions/",
 		Chain("/reactions/").
 			AllowedMethod("POST").
