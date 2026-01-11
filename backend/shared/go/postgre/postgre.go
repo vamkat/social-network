@@ -53,7 +53,7 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	tele.Info(ctx, "starting transaction")
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		tele.Error(ctx, "failed to begin transaction @1", "error", err)
+		tele.Error(ctx, "failed to begin transaction @1", "error", err.Error())
 		return ce.Wrap(ce.ErrInternal, err, "run tx error")
 	}
 	defer tx.Rollback(ctx)
@@ -64,7 +64,7 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	// run the function, passing qtx as sqlc.Querier interface.
 	if err := fn(qtx); err != nil {
 		//TODO add no rows check to avoid logging non error
-		tele.Error(ctx, "querier @1", "error", err)
+		tele.Error(ctx, "querier @1", "error", err.Error())
 		return err
 	}
 
@@ -92,7 +92,7 @@ func (r *PgxTxRunner[T]) RunTxSerializable(
 			IsoLevel: pgx.Serializable,
 		})
 		if err != nil {
-			tele.Error(ctx, "failed to begin serializable transaction", "error", err)
+			tele.Error(ctx, "failed to begin serializable transaction", "error", err.Error())
 			return ce.Wrap(ce.ErrInternal, err, "run serializable tx error")
 		}
 
@@ -106,7 +106,7 @@ func (r *PgxTxRunner[T]) RunTxSerializable(
 		err = fn(qtx)
 		if err != nil {
 			// log and return other errors
-			tele.Error(ctx, "serializable tx function failed", "error", err)
+			tele.Error(ctx, "serializable tx function failed", "error", err.Error())
 			return err
 		}
 

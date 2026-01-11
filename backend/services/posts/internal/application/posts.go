@@ -268,7 +268,7 @@ func (s *Application) GetMostPopularPostInGroup(ctx context.Context, req models.
 	if post.ImageId > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", p.Image, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", p.Image, "error", err.Error()) //log error instead of returning
 			//return models.Post{}, ce.Wrap(nil, err, input).WithPublic("error retrieving image")
 		} else {
 
@@ -353,7 +353,7 @@ func (s *Application) GetPostById(ctx context.Context, req models.GenericReq) (m
 	if post.ImageId > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, p.Image, media.FileVariant_MEDIUM)
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", p.Image, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", p.Image, "error", err.Error()) //log error instead of returning
 			//return models.Post{}, ce.Wrap(nil, err, input).WithPublic("error retrieving image")
 		} else {
 

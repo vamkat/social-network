@@ -30,23 +30,31 @@ func (e *Error) Error() string {
 
 	var builder strings.Builder
 	if e.class != nil {
-		builder.WriteString("\nCode: ")
+		builder.WriteString("\n    Code: ")
 		builder.WriteString(e.class.Error())
 	}
 
 	if e.input != "" {
-		builder.WriteString(", Input: ")
+		builder.WriteString("\n   Input: ")
 		builder.WriteString(e.input)
 	}
 
 	if e.stack != "" {
-		builder.WriteString(", Origin: ")
+		builder.WriteString("\n  Origin: ")
 		builder.WriteString(e.stack)
 	}
 
 	if e.err != nil {
-		builder.WriteString(" || ")
+		var ce *Error
+		if errors.As(e.err, &ce) {
+			builder.WriteString("\n -====- Inner Error: --v\n")
+		} else {
+			builder.WriteString("\n   Error: ")
+		}
 		builder.WriteString(e.err.Error())
+		if !errors.As(e.err, &ce) {
+			builder.WriteString("\n")
+		}
 	}
 
 	return builder.String()

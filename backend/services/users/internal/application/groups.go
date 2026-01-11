@@ -62,7 +62,7 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		} else {
 			for i := range groups {
@@ -122,7 +122,7 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		} else {
 			for i := range groups {
@@ -167,7 +167,7 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 	if group.GroupImage > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant_SMALL)
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", group.GroupImage, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", group.GroupImage, "error", err.Error()) //log error instead of returning
 			//return models.Group{}, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		} else {
 			group.GroupImageURL = imageUrl
@@ -229,7 +229,7 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return []models.GroupUser{}, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		} else {
 			for i := range members {
@@ -319,7 +319,7 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 	if len(imageIds) > 0 {
 		imageMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		} else {
 			for i := range groups {
@@ -831,7 +831,7 @@ func (s *Application) GetFollowersNotInvitedToGroup(ctx context.Context, req mod
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {
@@ -887,7 +887,7 @@ func (s *Application) GetPendingGroupJoinRequests(ctx context.Context, req model
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {

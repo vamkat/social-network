@@ -262,7 +262,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 		}
 
 		if err := m.Queries.UpdateFileStatus(ctx, fileId, ct.Complete); err != nil {
-			tele.Error(ctx, "Media Service: Failed to update file status after file validation for @1", "FileId", fileId)
+			tele.Error(ctx, "Media Service: Failed to update file status after file validation for @1 @2", "FileId", fileId, "error", err.Error())
 			return url, ce.Wrap(ce.ErrInternal,
 				fmt.Errorf("failed to update file status after file validation %w", err),
 				input+": db: update file status",

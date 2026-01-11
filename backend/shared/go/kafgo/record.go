@@ -36,8 +36,9 @@ var ErrBadArgs = errors.New("bro, you passed bad arguments")
 // newRecord creates a new Record instance
 func newRecord(ctx context.Context, record *kgo.Record, commitChannel chan<- (*Record), monotonicId uint64) (*Record, error) {
 	if record == nil {
-		tele.Error(ctx, "new record")
-		return nil, fmt.Errorf("%w record: %v", ErrBadArgs, record)
+		err := fmt.Errorf("%w record: %v", ErrBadArgs, record)
+		tele.Error(ctx, "new record @1", "error", err.Error())
+		return nil, err
 	}
 	return &Record{
 		rec:            record,

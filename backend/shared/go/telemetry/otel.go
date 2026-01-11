@@ -51,23 +51,23 @@ func SetupOTelSDK(ctx context.Context, collectorAddress string, serviceName stri
 	prop := NewPropagator()
 	otel.SetTextMapPropagator(prop)
 
-	// Set up trace provider.
-	tracerProvider, err := NewTracerProvider()
-	if err != nil {
-		handleErr(err)
-		return shutdown, err
-	}
-	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
-	otel.SetTracerProvider(tracerProvider)
+	// // Set up trace provider.
+	// tracerProvider, err := NewTracerProvider()
+	// if err != nil {
+	// 	handleErr(err)
+	// 	return shutdown, err
+	// }
+	// shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
+	// otel.SetTracerProvider(tracerProvider)
 
-	// Set up meter provider.
-	meterProvider, err := NewMeterProvider()
-	if err != nil {
-		handleErr(err)
-		return shutdown, err
-	}
-	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
-	otel.SetMeterProvider(meterProvider)
+	// // Set up meter provider.
+	// meterProvider, err := NewMeterProvider()
+	// if err != nil {
+	// 	handleErr(err)
+	// 	return shutdown, err
+	// }
+	// shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	// otel.SetMeterProvider(meterProvider)
 
 	// Set up logger provider.
 	loggerProvider, err := NewLoggerProvider(ctx, collectorAddress, serviceName)
