@@ -6,12 +6,16 @@ import (
 	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	notifpb "social-network/shared/gen-go/notifications"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
@@ -134,34 +138,90 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 		resp.IsPending = true
 		resp.ViewerIsFollowing = false
 
-		// create notification
+		// =======================  create notification ====================================
 		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
 		}
-		err = s.clients.CreateFollowRequestNotification(ctx, req.TargetUserId.Int64(), req.FollowerId.Int64(), follower.Username.String())
+
+		// build metadata
+		metadata := map[string]string{
+			"source":     "users",
+			"request_id": ctx.Value("ReqID").(string),
+			"trace_id":   ctx.Value("TraceId").(string),
+		}
+
+		// build the notification event
+		event := &notifpb.NotificationEvent{
+			EventId:    uuid.NewString(),
+			OccurredAt: timestamppb.Now(),
+			EventType:  notifpb.EventType_FOLLOW_REQUEST_CREATED,
+			Metadata:   metadata,
+			Payload: &notifpb.NotificationEvent_FollowRequestCreated{
+				FollowRequestCreated: &notifpb.FollowRequestCreated{
+					TargetUserId:      req.TargetUserId.Int64(),
+					RequesterUserId:   req.FollowerId.Int64(),
+					RequesterUsername: follower.Username.String(),
+				},
+			},
+		}
+
+		// serialize
+		eventBytes, err := proto.Marshal(event)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "failed to marshal follow request notification: @1", "error", err.Error())
 		}
+
+		// send to Kafka
+		err = s.kafkaProducer.Send(ctx, "notifications", eventBytes)
+		if err != nil {
+			tele.Error(ctx, "failed to send follow request notification: @1", "error", err.Error())
+		}
+
 	} else {
 		resp.IsPending = false
 		resp.ViewerIsFollowing = true
 
-		// create notification
+		// =======================  create notification ====================================
 		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
 		}
-		err = s.clients.CreateNewFollower(ctx, req.TargetUserId.Int64(), req.FollowerId.Int64(), follower.Username.String())
+
+		// build metadata
+		metadata := map[string]string{
+			"source":     "users",
+			"request_id": ctx.Value("ReqID").(string),
+			"trace_id":   ctx.Value("TraceId").(string),
+		}
+
+		// build the notification event
+		event := &notifpb.NotificationEvent{
+			EventId:    uuid.NewString(),
+			OccurredAt: timestamppb.Now(),
+			EventType:  notifpb.EventType_FOLLOW_REQUEST_CREATED,
+			Metadata:   metadata,
+			Payload: &notifpb.NotificationEvent_NewFollowerCreated{
+				NewFollowerCreated: &notifpb.NewFollowerCreated{
+					TargetUserId:     req.TargetUserId.Int64(),
+					FollowerUserId:   req.FollowerId.Int64(),
+					FollowerUsername: follower.Username.String(),
+				},
+			},
+		}
+
+		// serialize
+		eventBytes, err := proto.Marshal(event)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "failed to marshal follow request notification: @1", "error", err.Error())
 		}
-		//try and create conversation in chat service if none exists
-		//condition that exactly one user follows the other is checked before call is made
-		// err = s.createPrivateConversation(ctx, req)
-		// if err != nil {
-		// 	tele.Info("conversation couldn't be created", err)
-		// }
+
+		// send to Kafka
+		err = s.kafkaProducer.Send(ctx, "notifications", eventBytes)
+		if err != nil {
+			tele.Error(ctx, "failed to send follow request notification: @1", "error", err.Error())
+		}
+
 	}
 
 	return resp, nil
