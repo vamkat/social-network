@@ -105,14 +105,14 @@ func (m *MiddleSystem) Auth() *MiddleSystem {
 		tele.Debug(ctx, "authenticating @1 with @2", "endpoint", r.URL, "cookies", r.Cookies())
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
-			tele.Warn(ctx, "no cookie found @1", "endpoint", r.URL)
+			tele.Warn(ctx, "no cookie found @1 @2", "endpoint", r.URL, "error", err.Error())
 			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, "missing auth cookie")
 			return false, nil
 		}
 		tele.Debug(ctx, "JWT cookie. @1", "value", cookie.Value)
 		claims, err := jwt.ParseAndValidate(cookie.Value)
 		if err != nil {
-			tele.Warn(ctx, "unauthorized request at @1", "endpoint", r.URL)
+			tele.Warn(ctx, "unauthorized request at @1 @2", "endpoint", r.URL, "error", err.Error())
 			utils.ErrorJSON(ctx, w, http.StatusUnauthorized, err.Error())
 			return false, nil
 		}
@@ -149,15 +149,17 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 		ctx := r.Context()
 		tele.Debug(ctx, "in ratelimit of @1 for @2", "type", rateLimitType, "endpoint", r.URL)
 		rateLimitKey := ""
+
 		switch rateLimitType {
 		case IPLimit:
 			remoteIp, err := getRemoteIpKey(r)
 			if err != nil {
-				tele.Warn(ctx, "malformed @1 found", "ip", remoteIp)
+				tele.Warn(ctx, "malformed @1 found", "ip", remoteIp, "error", err.Error())
 				utils.ErrorJSON(ctx, w, http.StatusNotAcceptable, "your IP is absolutely WACK")
 				return false, nil
 			}
 			rateLimitKey = fmt.Sprintf("%s:%s:ip:%s", m.serviceName, m.endpoint, remoteIp)
+
 		case UserLimit:
 			userId, ok := ctx.Value(ct.UserId).(int64)
 			if !ok {
@@ -166,6 +168,7 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 				return false, nil
 			}
 			rateLimitKey = fmt.Sprintf("%s:%s:id:%d", m.serviceName, m.endpoint, userId)
+
 		default:
 			tele.Error(ctx, "bad rate limit type used!!")
 			panic("bad rate limit type argument!")

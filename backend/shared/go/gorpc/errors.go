@@ -37,7 +37,7 @@ func Classify(err error) (httpStatus int, class ClassifiedError) {
 
 	// ---- Context errors (caller-side) ----
 	if errors.Is(err, context.DeadlineExceeded) {
-		return grpcCodeToHTTP(codes.DeadlineExceeded), ClassifiedError{
+		return GrpcCodeToHTTP(codes.DeadlineExceeded), ClassifiedError{
 			Class:       ErrorClassTimeout,
 			GRPCCode:    codes.DeadlineExceeded,
 			Retryable:   true,
@@ -46,7 +46,7 @@ func Classify(err error) (httpStatus int, class ClassifiedError) {
 	}
 
 	if errors.Is(err, context.Canceled) {
-		return grpcCodeToHTTP(codes.Canceled), ClassifiedError{
+		return GrpcCodeToHTTP(codes.Canceled), ClassifiedError{
 			Class:       ErrorClassCanceled,
 			GRPCCode:    codes.Canceled,
 			Retryable:   false,
@@ -58,7 +58,7 @@ func Classify(err error) (httpStatus int, class ClassifiedError) {
 	st, ok := status.FromError(err)
 	if !ok {
 		// Non-gRPC error (network / transport)
-		return grpcCodeToHTTP(codes.Unknown), ClassifiedError{
+		return GrpcCodeToHTTP(codes.Unknown), ClassifiedError{
 			Class:       ErrorClassTransport,
 			GRPCCode:    codes.Unknown,
 			Retryable:   true,
@@ -68,7 +68,7 @@ func Classify(err error) (httpStatus int, class ClassifiedError) {
 
 	code := st.Code()
 
-	httpStatus = grpcCodeToHTTP(code)
+	httpStatus = GrpcCodeToHTTP(code)
 
 	switch code {
 
@@ -152,7 +152,7 @@ func Classify(err error) (httpStatus int, class ClassifiedError) {
 	}
 }
 
-func grpcCodeToHTTP(code codes.Code) int {
+func GrpcCodeToHTTP(code codes.Code) int {
 	switch code {
 
 	// ---- Client errors ----

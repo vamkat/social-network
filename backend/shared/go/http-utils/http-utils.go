@@ -5,10 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	tele "social-network/shared/go/telemetry"
+	"strconv"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/status"
@@ -123,3 +126,32 @@ func ReturnHttpError(ctx context.Context, w http.ResponseWriter, err error) {
 
 // 	return filetype, nil
 // }
+
+func ParamGet[T int | string | bool](values url.Values, key string, defaultValue T, mustExit bool) (T, error) {
+	if !values.Has(key) {
+		if mustExit {
+			return defaultValue, fmt.Errorf("required value %s missing", key)
+		}
+		return defaultValue, nil
+	}
+	val, err := transform(values.Get(key), defaultValue)
+	return val.(T), err
+}
+
+var ErrMissingValue = errors.New("missing value")
+
+func transform(str string, target any) (any, error) {
+	if str == "" {
+		return nil, ErrMissingValue
+	}
+	switch target.(type) {
+	case int:
+		return strconv.Atoi(str)
+	case string:
+		return str, nil
+	case bool:
+		return strconv.ParseBool(str)
+	default:
+		panic("you passed an incompatible type!")
+	}
+}

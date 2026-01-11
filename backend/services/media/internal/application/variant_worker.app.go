@@ -25,7 +25,7 @@ func (m *MediaService) StartVariantWorker(ctx context.Context, interval time.Dur
 					continue
 				}
 				if err := m.processPendingVariants(ctx); err != nil {
-					tele.Warn(ctx, "Error processing pending variants. @1", "error", err)
+					tele.Warn(ctx, "Error processing pending variants. @1", "error", err.Error())
 				}
 			case <-ctx.Done():
 				tele.Info(ctx, "Variant worker stopped")
@@ -55,13 +55,13 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 			tele.Warn(ctx, "Failed to generate variant for @1, @2", "id", v.Id, "variant", v.Variant, "error", err.Error())
 			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
 				ct.Failed, size); updateErr != nil {
-				tele.Warn(ctx, "Failed to update status to failed. @1", "error", updateErr)
+				tele.Warn(ctx, "Failed to update status to failed. @1", "error", updateErr.Error())
 			}
 		} else {
 			tele.Info(ctx, "Successfully generated variant for @1  @2", "fileId", v.Id, "variant", v.Variant)
 			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
 				ct.Complete, size); updateErr != nil {
-				tele.Warn(ctx, "Failed to update status to complete. @1", "error", updateErr)
+				tele.Warn(ctx, "Failed to update status to complete. @1", "error", updateErr.Error())
 			}
 		}
 	}

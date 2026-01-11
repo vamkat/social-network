@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/media"
+	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	middleware "social-network/shared/go/http-middleware"
@@ -16,6 +17,7 @@ type Handlers struct {
 	PostsService posts.PostsServiceClient
 	ChatService  chat.ChatServiceClient
 	MediaService media.MediaServiceClient
+	NotifService notifications.NotificationServiceClient
 }
 
 func NewHandlers(
@@ -25,6 +27,7 @@ func NewHandlers(
 	PostsService posts.PostsServiceClient,
 	ChatService chat.ChatServiceClient,
 	MediaService media.MediaServiceClient,
+	NotifService notifications.NotificationServiceClient,
 ) *http.ServeMux {
 	handlers := Handlers{
 		CacheService: CacheService,
@@ -32,6 +35,7 @@ func NewHandlers(
 		PostsService: PostsService,
 		ChatService:  ChatService,
 		MediaService: MediaService,
+		NotifService: NotifService,
 	}
 	return handlers.BuildMux(serviceName)
 }
@@ -545,6 +549,60 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			RateLimit(USERID, 20, 5).
 			Finalize(h.toggleOrInsertReaction()))
+
+	mux.HandleFunc("/notifications/all",
+		Chain("/notifications/all").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.GetUserNotifications()))
+
+	mux.HandleFunc("/notifications/unread",
+		Chain("/notifications/unread").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.GetUnreadNotificationsCount()))
+
+	mux.HandleFunc("/notifications/read",
+		Chain("/notifications/read").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.MarkNotificationAsRead()))
+
+	mux.HandleFunc("/notifications/allread",
+		Chain("/notifications/allread").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.MarkAllAsRead()))
+
+	mux.HandleFunc("/notifications/delete",
+		Chain("/notifications/delete").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.DeleteNotification()))
+
+	mux.HandleFunc("/notifications/preferences",
+		Chain("/notifications/preferences").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.GetNotificationPreferences()))
 
 	return mux
 }

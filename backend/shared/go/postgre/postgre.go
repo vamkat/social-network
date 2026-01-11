@@ -116,7 +116,7 @@ func (r *PgxTxRunner[T]) RunTxSerializable(
 			// check for serialization failure (Postgres code 40001)
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "40001" {
-				tele.Warn(ctx, "serialization failure, retrying transaction", "attempt", attempt+1)
+				tele.Warn(ctx, "serialization failure, retrying transaction @1 @2", "attempt", attempt+1, "error", err.Error())
 				// retry loop
 				continue
 			}
