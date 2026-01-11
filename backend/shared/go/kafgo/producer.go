@@ -55,7 +55,7 @@ func (kfc *KafkaProducer) Send(ctx context.Context, topic string, payload ...[]b
 	}
 	results := kfc.client.ProduceSync(ctx, records...)
 	if results.FirstErr() != nil {
-		tele.Error(ctx, "failed to produce: @1", "error", results.FirstErr())
+		tele.Error(ctx, "failed to produce: @1", "error", results.FirstErr().Error())
 		return fmt.Errorf("failed to produce %w", results.FirstErr())
 	}
 	return nil

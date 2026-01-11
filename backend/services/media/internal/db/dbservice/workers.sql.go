@@ -15,7 +15,7 @@ func (w *Workers) StartStaleFilesWorker(ctx context.Context, period time.Duratio
 			select {
 			case <-ticker.C:
 				if err := w.db.MarkStaleFilesFailed(ctx); err != nil {
-					tele.Error(ctx, "Error processing pending variants. @1", "error", err)
+					tele.Error(ctx, "Error processing pending variants. @1", "error", err.Error())
 				}
 			case <-ctx.Done():
 				tele.Warn(ctx, "Stale files worker stopped")

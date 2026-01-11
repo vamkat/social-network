@@ -243,7 +243,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, EventImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		tele.Error(ctx, "media retriever failed for @1", "request", EventImageIds, "error", err) //log error instead of returning
+		tele.Error(ctx, "media retriever failed for @1", "request", EventImageIds, "error", err.Error()) //log error instead of returning
 		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 		for i := range events {

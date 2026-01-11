@@ -135,7 +135,7 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 	if profile.AvatarId > 0 {
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, profile.AvatarId.Int64(), media.FileVariant(1))
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", profile.AvatarId, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", profile.AvatarId, "error", err.Error()) //log error instead of returning
 			//return models.UserProfileResponse{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user image")
 		} else {
 
@@ -187,7 +187,7 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 	if len(imageIds) > 0 {
 		avatarMap, _, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant(1)) //TODO delete failed
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user images")
 		} else {
 			for i := range users {

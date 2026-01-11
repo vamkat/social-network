@@ -64,7 +64,7 @@ func truncateTestTables(ctx context.Context, pool *pgxpool.Pool) {
 	for _, table := range tables {
 		_, err := pool.Exec(ctx, fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
 		if err != nil {
-			tele.Error(ctx, "Failed to truncate @1 @2", "table", table, "error", err)
+			tele.Error(ctx, "Failed to truncate @1 @2", "table", table, "error", err.Error())
 		}
 	}
 }

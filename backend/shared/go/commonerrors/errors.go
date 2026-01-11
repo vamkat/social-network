@@ -52,6 +52,9 @@ func (e *Error) Error() string {
 			builder.WriteString("\n   Error: ")
 		}
 		builder.WriteString(e.err.Error())
+		if !errors.As(e.err, &ce) {
+			builder.WriteString("\n")
+		}
 	}
 
 	return builder.String()

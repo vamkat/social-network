@@ -194,7 +194,10 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 			default:
 				fetches := kfc.client.PollFetches(kfc.context)
 				if errs := fetches.Errors(); len(errs) > 0 {
-					tele.Error(kfc.context, "fetch error: @1", "error", errs)
+					for i, err := range errs {
+						tele.Error(kfc.context, "fetch @1 error: @2", "number", i, "error", err.Err.Error())
+					}
+
 					kfc.shutdownProcedure(true)
 					return
 				}
@@ -218,7 +221,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 					Record, err := newRecord(kfc.context, record, committerData.CommitChannel, newId)
 					if err != nil {
 						//think what to do
-						tele.Error(context.Background(), "failed to create record")
+						tele.Error(context.Background(), "failed to create record @1", "error", err.Error())
 						continue
 					}
 
@@ -228,7 +231,6 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 					case <-timer.C:
 						tele.Error(context.Background(), "SLOW CHANNEL DETECTED")
 						kfc.shutdownProcedure(true)
-						tele.Error(context.Background(), "SLOW CHANNEL error: ")
 						return
 					case committerData.TopicChannel <- Record:
 						tele.Info(kfc.context, "consumer give record to topic channel")

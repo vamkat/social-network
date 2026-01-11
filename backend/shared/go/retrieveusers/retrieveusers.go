@@ -109,7 +109,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 		// Use shared MediaRetriever for images (handles caching and fetching)
 		imageMap, _, err := h.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
-			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err) //log error instead of returning
+			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
 			//return nil, ce.Wrap(nil, err, input) // keep the code from retrieve media by wrapping the error and add errMsg for context
 		} else {
 

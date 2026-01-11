@@ -79,7 +79,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
 		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
@@ -154,7 +154,7 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
 		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
@@ -235,7 +235,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
 		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
@@ -326,7 +326,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 		imageMap, _, err = s.mediaRetriever.GetImages(ctx, postImageIds, media.FileVariant_MEDIUM)
 	}
 	if err != nil {
-		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err) //log error instead of returning
+		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
 		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
