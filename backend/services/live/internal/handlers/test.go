@@ -44,7 +44,7 @@ var htmlPage = `<!DOCTYPE html>
 			if (socket.readyState === WebSocket.OPEN) {
 				socket.send('ch:{"category":"private", "conversation_id":"2VolejRejNmG", "body": "This is the body"}');
 			}
-		}, 5);
+		}, 800);
 	};
 
 	socket.onmessage = (event) => {
