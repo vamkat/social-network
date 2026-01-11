@@ -64,7 +64,7 @@ func (r *PgxTxRunner[T]) RunTx(ctx context.Context, fn func(T) error) error {
 	// run the function, passing qtx as sqlc.Querier interface.
 	if err := fn(qtx); err != nil {
 		//TODO add no rows check to avoid logging non error
-		tele.Error(ctx, "querier @1", "error", err)
+		tele.Error(ctx, "querier @1", "error", err.Error())
 		return err
 	}
 

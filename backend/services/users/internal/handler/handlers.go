@@ -1196,6 +1196,21 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 	return &emptypb.Empty{}, nil
 }
 
+func (s *UsersHandler) RemoveImages(ctx context.Context, req *pb.FailedImageIds) (*emptypb.Empty, error) {
+	tele.Info(ctx, "RemoveImages called with @1", "request", req.String())
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "RemoveImages: request is nil")
+	}
+
+	err := s.Application.RemoveImages(ctx, req.ImgIds)
+	if err != nil {
+		tele.Error(ctx, "Error in RemoveImages. @1", "error", err.Error(), "request", req.String())
+		return nil, ce.GRPCStatus(err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
 // CONVERTORS
 func usersToPB(dbUsers []models.User) *cm.ListUsers {
 	pbUsers := make([]*cm.User, 0, len(dbUsers))

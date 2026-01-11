@@ -53,6 +53,7 @@ type Querier interface {
 	LeaveGroup(ctx context.Context, arg LeaveGroupParams) error
 	RejectFollowRequest(ctx context.Context, arg RejectFollowRequestParams) error
 	RejectGroupJoinRequest(ctx context.Context, arg RejectGroupJoinRequestParams) error
+	RemoveImages(ctx context.Context, arg []int64) error
 	SearchGroups(ctx context.Context, arg SearchGroupsParams) ([]SearchGroupsRow, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
 	SendGroupInvites(ctx context.Context, arg SendGroupInvitesParams) error

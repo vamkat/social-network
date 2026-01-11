@@ -201,16 +201,16 @@ type ChatServiceServer interface {
 type UnimplementedChatServiceServer struct{}
 
 func (UnimplementedChatServiceServer) CreateGroupConversation(context.Context, *CreateGroupConversationRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateGroupConversation not implemented")
+	return nil, status.Error(codes.Unimplemented, "method CreateGroupConversation not implemented")
 }
 func (UnimplementedChatServiceServer) CreateGroupMessage(context.Context, *CreateGroupMessageRequest) (*GroupMessage, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateGroupMessage not implemented")
+	return nil, status.Error(codes.Unimplemented, "method CreateGroupMessage not implemented")
 }
 func (UnimplementedChatServiceServer) GetPreviousGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPreviousGroupMessages not implemented")
+	return nil, status.Error(codes.Unimplemented, "method GetPreviousGroupMessages not implemented")
 }
 func (UnimplementedChatServiceServer) GetNextGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNextGroupMessages not implemented")
+	return nil, status.Error(codes.Unimplemented, "method GetNextGroupMessages not implemented")
 }
 func (UnimplementedChatServiceServer) GetOrCreatePrivateConv(context.Context, *GetOrCreatePrivateConvRequest) (*GetOrCreatePrivateConvResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrCreatePrivateConv not implemented")

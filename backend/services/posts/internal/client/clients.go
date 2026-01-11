@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	cm "social-network/shared/gen-go/common"
 	mediapb "social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/notifications"
 	notifpb "social-network/shared/gen-go/notifications"
@@ -49,21 +48,29 @@ func (c *Clients) IsGroupMember(ctx context.Context, userId, groupId int64) (boo
 	return resp.Value, nil
 }
 
-func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, error) {
-	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
+// func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, error) {
+// 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return resp, nil
+// }
 
-func (c *Clients) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*cm.User, error) {
-	resp, err := c.UserClient.GetBasicUserInfo(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
+// func (c *Clients) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*cm.User, error) {
+// 	resp, err := c.UserClient.GetBasicUserInfo(ctx, req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return resp, nil
+// }
+
+// func (c *Clients) RemoveImages(ctx context.Context, req *userpb.FailedImageIds) error {
+// 	_, err := c.UserClient.RemoveImages(ctx, req)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (c *Clients) GetFollowingIds(ctx context.Context, userId int64) ([]int64, error) {
 	req := &wrapperspb.Int64Value{Value: userId}

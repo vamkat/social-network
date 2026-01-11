@@ -78,7 +78,7 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 		}
 
 		for _, failedImage := range resp.FailedIds {
-			if failedImage.GetStatus() == 4 || failedImage.GetStatus() == 0 {
+			if failedImage.GetStatus() == media.UploadStatus_UPLOAD_STATUS_FAILED {
 				imagesToDelete = append(imagesToDelete, failedImage.FileId)
 			}
 		}
@@ -94,6 +94,30 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 			} else {
 				fmt.Printf("RETRIEVE MEDIA - failed to construct redis key for caching image %v: %v\n", id, err)
 			}
+		}
+
+		//==============pinpoint not found images============
+		for _, imageId := range uniqueImageIds {
+			id := imageId.Int64()
+
+			// skip if download succeeded
+			if _, exists := resp.DownloadUrls[id]; exists {
+				continue
+			}
+
+			// skip if download failed
+			foundFailed := false
+			for _, failedImage := range resp.FailedIds {
+				if failedImage.FileId == id {
+					foundFailed = true
+					break
+				}
+			}
+			if foundFailed {
+				continue
+			}
+
+			imagesToDelete = append(imagesToDelete, id) //now imagesToDelete includes failed and not found
 		}
 	}
 

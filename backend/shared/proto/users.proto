@@ -180,6 +180,9 @@ service UserService {
 
   // Toggles public/private profile visibility (public/private).
   rpc UpdateProfilePrivacy (UpdateProfilePrivacyRequest) returns (google.protobuf.Empty);
+
+  // Resets failed or missing avatar ids to 0
+  rpc RemoveImages (FailedImageIds) returns (google.protobuf.Empty);
 }
 
 // GENERAL
@@ -187,6 +190,11 @@ service UserService {
 //Generic response message with int64 (can be id or count)
 message CountResp{
     int64 id=1;
+}
+
+//Request message for failed or missing image ids
+message FailedImageIds {
+  repeated int64 img_ids =1;
 }
 
 // PROFILE

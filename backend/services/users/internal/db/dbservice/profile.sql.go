@@ -300,3 +300,14 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 	)
 	return i, err
 }
+
+const removeImages = `-- name: RemoveImage :exec
+UPDATE users
+SET avatar_id = 0
+WHERE avatar_id = ANY($1::bigint[]);
+`
+
+func (q *Queries) RemoveImages(ctx context.Context, arg []int64) error {
+	_, err := q.db.Exec(ctx, removeImages, arg)
+	return err
+}

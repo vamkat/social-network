@@ -59,6 +59,7 @@ const (
 	UserService_SearchUsers_FullMethodName                      = "/users.UserService/SearchUsers"
 	UserService_UpdateUserProfile_FullMethodName                = "/users.UserService/UpdateUserProfile"
 	UserService_UpdateProfilePrivacy_FullMethodName             = "/users.UserService/UpdateProfilePrivacy"
+	UserService_RemoveImages_FullMethodName                     = "/users.UserService/RemoveImages"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -200,6 +201,8 @@ type UserServiceClient interface {
 	UpdateUserProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
 	// Toggles public/private profile visibility (public/private).
 	UpdateProfilePrivacy(ctx context.Context, in *UpdateProfilePrivacyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Resets failed or missing avatar ids to 0
+	RemoveImages(ctx context.Context, in *FailedImageIds, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type userServiceClient struct {
@@ -580,6 +583,16 @@ func (c *userServiceClient) UpdateProfilePrivacy(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *userServiceClient) RemoveImages(ctx context.Context, in *FailedImageIds, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, UserService_RemoveImages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -719,6 +732,8 @@ type UserServiceServer interface {
 	UpdateUserProfile(context.Context, *UpdateProfileRequest) (*UserProfileResponse, error)
 	// Toggles public/private profile visibility (public/private).
 	UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error)
+	// Resets failed or missing avatar ids to 0
+	RemoveImages(context.Context, *FailedImageIds) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -781,13 +796,13 @@ func (UnimplementedUserServiceServer) GetGroupMembers(context.Context, *GroupMem
 	return nil, status.Error(codes.Unimplemented, "method GetGroupMembers not implemented")
 }
 func (UnimplementedUserServiceServer) GetPendingGroupJoinRequests(context.Context, *GroupMembersRequest) (*common.ListUsers, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPendingGroupJoinRequests not implemented")
+	return nil, status.Error(codes.Unimplemented, "method GetPendingGroupJoinRequests not implemented")
 }
 func (UnimplementedUserServiceServer) GetPendingGroupJoinRequestsCount(context.Context, *GeneralGroupRequest) (*CountResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPendingGroupJoinRequestsCount not implemented")
+	return nil, status.Error(codes.Unimplemented, "method GetPendingGroupJoinRequestsCount not implemented")
 }
 func (UnimplementedUserServiceServer) GetFollowersNotInvitedToGroup(context.Context, *GroupMembersRequest) (*common.ListUsers, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFollowersNotInvitedToGroup not implemented")
+	return nil, status.Error(codes.Unimplemented, "method GetFollowersNotInvitedToGroup not implemented")
 }
 func (UnimplementedUserServiceServer) SearchGroups(context.Context, *GroupSearchRequest) (*GroupArr, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchGroups not implemented")
@@ -802,7 +817,7 @@ func (UnimplementedUserServiceServer) RequestJoinGroup(context.Context, *GroupJo
 	return nil, status.Error(codes.Unimplemented, "method RequestJoinGroup not implemented")
 }
 func (UnimplementedUserServiceServer) CancelJoinGroupRequest(context.Context, *GroupJoinRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelJoinGroupRequest not implemented")
+	return nil, status.Error(codes.Unimplemented, "method CancelJoinGroupRequest not implemented")
 }
 func (UnimplementedUserServiceServer) RespondToGroupInvite(context.Context, *HandleGroupInviteRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RespondToGroupInvite not implemented")
@@ -814,7 +829,7 @@ func (UnimplementedUserServiceServer) LeaveGroup(context.Context, *GeneralGroupR
 	return nil, status.Error(codes.Unimplemented, "method LeaveGroup not implemented")
 }
 func (UnimplementedUserServiceServer) RemoveFromGroup(context.Context, *RemoveFromGroupRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromGroup not implemented")
+	return nil, status.Error(codes.Unimplemented, "method RemoveFromGroup not implemented")
 }
 func (UnimplementedUserServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*wrapperspb.Int64Value, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateGroup not implemented")
@@ -839,6 +854,9 @@ func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *Update
 }
 func (UnimplementedUserServiceServer) UpdateProfilePrivacy(context.Context, *UpdateProfilePrivacyRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateProfilePrivacy not implemented")
+}
+func (UnimplementedUserServiceServer) RemoveImages(context.Context, *FailedImageIds) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveImages not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -1527,6 +1545,24 @@ func _UserService_UpdateProfilePrivacy_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_RemoveImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FailedImageIds)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RemoveImages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RemoveImages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RemoveImages(ctx, req.(*FailedImageIds))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1681,6 +1717,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateProfilePrivacy",
 			Handler:    _UserService_UpdateProfilePrivacy_Handler,
+		},
+		{
+			MethodName: "RemoveImages",
+			Handler:    _UserService_RemoveImages_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
