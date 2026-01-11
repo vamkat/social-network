@@ -73,7 +73,7 @@ func (s *Server) CreateNotifications(ctx context.Context, req *pb.CreateNotifica
 			n.SourceEntityId,
 			n.NeedsAction,
 			payload,
-			aggregate,  // Use the aggregate flag determined by type
+			aggregate, // Use the aggregate flag determined by type
 		)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to create notification: %v", err)
@@ -92,7 +92,7 @@ func (s *Server) CreateNotifications(ctx context.Context, req *pb.CreateNotifica
 	}, nil
 }
 
-// GetUserNotifications retrieves notifications for a user
+// GetUserNotifications retrieves notifications for a user -0
 func (s *Server) GetUserNotifications(ctx context.Context, req *pb.GetUserNotificationsRequest) (*pb.GetUserNotificationsResponse, error) {
 	if req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
@@ -132,7 +132,7 @@ func (s *Server) GetUserNotifications(ctx context.Context, req *pb.GetUserNotifi
 	}, nil
 }
 
-// GetUnreadNotificationsCount returns the count of unread notifications for a user
+// GetUnreadNotificationsCount returns the count of unread notifications for a user -0
 func (s *Server) GetUnreadNotificationsCount(ctx context.Context, req *wrapperspb.Int64Value) (*wrapperspb.Int64Value, error) {
 	if req.Value == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
@@ -148,7 +148,7 @@ func (s *Server) GetUnreadNotificationsCount(ctx context.Context, req *wrappersp
 	}, nil
 }
 
-// MarkNotificationAsRead marks a notification as read
+// MarkNotificationAsRead marks a notification as read -0
 func (s *Server) MarkNotificationAsRead(ctx context.Context, req *pb.MarkNotificationAsReadRequest) (*emptypb.Empty, error) {
 	if req.NotificationId == 0 || req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "notification_id and user_id are required")
@@ -162,7 +162,7 @@ func (s *Server) MarkNotificationAsRead(ctx context.Context, req *pb.MarkNotific
 	return &emptypb.Empty{}, nil
 }
 
-// MarkAllAsRead marks all notifications for a user as read
+// MarkAllAsRead marks all notifications for a user as read -0
 func (s *Server) MarkAllAsRead(ctx context.Context, req *wrapperspb.Int64Value) (*emptypb.Empty, error) {
 	if req.Value == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
@@ -176,7 +176,7 @@ func (s *Server) MarkAllAsRead(ctx context.Context, req *wrapperspb.Int64Value) 
 	return &emptypb.Empty{}, nil
 }
 
-// DeleteNotification deletes a notification
+// DeleteNotification deletes a notification -0
 func (s *Server) DeleteNotification(ctx context.Context, req *pb.DeleteNotificationRequest) (*emptypb.Empty, error) {
 	if req.NotificationId == 0 || req.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "notification_id and user_id are required")
@@ -209,9 +209,9 @@ func (s *Server) CreateFollowRequest(ctx context.Context, req *pb.CreateFollowRe
 	// For consistency with existing functions, we'll return a basic notification
 
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.FollowRequest,
-		Title:         "New Follow Request",
-		Message:       fmt.Sprintf("%s wants to follow you", req.RequesterUsername),
+		Type:           application.FollowRequest,
+		Title:          "New Follow Request",
+		Message:        fmt.Sprintf("%s wants to follow you", req.RequesterUsername),
 		SourceEntityID: req.RequesterUserId,
 		SourceService:  "users",
 		NeedsAction:    true,
@@ -238,9 +238,9 @@ func (s *Server) CreateNewFollower(ctx context.Context, req *pb.CreateNewFollowe
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.NewFollower,
-		Title:         "New Follower",
-		Message:       fmt.Sprintf("%s is now following you", req.FollowerUsername),
+		Type:           application.NewFollower,
+		Title:          "New Follower",
+		Message:        fmt.Sprintf("%s is now following you", req.FollowerUsername),
 		SourceEntityID: req.FollowerUserId,
 		SourceService:  "users",
 		NeedsAction:    false,
@@ -266,9 +266,9 @@ func (s *Server) CreateGroupInvite(ctx context.Context, req *pb.CreateGroupInvit
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.GroupInvite,
-		Title:         "Group Invitation",
-		Message:       fmt.Sprintf("%s invited you to join the group \"%s\"", req.InviterUsername, req.GroupName),
+		Type:           application.GroupInvite,
+		Title:          "Group Invitation",
+		Message:        fmt.Sprintf("%s invited you to join the group \"%s\"", req.InviterUsername, req.GroupName),
 		SourceEntityID: req.GroupId,
 		SourceService:  "users",
 		NeedsAction:    true,
@@ -313,9 +313,9 @@ func (s *Server) CreateGroupJoinRequest(ctx context.Context, req *pb.CreateGroup
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.GroupJoinRequest,
-		Title:         "New Group Join Request",
-		Message:       fmt.Sprintf("%s wants to join your group \"%s\"", req.RequesterUsername, req.GroupName),
+		Type:           application.GroupJoinRequest,
+		Title:          "New Group Join Request",
+		Message:        fmt.Sprintf("%s wants to join your group \"%s\"", req.RequesterUsername, req.GroupName),
 		SourceEntityID: req.GroupId,
 		SourceService:  "users",
 		NeedsAction:    true,
@@ -344,9 +344,9 @@ func (s *Server) CreateNewEvent(ctx context.Context, req *pb.CreateNewEventReque
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.NewEvent,
-		Title:         "New Event in Group",
-		Message:       fmt.Sprintf("New event \"%s\" was created in group \"%s\"", req.EventTitle, req.GroupName),
+		Type:           application.NewEvent,
+		Title:          "New Event in Group",
+		Message:        fmt.Sprintf("New event \"%s\" was created in group \"%s\"", req.EventTitle, req.GroupName),
 		SourceEntityID: req.EventId,
 		SourceService:  "posts",
 		NeedsAction:    false,
@@ -391,9 +391,9 @@ func (s *Server) CreatePostLike(ctx context.Context, req *pb.CreatePostLikeReque
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.PostLike,
-		Title:         "Post Liked",
-		Message:       fmt.Sprintf("%s liked your post", req.LikerUsername),
+		Type:           application.PostLike,
+		Title:          "Post Liked",
+		Message:        fmt.Sprintf("%s liked your post", req.LikerUsername),
 		SourceEntityID: req.PostId,
 		SourceService:  "posts",
 		NeedsAction:    false,
@@ -421,9 +421,9 @@ func (s *Server) CreatePostComment(ctx context.Context, req *pb.CreatePostCommen
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.PostComment,
-		Title:         "New Comment",
-		Message:       fmt.Sprintf("%s commented on your post", req.CommenterUsername),
+		Type:           application.PostComment,
+		Title:          "New Comment",
+		Message:        fmt.Sprintf("%s commented on your post", req.CommenterUsername),
 		SourceEntityID: req.PostId,
 		SourceService:  "posts",
 		NeedsAction:    false,
@@ -452,9 +452,9 @@ func (s *Server) CreateMention(ctx context.Context, req *pb.CreateMentionRequest
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.Mention,
-		Title:         "You were mentioned",
-		Message:       fmt.Sprintf("%s mentioned you in a post", req.MentionerUsername),
+		Type:           application.Mention,
+		Title:          "You were mentioned",
+		Message:        fmt.Sprintf("%s mentioned you in a post", req.MentionerUsername),
 		SourceEntityID: req.PostId,
 		SourceService:  "posts",
 		NeedsAction:    false,
@@ -484,9 +484,9 @@ func (s *Server) CreateNewMessage(ctx context.Context, req *pb.CreateNewMessageR
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.NewMessage,
-		Title:         "New Message",
-		Message:       fmt.Sprintf("%s sent you a message", req.SenderUsername),
+		Type:           application.NewMessage,
+		Title:          "New Message",
+		Message:        fmt.Sprintf("%s sent you a message", req.SenderUsername),
 		SourceEntityID: req.ChatId,
 		SourceService:  "chat",
 		NeedsAction:    false,
@@ -531,9 +531,9 @@ func (s *Server) CreateFollowRequestAccepted(ctx context.Context, req *pb.Create
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.FollowRequestAccepted,
-		Title:         "Follow Request Accepted",
-		Message:       fmt.Sprintf("%s accepted your follow request", req.TargetUsername),
+		Type:           application.FollowRequestAccepted,
+		Title:          "Follow Request Accepted",
+		Message:        fmt.Sprintf("%s accepted your follow request", req.TargetUsername),
 		SourceEntityID: req.TargetUserId,
 		SourceService:  "users",
 		NeedsAction:    false,
@@ -559,9 +559,9 @@ func (s *Server) CreateFollowRequestRejected(ctx context.Context, req *pb.Create
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.FollowRequestRejected,
-		Title:         "Follow Request Rejected",
-		Message:       fmt.Sprintf("%s rejected your follow request", req.TargetUsername),
+		Type:           application.FollowRequestRejected,
+		Title:          "Follow Request Rejected",
+		Message:        fmt.Sprintf("%s rejected your follow request", req.TargetUsername),
 		SourceEntityID: req.TargetUserId,
 		SourceService:  "users",
 		NeedsAction:    false,
@@ -587,17 +587,17 @@ func (s *Server) CreateGroupInviteAccepted(ctx context.Context, req *pb.CreateGr
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.GroupInviteAccepted,
-		Title:         "Group Invite Accepted",
-		Message:       fmt.Sprintf("%s accepted your group invitation to '%s'", req.InvitedUsername, req.GroupName),
+		Type:           application.GroupInviteAccepted,
+		Title:          "Group Invite Accepted",
+		Message:        fmt.Sprintf("%s accepted your group invitation to '%s'", req.InvitedUsername, req.GroupName),
 		SourceEntityID: req.GroupId,
 		SourceService:  "users",
 		NeedsAction:    false,
 		Payload: map[string]string{
-			"invited_id":    fmt.Sprintf("%d", req.InvitedUserId),
-			"invited_name":  req.InvitedUsername,
-			"group_id":      fmt.Sprintf("%d", req.GroupId),
-			"group_name":    req.GroupName,
+			"invited_id":   fmt.Sprintf("%d", req.InvitedUserId),
+			"invited_name": req.InvitedUsername,
+			"group_id":     fmt.Sprintf("%d", req.GroupId),
+			"group_name":   req.GroupName,
 		},
 	})
 
@@ -617,17 +617,17 @@ func (s *Server) CreateGroupInviteRejected(ctx context.Context, req *pb.CreateGr
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.GroupInviteRejected,
-		Title:         "Group Invite Rejected",
-		Message:       fmt.Sprintf("%s declined your group invitation to '%s'", req.InvitedUsername, req.GroupName),
+		Type:           application.GroupInviteRejected,
+		Title:          "Group Invite Rejected",
+		Message:        fmt.Sprintf("%s declined your group invitation to '%s'", req.InvitedUsername, req.GroupName),
 		SourceEntityID: req.GroupId,
 		SourceService:  "users",
 		NeedsAction:    false,
 		Payload: map[string]string{
-			"invited_id":    fmt.Sprintf("%d", req.InvitedUserId),
-			"invited_name":  req.InvitedUsername,
-			"group_id":      fmt.Sprintf("%d", req.GroupId),
-			"group_name":    req.GroupName,
+			"invited_id":   fmt.Sprintf("%d", req.InvitedUserId),
+			"invited_name": req.InvitedUsername,
+			"group_id":     fmt.Sprintf("%d", req.GroupId),
+			"group_name":   req.GroupName,
 		},
 	})
 
@@ -647,9 +647,9 @@ func (s *Server) CreateGroupJoinRequestAccepted(ctx context.Context, req *pb.Cre
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.GroupJoinRequestAccepted,
-		Title:         "Group Join Request Accepted",
-		Message:       fmt.Sprintf("Your request to join group '%s' was approved", req.GroupName),
+		Type:           application.GroupJoinRequestAccepted,
+		Title:          "Group Join Request Accepted",
+		Message:        fmt.Sprintf("Your request to join group '%s' was approved", req.GroupName),
 		SourceEntityID: req.GroupId,
 		SourceService:  "users",
 		NeedsAction:    false,
@@ -676,9 +676,9 @@ func (s *Server) CreateGroupJoinRequestRejected(ctx context.Context, req *pb.Cre
 
 	// Return a basic notification as the internal function returns only error
 	notification := s.convertToProtoNotification(&application.Notification{
-		Type:          application.GroupJoinRequestRejected,
-		Title:         "Group Join Request Rejected",
-		Message:       fmt.Sprintf("Your request to join group '%s' was declined", req.GroupName),
+		Type:           application.GroupJoinRequestRejected,
+		Title:          "Group Join Request Rejected",
+		Message:        fmt.Sprintf("Your request to join group '%s' was declined", req.GroupName),
 		SourceEntityID: req.GroupId,
 		SourceService:  "users",
 		NeedsAction:    false,
@@ -692,7 +692,7 @@ func (s *Server) CreateGroupJoinRequestRejected(ctx context.Context, req *pb.Cre
 	return notification, nil
 }
 
-// GetNotificationPreferences returns notification preferences for a user
+// GetNotificationPreferences returns notification preferences for a user -0 not yet
 func (s *Server) GetNotificationPreferences(ctx context.Context, req *wrapperspb.Int64Value) (*pb.NotificationPreferences, error) {
 	// For now, return default preferences
 	// In a real implementation, this would fetch from a user preferences table
@@ -702,8 +702,8 @@ func (s *Server) GetNotificationPreferences(ctx context.Context, req *wrapperspb
 	}
 
 	return &pb.NotificationPreferences{
-		UserId:       req.Value,
-		Preferences:  defaultPrefs,
+		UserId:      req.Value,
+		Preferences: defaultPrefs,
 	}, nil
 }
 
@@ -774,17 +774,17 @@ func shouldAggregateNotification(notificationType pb.NotificationType) bool {
 	case pb.NotificationType_NOTIFICATION_TYPE_NEW_MESSAGE:
 		return true
 	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_ACCEPTED:
-		return false  // Follow request responses are specific to each request
+		return false // Follow request responses are specific to each request
 	case pb.NotificationType_NOTIFICATION_TYPE_FOLLOW_REQUEST_REJECTED:
-		return false  // Follow request responses are specific to each request
+		return false // Follow request responses are specific to each request
 	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_ACCEPTED:
-		return false  // Group invite responses are specific to each invitation
+		return false // Group invite responses are specific to each invitation
 	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_INVITE_REJECTED:
-		return false  // Group invite responses are specific to each invitation
+		return false // Group invite responses are specific to each invitation
 	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_ACCEPTED:
-		return false  // Group join request responses are specific to each request
+		return false // Group join request responses are specific to each request
 	case pb.NotificationType_NOTIFICATION_TYPE_GROUP_JOIN_REQUEST_REJECTED:
-		return false  // Group join request responses are specific to each request
+		return false // Group join request responses are specific to each request
 	default:
 		return false
 	}

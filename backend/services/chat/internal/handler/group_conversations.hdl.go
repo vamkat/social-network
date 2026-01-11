@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// probably deprecated/not needed
 func (h *ChatHandler) CreateGroupConversation(
 	ctx context.Context,
 	params *pb.CreateGroupConversationRequest,
@@ -44,6 +45,7 @@ func (h *ChatHandler) CreateGroupConversation(
 	return resp, nil
 }
 
+// called by live service
 func (h *ChatHandler) CreateGroupMessage(
 	ctx context.Context,
 	params *pb.CreateGroupMessageRequest,

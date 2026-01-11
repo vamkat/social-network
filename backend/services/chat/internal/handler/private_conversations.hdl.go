@@ -16,6 +16,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+//TODO endpoint for fetching all (or paginated) conversations
+//TODO need a batch getorcreateprivateconv
+
 // GetOrCreatePrivateConv creates a new private conversation between two users
 // or returns an existing one if it already exists.
 func (h *ChatHandler) GetOrCreatePrivateConv(

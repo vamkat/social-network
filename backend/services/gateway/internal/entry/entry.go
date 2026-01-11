@@ -10,6 +10,7 @@ import (
 	"social-network/services/gateway/internal/handlers"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/media"
+	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
@@ -57,6 +58,15 @@ func Run() {
 	//
 	//
 	// GRPC CLIENTS
+	NotifService, err := gorpc.GetGRpcClient(
+		notifications.NewNotificationServiceClient,
+		cfgs.NotifGRPCAddr,
+		ct.CommonKeys(),
+	)
+	if err != nil {
+		tele.Fatalf("failed to connect to users service: %v", err)
+	}
+
 	UsersService, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient,
 		cfgs.UsersGRPCAddr,
@@ -104,6 +114,7 @@ func Run() {
 		PostsService,
 		ChatService,
 		MediaService,
+		NotifService,
 	)
 
 	//
@@ -158,6 +169,7 @@ type configs struct {
 	PostsGRPCAddr string `env:"POSTS_GRPC_ADDR"`
 	ChatGRPCAddr  string `env:"CHAT_GRPC_ADDR"`
 	MediaGRPCAddr string `env:"MEDIA_GRPC_ADDR"`
+	NotifGRPCAddr string `env:"NOTIFICATIONS_GRPC_ADDR"`
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
@@ -181,6 +193,7 @@ func getConfigs() configs { // sensible defaults
 		PostsGRPCAddr: "posts:50051",
 		ChatGRPCAddr:  "chat:50051",
 		MediaGRPCAddr: "media:50051",
+		NotifGRPCAddr: "notifications:50051",
 
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
