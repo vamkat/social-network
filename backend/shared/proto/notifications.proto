@@ -371,3 +371,163 @@ message CreateGroupJoinRequestRejectedRequest {
   int64 group_id = 3; // id of the group
   string group_name = 4; // name of the group
 }
+
+// Event types enum
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  POST_COMMENT_CREATED = 1;
+  POST_LIKED = 2;
+  FOLLOW_REQUEST_CREATED = 3;
+  NEW_FOLLOWER_CREATED = 4;
+  GROUP_INVITE_CREATED = 5;
+  GROUP_JOIN_REQUEST_CREATED = 6;
+  NEW_EVENT_CREATED = 7;
+  MENTION_CREATED = 8;
+  NEW_MESSAGE_CREATED = 9;
+  FOLLOW_REQUEST_ACCEPTED = 10;
+  FOLLOW_REQUEST_REJECTED = 11;
+  GROUP_INVITE_ACCEPTED = 12;
+  GROUP_INVITE_REJECTED = 13;
+  GROUP_JOIN_REQUEST_ACCEPTED = 14;
+  GROUP_JOIN_REQUEST_REJECTED = 15;
+}
+
+// Specific event payload messages
+message PostCommentCreated {
+  int64 post_id = 1;
+  int64 comment_id = 2;
+  int64 commenter_user_id = 3;
+  string commenter_username = 4;
+  string body = 5;
+  bool aggregate = 6;
+}
+
+message PostLiked {
+  int64 post_id = 1;
+  int64 liker_user_id = 2;
+  string liker_username = 3;
+  bool aggregate = 4;
+}
+
+message FollowRequestCreated {
+  int64 target_user_id = 1;
+  int64 requester_user_id = 2;
+  string requester_username = 3;
+}
+
+message NewFollowerCreated {
+  int64 target_user_id = 1;
+  int64 follower_user_id = 2;
+  string follower_username = 3;
+  bool aggregate = 4;
+}
+
+message GroupInviteCreated {
+  int64 invited_user_id = 1;
+  int64 inviter_user_id = 2;
+  int64 group_id = 3;
+  string group_name = 4;
+  string inviter_username = 5;
+}
+
+message GroupJoinRequestCreated {
+  int64 group_owner_id = 1;
+  int64 requester_user_id = 2;
+  int64 group_id = 3;
+  string group_name = 4;
+  string requester_username = 5;
+}
+
+message NewEventCreated {
+  int64 user_id = 1;
+  int64 group_id = 2;
+  int64 event_id = 3;
+  string group_name = 4;
+  string event_title = 5;
+}
+
+message MentionCreated {
+  int64 mentioned_user_id = 1;
+  int64 mentioner_user_id = 2;
+  int64 post_id = 3;
+  string mentioner_username = 4;
+  string post_content = 5;
+  string mention_text = 6;
+}
+
+message NewMessageCreated {
+  int64 user_id = 1;
+  int64 sender_user_id = 2;
+  int64 chat_id = 3;
+  string sender_username = 4;
+  string message_content = 5;
+  bool aggregate = 6;
+}
+
+message FollowRequestAccepted {
+  int64 requester_user_id = 1;
+  int64 target_user_id = 2;
+  string target_username = 3;
+}
+
+message FollowRequestRejected {
+  int64 requester_user_id = 1;
+  int64 target_user_id = 2;
+  string target_username = 3;
+}
+
+message GroupInviteAccepted {
+  int64 inviter_user_id = 1;
+  int64 invited_user_id = 2;
+  int64 group_id = 3;
+  string invited_username = 4;
+  string group_name = 5;
+}
+
+message GroupInviteRejected {
+  int64 inviter_user_id = 1;
+  int64 invited_user_id = 2;
+  int64 group_id = 3;
+  string invited_username = 4;
+  string group_name = 5;
+}
+
+message GroupJoinRequestAccepted {
+  int64 requester_user_id = 1;
+  int64 group_owner_id = 2;
+  int64 group_id = 3;
+  string group_name = 4;
+}
+
+message GroupJoinRequestRejected {
+  int64 requester_user_id = 1;
+  int64 group_owner_id = 2;
+  int64 group_id = 3;
+  string group_name = 4;
+}
+
+// Main notification event wrapper
+message NotificationEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp occurred_at = 2;
+  EventType event_type = 3;
+  map<string, string> metadata = 4;
+
+  oneof payload {
+    PostCommentCreated post_comment_created = 10;
+    PostLiked post_liked = 11;
+    FollowRequestCreated follow_request_created = 12;
+    NewFollowerCreated new_follower_created = 13;
+    GroupInviteCreated group_invite_created = 14;
+    GroupJoinRequestCreated group_join_request_created = 15;
+    NewEventCreated new_event_created = 16;
+    MentionCreated mention_created = 17;
+    NewMessageCreated new_message_created = 18;
+    FollowRequestAccepted follow_request_accepted = 19;
+    FollowRequestRejected follow_request_rejected = 20;
+    GroupInviteAccepted group_invite_accepted = 21;
+    GroupInviteRejected group_invite_rejected = 22;
+    GroupJoinRequestAccepted group_join_request_accepted = 23;
+    GroupJoinRequestRejected group_join_request_rejected = 24;
+  }
+}

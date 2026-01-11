@@ -9,9 +9,10 @@ import (
 	"social-network/services/notifications/internal/application"
 	"social-network/services/notifications/internal/client"
 	"social-network/services/notifications/internal/db/sqlc"
+	"social-network/services/notifications/internal/events"
 	"social-network/services/notifications/internal/handler"
+	pb "social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/chat"
-	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
@@ -20,6 +21,8 @@ import (
 
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
+	"social-network/shared/go/kafgo"
+	"google.golang.org/protobuf/proto"
 	"syscall"
 )
 
@@ -71,11 +74,16 @@ func Run() error {
 		log.Printf("Warning: failed to create default notification types: %v", err)
 	}
 
+	// Initialize Kafka consumer and start processing
+	if err := startKafkaConsumer(ctx, app); err != nil {
+		return fmt.Errorf("failed to start kafka consumer: %w", err)
+	}
+
 	service := handler.NewNotificationsHandler(app)
 
 	log.Println("Running gRpc service...")
-	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[notifications.NotificationServiceServer](
-		notifications.RegisterNotificationServiceServer,
+	startServerFunc, endServerFunc, err := gorpc.CreateGRpcServer[pb.NotificationServiceServer](
+		pb.RegisterNotificationServiceServer,
 		service,
 		cfgs.GrpcServerPort,
 		ct.CommonKeys())
@@ -114,6 +122,8 @@ type configs struct {
 	PostsGRPCAddr  string `env:"POSTS_GRPC_ADDR"`
 	ChatGRPCAddr   string `env:"CHAT_GRPC_ADDR"`
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
+
+	KafkaBrokers   []string `env:"KAFKA_BROKERS"` // Comma-separated list of Kafka brokers
 }
 
 func getConfigs() configs { // sensible defaults
@@ -124,6 +134,7 @@ func getConfigs() configs { // sensible defaults
 		UsersGRPCAddr: "users:50051",
 		PostsGRPCAddr: "posts:50051",
 		ChatGRPCAddr:  "chat:50051",
+		KafkaBrokers:  []string{"kafka:9092"}, // Default Kafka broker
 	}
 
 	// load environment variables if present
@@ -133,4 +144,86 @@ func getConfigs() configs { // sensible defaults
 	}
 
 	return cfgs
+}
+
+// startKafkaConsumer initializes and starts the Kafka consumer
+func startKafkaConsumer(ctx context.Context, app *application.Application) error {
+	cfgs := getConfigs()
+
+	if len(cfgs.KafkaBrokers) == 0 {
+		cfgs.KafkaBrokers = []string{"kafka:9092"} // Default broker
+	}
+
+	// Initialize Kafka consumer
+	kafkaConsumer, err := kafgo.NewKafkaConsumer(
+		cfgs.KafkaBrokers,
+		"notifications",  // Consumer group name for notifications
+	)
+	if err != nil {
+		tele.Error(ctx, "failed to create kafka consumer: @1", "error", err.Error())
+		return fmt.Errorf("failed to create kafka consumer: %w", err)
+	}
+
+	// Configure buffer sizes
+	kafkaConsumer = kafkaConsumer.WithTopicBuffer(1000).WithCommitBuffer(100)
+
+	// Register the notification topic
+	notificationChannel, err := kafkaConsumer.RegisterTopic(ct.KafkaTopic(ct.NotificationTopic))
+	if err != nil {
+		tele.Error(ctx, "failed to register notification topic: @1", "error", err.Error())
+		return fmt.Errorf("failed to register notification topic: %w", err)
+	}
+
+	// Initialize event handler
+	eventHandler := events.NewEventHandler(app)
+
+	// Start the Kafka consumer
+	closeConsumer, err := kafkaConsumer.StartConsuming(ctx)
+	if err != nil {
+		tele.Error(ctx, "failed to start kafka consumer: @1", "error", err.Error())
+		return fmt.Errorf("failed to start kafka consumer: %w", err)
+	}
+
+	// Start a goroutine to handle incoming notification events
+	go func() {
+		defer closeConsumer()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case record, ok := <-notificationChannel:
+				if !ok {
+					tele.Info(ctx, "Notification channel closed")
+					return
+				}
+
+				// Process the incoming protobuf notification event
+				if err := processNotificationEvent(ctx, record, eventHandler); err != nil {
+					tele.Error(ctx, "Failed to process notification event", "error", err)
+					// Don't commit the record if processing failed
+					continue
+				}
+
+				// Commit the record after successful processing
+				if err := record.Commit(ctx); err != nil {
+					tele.Error(ctx, "Failed to commit notification record", "error", err)
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
+
+// processNotificationEvent processes a single notification event from Kafka
+func processNotificationEvent(ctx context.Context, record *kafgo.Record, eventHandler *events.EventHandler) error {
+	// Deserialize the NotificationEvent wrapper
+	var notificationEvent pb.NotificationEvent
+	if err := proto.Unmarshal(record.Data(ctx), &notificationEvent); err != nil {
+		return fmt.Errorf("failed to unmarshal protobuf notification event: %w", err)
+	}
+
+	// Process the event using the event handler
+	return eventHandler.Handle(ctx, &notificationEvent)
 }
