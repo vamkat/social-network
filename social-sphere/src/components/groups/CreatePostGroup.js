@@ -86,8 +86,6 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
                 postData.image_type = imageFile.type;
             }
 
-            console.log("data to create post in group: ",postData);
-
             // Create post with metadata
             const resp = await createPost(postData);
 
@@ -145,7 +143,6 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
                 onPostCreated(newPost);
             }
             
-
         } catch (err) {
             console.error("Failed to create post:", err);
             setError("Failed to create post. Please try again.");

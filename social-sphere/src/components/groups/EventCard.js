@@ -20,8 +20,6 @@ export default function EventCard({ event, onDelete, onEdit }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState("");
 
-    console.log("EVENTL", event);
-
     const isCreator = user && event.user && event.user.id === user.id;
 
     // Format event date nicely
@@ -45,7 +43,6 @@ export default function EventCard({ event, onDelete, onEdit }) {
 
         // If clicking the same response, remove it
         if (userResponse === going) {
-            console.log("WHAAAAAT");
             await handleRemoveResponse();
             return;
         }

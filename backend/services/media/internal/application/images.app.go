@@ -280,7 +280,7 @@ func (m *MediaService) ValidateUpload(ctx context.Context,
 		u, err := m.S3.GenerateDownloadURL(ctx,
 			fileMeta.Bucket,
 			fileMeta.ObjectKey,
-			setExp(fileMeta.Visibility),
+			time.Duration(3*time.Minute),
 		)
 		if err != nil {
 			tele.Info(ctx, "failed to fetch url for @1", "FileId", fileId)

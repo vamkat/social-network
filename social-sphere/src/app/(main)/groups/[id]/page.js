@@ -18,8 +18,6 @@ export default async function GroupPage({ params }) {
 
   const group = result.data;
 
-  console.log(group);
-
   let posts = null;
 
   if (group.is_owner || group.is_member) {
@@ -29,10 +27,8 @@ export default async function GroupPage({ params }) {
     // else is just a visitor 
     // add most popular here
     const response = await getMostPopular(id);
-    console.log("most popular", response.data);
     posts = response.data;
   }
-
 
   const isVisitor = !group.is_owner && !group.is_member;
 

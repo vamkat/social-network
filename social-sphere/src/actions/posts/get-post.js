@@ -15,10 +15,10 @@ export async function getPost(postId) {
             }
         });
 
-        return post;
+        return {success: true, error: null, post: post};
 
     } catch (error) {
         console.error("Error fetching post:", error);
-        return null;
+        return {success:false, error: error.message, post: null};
     }
 }

@@ -19,7 +19,12 @@ export async function serverApiRequest(endpoint, options = {}) {
 
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "API error");
+
+        if (err.error.includes("permission denied")) {
+            return {ok: true, permission: false};
+        } else {
+            throw new Error(err.error || "API error");
+        }
     }
 
     if (options.forwardCookies) {
