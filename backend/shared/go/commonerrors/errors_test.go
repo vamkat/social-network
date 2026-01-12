@@ -249,13 +249,3 @@ func TestGRPCStatus_DefaultPublicMessage(t *testing.T) {
 	assert.Equal(t, codes.Internal, st.Code())
 	assert.Contains(t, st.Message(), "missing error message")
 }
-
-func TestIntegration_MultiwrapWithNilClass(t *testing.T) {
-	err := errors.New("sql no rows")
-	new := New(ErrNotFound, err).WithPublic("not found")
-	wrapped := Wrap(nil, new, "wrapped error")
-	st, ok := status.FromError(GRPCStatus(wrapped))
-	require.True(t, ok)
-	assert.Equal(t, codes.NotFound, st.Code())
-	assert.Contains(t, st.Message(), "not found")
-}

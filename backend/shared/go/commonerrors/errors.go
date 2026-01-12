@@ -85,6 +85,14 @@ func (e *Error) IsClass(target error) bool {
 	return e.class == target
 }
 
+func IsClass(err error, target *Error) bool {
+	var ce *Error
+	if errors.As(target, &ce) {
+		return err.(*Error).class == target
+	}
+	return errors.Is(err, target)
+}
+
 // Method for error.As parsing. Returns the `MediaError.Err`.
 func (e *Error) Unwrap() error {
 	return e.err
@@ -99,7 +107,7 @@ func New(class error, err error, input ...string) *Error {
 	e := &Error{
 		class: parseCode(class),
 		err:   err,
-		stack: getStack(1, 3),
+		stack: getStack(2, 3),
 		input: getInput(input...),
 	}
 	return e
@@ -130,7 +138,7 @@ func Wrap(class error, err error, input ...string) *Error {
 		e := &Error{
 			class:     ce.class,
 			err:       err,
-			stack:     getStack(1, 3),
+			stack:     getStack(2, 3),
 			publicMsg: ce.publicMsg, // retain public message by default
 		}
 
@@ -149,7 +157,7 @@ func Wrap(class error, err error, input ...string) *Error {
 	e := &Error{
 		class: parseCode(class),
 		err:   err,
-		stack: getStack(1, 3),
+		stack: getStack(2, 3),
 	}
 
 	e.input = getInput(input...)

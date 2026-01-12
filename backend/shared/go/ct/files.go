@@ -96,12 +96,13 @@ func (v FileVisibility) Value() (driver.Value, error) {
 }
 
 // Sets 3 minutes expiration for private and 6 hours exp for public
+// TODO: Change Public duration to 7 days
 func (v FileVisibility) SetExp() time.Duration {
 	switch v {
 	case Private:
 		return time.Duration(3 * time.Minute)
 	case Public:
-		return time.Duration(6 * time.Minute) // Temp duration for testing
+		return time.Duration(30 * time.Second) // Temp duration for testing
 	}
 	return time.Duration(0)
 }
