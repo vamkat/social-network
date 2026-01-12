@@ -15,6 +15,7 @@ var (
 
 // Creates new conversation between two users or fetches an existing.
 // Returns convesation id, last read message id (if existing) and other user basic info if opted via RetrieveOther.
+// TODO: Return last message
 func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
 	params md.GetOrCreatePrivateConvReq) (res md.GetOrCreatePrivateConvResp, err error) {
 

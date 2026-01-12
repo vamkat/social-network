@@ -200,7 +200,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 	})
 
 	if errTx != nil {
-		return nil, nil, ce.Wrap(nil, err, errMsg+": tx error")
+		return nil, nil, ce.Wrap(nil, errTx, errMsg+": tx error")
 	}
 
 	downUrls = make(map[ct.Id]string, len(fms))

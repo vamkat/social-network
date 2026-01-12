@@ -144,8 +144,9 @@ func TestIntegration(t *testing.T) {
 	customErr := Wrap(ErrInternal, underlying, "failed to connect")
 
 	// Test errors.Is works
-	assert.True(t, errors.Is(customErr, ErrInternal))
+	assert.True(t, errors.Is(customErr, underlying))
 	assert.False(t, errors.Is(customErr, ErrNotFound))
+	assert.False(t, errors.Is(customErr, ErrInternal))
 
 	// Test errors.As works
 	var target *Error
@@ -247,4 +248,14 @@ func TestGRPCStatus_DefaultPublicMessage(t *testing.T) {
 
 	assert.Equal(t, codes.Internal, st.Code())
 	assert.Contains(t, st.Message(), "missing error message")
+}
+
+func TestIntegration_MultiwrapWithNilClass(t *testing.T) {
+	err := errors.New("sql no rows")
+	new := New(ErrNotFound, err).WithPublic("not found")
+	wrapped := Wrap(nil, new, "wrapped error")
+	st, ok := status.FromError(GRPCStatus(wrapped))
+	require.True(t, ok)
+	assert.Equal(t, codes.NotFound, st.Code())
+	assert.Contains(t, st.Message(), "not found")
 }

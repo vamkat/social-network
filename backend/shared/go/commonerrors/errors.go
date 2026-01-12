@@ -30,7 +30,7 @@ func (e *Error) Error() string {
 
 	var builder strings.Builder
 	if e.class != nil {
-		builder.WriteString("\n    Code: ")
+		builder.WriteString("\n    Class: ")
 		builder.WriteString(e.class.Error())
 	}
 
@@ -90,7 +90,7 @@ func (e *Error) Unwrap() error {
 	return e.err
 }
 
-// Creates a new Error with code
+// Creates a new Error with class and optional input.
 func New(class error, err error, input ...string) *Error {
 	if err == nil {
 		return nil
