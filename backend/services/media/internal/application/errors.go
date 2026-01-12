@@ -11,12 +11,13 @@ import (
 )
 
 var (
-	ErrReqValidation  = errors.New("request validation error")               // invalid arguments
-	ErrNotValidated   = errors.New("file not yet validated")                 // means that validation is pending
-	ErrFailed         = errors.New("file has permanently failed validation") // means that file validation has failed permanently
-	ErrNotFound       = errors.New("not found")                              // Usually equivalent to sql.ErrNoRows
-	ErrInternal       = errors.New("internal error")
-	ErrValidateStatus = errors.New("validate status error")
+	ErrReqValidation    = errors.New("request validation error")               // invalid arguments
+	ErrNotValidated     = errors.New("file not yet validated")                 // means that validation is pending
+	ErrFailed           = errors.New("file has permanently failed validation") // means that file validation has failed permanently
+	ErrNotFound         = errors.New("not found")                              // Usually equivalent to sql.ErrNoRows
+	ErrInternal         = errors.New("internal error")
+	ErrValidateStatus   = errors.New("validate status error")
+	ErrPermissionDenied = errors.New("permission denied")
 )
 
 // Maps a file status to application errors and returns error.

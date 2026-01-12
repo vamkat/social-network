@@ -99,7 +99,7 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	tele.Info(ctx, "get image called @1", "request", req.String())
 
 	// Call application
-	downUrl, err := m.Application.GetImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
+	downUrl, err := m.Application.GetPublicImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		tele.Error(ctx, "get image error", "request", req.String(), "error", err.Error())
 		return nil, ce.GRPCStatus(err)

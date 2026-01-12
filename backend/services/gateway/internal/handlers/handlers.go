@@ -80,6 +80,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			Finalize(h.registerHandler()))
 
+	// TODO: Add Auth ??
 	mux.HandleFunc("/validate-file-upload",
 		Chain("/validate-file-upload").
 			AllowedMethod("POST").
@@ -87,7 +88,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			Finalize(h.validateFileUpload()))
 
-	// Test handler for media package
+	// TODO: Add Atuh
 	mux.HandleFunc("/get-image",
 		Chain("/get-image").
 			AllowedMethod("POST").

@@ -52,6 +52,7 @@ func (h *Handlers) validateFileUpload() http.HandlerFunc {
 	}
 }
 
+// Only valid for public images
 func (h *Handlers) getImageUrl() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

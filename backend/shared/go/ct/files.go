@@ -101,7 +101,7 @@ func (v FileVisibility) SetExp() time.Duration {
 	case Private:
 		return time.Duration(3 * time.Minute)
 	case Public:
-		return time.Duration(6 * time.Hour)
+		return time.Duration(6 * time.Minute) // Temp duration for testing
 	}
 	return time.Duration(0)
 }

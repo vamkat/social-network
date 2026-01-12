@@ -111,7 +111,7 @@ func (m *MediaService) UploadImage(ctx context.Context,
 
 // Returns an image download URL for the requested imageId and Variant.
 // If the variant is not available it falls back to the original file.
-func (m *MediaService) GetImage(
+func (m *MediaService) GetPublicImage(
 	ctx context.Context,
 	imgId ct.Id,
 	variant ct.FileVariant,
@@ -146,6 +146,10 @@ func (m *MediaService) GetImage(
 
 	if err != nil {
 		return "", ce.Wrap(nil, err, input)
+	}
+
+	if fm.Visibility != ct.Public {
+		return "", ce.New(ce.ErrPermissionDenied, ErrPermissionDenied, input).WithPublic("you don't have permission to view this image")
 	}
 
 	u, err := m.S3.GenerateDownloadURL(
