@@ -264,3 +264,12 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 
 	return comments, nil
 }
+
+func (s *Application) GetPostAudienceForComment(ctx context.Context, postId int64) (string, error) {
+	input := fmt.Sprintf("commentId: %v", postId)
+	audience, err := s.db.GetPostAudienceForComment(ctx, postId)
+	if err != nil {
+		return "", ce.Wrap(nil, err, input).WithPublic("error retrieving comment's visibility")
+	}
+	return audience, nil
+}

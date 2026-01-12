@@ -594,3 +594,18 @@ func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.Gener
 	}
 	return &emptypb.Empty{}, nil
 }
+
+func (s *PostsHandler) GetPostAudienceForComment(ctx context.Context, req *pb.SimpleIdReq) (*pb.AudienceResp, error) {
+	tele.Info(ctx, "GetPostAudienceForComment gRPC method called. @1", "request", req.String())
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	audience, err := s.Application.GetPostAudienceForComment(ctx, req.Id)
+	if err != nil {
+		tele.Error(ctx, "Error in GetPostAudienceForComment @1 @2", "request", req.String(), "error", err.Error())
+		return nil, ce.GRPCStatus(err)
+	}
+	return &pb.AudienceResp{
+		Audience: audience,
+	}, nil
+}

@@ -50,6 +50,14 @@ func (h *Handlers) createComment() http.HandlerFunc {
 			return
 		}
 
+		imageVisibility := media.FileVisibility_PUBLIC
+		//check post's visibility based on parent
+		audience, err := h.PostsService.GetPostAudienceForComment(ctx, &posts.SimpleIdReq{Id: httpReq.ParentId.Int64()})
+		if audience.Audience != "everyone" {
+			imageVisibility = media.FileVisibility_PRIVATE
+		}
+		tele.Info(ctx, "comment audience is @1", "audience", audience.Audience)
+
 		var ImageId ct.Id
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
@@ -58,7 +66,7 @@ func (h *Handlers) createComment() http.HandlerFunc {
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
-				Visibility:        media.FileVisibility_PUBLIC,
+				Visibility:        imageVisibility,
 				Variants:          []media.FileVariant{media.FileVariant_MEDIUM},
 				ExpirationSeconds: int64(exp),
 			})

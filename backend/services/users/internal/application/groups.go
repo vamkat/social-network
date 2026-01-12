@@ -5,6 +5,7 @@ import (
 	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	notifpb "social-network/shared/gen-go/notifications"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -363,6 +364,9 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 	if err != nil {
 		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
+
+	// ============== create notification ===============================
+
 	//create notification (waiting for batch notification)
 	// inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
 	// if err != nil {
@@ -413,16 +417,31 @@ func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoin
 	//create notification
 	requester, err := s.GetBasicUserInfo(ctx, req.RequesterId)
 	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
+		tele.Error(ctx, "Could not get basic user info for id @1 for request join group notif: @2", "userId", req.RequesterId, "error", err.Error())
 	}
 	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
+		tele.Error(ctx, "Could not get basic group info for id @1 for request join group notif: @2", "userId", req.GroupId, "error", err.Error())
 	}
-	err = s.clients.CreateGroupJoinRequest(ctx, group.GroupOwner, int64(req.RequesterId.Int64()), req.GroupId.Int64(), group.GroupTitle, requester.Username.String())
-	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
+
+	event := &notifpb.NotificationEvent{
+		EventType: notifpb.EventType_GROUP_JOIN_REQUEST_CREATED,
+		Payload: &notifpb.NotificationEvent_GroupJoinRequestCreated{
+			GroupJoinRequestCreated: &notifpb.GroupJoinRequestCreated{
+				GroupOwnerId:      group.GroupOwner,
+				RequesterUserId:   req.RequesterId.Int64(),
+				GroupId:           req.GroupId.Int64(),
+				GroupName:         group.GroupTitle,
+				RequesterUsername: requester.Username.String(),
+			},
+		},
 	}
+
+	if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		tele.Error(ctx, "failed to send request join group notification: @1", "error", err.Error())
+	}
+	tele.Info(ctx, "request join group notification event created")
+
 	return nil
 }
 
@@ -472,21 +491,30 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 		//create notification
 		invited, err := s.GetBasicUserInfo(ctx, req.InvitedId)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic user info for id @1 for group invite accepted notif: @2", "userId", req.InvitedId, "error", err.Error())
 		}
 		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
-		}
-		err = s.clients.CreateGroupInviteAccepted(ctx, int64(req.InvitedId.Int64()), inviterId, req.GroupId.Int64(), group.GroupTitle, invited.Username.String())
-		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic group info for id @1 for group invite accepted notif: @2", "userId", req.GroupId, "error", err.Error())
 		}
 
-		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.InvitedId.Int64()})
-		// if err != nil {
-		// 	tele.Info("could not add member to group conversation:", err)
-		// }
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_GROUP_INVITE_ACCEPTED,
+			Payload: &notifpb.NotificationEvent_GroupInviteAccepted{
+				GroupInviteAccepted: &notifpb.GroupInviteAccepted{
+					InviterUserId:   inviterId,
+					InvitedUserId:   req.InvitedId.Int64(),
+					GroupId:         req.GroupId.Int64(),
+					InvitedUsername: invited.Username.String(),
+					GroupName:       group.GroupTitle,
+				},
+			},
+		}
+
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send group invite accepted notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "group invite accepted notification event created")
 
 	} else {
 		err := s.db.DeclineGroupInvite(ctx, ds.DeclineGroupInviteParams{
@@ -499,16 +527,29 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 		//create notification
 		invited, err := s.GetBasicUserInfo(ctx, req.InvitedId)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic user info for id @1 for group invite rejected notif: @2", "userId", req.InvitedId, "error", err.Error())
 		}
 		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic group info for id @1 for group invite rejected notif: @2", "userId", req.GroupId, "error", err.Error())
 		}
-		err = s.clients.CreateGroupInviteRejected(ctx, int64(req.InvitedId.Int64()), inviterId, req.GroupId.Int64(), group.GroupTitle, invited.Username.String())
-		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_GROUP_INVITE_REJECTED,
+			Payload: &notifpb.NotificationEvent_GroupInviteRejected{
+				GroupInviteRejected: &notifpb.GroupInviteRejected{
+					InviterUserId:   inviterId,
+					InvitedUserId:   req.InvitedId.Int64(),
+					GroupId:         req.GroupId.Int64(),
+					InvitedUsername: invited.Username.String(),
+					GroupName:       group.GroupTitle,
+				},
+			},
 		}
+
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send group invite rejected notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "group invite rejected notification event created")
 	}
 	return nil
 }
@@ -543,17 +584,25 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 		//create notification
 		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
-		}
-		err = s.clients.CreateGroupJoinRequestAccepted(ctx, int64(req.RequesterId.Int64()), group.GroupOwner, req.GroupId.Int64(), group.GroupTitle)
-		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic group info for id @1 for group join request accepted notif: @2", "userId", req.GroupId, "error", err.Error())
 		}
 
-		// err = s.clients.AddMembersToGroupConversation(ctx, req.GroupId.Int64(), []int64{req.RequesterId.Int64()})
-		// if err != nil {
-		// 	tele.Info("could not add member to group conversation:", err)
-		// }
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_GROUP_JOIN_REQUEST_ACCEPTED,
+			Payload: &notifpb.NotificationEvent_GroupJoinRequestAccepted{
+				GroupJoinRequestAccepted: &notifpb.GroupJoinRequestAccepted{
+					RequesterUserId: req.RequesterId.Int64(),
+					GroupOwnerId:    req.GroupId.Int64(),
+					GroupId:         req.GroupId.Int64(),
+					GroupName:       group.GroupTitle,
+				},
+			},
+		}
+
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send group join request accepted notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "group join request accepted notification event created")
 
 	} else {
 		err = s.db.RejectGroupJoinRequest(ctx, ds.RejectGroupJoinRequestParams{
@@ -566,12 +615,24 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 		//create notification
 		group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic group info for id @1 for group join request rejected notif: @2", "userId", req.GroupId, "error", err.Error())
 		}
-		err = s.clients.CreateGroupJoinRequestRejected(ctx, int64(req.RequesterId.Int64()), group.GroupOwner, req.GroupId.Int64(), group.GroupTitle)
-		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_GROUP_JOIN_REQUEST_REJECTED,
+			Payload: &notifpb.NotificationEvent_GroupJoinRequestRejected{
+				GroupJoinRequestRejected: &notifpb.GroupJoinRequestRejected{
+					RequesterUserId: req.RequesterId.Int64(),
+					GroupOwnerId:    req.GroupId.Int64(),
+					GroupId:         req.GroupId.Int64(),
+					GroupName:       group.GroupTitle,
+				},
+			},
 		}
+
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send group join request accepted notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "group join request accepted notification event created")
 	}
 
 	return nil

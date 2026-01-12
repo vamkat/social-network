@@ -28,6 +28,7 @@ type Querier interface {
 	GetImages(ctx context.Context, parentID int64) (int64, error)
 	GetLatestCommentforPostId(ctx context.Context, arg GetLatestCommentforPostIdParams) (GetLatestCommentforPostIdRow, error)
 	GetMostPopularPostInGroup(ctx context.Context, groupID pgtype.Int8) (GetMostPopularPostInGroupRow, error)
+	GetPostAudienceForComment(ctx context.Context, postID int64) (string, error)
 	GetPersonalizedFeed(ctx context.Context, arg GetPersonalizedFeedParams) ([]GetPersonalizedFeedRow, error)
 	GetPostAudience(ctx context.Context, postID int64) ([]int64, error)
 	GetPostByID(ctx context.Context, arg GetPostByIDParams) (GetPostByIDRow, error)

@@ -34,6 +34,7 @@ const (
 	PostsService_EditComment_FullMethodName                = "/posts.PostsService/EditComment"
 	PostsService_DeleteComment_FullMethodName              = "/posts.PostsService/DeleteComment"
 	PostsService_GetCommentsByParentId_FullMethodName      = "/posts.PostsService/GetCommentsByParentId"
+	PostsService_GetPostAudienceForComment_FullMethodName  = "/posts.PostsService/GetPostAudienceForComment"
 	PostsService_CreateEvent_FullMethodName                = "/posts.PostsService/CreateEvent"
 	PostsService_DeleteEvent_FullMethodName                = "/posts.PostsService/DeleteEvent"
 	PostsService_EditEvent_FullMethodName                  = "/posts.PostsService/EditEvent"
@@ -105,6 +106,8 @@ type PostsServiceClient interface {
 	// Every comment includes reactions count and whether requester has reacted.
 	// A call to users and media service is made for user information and images.
 	GetCommentsByParentId(ctx context.Context, in *EntityIdPaginatedReq, opts ...grpc.CallOption) (*ListComments, error)
+	// Returns the parent post's audience
+	GetPostAudienceForComment(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*AudienceResp, error)
 	// Creates a group event.
 	// Returns permission denied if requester is not a member of the group.
 	CreateEvent(ctx context.Context, in *CreateEventReq, opts ...grpc.CallOption) (*IdResp, error)
@@ -282,6 +285,16 @@ func (c *postsServiceClient) GetCommentsByParentId(ctx context.Context, in *Enti
 	return out, nil
 }
 
+func (c *postsServiceClient) GetPostAudienceForComment(ctx context.Context, in *SimpleIdReq, opts ...grpc.CallOption) (*AudienceResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AudienceResp)
+	err := c.cc.Invoke(ctx, PostsService_GetPostAudienceForComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *postsServiceClient) CreateEvent(ctx context.Context, in *CreateEventReq, opts ...grpc.CallOption) (*IdResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(IdResp)
@@ -423,6 +436,8 @@ type PostsServiceServer interface {
 	// Every comment includes reactions count and whether requester has reacted.
 	// A call to users and media service is made for user information and images.
 	GetCommentsByParentId(context.Context, *EntityIdPaginatedReq) (*ListComments, error)
+	// Returns the parent post's audience
+	GetPostAudienceForComment(context.Context, *SimpleIdReq) (*AudienceResp, error)
 	// Creates a group event.
 	// Returns permission denied if requester is not a member of the group.
 	CreateEvent(context.Context, *CreateEventReq) (*IdResp, error)
@@ -508,6 +523,9 @@ func (UnimplementedPostsServiceServer) DeleteComment(context.Context, *GenericRe
 }
 func (UnimplementedPostsServiceServer) GetCommentsByParentId(context.Context, *EntityIdPaginatedReq) (*ListComments, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCommentsByParentId not implemented")
+}
+func (UnimplementedPostsServiceServer) GetPostAudienceForComment(context.Context, *SimpleIdReq) (*AudienceResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPostAudienceForComment not implemented")
 }
 func (UnimplementedPostsServiceServer) CreateEvent(context.Context, *CreateEventReq) (*IdResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateEvent not implemented")
@@ -788,6 +806,24 @@ func _PostsService_GetCommentsByParentId_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostsService_GetPostAudienceForComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SimpleIdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostsServiceServer).GetPostAudienceForComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostsService_GetPostAudienceForComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostsServiceServer).GetPostAudienceForComment(ctx, req.(*SimpleIdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PostsService_CreateEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateEventReq)
 	if err := dec(in); err != nil {
@@ -990,6 +1026,10 @@ var PostsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCommentsByParentId",
 			Handler:    _PostsService_GetCommentsByParentId_Handler,
+		},
+		{
+			MethodName: "GetPostAudienceForComment",
+			Handler:    _PostsService_GetPostAudienceForComment_Handler,
 		},
 		{
 			MethodName: "CreateEvent",

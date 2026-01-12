@@ -13,10 +13,7 @@ import (
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
@@ -140,78 +137,40 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 		resp.ViewerIsFollowing = false
 
 		// =======================  create notification ====================================
-		// follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
-		// if err != nil {
-		// 	tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
-		// }
+		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
+		if err != nil {
+			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
+		}
 
-		// // build metadata
-		// metadata := map[string]string{
-		// 	"source":     "users",
-		// 	"request_id": ctx.Value("ReqID").(string),
-		// 	"trace_id":   ctx.Value("TraceId").(string),
-		// }
+		// build the notification event
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_FOLLOW_REQUEST_CREATED,
+			Payload: &notifpb.NotificationEvent_FollowRequestCreated{
+				FollowRequestCreated: &notifpb.FollowRequestCreated{
+					TargetUserId:      req.TargetUserId.Int64(),
+					RequesterUserId:   req.FollowerId.Int64(),
+					RequesterUsername: follower.Username.String(),
+				},
+			},
+		}
 
-		// // build the notification event
-		// event := &notifpb.NotificationEvent{
-		// 	EventId:    uuid.NewString(),
-		// 	OccurredAt: timestamppb.Now(),
-		// 	EventType:  notifpb.EventType_FOLLOW_REQUEST_CREATED,
-		// 	Metadata:   metadata,
-		// 	Payload: &notifpb.NotificationEvent_FollowRequestCreated{
-		// 		FollowRequestCreated: &notifpb.FollowRequestCreated{
-		// 			TargetUserId:      req.TargetUserId.Int64(),
-		// 			RequesterUserId:   req.FollowerId.Int64(),
-		// 			RequesterUsername: follower.Username.String(),
-		// 		},
-		// 	},
-		// }
-
-		// // serialize
-		// eventBytes, err := proto.Marshal(event)
-		// if err != nil {
-		// 	tele.Error(ctx, "failed to marshal follow request notification: @1", "error", err.Error())
-		// }
-
-		// // send to Kafka
-		// err = s.kafkaProducer.Send(ctx, "notifications", eventBytes)
-		// if err != nil {
-		// 	tele.Error(ctx, "failed to send follow request notification: @1", "error", err.Error())
-		// }
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send new follow request notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "Follow request notification event created")
 
 	} else {
 		resp.IsPending = false
 		resp.ViewerIsFollowing = true
 
 		// =======================  create notification ====================================
-		tele.Info(ctx, "preparing follow notification event")
 		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
 		if err != nil {
 			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
 		}
 
-		// build metadata
-		requestId, ok := ctx.Value(ct.ReqID).(string)
-		if !ok {
-			tele.Error(ctx, "could not get request id")
-		}
-		traceId, ok := ctx.Value(ct.TraceId).(string)
-		if !ok {
-			tele.Error(ctx, "could not get trace id")
-		}
-
-		metadata := map[string]string{
-			"source":     "users",
-			"request_id": requestId,
-			"trace_id":   traceId,
-		}
-
-		// build the notification event
 		event := &notifpb.NotificationEvent{
-			EventId:    uuid.NewString(),
-			OccurredAt: timestamppb.Now(),
-			EventType:  notifpb.EventType_FOLLOW_REQUEST_CREATED,
-			Metadata:   metadata,
+			EventType: notifpb.EventType_NEW_FOLLOWER_CREATED,
 			Payload: &notifpb.NotificationEvent_NewFollowerCreated{
 				NewFollowerCreated: &notifpb.NewFollowerCreated{
 					TargetUserId:     req.TargetUserId.Int64(),
@@ -221,19 +180,10 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 			},
 		}
 
-		// serialize
-		eventBytes, err := proto.Marshal(event)
-		if err != nil {
-			tele.Error(ctx, "failed to marshal follow request notification: @1", "error", err.Error())
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send new follower notification: @1", "error", err.Error())
 		}
-		_ = eventBytes
-
-		// send to Kafka
-		err = s.eventProducer.Send(ctx, ct.NotificationTopic, eventBytes)
-		if err != nil {
-			tele.Error(ctx, "failed to create follow request notification event: @1", "error", err.Error())
-		}
-		tele.Info(ctx, "Follow request notification event created")
+		tele.Info(ctx, "new follower notification event created")
 	}
 
 	return resp, nil
@@ -297,21 +247,24 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 		//create notification
 		targetUser, err := s.GetBasicUserInfo(ctx, req.UserId)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic user info for id @1 for follow request accepted notif: @2", "userId", req.UserId, "error", err.Error())
 		}
-		err = s.clients.CreateFollowRequestAccepted(ctx, req.RequesterId.Int64(), req.UserId.Int64(), targetUser.Username.String())
-		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+
+		event := &notifpb.NotificationEvent{
+			EventType: *notifpb.EventType_FOLLOW_REQUEST_ACCEPTED.Enum(),
+			Payload: &notifpb.NotificationEvent_FollowRequestAccepted{
+				FollowRequestAccepted: &notifpb.FollowRequestAccepted{
+					RequesterUserId: req.RequesterId.Int64(),
+					TargetUserId:    targetUser.UserId.Int64(),
+					TargetUsername:  targetUser.Username.String(),
+				},
+			},
 		}
-		//try and create conversation in chat service if none exists
-		//condition that exactly one user follows the other is checked before call is made
-		// err = s.createPrivateConversation(ctx, models.FollowUserReq{
-		// 	FollowerId:   req.RequesterId,
-		// 	TargetUserId: req.UserId,
-		// })
-		// if err != nil {
-		// 	tele.Info("conversation couldn't be created", err)
-		// }
+
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to follow request accepted notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "follow request accepted notification event created")
 
 	} else {
 		err = s.db.RejectFollowRequest(ctx, ds.RejectFollowRequestParams{
@@ -324,12 +277,25 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 		//create notification
 		targetUser, err := s.GetBasicUserInfo(ctx, req.UserId)
 		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+			tele.Error(ctx, "Could not get basic user info for id @1 for follow request rejected notif: @2", "userId", req.UserId, "error", err.Error())
 		}
-		err = s.clients.CreateFollowRequestRejected(ctx, req.RequesterId.Int64(), req.UserId.Int64(), targetUser.Username.String())
-		if err != nil {
-			//WHAT DO DO WITH ERROR HERE?
+
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_FOLLOW_REQUEST_REJECTED,
+			Payload: &notifpb.NotificationEvent_FollowRequestRejected{
+				FollowRequestRejected: &notifpb.FollowRequestRejected{
+					RequesterUserId: req.RequesterId.Int64(),
+					TargetUserId:    targetUser.UserId.Int64(),
+					TargetUsername:  targetUser.Username.String(),
+				},
+			},
 		}
+
+		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send follow request rejected notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "follow request rejected notification event created")
+
 	}
 	return nil
 }

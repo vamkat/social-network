@@ -229,3 +229,19 @@ func (q *Queries) GetLatestCommentforPostId(ctx context.Context, arg GetLatestCo
 	)
 	return i, err
 }
+
+const getPostAudienceForComment = `
+SELECT audience
+FROM posts
+WHERE id = $1;
+`
+
+func (q *Queries) GetPostAudienceForComment(ctx context.Context, postID int64) (string, error) {
+	row := q.db.QueryRow(ctx, getPostAudienceForComment, postID)
+	var audience string
+	err := row.Scan(&audience)
+	if err != nil {
+		return "", err
+	}
+	return audience, nil
+}

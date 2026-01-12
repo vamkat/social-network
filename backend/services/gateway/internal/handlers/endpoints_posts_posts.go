@@ -184,6 +184,11 @@ func (h *Handlers) createPost() http.HandlerFunc {
 			return
 		}
 
+		imageVisibility := media.FileVisibility_PUBLIC
+		if httpReq.Audience.String() != "everyone" {
+			imageVisibility = media.FileVisibility_PRIVATE
+		}
+
 		var ImageId ct.Id
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
@@ -192,7 +197,7 @@ func (h *Handlers) createPost() http.HandlerFunc {
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
-				Visibility:        media.FileVisibility_PUBLIC,
+				Visibility:        imageVisibility,
 				Variants:          []media.FileVariant{media.FileVariant_MEDIUM},
 				ExpirationSeconds: int64(exp),
 			})
@@ -274,6 +279,11 @@ func (h *Handlers) editPost() http.HandlerFunc {
 			return
 		}
 
+		imageVisibility := media.FileVisibility_PUBLIC
+		if httpReq.Audience.String() != "everyone" {
+			imageVisibility = media.FileVisibility_PRIVATE
+		}
+
 		var ImageId ct.Id
 		var uploadURL string
 		if httpReq.ImageSize != 0 {
@@ -282,7 +292,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 				Filename:          httpReq.ImageName,
 				MimeType:          httpReq.ImageType,
 				SizeBytes:         httpReq.ImageSize,
-				Visibility:        media.FileVisibility_PUBLIC,
+				Visibility:        imageVisibility,
 				Variants:          []media.FileVariant{media.FileVariant_MEDIUM},
 				ExpirationSeconds: int64(exp),
 			})
