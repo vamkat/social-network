@@ -210,12 +210,14 @@ services:
     image: apache/kafka-native:4.1.1
     container_name: kafka
     ports:
-      - "9092:9092"   # host access
+      - "9092:9092"      # internal Docker
+      - "29092:29092"    # external host
     environment:
       # Kafka listeners
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:29093,PLAINTEXT_HOST://:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092,CONTROLLER://kafka:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
 
       # Node / controller configuration
       KAFKA_NODE_ID: 1

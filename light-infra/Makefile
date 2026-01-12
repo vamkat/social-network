@@ -29,6 +29,7 @@ export MEDIA_GRPC_ADDR=localhost:50055
 export SHUTDOWN_TIMEOUT_SECONDS=5
 export ENABLE_DEBUG_LOGS=true
 export ENABLE_SIMPLE_PRINT=true
+export KAFKA_BROKERS=localhost:29092
 
 
 
@@ -121,26 +122,31 @@ run-built:
 	MINIO_ENDPOINT=localhost:9000 \
 	MINIO_ACCESS_KEY=minioadmin \
 	MINIO_SECRET_KEY=minioadmin \
+	KAFKA_BROKERS=localhost:29092 \
 	./media.social & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable \
 	MIGRATE_PATH=services/chat/internal/db/migrations \
 	GRPC_SERVER_PORT=:50053 \
 	NATS_HOST=localhost \
+	KAFKA_BROKERS=localhost:29092 \
 	./chat.social 2>&1 | sed 's/^/[CHAT] /' & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5434/social_posts?sslmode=disable \
 	GRPC_SERVER_PORT=:50052 \
+	KAFKA_BROKERS=localhost:29092 \
 	./posts.social 2>&1 | sed 's/^/[POSTS] /' & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5433/social_users?sslmode=disable \
 	MIGRATE_PATH=services/users/internal/db/migrations \
 	GRPC_SERVER_PORT=:50051 \
+	KAFKA_BROKERS=localhost:29092 \
 	./users.social 2>&1 | sed 's/^/[USERS] /' & \
 	\
 	DATABASE_URL=postgres://postgres:secret@localhost:5436/social_notifications?sslmode=disable \
 	MIGRATE_PATH=services/notifications/internal/db/migrations \
 	GRPC_SERVER_PORT=:50054 \
+	KAFKA_BROKERS=localhost:29092 \
 	./notifs.social 2>&1 | sed 's/^/[NOTIFICATIONS] /' & \
 	\
 	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
@@ -191,6 +197,7 @@ run-notifications:
 	DATABASE_URL=postgres://postgres:secret@localhost:5436/social_notifications?sslmode=disable \
 	MIGRATE_PATH=services/notifications/internal/db/migrations \
 	GRPC_SERVER_PORT=:50054 \
+	KAFKA_BROKERS=localhost:29092 \
 	go run -C ../backend ./services/notifications/cmd/server/main.go 2>&1 | sed 's/^/[NOTIFICATIONS] /'
 
 ######################################
