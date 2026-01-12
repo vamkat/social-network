@@ -7,7 +7,6 @@ import (
 	"social-network/shared/go/kafgo"
 	"social-network/shared/go/models"
 	"social-network/shared/go/retrievemedia"
-	tele "social-network/shared/go/telemetry"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,23 +22,18 @@ type Application struct {
 	txRunner       TxRunner
 	clients        ClientsInterface
 	mediaRetriever *retrievemedia.MediaRetriever
-	kafkaProducer  *kafgo.KafkaProducer
+	eventProducer  *kafgo.KafkaProducer
 }
 
 // NewApplication constructs a new UserService
-func NewApplication(db ds.Querier, txRunner TxRunner, pool *pgxpool.Pool, clients *client.Clients) *Application {
+func NewApplication(db ds.Querier, txRunner TxRunner, pool *pgxpool.Pool, clients *client.Clients, eventProducer *kafgo.KafkaProducer) *Application {
 	mediaRetriever := retrievemedia.NewMediaRetriever(clients.MediaClient, clients.RedisClient, 3*time.Minute)
-	producer, close, err := kafgo.NewKafkaProducer([]string{"localhost:9092"})
-	if err != nil {
-		tele.Fatal("wtf")
-	}
-	defer close()
 	return &Application{
 		db:             db,
 		txRunner:       txRunner,
 		clients:        clients,
 		mediaRetriever: mediaRetriever,
-		kafkaProducer:  producer,
+		eventProducer:  eventProducer,
 	}
 }
 

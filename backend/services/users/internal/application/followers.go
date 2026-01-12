@@ -6,12 +6,17 @@ import (
 	"fmt"
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+
+	notifpb "social-network/shared/gen-go/notifications"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagination) ([]models.User, error) {
@@ -179,45 +184,56 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 		resp.ViewerIsFollowing = true
 
 		// =======================  create notification ====================================
-		// 	follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
-		// 	if err != nil {
-		// 		tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
-		// 	}
+		tele.Info(ctx, "preparing follow notification event")
+		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
+		if err != nil {
+			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
+		}
 
-		// 	// build metadata
-		// 	metadata := map[string]string{
-		// 		"source":     "users",
-		// 		"request_id": ctx.Value("ReqID").(string),
-		// 		"trace_id":   ctx.Value("TraceId").(string),
-		// 	}
+		// build metadata
+		requestId, ok := ctx.Value(ct.ReqID).(string)
+		if !ok {
+			tele.Error(ctx, "could not get request id")
+		}
+		traceId, ok := ctx.Value(ct.TraceId).(string)
+		if !ok {
+			tele.Error(ctx, "could not get trace id")
+		}
 
-		// 	// build the notification event
-		// 	event := &notifpb.NotificationEvent{
-		// 		EventId:    uuid.NewString(),
-		// 		OccurredAt: timestamppb.Now(),
-		// 		EventType:  notifpb.EventType_FOLLOW_REQUEST_CREATED,
-		// 		Metadata:   metadata,
-		// 		Payload: &notifpb.NotificationEvent_NewFollowerCreated{
-		// 			NewFollowerCreated: &notifpb.NewFollowerCreated{
-		// 				TargetUserId:     req.TargetUserId.Int64(),
-		// 				FollowerUserId:   req.FollowerId.Int64(),
-		// 				FollowerUsername: follower.Username.String(),
-		// 			},
-		// 		},
-		// 	}
+		metadata := map[string]string{
+			"source":     "users",
+			"request_id": requestId,
+			"trace_id":   traceId,
+		}
 
-		// 	// serialize
-		// 	eventBytes, err := proto.Marshal(event)
-		// 	if err != nil {
-		// 		tele.Error(ctx, "failed to marshal follow request notification: @1", "error", err.Error())
-		// 	}
+		// build the notification event
+		event := &notifpb.NotificationEvent{
+			EventId:    uuid.NewString(),
+			OccurredAt: timestamppb.Now(),
+			EventType:  notifpb.EventType_FOLLOW_REQUEST_CREATED,
+			Metadata:   metadata,
+			Payload: &notifpb.NotificationEvent_NewFollowerCreated{
+				NewFollowerCreated: &notifpb.NewFollowerCreated{
+					TargetUserId:     req.TargetUserId.Int64(),
+					FollowerUserId:   req.FollowerId.Int64(),
+					FollowerUsername: follower.Username.String(),
+				},
+			},
+		}
 
-		// 	// send to Kafka
-		// 	err = s.kafkaProducer.Send(ctx, "notifications", eventBytes)
-		// 	if err != nil {
-		// 		tele.Error(ctx, "failed to send follow request notification: @1", "error", err.Error())
-		// 	}
+		// serialize
+		eventBytes, err := proto.Marshal(event)
+		if err != nil {
+			tele.Error(ctx, "failed to marshal follow request notification: @1", "error", err.Error())
+		}
+		_ = eventBytes
 
+		// send to Kafka
+		// err = s.eventProducer.Send(ctx, ct.NotificationTopic, eventBytes)
+		// if err != nil {
+		// 	tele.Error(ctx, "failed to create follow request notification event: @1", "error", err.Error())
+		// }
+		// tele.Info(ctx, "Follow request notification event created")
 	}
 
 	return resp, nil

@@ -15,6 +15,7 @@ import (
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
+	"social-network/shared/go/kafgo"
 	rds "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 
@@ -90,6 +91,17 @@ func Run() error {
 
 	//
 	//
+	//
+	// KAFKA PRODUCER
+	eventProducer, close, err := kafgo.NewKafkaProducer([]string{"localhost:9092"})
+	if err != nil {
+		tele.Fatal("wtf")
+	}
+	defer close()
+	tele.Info(ctx, "initialized kafka producer")
+
+	//
+	//
 	// APPLICATION
 	clients := client.NewClients(
 		chatClient,
@@ -98,7 +110,7 @@ func Run() error {
 		redisConnector,
 	)
 
-	app := application.NewApplication(ds.New(pool), pgxTxRunner, pool, clients)
+	app := application.NewApplication(ds.New(pool), pgxTxRunner, pool, clients, eventProducer)
 	service := *handler.NewUsersHanlder(app)
 
 	//

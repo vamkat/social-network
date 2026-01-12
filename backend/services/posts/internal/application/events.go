@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
@@ -175,18 +177,14 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		return nil, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
-	accessCtx := accessContext{
-		requesterId: req.RequesterId.Int64(),
-		entityId:    req.EntityId.Int64(),
+	isMember, err := s.clients.IsGroupMember(ctx, req.RequesterId.Int64(), req.EntityId.Int64())
+	if err != nil {
+		return []models.Event{}, ce.ParseGrpcErr(err, input)
+	}
+	if !isMember {
+		return []models.Event{}, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not group member"), input).WithPublic("permission denied")
 	}
 
-	hasAccess, err := s.hasRightToView(ctx, accessCtx)
-	if err != nil {
-		return nil, ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
-	}
-	if !hasAccess {
-		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user has no permission to view events of group %v", req.EntityId), input).WithPublic("permission denied")
-	}
 	rows, err := s.db.GetEventsByGroupId(ctx, ds.GetEventsByGroupIdParams{
 		GroupID: req.EntityId.Int64(),
 		Offset:  req.Offset.Int32(),
@@ -194,7 +192,10 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 		UserID:  req.RequesterId.Int64(),
 	})
 	if err != nil {
-		return nil, ce.Wrap(ce.ErrInternal, err, fmt.Sprintf("%#v", accessCtx)).WithPublic(genericPublic)
+		if errors.Is(err, sql.ErrNoRows) {
+			return []models.Event{}, nil
+		}
+		return nil, ce.Wrap(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 	events := make([]models.Event, 0, len(rows))
 	userIDs := make(ct.Ids, 0, len(rows))
