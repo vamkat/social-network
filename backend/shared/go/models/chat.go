@@ -32,7 +32,7 @@ type GroupMsg struct {
 	DeletedAt     ct.GenDateTime `validation:"nullable"`
 }
 
-type GetGetGroupMsgsResp struct {
+type GetGroupMsgsResp struct {
 	HaveMore bool
 	Messages []GroupMsg
 }

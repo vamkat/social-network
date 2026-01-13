@@ -89,11 +89,11 @@ type Querier interface {
 
 	// Gets paginated group messages that are updated before a given date time.
 	GetPrevGroupMessages(ctx context.Context,
-		req md.GetGroupMsgsReq) (msgs md.GetGetGroupMsgsResp, err error)
+		req md.GetGroupMsgsReq) (msgs md.GetGroupMsgsResp, err error)
 
 	// Gets paginated group messages that are updated after a given date time.
 	GetNextGroupMessages(ctx context.Context,
-		req md.GetGroupMsgsReq) (msgs md.GetGetGroupMsgsResp, err error)
+		req md.GetGroupMsgsReq) (msgs md.GetGroupMsgsResp, err error)
 }
 
 var _ Querier = (*Queries)(nil)

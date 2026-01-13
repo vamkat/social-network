@@ -318,7 +318,7 @@ func (h *Handlers) GetGroupMessagesPag() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, &models.GetGetGroupMsgsResp{
+		err = utils.WriteJSON(ctx, w, httpCode, &models.GetGroupMsgsResp{
 			HaveMore: grpcResponse.HaveMore,
 			Messages: mapping.MapGroupMessagesFromProto(grpcResponse.Messages),
 		})

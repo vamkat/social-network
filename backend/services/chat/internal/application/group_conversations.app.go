@@ -6,6 +6,7 @@ import (
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 )
 
 type CreateMessageInGroupReq struct {
@@ -41,7 +42,7 @@ func (c *ChatService) CreateMessageInGroup(ctx context.Context,
 }
 
 func (c *ChatService) GetPrevGroupMessages(ctx context.Context,
-	req md.GetGroupMsgsReq) (res md.GetGetGroupMsgsResp, Err *ce.Error) {
+	req md.GetGroupMsgsReq) (res md.GetGroupMsgsResp, Err *ce.Error) {
 
 	input := fmt.Sprintf("req: %#v", req)
 	if err := ct.ValidateStruct(req); err != nil {
@@ -56,11 +57,16 @@ func (c *ChatService) GetPrevGroupMessages(ctx context.Context,
 	if err != nil {
 		return res, ce.Wrap(nil, err, input)
 	}
+
+	err = c.retrieveMessageSenders(ctx, res.Messages, input)
+	if err != nil {
+		tele.Error(ctx, "failed to retrieve users for messages", "input", input, "error", err)
+	}
 	return res, nil
 }
 
 func (c *ChatService) GetNextGroupMessages(ctx context.Context,
-	req md.GetGroupMsgsReq) (res md.GetGetGroupMsgsResp, Err *ce.Error) {
+	req md.GetGroupMsgsReq) (res md.GetGroupMsgsResp, Err *ce.Error) {
 
 	input := fmt.Sprintf("req: %#v", req)
 	if err := ct.ValidateStruct(req); err != nil {
@@ -76,7 +82,32 @@ func (c *ChatService) GetNextGroupMessages(ctx context.Context,
 		return res, ce.Wrap(nil, err, input)
 	}
 
+	err = c.retrieveMessageSenders(ctx, res.Messages, input)
+	if err != nil {
+		tele.Error(ctx, "failed to retrieve users for messages", "input", input, "error", err)
+	}
+
 	return res, nil
+}
+
+func (c *ChatService) retrieveMessageSenders(ctx context.Context, msgs []md.GroupMsg, input string) error {
+	allMemberIDs := make(ct.Ids, 0)
+	for _, r := range msgs {
+		allMemberIDs = append(allMemberIDs, r.Sender.UserId)
+	}
+
+	usersMap, err := c.RetriveUsers.GetUsers(ctx, allMemberIDs)
+	if err != nil {
+		return ce.Wrap(nil, err, input)
+	}
+
+	for i := range msgs {
+		retrieved := usersMap[msgs[i].Sender.UserId]
+		msgs[i].Sender.Username = retrieved.Username
+		msgs[i].Sender.AvatarId = retrieved.AvatarId
+		msgs[i].Sender.AvatarURL = retrieved.AvatarURL
+	}
+	return nil
 }
 
 // Returns a commonerrors Error type with public message if user is not a group member.

@@ -99,11 +99,11 @@ func (c *ChatService) GetPrivateConversations(ctx context.Context,
 		return nil, ce.Wrap(nil, err, input)
 	}
 
-	for _, c := range conversations {
-		retrieved := usersMap[c.OtherUser.UserId]
-		c.OtherUser.Username = retrieved.Username
-		c.OtherUser.AvatarId = retrieved.AvatarId
-		c.OtherUser.AvatarURL = retrieved.AvatarURL
+	for i := range conversations {
+		retrieved := usersMap[conversations[i].OtherUser.UserId]
+		conversations[i].OtherUser.Username = retrieved.Username
+		conversations[i].OtherUser.AvatarId = retrieved.AvatarId
+		conversations[i].OtherUser.AvatarURL = retrieved.AvatarURL
 	}
 
 	return conversations, nil

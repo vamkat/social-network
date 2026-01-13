@@ -43,7 +43,7 @@ func (q *Queries) CreateNewGroupMessage(ctx context.Context,
 }
 
 func (q *Queries) GetPrevGroupMessages(ctx context.Context,
-	req md.GetGroupMsgsReq) (res md.GetGetGroupMsgsResp, err error) {
+	req md.GetGroupMsgsReq) (res md.GetGroupMsgsResp, err error) {
 	input := fmt.Sprintf("arg: %#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
@@ -90,7 +90,7 @@ func (q *Queries) GetPrevGroupMessages(ctx context.Context,
 }
 
 func (q *Queries) GetNextGroupMessages(ctx context.Context,
-	arg md.GetGroupMsgsReq) (res md.GetGetGroupMsgsResp, err error) {
+	arg md.GetGroupMsgsReq) (res md.GetGroupMsgsResp, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	if err := ct.ValidateStruct(arg); err != nil {
