@@ -20,6 +20,11 @@ import (
 func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id]models.User, error) {
 	input := fmt.Sprintf("user retriever: get users: uses ids: %v", userIDs)
 	//========================== STEP 1 : get user info from users ===============================================
+	if err := userIDs.Validate(); err != nil {
+		return nil, ce.New(ce.ErrInvalidArgument, err, input)
+	}
+
+	tele.Debug(ctx, "get users called with ids @1", "ids", userIDs)
 
 	ids := userIDs.Unique()
 
@@ -32,14 +37,14 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 
 		key, err := ct.BasicUserInfoKey{Id: id}.String()
 		if err != nil {
-			fmt.Printf("RETRIEVE USERS - failed to construct redis key for id %v: %v\n", id, err)
+			tele.Warn(ctx, "failed to construct redis key for id @1: @2", "userId", id, "error", err.Error())
 			missing = append(missing, id)
 			continue
 		}
 
 		if err := h.cache.GetObj(ctx, key, &u); err == nil {
 			users[id] = u
-			fmt.Println("RETRIEVE USERS - found user on redis:", u)
+			tele.Info(ctx, "found user on redis: @1", "user", u)
 		} else {
 			missing = append(missing, id)
 		}
@@ -68,7 +73,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 					h.ttl,
 				)
 			} else {
-				fmt.Printf("RETRIEVE USERS - failed to construct redis key for user %v: %v\n", user.UserId, err)
+				tele.Warn(ctx, "failed to construct redis key for user @1: @2", "userId", user.UserId, "error", err.Error())
 			}
 		}
 	}
@@ -119,17 +124,24 @@ func (h *UserRetriever) GetUser(ctx context.Context, userID ct.Id) (models.User,
 
 	//========================== STEP 1 : get user info from users ===============================================
 
+	if err := userID.Validate(); err != nil {
+		return models.User{}, ce.New(ce.ErrInvalidArgument, err, input)
+	}
+
+	tele.Debug(ctx, "retrieve user called with user id @1", "userId", userID)
+
 	// Redis lookup
 	var u models.User
 
 	key, err := ct.BasicUserInfoKey{Id: userID}.String()
 	if err != nil {
-		fmt.Printf("RETRIEVE USERS - failed to construct redis key for id %v: %v\n", userID, err)
+		tele.Warn(ctx, "failed to construct redis key for id @1: @2", "userId", userID, "error", err.Error())
 	}
+	tele.Debug(ctx, "redis key constructed: @1", "redisKey", key)
 
 	var user models.User
 	if err := h.cache.GetObj(ctx, key, &user); err == nil {
-		fmt.Println("RETRIEVE USERS - found user on redis:", u)
+		tele.Info(ctx, "found user on redis: @1", "user", u)
 		return user, nil
 	}
 	resp, err := h.client.GetBasicUserInfo(ctx, wrapperspb.Int64(userID.Int64()))
@@ -151,7 +163,7 @@ func (h *UserRetriever) GetUser(ctx context.Context, userID ct.Id) (models.User,
 			h.ttl,
 		)
 	} else {
-		fmt.Printf("RETRIEVE USERS - failed to construct redis key for user %v: %v\n", user.UserId, err)
+		tele.Warn(ctx, "failed to construct redis key for user @1: @1", "userId", user.UserId, "error", err.Error())
 	}
 
 	//========================== STEP 2 : get avatar from media ===============================================

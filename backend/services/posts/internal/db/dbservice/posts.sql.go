@@ -320,7 +320,7 @@ SELECT
       
 FROM posts
 WHERE id=$1
-  AND p.deleted_at IS NULL
+  AND deleted_at IS NULL
 `
 
 type GetBasicPostByIDRow struct {

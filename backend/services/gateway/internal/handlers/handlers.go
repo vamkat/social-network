@@ -272,7 +272,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			Finalize(h.requestJoinGroup()))
 
 	mux.HandleFunc("/group/cancel-request",
-		Chain("/group/cancek-request").
+		Chain("/group/cancel-request").
 			AllowedMethod("POST").
 			RateLimit(IP, 20, 5).
 			Auth().

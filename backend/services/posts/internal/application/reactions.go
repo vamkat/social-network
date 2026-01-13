@@ -46,11 +46,15 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 			//log error
 		}
 
-		//HOW IS THIS NOT NEEDED?
-		// row, err := s.db.GetEntityCreatorAndGroup(ctx, req.EntityId.Int64())
-		// if err != nil {
-		// 	//log and don't proceed to notif
-		// }
+		row, err := s.db.GetEntityCreatorAndGroup(ctx, req.EntityId.Int64())
+		if err != nil {
+			//log and don't proceed to notif
+		}
+
+		//if liker is same as entity creator, return without creating a notification
+		if row.CreatorID == int64(liker.UserId) {
+			return nil
+		}
 
 		// build the notification event
 		event := &notifpb.NotificationEvent{
@@ -70,8 +74,6 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 		}
 		tele.Info(ctx, "new reaction notification event created")
 
-	} else {
-		//remove notification or not? how?
 	}
 	return nil
 }

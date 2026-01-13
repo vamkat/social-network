@@ -9,11 +9,16 @@ import (
 	ce "social-network/shared/go/commonerrors"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/mapping"
+	tele "social-network/shared/go/telemetry"
 )
 
 // GetImages returns a map[imageId]imageUrl, using cache + batch RPC.
 func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
 	input := fmt.Sprintf("ids %v, variant: %v", imageIds, variant)
+
+	if err := imageIds.Validate(); err != nil {
+		return nil, nil, ce.New(ce.ErrInvalidArgument, err, input)
+	}
 
 	uniqueImageIds := imageIds.Unique()
 	images := make(map[int64]string, len(uniqueImageIds))
@@ -31,14 +36,14 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 	for _, imageId := range uniqueImageIds {
 		key, err := ct.ImageKey{Id: imageId, Variant: ctVariant}.String()
 		if err != nil {
-			fmt.Printf("RETRIEVE MEDIA - failed to construct redis key for image %v: %v\n", imageId, err)
+			tele.Warn(ctx, "failed to construct redis key for image @1: @2", "imageId", imageId, "error", err.Error())
 			missingImages = append(missingImages, imageId)
 			continue
 		}
 
 		imageURL, err := h.cache.GetStr(ctx, key)
 		if err == nil {
-			fmt.Println("Got Image from redis")
+			tele.Info(ctx, "Got url for image @1 from redis", "imageId", imageId)
 			images[imageId.Int64()] = imageURL.(string)
 		} else {
 			missingImages = append(missingImages, imageId)
@@ -67,7 +72,7 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 			if err == nil {
 				_ = h.cache.SetStr(ctx, key, url, h.ttl)
 			} else {
-				fmt.Printf("RETRIEVE MEDIA - failed to construct redis key for caching image %v: %v\n", id, err)
+				tele.Warn(ctx, "failed to construct redis key for image @1: @2", "imageId", id, "error", err.Error())
 			}
 		}
 
@@ -120,6 +125,10 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant media.FileVariant) (string, error) {
 	input := fmt.Sprintf("id %v, variant: %v", imageId, variant)
 
+	if err := ct.Id(imageId).Validate(); err != nil {
+		return "", ce.New(ce.ErrInvalidArgument, err, input)
+	}
+
 	ctVariant := mapping.PbToCtFileVariant(variant)
 	if err := ctVariant.Validate(); err != nil {
 		return "", ce.New(ce.ErrInvalidArgument, err, input)
@@ -128,12 +137,12 @@ func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant me
 	// Redis lookup for images
 	key, err := ct.ImageKey{Id: ct.Id(imageId), Variant: ctVariant}.String()
 	if err != nil {
-		fmt.Printf("RETRIEVE MEDIA - failed to construct redis key for image %v: %v\n", imageId, err)
+		tele.Warn(ctx, "failed to construct redis key for image @1: @1", "imageId", imageId, "error", err.Error())
 	}
 
 	imageURL, err := h.cache.GetStr(ctx, key)
 	if err == nil {
-		fmt.Println("Got Image from redis")
+		tele.Info(ctx, "Got image url for image @1 from redis", "imageId", imageId)
 		return imageURL.(string), nil
 	}
 
@@ -152,7 +161,7 @@ func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant me
 	if err == nil {
 		_ = h.cache.SetStr(ctx, key, resp.DownloadUrl, h.ttl)
 	} else {
-		fmt.Printf("RETRIEVE MEDIA - failed to construct redis key for caching image %v: %v\n", imageId, err)
+		tele.Warn(ctx, "failed to construct redis key for image @1: @2", "imageId", imageId, "error", err.Error())
 	}
 
 	return resp.DownloadUrl, nil

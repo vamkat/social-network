@@ -66,10 +66,15 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		tele.Error(ctx, "Could not get basic user info for id @1 for comment created event: @2", "userId", req.CreatorId, "error", err.Error())
 	}
 
-	// basicPost, err := s.db.GetBasicPostByID(ctx, req.ParentId.Int64())
-	// if err != nil {
-	// 	tele.Error(ctx, "Could not get basic post info for id @1 for comment created event: @2", "postId", req.ParentId, "error", err.Error())
-	// }
+	basicPost, err := s.db.GetBasicPostByID(ctx, req.ParentId.Int64())
+	if err != nil {
+		tele.Error(ctx, "Could not get basic post info for id @1 for comment created event: @2", "postId", req.ParentId, "error", err.Error())
+	}
+
+	//if commenter is parent creator, do not create notification
+	if commenter.UserId == ct.Id(basicPost.CreatorID) {
+		return commentId, nil
+	}
 
 	// build the notification event
 	event := &notifpb.NotificationEvent{
