@@ -24,6 +24,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Request message for creating a new group message.
+// Contains the group ID, sender ID, and the text of the message.
 type CreateGroupMessageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -84,6 +86,8 @@ func (x *CreateGroupMessageRequest) GetMessageText() string {
 	return ""
 }
 
+// Represents a group message in a conversation.
+// Includes message ID, conversation ID, group ID, sender details, message text, and timestamps.
 type GroupMessage struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -184,6 +188,8 @@ func (x *GroupMessage) GetDeletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// Request message for retrieving group messages.
+// Specifies the group ID, member ID, boundary message ID for pagination, and limit.
 type GetGroupMessagesRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	GroupId           int64                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -252,6 +258,8 @@ func (x *GetGroupMessagesRequest) GetLimit() int32 {
 	return 0
 }
 
+// Response message for group messages retrieval.
+// Indicates if there are more messages and contains the list of messages.
 type GetGroupMessagesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	HaveMore      bool                   `protobuf:"varint,1,opt,name=have_more,json=haveMore,proto3" json:"have_more,omitempty"`
@@ -304,6 +312,8 @@ func (x *GetGroupMessagesResponse) GetMessages() []*GroupMessage {
 	return nil
 }
 
+// Request message to get or create a private conversation between two users.
+// Includes user IDs and a flag to retrieve interlocutor details.
 type GetOrCreatePrivateConvRequest struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	User                 int64                  `protobuf:"varint,1,opt,name=user,proto3" json:"user,omitempty"`
@@ -364,6 +374,8 @@ func (x *GetOrCreatePrivateConvRequest) GetRetrieveInterlocutor() bool {
 	return false
 }
 
+// Response message for getting or creating a private conversation.
+// Contains conversation ID, interlocutor details, last read message ID, and if it's new.
 type GetOrCreatePrivateConvResponse struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId  int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
@@ -432,6 +444,8 @@ func (x *GetOrCreatePrivateConvResponse) GetIsNew() bool {
 	return false
 }
 
+// Request message for retrieving a paginated list of private conversations for a user.
+// Includes user ID, date before which to fetch, and limit.
 type GetPrivateConversationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -492,6 +506,8 @@ func (x *GetPrivateConversationsRequest) GetLimit() int32 {
 	return 0
 }
 
+// Preview of a private conversation.
+// Includes conversation ID, last update time, interlocutor, last message, and unread count.
 type PrivateConversationPreview struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
@@ -568,6 +584,8 @@ func (x *PrivateConversationPreview) GetUnreadCount() int32 {
 	return 0
 }
 
+// Response message for private conversations retrieval.
+// Contains a list of conversation previews.
 type GetPrivateConversationsResponse struct {
 	state         protoimpl.MessageState        `protogen:"open.v1"`
 	Conversations []*PrivateConversationPreview `protobuf:"bytes,1,rep,name=conversations,proto3" json:"conversations,omitempty"`
@@ -612,12 +630,13 @@ func (x *GetPrivateConversationsResponse) GetConversations() []*PrivateConversat
 	return nil
 }
 
+// Request message for creating a new private message.
+// Contains sender ID, interlocutor ID, and message text.
 type CreatePrivateMessageRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	SenderId       int64                  `protobuf:"varint,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	InterlocutorId int64                  `protobuf:"varint,3,opt,name=interlocutor_id,json=interlocutorId,proto3" json:"interlocutor_id,omitempty"`
-	MessageText    string                 `protobuf:"bytes,4,opt,name=message_text,json=messageText,proto3" json:"message_text,omitempty"`
+	SenderId       int64                  `protobuf:"varint,1,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
+	InterlocutorId int64                  `protobuf:"varint,2,opt,name=interlocutor_id,json=interlocutorId,proto3" json:"interlocutor_id,omitempty"`
+	MessageText    string                 `protobuf:"bytes,3,opt,name=message_text,json=messageText,proto3" json:"message_text,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -652,13 +671,6 @@ func (*CreatePrivateMessageRequest) Descriptor() ([]byte, []int) {
 	return file_chat_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *CreatePrivateMessageRequest) GetConversationId() int64 {
-	if x != nil {
-		return x.ConversationId
-	}
-	return 0
-}
-
 func (x *CreatePrivateMessageRequest) GetSenderId() int64 {
 	if x != nil {
 		return x.SenderId
@@ -680,6 +692,8 @@ func (x *CreatePrivateMessageRequest) GetMessageText() string {
 	return ""
 }
 
+// Represents a private message in a conversation.
+// Includes message ID, conversation ID, sender, receiver ID, message text, and timestamps.
 type PrivateMessage struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -780,6 +794,8 @@ func (x *PrivateMessage) GetDeletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// Request message for retrieving private messages.
+// Specifies conversation ID, user ID, boundary message ID for pagination, limit, and user retrieval flag.
 type GetPrivateMessagesRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId    int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
@@ -856,6 +872,8 @@ func (x *GetPrivateMessagesRequest) GetRetrieveUsers() bool {
 	return false
 }
 
+// Response message for private messages retrieval.
+// Indicates if there are more messages and contains the list of messages.
 type GetPrivateMessagesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	HaveMore      bool                   `protobuf:"varint,1,opt,name=have_more,json=haveMore,proto3" json:"have_more,omitempty"`
@@ -908,6 +926,8 @@ func (x *GetPrivateMessagesResponse) GetMessages() []*PrivateMessage {
 	return nil
 }
 
+// Request message to update the last read message in a private conversation.
+// Contains conversation ID, user ID, and last read message ID.
 type UpdateLastReadPrivateMessageRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId    int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
@@ -1020,12 +1040,11 @@ const file_chat_proto_rawDesc = "" +
 	"\flast_message\x18\x04 \x01(\v2\x14.chat.PrivateMessageR\vlastMessage\x12!\n" +
 	"\funread_count\x18\x05 \x01(\x05R\vunreadCount\"i\n" +
 	"\x1fGetPrivateConversationsResponse\x12F\n" +
-	"\rconversations\x18\x01 \x03(\v2 .chat.PrivateConversationPreviewR\rconversations\"\xaf\x01\n" +
-	"\x1bCreatePrivateMessageRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\x1b\n" +
-	"\tsender_id\x18\x02 \x01(\x03R\bsenderId\x12'\n" +
-	"\x0finterlocutor_id\x18\x03 \x01(\x03R\x0einterlocutorId\x12!\n" +
-	"\fmessage_text\x18\x04 \x01(\tR\vmessageText\"\xe4\x02\n" +
+	"\rconversations\x18\x01 \x03(\v2 .chat.PrivateConversationPreviewR\rconversations\"\x86\x01\n" +
+	"\x1bCreatePrivateMessageRequest\x12\x1b\n" +
+	"\tsender_id\x18\x01 \x01(\x03R\bsenderId\x12'\n" +
+	"\x0finterlocutor_id\x18\x02 \x01(\x03R\x0einterlocutorId\x12!\n" +
+	"\fmessage_text\x18\x03 \x01(\tR\vmessageText\"\xe4\x02\n" +
 	"\x0ePrivateMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\x03R\x0econversationId\x12$\n" +

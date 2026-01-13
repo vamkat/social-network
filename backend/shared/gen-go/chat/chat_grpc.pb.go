@@ -34,24 +34,26 @@ const (
 // ChatServiceClient is the client API for ChatService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Service definition for chat-related operations, including group and private messaging.
 type ChatServiceClient interface {
-	// Creates a group message
+	// Creates a new group message and returns the created message details.
 	CreateGroupMessage(ctx context.Context, in *CreateGroupMessageRequest, opts ...grpc.CallOption) (*GroupMessage, error)
-	// Fetch previous group messages (older than boundary)
+	// Retrieves previous group messages (older than the boundary message) for a group.
 	GetPreviousGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error)
-	// Fetch next group messages (newer than boundary)
+	// Retrieves next group messages (newer than the boundary message) for a group.
 	GetNextGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error)
-	// Creates or fetches a private conversation
+	// Gets an existing private conversation or creates a new one between two users.
 	GetOrCreatePrivateConv(ctx context.Context, in *GetOrCreatePrivateConvRequest, opts ...grpc.CallOption) (*GetOrCreatePrivateConvResponse, error)
-	// Returns paginated list of private conversations
+	// Retrieves a paginated list of private conversations for a user.
 	GetPrivateConversations(ctx context.Context, in *GetPrivateConversationsRequest, opts ...grpc.CallOption) (*GetPrivateConversationsResponse, error)
-	// Creates a private message
+	// Creates a new private message and returns the created message details.
 	CreatePrivateMessage(ctx context.Context, in *CreatePrivateMessageRequest, opts ...grpc.CallOption) (*PrivateMessage, error)
-	// Fetch previous messages (older than boundary)
+	// Retrieves previous private messages (older than the boundary message) in a conversation.
 	GetPreviousPrivateMessages(ctx context.Context, in *GetPrivateMessagesRequest, opts ...grpc.CallOption) (*GetPrivateMessagesResponse, error)
-	// Fetch next messages (newer than boundary)
+	// Retrieves next private messages (newer than the boundary message) in a conversation.
 	GetNextPrivateMessages(ctx context.Context, in *GetPrivateMessagesRequest, opts ...grpc.CallOption) (*GetPrivateMessagesResponse, error)
-	// Update last read message pointer
+	// Updates the last read message pointer for a user in a private conversation.
 	UpdateLastReadPrivateMessage(ctx context.Context, in *UpdateLastReadPrivateMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -156,24 +158,26 @@ func (c *chatServiceClient) UpdateLastReadPrivateMessage(ctx context.Context, in
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
+//
+// Service definition for chat-related operations, including group and private messaging.
 type ChatServiceServer interface {
-	// Creates a group message
+	// Creates a new group message and returns the created message details.
 	CreateGroupMessage(context.Context, *CreateGroupMessageRequest) (*GroupMessage, error)
-	// Fetch previous group messages (older than boundary)
+	// Retrieves previous group messages (older than the boundary message) for a group.
 	GetPreviousGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error)
-	// Fetch next group messages (newer than boundary)
+	// Retrieves next group messages (newer than the boundary message) for a group.
 	GetNextGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error)
-	// Creates or fetches a private conversation
+	// Gets an existing private conversation or creates a new one between two users.
 	GetOrCreatePrivateConv(context.Context, *GetOrCreatePrivateConvRequest) (*GetOrCreatePrivateConvResponse, error)
-	// Returns paginated list of private conversations
+	// Retrieves a paginated list of private conversations for a user.
 	GetPrivateConversations(context.Context, *GetPrivateConversationsRequest) (*GetPrivateConversationsResponse, error)
-	// Creates a private message
+	// Creates a new private message and returns the created message details.
 	CreatePrivateMessage(context.Context, *CreatePrivateMessageRequest) (*PrivateMessage, error)
-	// Fetch previous messages (older than boundary)
+	// Retrieves previous private messages (older than the boundary message) in a conversation.
 	GetPreviousPrivateMessages(context.Context, *GetPrivateMessagesRequest) (*GetPrivateMessagesResponse, error)
-	// Fetch next messages (newer than boundary)
+	// Retrieves next private messages (newer than the boundary message) in a conversation.
 	GetNextPrivateMessages(context.Context, *GetPrivateMessagesRequest) (*GetPrivateMessagesResponse, error)
-	// Update last read message pointer
+	// Updates the last read message pointer for a user in a private conversation.
 	UpdateLastReadPrivateMessage(context.Context, *UpdateLastReadPrivateMessageRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedChatServiceServer()
 }

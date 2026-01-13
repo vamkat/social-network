@@ -12,12 +12,16 @@ import "common.proto";
 // Group Messages
 // =====================
 
+// Request message for creating a new group message.
+// Contains the group ID, sender ID, and the text of the message.
 message CreateGroupMessageRequest {
   int64 group_id = 1;
   int64 sender_id = 2;
   string message_text = 3;
 }
 
+// Represents a group message in a conversation.
+// Includes message ID, conversation ID, group ID, sender details, message text, and timestamps.
 message GroupMessage {
   int64 id = 1;
   int64 conversation_id = 2;
@@ -29,6 +33,8 @@ message GroupMessage {
   google.protobuf.Timestamp deleted_at = 8;
 }
 
+// Request message for retrieving group messages.
+// Specifies the group ID, member ID, boundary message ID for pagination, and limit.
 message GetGroupMessagesRequest {
   int64 group_id = 1;
   int64 member_id = 2;
@@ -36,6 +42,8 @@ message GetGroupMessagesRequest {
   int32 limit = 4;
 }
 
+// Response message for group messages retrieval.
+// Indicates if there are more messages and contains the list of messages.
 message GetGroupMessagesResponse {
   bool have_more = 1;
   repeated GroupMessage messages = 2;
@@ -45,12 +53,16 @@ message GetGroupMessagesResponse {
 // Private Conversations
 // =====================
 
+// Request message to get or create a private conversation between two users.
+// Includes user IDs and a flag to retrieve interlocutor details.
 message GetOrCreatePrivateConvRequest {
   int64 user = 1;
   int64 interlocutor = 2;
   bool retrieve_interlocutor = 3;
 }
 
+// Response message for getting or creating a private conversation.
+// Contains conversation ID, interlocutor details, last read message ID, and if it's new.
 message GetOrCreatePrivateConvResponse {
   int64 conversation_id = 1;
   common.User interlocutor = 2;
@@ -58,12 +70,16 @@ message GetOrCreatePrivateConvResponse {
   bool is_new = 4;
 }
 
+// Request message for retrieving a paginated list of private conversations for a user.
+// Includes user ID, date before which to fetch, and limit.
 message GetPrivateConversationsRequest {
   int64 user_id = 1;
   google.protobuf.Timestamp before_date = 2;
   int32 limit = 3;
 }
 
+// Preview of a private conversation.
+// Includes conversation ID, last update time, interlocutor, last message, and unread count.
 message PrivateConversationPreview {
   int64 conversation_id = 1;
   google.protobuf.Timestamp updated_at = 2;
@@ -72,22 +88,26 @@ message PrivateConversationPreview {
   int32 unread_count = 5;
 }
 
+// Response message for private conversations retrieval.
+// Contains a list of conversation previews.
 message GetPrivateConversationsResponse {
   repeated PrivateConversationPreview conversations = 1;
 }
-
 
 // =====================
 // Private Messages
 // =====================
 
+// Request message for creating a new private message.
+// Contains sender ID, interlocutor ID, and message text.
 message CreatePrivateMessageRequest {
-  int64 conversation_id = 1;
-  int64 sender_id = 2;
-  int64 interlocutor_id = 3;
-  string message_text = 4;
+  int64 sender_id = 1;
+  int64 interlocutor_id = 2;
+  string message_text = 3;
 }
 
+// Represents a private message in a conversation.
+// Includes message ID, conversation ID, sender, receiver ID, message text, and timestamps.
 message PrivateMessage {
   int64 id = 1;
   int64 conversation_id = 2;
@@ -99,6 +119,8 @@ message PrivateMessage {
   google.protobuf.Timestamp deleted_at = 8;
 }
 
+// Request message for retrieving private messages.
+// Specifies conversation ID, user ID, boundary message ID for pagination, limit, and user retrieval flag.
 message GetPrivateMessagesRequest {
   int64 conversation_id = 1;
   int64 user_id = 2;
@@ -107,81 +129,85 @@ message GetPrivateMessagesRequest {
   bool retrieve_users = 5;
 }
 
+// Response message for private messages retrieval.
+// Indicates if there are more messages and contains the list of messages.
 message GetPrivateMessagesResponse {
   bool have_more = 1;
   repeated PrivateMessage messages = 2;
 }
 
+// Request message to update the last read message in a private conversation.
+// Contains conversation ID, user ID, and last read message ID.
 message UpdateLastReadPrivateMessageRequest {
   int64 conversation_id = 1;
   int64 user_id = 2;
   int64 last_read_message_id = 3;
 }
 
-
 // =====================
 // Chat Service
 // =====================
 
+// Service definition for chat-related operations, including group and private messaging.
 service ChatService {
 
-  // Creates a group message
+  // Creates a new group message and returns the created message details.
   rpc CreateGroupMessage(
     CreateGroupMessageRequest
   ) returns (
     GroupMessage
   );
 
-  // Fetch previous group messages (older than boundary)
+  // Retrieves previous group messages (older than the boundary message) for a group.
   rpc GetPreviousGroupMessages(
     GetGroupMessagesRequest
   ) returns (
     GetGroupMessagesResponse
   );
 
-  // Fetch next group messages (newer than boundary)
+  // Retrieves next group messages (newer than the boundary message) for a group.
   rpc GetNextGroupMessages(
     GetGroupMessagesRequest
   ) returns (
     GetGroupMessagesResponse
   );
 
-  // Creates or fetches a private conversation
+  // Gets an existing private conversation or creates a new one between two users.
   rpc GetOrCreatePrivateConv(
     GetOrCreatePrivateConvRequest
   ) returns (
     GetOrCreatePrivateConvResponse
   );
 
-  // Returns paginated list of private conversations
+  // Retrieves a paginated list of private conversations for a user.
   rpc GetPrivateConversations(
     GetPrivateConversationsRequest
   ) returns (
     GetPrivateConversationsResponse
   );
 
-  // Creates a private message
+  // Creates a new private message and returns the created message details.
   rpc CreatePrivateMessage(
     CreatePrivateMessageRequest
   ) returns (
     PrivateMessage
   );
 
-  // Fetch previous messages (older than boundary)
+  // Retrieves previous private messages (older than the boundary message) in a conversation.
   rpc GetPreviousPrivateMessages(
     GetPrivateMessagesRequest
   ) returns (
     GetPrivateMessagesResponse
   );
 
-  // Fetch next messages (newer than boundary)
+  // Retrieves next private messages (newer than the boundary message) in a conversation.
   rpc GetNextPrivateMessages(
     GetPrivateMessagesRequest
   ) returns (
     GetPrivateMessagesResponse
   );
 
-  // Update last read message pointer
+  // Updates the last read message pointer for a user in a private conversation.
   rpc UpdateLastReadPrivateMessage(
     UpdateLastReadPrivateMessageRequest
   ) returns (
