@@ -592,7 +592,7 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			Payload: &notifpb.NotificationEvent_GroupJoinRequestAccepted{
 				GroupJoinRequestAccepted: &notifpb.GroupJoinRequestAccepted{
 					RequesterUserId: req.RequesterId.Int64(),
-					GroupOwnerId:    req.GroupId.Int64(),
+					GroupOwnerId:    req.OwnerId.Int64(),
 					GroupId:         req.GroupId.Int64(),
 					GroupName:       group.GroupTitle,
 				},

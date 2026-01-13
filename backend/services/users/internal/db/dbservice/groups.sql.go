@@ -238,7 +238,7 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 	return i, err
 }
 
-const getGroupBasicInfo = `-- name: GetGroupName :one
+const getGroupBasicInfo = `-- name: GetGroupBasicInfo :one
 SELECT
   id,
   group_owner,
@@ -259,7 +259,7 @@ type GetGroupBasicInfoRow struct {
 }
 
 func (q *Queries) GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupBasicInfoRow, error) {
-	row := q.db.QueryRow(ctx, getGroupInfo, id)
+	row := q.db.QueryRow(ctx, getGroupBasicInfo, id)
 	var i GetGroupBasicInfoRow
 	err := row.Scan(
 		&i.ID,
