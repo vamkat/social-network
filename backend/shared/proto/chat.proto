@@ -8,17 +8,6 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "common.proto";
 
-
-// =====================
-// Group Conversations
-// =====================
-
-message CreateGroupConversationRequest {
-  int64 group_id = 1;
-  int64 user_id = 2;
-}
-
-
 // =====================
 // Group Messages
 // =====================
@@ -141,13 +130,6 @@ message UpdateLastReadPrivateMessageRequest {
 // =====================
 
 service ChatService {
-
-    // Creates or fetches a group conversation
-  rpc CreateGroupConversation(
-    CreateGroupConversationRequest
-  ) returns (
-    google.protobuf.Empty
-  );
 
   // Creates a group message
   rpc CreateGroupMessage(

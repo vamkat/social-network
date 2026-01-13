@@ -5,13 +5,8 @@ import (
 )
 
 // ================================
-// PMs
+// Group Conversations
 // ================================
-
-type CreateGroupConvReq struct {
-	GroupId ct.Id `json:"group_id"`
-	UserId  ct.Id `json:"user_id"`
-}
 
 type CreateGroupMsgReq struct {
 	GroupId     ct.Id      `json:"group_id"`

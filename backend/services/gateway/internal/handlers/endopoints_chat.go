@@ -10,6 +10,8 @@ import (
 	"social-network/shared/go/gorpc"
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
+	"social-network/shared/go/mapping"
+	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 	"time"
 )
@@ -29,7 +31,7 @@ func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 			OtherUserId   ct.Id `json:"other_user_id"`
 			RetrieveOther bool  `json:"retrieve_other"`
 		}
-		httpReq := req{}
+		httpReq := models.GetOrCreatePrivateConvReq{}
 
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
@@ -43,10 +45,10 @@ func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 			return
 		}
 
-		grpcResponse, err := h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
+		res, err := h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
 			User:              userId,
 			OtherUser:         httpReq.OtherUserId.Int64(),
-			RetrieveOtherUser: httpReq.RetrieveOther,
+			RetrieveOtherUser: httpReq.RetrieveOtherUser,
 		})
 
 		httpCode, _ := gorpc.Classify(err)
@@ -56,7 +58,14 @@ func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
+		err = utils.WriteJSON(ctx, w,
+			httpCode,
+			&models.GetOrCreatePrivateConvResp{
+				ConversationId:  ct.Id(res.ConversationId),
+				OtherUser:       mapping.MapUserFromProto(res.OtherUser),
+				LastReadMessage: ct.Id(res.LastReadMessage),
+				IsNew:           res.IsNew,
+			})
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}
@@ -78,7 +87,7 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 			ConversationId ct.Id      `json:"conversation_id"`
 			Message        ct.MsgBody `json:"message_body"`
 		}
-		httpReq := req{}
+		httpReq := models.CreatePrivateMsgReq{}
 
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
@@ -92,11 +101,12 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 			return
 		}
 
-		grpcResponse, err := h.ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
-			SenderId:       userId,
-			ConversationId: httpReq.ConversationId.Int64(),
-			MessageText:    httpReq.Message.String(),
-		})
+		grpcResponse, err := h.ChatService.CreatePrivateMessage(ctx,
+			&chat.CreatePrivateMessageRequest{
+				SenderId:       userId,
+				ConversationId: httpReq.ConversationId.Int64(),
+				MessageText:    httpReq.MessageText.String(),
+			})
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
@@ -105,7 +115,8 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
+		err = utils.WriteJSON(ctx, w, httpCode,
+			mapping.MapPMFromProto(grpcResponse))
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}
@@ -149,7 +160,9 @@ func (h *Handlers) GetPrivateConversations() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
+		err = utils.WriteJSON(ctx, w,
+			httpCode,
+			mapping.MapConversationsFromProto(grpcResponse.Conversations))
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}
@@ -203,54 +216,7 @@ func (h *Handlers) GetPrivateMessagesPag() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
-		}
-	}
-}
-
-func (h *Handlers) CreateGroupConversation() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
-		if !ok {
-			tele.Error(ctx, "problem fetching claims")
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "can't find claims")
-			return
-		}
-		userId := claims.UserId
-
-		type req struct {
-			GroupId ct.Id `json:"group_id"`
-		}
-		httpReq := req{}
-
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
-			return
-		}
-
-		grpcResponse, err := h.ChatService.CreateGroupConversation(ctx, &chat.CreateGroupConversationRequest{
-			GroupId: httpReq.GroupId.Int64(),
-			UserId:  userId,
-		})
-
-		httpCode, _ := gorpc.Classify(err)
-		if err != nil {
-			err = ce.ParseGrpcErr(err)
-			utils.ErrorJSON(ctx, w, httpCode, err.Error())
-			return
-		}
-
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
+		err = utils.WriteJSON(ctx, w, httpCode, mapping.MapGetPMsRespFromProto(grpcResponse))
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}
@@ -299,7 +265,8 @@ func (h *Handlers) CreateGroupMsg() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
+		err = utils.WriteJSON(ctx, w, httpCode,
+			mapping.MapGroupMessageFromProto(grpcResponse))
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}
@@ -351,7 +318,10 @@ func (h *Handlers) GetGroupMessagesPag() http.HandlerFunc {
 			return
 		}
 
-		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
+		err = utils.WriteJSON(ctx, w, httpCode, &models.GetGetGroupMsgsResp{
+			HaveMore: grpcResponse.HaveMore,
+			Messages: mapping.MapGroupMessagesFromProto(grpcResponse.Messages),
+		})
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}

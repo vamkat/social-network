@@ -8,27 +8,6 @@ import (
 	md "social-network/shared/go/models"
 )
 
-// Returns a conversation id of a newly created or an existing conversation.
-func (c *ChatService) CreateGroupConversation(ctx context.Context,
-	req md.CreateGroupConvReq) (Err *ce.Error) {
-
-	input := fmt.Sprintf("group id: %d, user ids: %d", req.GroupId, req.UserId)
-
-	if err := ct.ValidateStruct(req); err != nil {
-		return ce.Wrap(ce.ErrInvalidArgument, err, input)
-	}
-	if err := c.isMember(ctx, req.GroupId, req.UserId, input); err != nil {
-		return ce.Wrap(nil, err)
-	}
-
-	err := c.Queries.CreateGroupConv(ctx, req.GroupId)
-	if err != nil {
-		return ce.Wrap(ce.ErrInternal, err, input)
-	}
-
-	return nil
-}
-
 type CreateMessageInGroupReq struct {
 	GroupId     ct.Id
 	SenderId    ct.Id

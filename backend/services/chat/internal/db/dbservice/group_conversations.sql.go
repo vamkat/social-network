@@ -12,24 +12,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Initiates the conversation by groupId. Group Id should be a not null value.
-// If conversation already exists then the conversation id is returned.
-// Use as a preparation for adding members on conversation or adding messages in
-// in group conversations.
-func (q *Queries) CreateGroupConv(ctx context.Context,
-	groupId ct.Id) (err error) {
-	input := fmt.Sprintf("group id: %d", groupId)
-
-	_, err = q.db.Exec(ctx, createGroupConv, groupId)
-	if err != nil {
-		return ce.New(ce.ErrInternal,
-			fmt.Errorf("failed to create group conversation: %w", err),
-			input,
-		)
-	}
-	return err
-}
-
 func (q *Queries) CreateNewGroupMessage(ctx context.Context,
 	arg md.CreateGroupMsgReq) (msg md.GroupMsg, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)

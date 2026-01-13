@@ -9,42 +9,7 @@ import (
 	mp "social-network/shared/go/mapping"
 	md "social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
-
-	"google.golang.org/protobuf/types/known/emptypb"
 )
-
-// probably deprecated/not needed
-func (h *ChatHandler) CreateGroupConversation(
-	ctx context.Context,
-	params *pb.CreateGroupConversationRequest,
-) (*emptypb.Empty, error) {
-
-	tele.Info(ctx, "create group conversation called",
-		"request", params.String(),
-	)
-
-	err := h.Application.CreateGroupConversation(
-		ctx,
-		md.CreateGroupConvReq{
-			GroupId: ct.Id(params.GroupId),
-			UserId:  ct.Id(params.UserId),
-		},
-	)
-	if err != nil {
-		tele.Error(ctx, "create group conversation error",
-			"request", params.String(),
-			"error", err.Error(),
-		)
-		return nil, ce.GRPCStatus(err)
-	}
-	resp := &emptypb.Empty{}
-
-	tele.Info(ctx, "create group conversation success",
-		"groupId", params.GroupId,
-	)
-
-	return resp, nil
-}
 
 // called by live service
 func (h *ChatHandler) CreateGroupMessage(

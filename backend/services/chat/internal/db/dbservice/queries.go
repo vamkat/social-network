@@ -5,20 +5,18 @@ const (
 	// GROUP_CONVERSATIONS
 	// ====================================
 
-	createGroupConv = `
-	INSERT INTO group_conversations (group_id)
-	VALUES ($1)
-	ON CONFLICT (group_id)
-	DO UPDATE SET updated_at = group_conversations.updated_at
-	RETURNING group_id;
-	`
-
 	createGroupMessage = `
+	WITH upsert_conversation AS (
+		INSERT INTO group_conversations (group_id)
+		VALUES ($1)
+		ON CONFLICT (group_id) DO UPDATE
+			SET updated_at = CURRENT_TIMESTAMP
+		WHERE group_conversations.deleted_at IS NULL
+		RETURNING group_id
+	)
 	INSERT INTO group_messages (group_id, sender_id, message_text)
-	SELECT c.group_id, $2, $3
-	FROM group_conversations c
-	WHERE c.group_id = $1
-	AND c.deleted_at IS NULL
+	SELECT group_id, $2, $3
+	FROM upsert_conversation
 	RETURNING
 		id,
 		group_id,

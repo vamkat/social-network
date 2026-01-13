@@ -75,7 +75,6 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 		if err != nil {
 			return res, ce.New(ce.ErrInternal, err, input)
 		}
-		pc.LastMessage.Id = pc.ConversationId
 		res = append(res, pc)
 	}
 

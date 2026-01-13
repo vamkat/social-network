@@ -16,9 +16,20 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     const [hasMore, setHasMore] = useState((initialPosts || []).length >= 10);
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
+    const [isPublic, setIsPublic] = useState(result.user.public);
+    const [isFollowing, setIsFollowing] = useState(result.user.viewer_is_following);
+
+    console.log(result.user)
 
     const handleNewPost = (newPost) => {
         setPosts(prev => [newPost, ...prev]);
+    }
+
+    const handleUnfollow = ({isPublic, isFollowing}) => {
+        console.log("setting is public: ", isPublic);
+        console.log("setting is following: ", isFollowing);
+        setIsPublic(isPublic);
+        setIsFollowing(isFollowing);
     }
 
     // Handle error state
@@ -48,7 +59,7 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     }
 
     // Check if viewer can see the profile content
-    const canViewProfile = result.user.own_profile || result.user.public || result.user.viewer_is_following;
+    const canViewProfile = result.user.own_profile || isPublic || isFollowing;
 
     const loadMorePosts = useCallback(async () => {
         if (loading || !hasMore || !canViewProfile) return;
@@ -101,7 +112,7 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     // Render profile
     return (
         <div className="w-full">
-            <ProfileHeader user={result.user} />
+            <ProfileHeader user={result.user} onUnfollow={handleUnfollow}/>
 
             {result.user.own_profile ? (
                 <div>

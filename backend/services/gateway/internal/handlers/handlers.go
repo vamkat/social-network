@@ -615,15 +615,6 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.GetOrCreatePrivateConversation()))
 
-	mux.HandleFunc("/chat/get-private-conversations",
-		Chain("/chat/get-private-conversations").
-			AllowedMethod("GET").
-			RateLimit(IP, 20, 5).
-			Auth().
-			EnrichContext().
-			RateLimit(USERID, 20, 5).
-			Finalize(h.GetPrivateConversations()))
-
 	mux.HandleFunc("/chat/create-pm",
 		Chain("/chat/create-pm").
 			AllowedMethod("POST").
@@ -633,6 +624,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.CreatePrivateMsg()))
 
+	mux.HandleFunc("/chat/get-private-conversations",
+		Chain("/chat/get-private-conversations").
+			AllowedMethod("GET").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.GetPrivateConversations()))
+
 	mux.HandleFunc("/chat/get-pms-paginated",
 		Chain("/chat/get-pms-paginated").
 			AllowedMethod("GET").
@@ -641,15 +641,6 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			EnrichContext().
 			RateLimit(USERID, 20, 5).
 			Finalize(h.GetPrivateMessagesPag()))
-
-	mux.HandleFunc("/chat/create-group-conversation",
-		Chain("/chat/create-group-conversation").
-			AllowedMethod("POST").
-			RateLimit(IP, 20, 5).
-			Auth().
-			EnrichContext().
-			RateLimit(USERID, 20, 5).
-			Finalize(h.CreateGroupConversation()))
 
 	mux.HandleFunc("/chat/create-group-message",
 		Chain("/chat/create-group-message").
