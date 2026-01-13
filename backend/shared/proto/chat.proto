@@ -41,26 +41,19 @@ message GetGroupMessagesResponse {
   repeated GroupMessage messages = 2;
 }
 
-
-// =====================
-// Chat Service (Group)
-// =====================
-
-
-
 // =====================
 // Private Conversations
 // =====================
 
 message GetOrCreatePrivateConvRequest {
   int64 user = 1;
-  int64 other_user = 2;
-  bool retrieve_other_user = 3;
+  int64 interlocutor = 2;
+  bool retrieve_interlocutor = 3;
 }
 
 message GetOrCreatePrivateConvResponse {
   int64 conversation_id = 1;
-  common.User other_user = 2;
+  common.User interlocutor = 2;
   int64 last_read_message = 3;
   bool is_new = 4;
 }
@@ -74,7 +67,7 @@ message GetPrivateConversationsRequest {
 message PrivateConversationPreview {
   int64 conversation_id = 1;
   google.protobuf.Timestamp updated_at = 2;
-  common.User other_user = 3;
+  common.User interlocutor = 3;
   PrivateMessage last_message = 4;
   int32 unread_count = 5;
 }
@@ -91,7 +84,8 @@ message GetPrivateConversationsResponse {
 message CreatePrivateMessageRequest {
   int64 conversation_id = 1;
   int64 sender_id = 2;
-  string message_text = 3;
+  int64 interlocutor_id = 3;
+  string message_text = 4;
 }
 
 message PrivateMessage {

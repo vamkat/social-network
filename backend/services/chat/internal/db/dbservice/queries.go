@@ -144,6 +144,56 @@ const (
 		ON pc.id = im.conversation_id;
     `
 
+	createMsgAndConv = `
+	WITH conv AS (
+		INSERT INTO private_conversations (user_a, user_b)
+		VALUES (
+			LEAST($1::bigint, $2::bigint), 
+			GREATEST($1::bigint, $2::bigint)
+		)
+		ON CONFLICT (user_a, user_b) 
+		-- Dummy update: Keeps existing data (including deleted_at) 
+		-- but allows RETURNING to fetch the existing row.
+		DO UPDATE SET user_a = private_conversations.user_a 
+		RETURNING id, user_a, user_b, deleted_at
+	),
+	inserted_message AS (
+		INSERT INTO private_messages (conversation_id, sender_id, message_text)
+		SELECT c.id, $1, $3
+		FROM conv c
+		WHERE c.deleted_at IS NULL
+		RETURNING *
+	),
+	updated_conversation AS (
+		UPDATE private_conversations pc
+		SET 
+			last_read_message_id_a = CASE 
+				WHEN pc.user_a = im.sender_id THEN im.id 
+				ELSE pc.last_read_message_id_a 
+			END,
+			last_read_message_id_b = CASE 
+				WHEN pc.user_b = im.sender_id THEN im.id 
+				ELSE pc.last_read_message_id_b 
+			END
+		FROM inserted_message im
+		WHERE pc.id = im.conversation_id
+		-- Returning ID allows us to join this CTE to force execution
+		RETURNING pc.id
+	)
+	SELECT 
+		im.id, 
+		im.conversation_id, 
+		im.sender_id, 
+		im.message_text, 
+		im.created_at, 
+		im.updated_at, 
+		im.deleted_at
+	FROM inserted_message im
+	-- CROSS JOIN forces the update CTE to run.
+	-- If 'inserted_message' is empty (blocked), this result is also empty.
+	CROSS JOIN updated_conversation uc;
+	`
+
 	getPrivateConvs = `
 	WITH user_conversations AS (
 		SELECT

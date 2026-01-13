@@ -77,7 +77,7 @@ func TestCreatePrivateConv_AddMembers_GetConversationMembers(t *testing.T) {
 	userB := ct.Id(1002)
 
 	// Create private conversation
-	res, err := q.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{UserId: userA, OtherUserId: userB})
+	res, err := q.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{UserId: userA, InterlocutorId: userB})
 	require.NoError(t, err)
 	require.True(t, res.Id > 0)
 
@@ -105,7 +105,7 @@ func TestGetUserConversations_Basic(t *testing.T) {
 	// Create a DM and add members
 	userA := ct.Id(4001)
 	userB := ct.Id(4002)
-	res, err := q.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{UserId: userA, OtherUserId: userB})
+	res, err := q.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{UserId: userA, InterlocutorId: userB})
 	require.NoError(t, err)
 	require.True(t, res.Id > 0)
 	// err = q.AddConversationMembers(ctx, md.AddConversationMembersParams{ConversationId: convId, UserIds: ct.Ids{userA, userB}})

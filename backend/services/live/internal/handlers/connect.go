@@ -10,6 +10,7 @@ import (
 	"social-network/shared/go/ct"
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
+	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 	"strings"
 	"sync"
@@ -183,29 +184,30 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			delete(subcriptions, payload)
 		case "ch":
 
-			_, err = h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
-				User:              clientId,
-				OtherUser:         2,
-				RetrieveOtherUser: false,
-			})
-			if err != nil {
-				tele.Error(ctx, "failed to get or create private conversation @1", "error", err.Error())
-			}
+			// _, err = h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
+			// 	User:              clientId,
+			// 	OtherUser:         2,
+			// 	RetrieveOtherUser: false,
+			// })
+			// if err != nil {
+			// 	tele.Error(ctx, "failed to get or create private conversation @1", "error", err.Error())
+			// }
 
-			type chatMessage struct {
-				Category       string     `json:"category"`
-				ConversationId ct.Id      `json:"conversation_id"`
-				Body           ct.MsgBody `json:"body"`
-			}
-			message := &chatMessage{}
+			// type chatMessage struct {
+			// 	Category       string     `json:"category"`
+			// 	ConversationId ct.Id      `json:"conversation_id"`
+			// 	Body           ct.MsgBody `json:"body"`
+			// }
+			// message := &chatMessage{}
+			message := &models.CreatePrivateMsgReq{}
 			err = json.Unmarshal([]byte(payload), message)
 			if err != nil {
 				tele.Error(ctx, "failed to unmarshal chat message @1", "error", err.Error())
 			}
 			_, err = h.ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
-				ConversationId: message.ConversationId.Int64(),
 				SenderId:       clientId,
-				MessageText:    message.Body.String(),
+				InterlocutorId: message.InterlocutorId.Int64(),
+				MessageText:    message.MessageText.String(),
 			})
 			if err != nil {
 				tele.Error(ctx, "failed to create private message @1", "error", err.Error())

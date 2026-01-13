@@ -16,6 +16,9 @@ import (
 	"time"
 )
 
+// Returns an existing or creates a new conversation for a user and a target user.
+// If 'retrieveOther' is true the target user's basic info is also fetched.
+// DEPRECATED
 func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -46,9 +49,9 @@ func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 		}
 
 		res, err := h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
-			User:              userId,
-			OtherUser:         httpReq.OtherUserId.Int64(),
-			RetrieveOtherUser: httpReq.RetrieveOtherUser,
+			User:                 userId,
+			Interlocutor:         httpReq.InterlocutorId.Int64(),
+			RetrieveInterlocutor: httpReq.RetrieveInterlocutor,
 		})
 
 		httpCode, _ := gorpc.Classify(err)
@@ -62,7 +65,7 @@ func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 			httpCode,
 			&models.GetOrCreatePrivateConvResp{
 				ConversationId:  ct.Id(res.ConversationId),
-				OtherUser:       mapping.MapUserFromProto(res.OtherUser),
+				Interlocutor:    mapping.MapUserFromProto(res.Interlocutor),
 				LastReadMessage: ct.Id(res.LastReadMessage),
 				IsNew:           res.IsNew,
 			})
@@ -72,6 +75,7 @@ func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
 	}
 }
 
+// Creates a new message in a conversation. If the conversation does not exist it creates a new one.
 func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -104,7 +108,7 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 		grpcResponse, err := h.ChatService.CreatePrivateMessage(ctx,
 			&chat.CreatePrivateMessageRequest{
 				SenderId:       userId,
-				ConversationId: httpReq.ConversationId.Int64(),
+				InterlocutorId: httpReq.InterlocutorId.Int64(),
 				MessageText:    httpReq.MessageText.String(),
 			})
 

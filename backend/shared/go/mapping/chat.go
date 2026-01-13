@@ -12,7 +12,7 @@ func MapConversationsToProto(cs []md.PrivateConvsPreview) []*pb.PrivateConversat
 		c := &pb.PrivateConversationPreview{
 			ConversationId: conv.ConversationId.Int64(),
 			UpdatedAt:      conv.UpdatedAt.ToProto(),
-			OtherUser:      MapUserToProto(conv.OtherUser),
+			Interlocutor:   MapUserToProto(conv.Interlocutor),
 			LastMessage:    MapPMToProto(conv.LastMessage),
 			UnreadCount:    int32(conv.UnreadCount),
 		}
@@ -27,7 +27,7 @@ func MapConversationsFromProto(cs []*pb.PrivateConversationPreview) []md.Private
 		c := md.PrivateConvsPreview{
 			ConversationId: ct.Id(conv.ConversationId),
 			UpdatedAt:      ct.GenDateTime(conv.UpdatedAt.AsTime()),
-			OtherUser:      MapUserFromProto(conv.OtherUser),
+			Interlocutor:   MapUserFromProto(conv.Interlocutor),
 			LastMessage:    MapPMFromProto(conv.LastMessage),
 			UnreadCount:    int(conv.UnreadCount),
 		}

@@ -65,7 +65,7 @@ func (h *ChatHandler) GetPreviousGroupMessages(
 	res, err := h.Application.GetPrevGroupMessages(ctx,
 		md.GetGroupMsgsReq{
 			GroupId:           ct.Id(params.GroupId),
-			MemberId:          ct.Id(params.MemberId),
+			UserId:            ct.Id(params.MemberId),
 			BoundaryMessageId: ct.Id(params.BoundaryMessageId),
 			Limit:             ct.Limit(params.Limit),
 		},
@@ -98,7 +98,7 @@ func (h *ChatHandler) GetNextGroupMessages(
 	res, err := h.Application.GetNextGroupMessages(ctx,
 		md.GetGroupMsgsReq{
 			GroupId:           ct.Id(params.GroupId),
-			MemberId:          ct.Id(params.MemberId),
+			UserId:            ct.Id(params.MemberId),
 			BoundaryMessageId: ct.Id(params.BoundaryMessageId),
 			Limit:             ct.Limit(params.Limit),
 		},

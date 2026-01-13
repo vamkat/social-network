@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
@@ -34,6 +35,18 @@ func (c *ChatService) CreateMessageInGroup(ctx context.Context,
 		MessageText: req.MessageBody,
 	})
 
+	messageBytes, err := json.Marshal(res)
+	if err != nil {
+		err = ce.New(ce.ErrInternal, err, input)
+		tele.Error(ctx, "failed to publish group message to nats: @1", "error", err.Error())
+	}
+
+	err = c.NatsConn.Publish(ct.GroupMessageKey(res.GroupId.Int64()), messageBytes)
+	if err != nil {
+		err = ce.New(ce.ErrInternal, err, input)
+		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
+	}
+
 	if err != nil {
 		return res, ce.Wrap(nil, err, input)
 	}
@@ -49,7 +62,7 @@ func (c *ChatService) GetPrevGroupMessages(ctx context.Context,
 		return res, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	if err := c.isMember(ctx, req.GroupId, req.MemberId, input); err != nil {
+	if err := c.isMember(ctx, req.GroupId, req.UserId, input); err != nil {
 		return res, ce.Wrap(nil, err)
 	}
 
@@ -73,7 +86,7 @@ func (c *ChatService) GetNextGroupMessages(ctx context.Context,
 		return res, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	if err := c.isMember(ctx, req.GroupId, req.MemberId, input); err != nil {
+	if err := c.isMember(ctx, req.GroupId, req.UserId, input); err != nil {
 		return res, ce.Wrap(nil, err)
 	}
 

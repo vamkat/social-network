@@ -24,12 +24,13 @@ type NewPrivateConversation struct {
 }
 
 // Creates a private conversation if a conversation between the same 2 users does not exist.
+// DEPRECATED
 func (q *Queries) GetOrCreatePrivateConv(ctx context.Context,
 	arg md.GetOrCreatePrivateConvReq,
 ) (res NewPrivateConversation, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 	var pm NewPrivateConversation
-	row := q.db.QueryRow(ctx, getOrCreatePrivateConv, arg.UserId.Int64(), arg.OtherUserId.Int64())
+	row := q.db.QueryRow(ctx, getOrCreatePrivateConv, arg.UserId.Int64(), arg.InterlocutorId.Int64())
 	err = row.Scan(
 		&pm.Id,
 		&pm.UserA,
@@ -65,7 +66,7 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 		err := rows.Scan(
 			&pc.ConversationId,
 			&pc.UpdatedAt,
-			&pc.OtherUser.UserId,
+			&pc.Interlocutor.UserId,
 			&pc.LastMessage.Id,
 			&pc.LastMessage.Sender,
 			&pc.LastMessage.MessageText,
@@ -81,13 +82,14 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 	return res, nil
 }
 
+// Creates or fetches existing conversation between Sender and Interlocutor and creates a message with reference to conversation id.
 func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePrivateMsgReq) (msg md.PrivateMsg, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
 
 	row := q.db.QueryRow(ctx,
-		newPrivateMessage,
-		arg.ConversationId,
+		createMsgAndConv,
 		arg.SenderId,
+		arg.InterlocutorId,
 		arg.MessageText,
 	)
 
@@ -95,7 +97,6 @@ func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePriv
 		&msg.Id,
 		&msg.ConversationId,
 		&msg.Sender.UserId,
-		&msg.ReceiverId,
 		&msg.MessageText,
 		&msg.CreatedAt,
 		&msg.UpdatedAt,
@@ -103,7 +104,8 @@ func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePriv
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return msg, ce.New(ce.ErrInvalidArgument, err, input)
+			return msg, ce.New(ce.ErrPermissionDenied, err, input).
+				WithPublic("conversation is deleted")
 		}
 		return msg, ce.New(ce.ErrInternal, err, input)
 	}

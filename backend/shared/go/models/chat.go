@@ -16,7 +16,7 @@ type CreateGroupMsgReq struct {
 
 type GetGroupMsgsReq struct {
 	GroupId           ct.Id    `json:"user_id"`
-	MemberId          ct.Id    `json:"member_id"`
+	UserId            ct.Id    `json:"member_id"`
 	BoundaryMessageId ct.Id    `json:"boundary_message_id" validation:"nullable"`
 	Limit             ct.Limit `json:"limit"`
 }
@@ -42,21 +42,22 @@ type GetGroupMsgsResp struct {
 // ================================
 
 type GetOrCreatePrivateConvReq struct {
-	UserId            ct.Id `json:"user"`
-	OtherUserId       ct.Id `json:"other_user"`
-	RetrieveOtherUser bool  `json:"retrieve_other_user"`
+	UserId               ct.Id `json:"user"`
+	InterlocutorId       ct.Id `json:"interlocutor"`
+	RetrieveInterlocutor bool  `json:"retrieve_interlocutor"`
 }
 
 type GetOrCreatePrivateConvResp struct {
 	ConversationId  ct.Id
-	OtherUser       User
+	Interlocutor    User
 	LastReadMessage ct.Id `validation:"nullable"`
 	IsNew           bool
 }
 
 type CreatePrivateMsgReq struct {
-	ConversationId ct.Id      `json:"conversation_id"`
+	// ConversationId ct.Id      `json:"conversation_id"`
 	SenderId       ct.Id      `json:"sender_id"`
+	InterlocutorId ct.Id      `json:"interlocutor_id"`
 	MessageText    ct.MsgBody `json:"message_text"`
 }
 
@@ -82,7 +83,7 @@ type GetPrivateConvsReq struct {
 type PrivateConvsPreview struct {
 	ConversationId ct.Id
 	UpdatedAt      ct.GenDateTime
-	OtherUser      User
+	Interlocutor   User
 	LastMessage    PrivateMsg
 	UnreadCount    int
 }

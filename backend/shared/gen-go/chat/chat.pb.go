@@ -305,12 +305,12 @@ func (x *GetGroupMessagesResponse) GetMessages() []*GroupMessage {
 }
 
 type GetOrCreatePrivateConvRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	User              int64                  `protobuf:"varint,1,opt,name=user,proto3" json:"user,omitempty"`
-	OtherUser         int64                  `protobuf:"varint,2,opt,name=other_user,json=otherUser,proto3" json:"other_user,omitempty"`
-	RetrieveOtherUser bool                   `protobuf:"varint,3,opt,name=retrieve_other_user,json=retrieveOtherUser,proto3" json:"retrieve_other_user,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	User                 int64                  `protobuf:"varint,1,opt,name=user,proto3" json:"user,omitempty"`
+	Interlocutor         int64                  `protobuf:"varint,2,opt,name=interlocutor,proto3" json:"interlocutor,omitempty"`
+	RetrieveInterlocutor bool                   `protobuf:"varint,3,opt,name=retrieve_interlocutor,json=retrieveInterlocutor,proto3" json:"retrieve_interlocutor,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *GetOrCreatePrivateConvRequest) Reset() {
@@ -350,16 +350,16 @@ func (x *GetOrCreatePrivateConvRequest) GetUser() int64 {
 	return 0
 }
 
-func (x *GetOrCreatePrivateConvRequest) GetOtherUser() int64 {
+func (x *GetOrCreatePrivateConvRequest) GetInterlocutor() int64 {
 	if x != nil {
-		return x.OtherUser
+		return x.Interlocutor
 	}
 	return 0
 }
 
-func (x *GetOrCreatePrivateConvRequest) GetRetrieveOtherUser() bool {
+func (x *GetOrCreatePrivateConvRequest) GetRetrieveInterlocutor() bool {
 	if x != nil {
-		return x.RetrieveOtherUser
+		return x.RetrieveInterlocutor
 	}
 	return false
 }
@@ -367,7 +367,7 @@ func (x *GetOrCreatePrivateConvRequest) GetRetrieveOtherUser() bool {
 type GetOrCreatePrivateConvResponse struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId  int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	OtherUser       *common.User           `protobuf:"bytes,2,opt,name=other_user,json=otherUser,proto3" json:"other_user,omitempty"`
+	Interlocutor    *common.User           `protobuf:"bytes,2,opt,name=interlocutor,proto3" json:"interlocutor,omitempty"`
 	LastReadMessage int64                  `protobuf:"varint,3,opt,name=last_read_message,json=lastReadMessage,proto3" json:"last_read_message,omitempty"`
 	IsNew           bool                   `protobuf:"varint,4,opt,name=is_new,json=isNew,proto3" json:"is_new,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -411,9 +411,9 @@ func (x *GetOrCreatePrivateConvResponse) GetConversationId() int64 {
 	return 0
 }
 
-func (x *GetOrCreatePrivateConvResponse) GetOtherUser() *common.User {
+func (x *GetOrCreatePrivateConvResponse) GetInterlocutor() *common.User {
 	if x != nil {
-		return x.OtherUser
+		return x.Interlocutor
 	}
 	return nil
 }
@@ -496,7 +496,7 @@ type PrivateConversationPreview struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	UpdatedAt      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	OtherUser      *common.User           `protobuf:"bytes,3,opt,name=other_user,json=otherUser,proto3" json:"other_user,omitempty"`
+	Interlocutor   *common.User           `protobuf:"bytes,3,opt,name=interlocutor,proto3" json:"interlocutor,omitempty"`
 	LastMessage    *PrivateMessage        `protobuf:"bytes,4,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
 	UnreadCount    int32                  `protobuf:"varint,5,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -547,9 +547,9 @@ func (x *PrivateConversationPreview) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *PrivateConversationPreview) GetOtherUser() *common.User {
+func (x *PrivateConversationPreview) GetInterlocutor() *common.User {
 	if x != nil {
-		return x.OtherUser
+		return x.Interlocutor
 	}
 	return nil
 }
@@ -616,7 +616,8 @@ type CreatePrivateMessageRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	SenderId       int64                  `protobuf:"varint,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	MessageText    string                 `protobuf:"bytes,3,opt,name=message_text,json=messageText,proto3" json:"message_text,omitempty"`
+	InterlocutorId int64                  `protobuf:"varint,3,opt,name=interlocutor_id,json=interlocutorId,proto3" json:"interlocutor_id,omitempty"`
+	MessageText    string                 `protobuf:"bytes,4,opt,name=message_text,json=messageText,proto3" json:"message_text,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -661,6 +662,13 @@ func (x *CreatePrivateMessageRequest) GetConversationId() int64 {
 func (x *CreatePrivateMessageRequest) GetSenderId() int64 {
 	if x != nil {
 		return x.SenderId
+	}
+	return 0
+}
+
+func (x *CreatePrivateMessageRequest) GetInterlocutorId() int64 {
+	if x != nil {
+		return x.InterlocutorId
 	}
 	return 0
 }
@@ -989,37 +997,35 @@ const file_chat_proto_rawDesc = "" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\"g\n" +
 	"\x18GetGroupMessagesResponse\x12\x1b\n" +
 	"\thave_more\x18\x01 \x01(\bR\bhaveMore\x12.\n" +
-	"\bmessages\x18\x02 \x03(\v2\x12.chat.GroupMessageR\bmessages\"\x82\x01\n" +
+	"\bmessages\x18\x02 \x03(\v2\x12.chat.GroupMessageR\bmessages\"\x8c\x01\n" +
 	"\x1dGetOrCreatePrivateConvRequest\x12\x12\n" +
-	"\x04user\x18\x01 \x01(\x03R\x04user\x12\x1d\n" +
-	"\n" +
-	"other_user\x18\x02 \x01(\x03R\totherUser\x12.\n" +
-	"\x13retrieve_other_user\x18\x03 \x01(\bR\x11retrieveOtherUser\"\xb9\x01\n" +
+	"\x04user\x18\x01 \x01(\x03R\x04user\x12\"\n" +
+	"\finterlocutor\x18\x02 \x01(\x03R\finterlocutor\x123\n" +
+	"\x15retrieve_interlocutor\x18\x03 \x01(\bR\x14retrieveInterlocutor\"\xbe\x01\n" +
 	"\x1eGetOrCreatePrivateConvResponse\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12+\n" +
-	"\n" +
-	"other_user\x18\x02 \x01(\v2\f.common.UserR\totherUser\x12*\n" +
+	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x120\n" +
+	"\finterlocutor\x18\x02 \x01(\v2\f.common.UserR\finterlocutor\x12*\n" +
 	"\x11last_read_message\x18\x03 \x01(\x03R\x0flastReadMessage\x12\x15\n" +
 	"\x06is_new\x18\x04 \x01(\bR\x05isNew\"\x8c\x01\n" +
 	"\x1eGetPrivateConversationsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12;\n" +
 	"\vbefore_date\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"beforeDate\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x89\x02\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x8e\x02\n" +
 	"\x1aPrivateConversationPreview\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x129\n" +
 	"\n" +
-	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12+\n" +
-	"\n" +
-	"other_user\x18\x03 \x01(\v2\f.common.UserR\totherUser\x127\n" +
+	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x120\n" +
+	"\finterlocutor\x18\x03 \x01(\v2\f.common.UserR\finterlocutor\x127\n" +
 	"\flast_message\x18\x04 \x01(\v2\x14.chat.PrivateMessageR\vlastMessage\x12!\n" +
 	"\funread_count\x18\x05 \x01(\x05R\vunreadCount\"i\n" +
 	"\x1fGetPrivateConversationsResponse\x12F\n" +
-	"\rconversations\x18\x01 \x03(\v2 .chat.PrivateConversationPreviewR\rconversations\"\x86\x01\n" +
+	"\rconversations\x18\x01 \x03(\v2 .chat.PrivateConversationPreviewR\rconversations\"\xaf\x01\n" +
 	"\x1bCreatePrivateMessageRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\x1b\n" +
-	"\tsender_id\x18\x02 \x01(\x03R\bsenderId\x12!\n" +
-	"\fmessage_text\x18\x03 \x01(\tR\vmessageText\"\xe4\x02\n" +
+	"\tsender_id\x18\x02 \x01(\x03R\bsenderId\x12'\n" +
+	"\x0finterlocutor_id\x18\x03 \x01(\x03R\x0einterlocutorId\x12!\n" +
+	"\fmessage_text\x18\x04 \x01(\tR\vmessageText\"\xe4\x02\n" +
 	"\x0ePrivateMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\x03R\x0econversationId\x12$\n" +
@@ -1095,10 +1101,10 @@ var file_chat_proto_depIdxs = []int32{
 	15, // 2: chat.GroupMessage.updated_at:type_name -> google.protobuf.Timestamp
 	15, // 3: chat.GroupMessage.deleted_at:type_name -> google.protobuf.Timestamp
 	1,  // 4: chat.GetGroupMessagesResponse.messages:type_name -> chat.GroupMessage
-	14, // 5: chat.GetOrCreatePrivateConvResponse.other_user:type_name -> common.User
+	14, // 5: chat.GetOrCreatePrivateConvResponse.interlocutor:type_name -> common.User
 	15, // 6: chat.GetPrivateConversationsRequest.before_date:type_name -> google.protobuf.Timestamp
 	15, // 7: chat.PrivateConversationPreview.updated_at:type_name -> google.protobuf.Timestamp
-	14, // 8: chat.PrivateConversationPreview.other_user:type_name -> common.User
+	14, // 8: chat.PrivateConversationPreview.interlocutor:type_name -> common.User
 	10, // 9: chat.PrivateConversationPreview.last_message:type_name -> chat.PrivateMessage
 	7,  // 10: chat.GetPrivateConversationsResponse.conversations:type_name -> chat.PrivateConversationPreview
 	14, // 11: chat.PrivateMessage.sender:type_name -> common.User

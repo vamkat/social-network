@@ -6,8 +6,8 @@ func PrivateMessageKey(receiverId any) string {
 	return fmt.Sprintf("dm.%v", receiverId)
 }
 
-func GroupMessageKey(conversationId any) string {
-	return fmt.Sprintf("grm.%v", conversationId)
+func GroupMessageKey(groupId any) string {
+	return fmt.Sprintf("grm.%v", groupId)
 }
 
 func NotificationKey(receiverId any) string {

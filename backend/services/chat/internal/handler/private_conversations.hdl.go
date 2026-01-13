@@ -17,6 +17,7 @@ import (
 
 // GetOrCreatePrivateConv creates a new private conversation between two users
 // or returns an existing one if it already exists.
+// DEPRECATED
 func (h *ChatHandler) GetOrCreatePrivateConv(
 	ctx context.Context,
 	params *pb.GetOrCreatePrivateConvRequest,
@@ -26,9 +27,9 @@ func (h *ChatHandler) GetOrCreatePrivateConv(
 
 	// Call application layer
 	res, err := h.Application.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{
-		UserId:            ct.Id(params.User),
-		OtherUserId:       ct.Id(params.OtherUser),
-		RetrieveOtherUser: params.RetrieveOtherUser,
+		UserId:               ct.Id(params.User),
+		InterlocutorId:       ct.Id(params.Interlocutor),
+		RetrieveInterlocutor: params.RetrieveInterlocutor,
 	})
 	if err != nil {
 		tele.Error(ctx, "get or create private conversation error",
@@ -40,7 +41,7 @@ func (h *ChatHandler) GetOrCreatePrivateConv(
 
 	resp := &pb.GetOrCreatePrivateConvResponse{
 		ConversationId:  res.ConversationId.Int64(),
-		OtherUser:       mp.MapUserToProto(res.OtherUser),
+		Interlocutor:    mp.MapUserToProto(res.Interlocutor),
 		LastReadMessage: res.LastReadMessage.Int64(),
 		IsNew:           res.IsNew,
 	}
@@ -91,8 +92,8 @@ func (h *ChatHandler) CreatePrivateMessage(
 
 	// Call application layer
 	msg, Err := h.Application.CreatePrivateMessage(ctx, md.CreatePrivateMsgReq{
-		ConversationId: ct.Id(params.ConversationId),
 		SenderId:       ct.Id(params.SenderId),
+		InterlocutorId: ct.Id(params.InterlocutorId),
 		MessageText:    ct.MsgBody(params.MessageText),
 	})
 	if Err != nil {

@@ -20,13 +20,13 @@ var (
 func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
 	params md.GetOrCreatePrivateConvReq) (res md.GetOrCreatePrivateConvResp, Err *ce.Error) {
 
-	input := fmt.Sprintf("user ids: %d, %d", params.UserId, params.OtherUserId)
+	input := fmt.Sprintf("user ids: %d, %d", params.UserId, params.InterlocutorId)
 
 	if err := ct.ValidateStruct(params); err != nil {
 		return res, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	connected, Err := c.Clients.AreConnected(ctx, params.UserId, params.OtherUserId)
+	connected, Err := c.Clients.AreConnected(ctx, params.UserId, params.InterlocutorId)
 	if Err != nil {
 		return res, ce.Wrap(nil, Err, input)
 	}
@@ -52,9 +52,9 @@ func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
 		lastRead = newPC.LastReadMessageIdB
 	}
 
-	var otherUser md.User = md.User{UserId: params.OtherUserId}
-	if params.RetrieveOtherUser {
-		receiver, err := c.RetriveUsers.GetUser(ctx, params.OtherUserId)
+	var otherUser md.User = md.User{UserId: params.InterlocutorId}
+	if params.RetrieveInterlocutor {
+		receiver, err := c.RetriveUsers.GetUser(ctx, params.InterlocutorId)
 		if err != nil {
 			return res, ce.Wrap(nil, err, input)
 		}
@@ -63,7 +63,7 @@ func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
 
 	res = md.GetOrCreatePrivateConvResp{
 		ConversationId:  newPC.Id,
-		OtherUser:       otherUser,
+		Interlocutor:    otherUser,
 		LastReadMessage: lastRead,
 		IsNew:           isNew,
 	}
@@ -91,7 +91,7 @@ func (c *ChatService) GetPrivateConversations(ctx context.Context,
 
 	allMemberIDs := make(ct.Ids, 0)
 	for _, r := range conversations {
-		allMemberIDs = append(allMemberIDs, r.OtherUser.UserId)
+		allMemberIDs = append(allMemberIDs, r.Interlocutor.UserId)
 	}
 
 	usersMap, err := c.RetriveUsers.GetUsers(ctx, allMemberIDs)
@@ -100,17 +100,16 @@ func (c *ChatService) GetPrivateConversations(ctx context.Context,
 	}
 
 	for i := range conversations {
-		retrieved := usersMap[conversations[i].OtherUser.UserId]
-		conversations[i].OtherUser.Username = retrieved.Username
-		conversations[i].OtherUser.AvatarId = retrieved.AvatarId
-		conversations[i].OtherUser.AvatarURL = retrieved.AvatarURL
+		retrieved := usersMap[conversations[i].Interlocutor.UserId]
+		conversations[i].Interlocutor.Username = retrieved.Username
+		conversations[i].Interlocutor.AvatarId = retrieved.AvatarId
+		conversations[i].Interlocutor.AvatarURL = retrieved.AvatarURL
 	}
 
 	return conversations, nil
 }
 
-// Creates a message row with conversation id if user is a memeber.
-// If user match of conversation_id and user_id fails returns error.
+// Creates a private message and returns an id
 func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 	params md.CreatePrivateMsgReq) (msg md.PrivateMsg, Err *ce.Error) {
 
@@ -132,7 +131,7 @@ func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
 	}
 
-	err = c.NatsConn.Publish(ct.PrivateMessageKey(msg.ReceiverId), messageBytes)
+	err = c.NatsConn.Publish(ct.PrivateMessageKey(params.InterlocutorId), messageBytes)
 	if err != nil {
 		err = ce.New(ce.ErrInternal, err, input)
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
