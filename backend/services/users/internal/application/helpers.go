@@ -3,15 +3,9 @@ package application
 import (
 	"context"
 	"errors"
-	"fmt"
-	notifpb "social-network/shared/gen-go/notifications"
-	ce "social-network/shared/go/commonerrors"
-	ct "social-network/shared/go/ct"
-	tele "social-network/shared/go/telemetry"
 
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	ce "social-network/shared/go/commonerrors"
+	tele "social-network/shared/go/telemetry"
 )
 
 // HashPassword hashes a password using bcrypt.
@@ -61,45 +55,4 @@ func (s *Application) removeFailedImage(ctx context.Context, err error, imageId 
 
 func (s *Application) removeFailedImageAsync(ctx context.Context, err error, imageId int64) {
 	go s.removeFailedImage(ctx, err, imageId)
-}
-
-// Helper to create and send a notification event
-func (s *Application) createAndSendNotificationEvent(ctx context.Context, event *notifpb.NotificationEvent) error {
-	// Extract metadata
-	requestId, ok := ctx.Value(ct.ReqID).(string)
-	if !ok {
-		tele.Error(ctx, "could not get request id")
-		requestId = "unknown"
-	}
-	traceId, ok := ctx.Value(ct.TraceId).(string)
-	if !ok {
-		tele.Error(ctx, "could not get trace id")
-		traceId = "unknown"
-	}
-
-	metadata := map[string]string{
-		"source":     "users",
-		"request_id": requestId,
-		"trace_id":   traceId,
-	}
-
-	// Populate common fields
-	event.EventId = uuid.NewString()
-	event.OccurredAt = timestamppb.Now()
-	event.Metadata = metadata
-
-	// Serialize
-	eventBytes, err := proto.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal notification event: %w", err)
-	}
-
-	// Send to Kafka
-	err = s.eventProducer.Send(ctx, ct.NotificationTopic, eventBytes)
-	if err != nil {
-		return fmt.Errorf("failed to send notification event: %w", err)
-	}
-
-	tele.Info(ctx, "Notification event sent: @1", "eventType", event.EventType)
-	return nil
 }

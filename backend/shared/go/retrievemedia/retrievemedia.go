@@ -4,31 +4,12 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"time"
 
 	"social-network/shared/gen-go/media"
 	ce "social-network/shared/go/commonerrors"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/mapping"
-
-	"google.golang.org/grpc"
 )
-
-// MediaInfoRetriever defines the interface for fetching media info (usually gRPC client).
-type MediaInfoRetriever interface {
-	GetImages(ctx context.Context, in *media.GetImagesRequest, opts ...grpc.CallOption) (*media.GetImagesResponse, error)
-	GetImage(ctx context.Context, in *media.GetImageRequest, opts ...grpc.CallOption) (*media.GetImageResponse, error)
-}
-
-type MediaRetriever struct {
-	client MediaInfoRetriever
-	cache  RedisCache
-	ttl    time.Duration
-}
-
-func NewMediaRetriever(client MediaInfoRetriever, cache RedisCache, ttl time.Duration) *MediaRetriever {
-	return &MediaRetriever{client: client, cache: cache, ttl: ttl}
-}
 
 // GetImages returns a map[imageId]imageUrl, using cache + batch RPC.
 func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
@@ -154,11 +135,6 @@ func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant me
 	if err == nil {
 		fmt.Println("Got Image from redis")
 		return imageURL.(string), nil
-	}
-
-	imageURL = &media.GetImageRequest{
-		ImageId: imageId,
-		Variant: variant,
 	}
 
 	resp, err := h.client.GetImage(ctx, &media.GetImageRequest{

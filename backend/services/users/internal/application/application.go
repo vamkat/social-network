@@ -6,6 +6,7 @@ import (
 	ds "social-network/services/users/internal/db/dbservice"
 	"social-network/shared/go/kafgo"
 	"social-network/shared/go/models"
+	"social-network/shared/go/notifevents"
 	"social-network/shared/go/retrievemedia"
 	"time"
 
@@ -22,7 +23,7 @@ type Application struct {
 	txRunner       TxRunner
 	clients        ClientsInterface
 	mediaRetriever *retrievemedia.MediaRetriever
-	eventProducer  *kafgo.KafkaProducer
+	eventProducer  *notifevents.EventCreator
 }
 
 // NewApplication constructs a new UserService
@@ -33,7 +34,7 @@ func NewApplication(db ds.Querier, txRunner TxRunner, pool *pgxpool.Pool, client
 		txRunner:       txRunner,
 		clients:        clients,
 		mediaRetriever: mediaRetriever,
-		eventProducer:  eventProducer,
+		eventProducer:  notifevents.NewEventProducer(eventProducer),
 	}
 }
 

@@ -15,6 +15,7 @@ import (
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
+	"social-network/shared/go/kafgo"
 	rds "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 
@@ -90,12 +91,24 @@ func Run() error {
 	//
 	//
 	//
+	// KAFKA PRODUCER
+	eventProducer, close, err := kafgo.NewKafkaProducer([]string{cfgs.KafkaBrokers})
+	if err != nil {
+		tele.Warn(ctx, "failed to initialize kafka producer: @1", "error", err.Error())
+	} else {
+		defer close()
+		tele.Info(ctx, "initialized kafka producer")
+	}
+
+	//
+	//
+	//
 	// REDIS
 	redisConnector := rds.NewRedisClient(cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB)
 
 	clients := client.NewClients(UsersService, MediaService, NotifService)
 
-	app, err := application.NewApplication(ds.New(pool), pool, clients, redisConnector)
+	app, err := application.NewApplication(ds.New(pool), pool, clients, redisConnector, eventProducer)
 	if err != nil {
 		return fmt.Errorf("failed to create posts application: %v", err)
 	}
@@ -154,6 +167,8 @@ type configs struct {
 	NotifGRPCAddr  string `env:"NOTIFICATIONS_GRPC_ADDR"`
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
 
+	KafkaBrokers string `env:"KAFKA_BROKERS"`
+
 	HTTPAddr        string `env:"HTTP_ADDR"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
 
@@ -181,6 +196,8 @@ func getConfigs() configs { // sensible defaults
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
 		GrpcServerPort:  ":50051",
+
+		KafkaBrokers: "kafka:9092",
 
 		EnableDebugLogs:           true,
 		SimplePrint:               true,

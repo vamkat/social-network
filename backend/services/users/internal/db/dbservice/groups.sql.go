@@ -238,13 +238,13 @@ func (q *Queries) GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, 
 	return i, err
 }
 
-const getGroupBasicInfo = `-- name: GetGroupName :one
+const getGroupBasicInfo = `-- name: GetGroupBasicInfo :one
 SELECT
   id,
   group_owner,
   group_title,
   group_description,
-  group_image_id,
+  group_image_id
 FROM groups
 WHERE id=$1
   AND deleted_at IS NULL
@@ -258,9 +258,9 @@ type GetGroupBasicInfoRow struct {
 	GroupImageID     int64
 }
 
-func (q *Queries) GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupInfoRow, error) {
-	row := q.db.QueryRow(ctx, getGroupInfo, id)
-	var i GetGroupInfoRow
+func (q *Queries) GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupBasicInfoRow, error) {
+	row := q.db.QueryRow(ctx, getGroupBasicInfo, id)
+	var i GetGroupBasicInfoRow
 	err := row.Scan(
 		&i.ID,
 		&i.GroupOwner,

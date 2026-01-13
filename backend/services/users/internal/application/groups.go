@@ -437,7 +437,7 @@ func (s *Application) RequestJoinGroup(ctx context.Context, req models.GroupJoin
 		},
 	}
 
-	if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+	if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 		tele.Error(ctx, "failed to send request join group notification: @1", "error", err.Error())
 	}
 	tele.Info(ctx, "request join group notification event created")
@@ -511,7 +511,7 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send group invite accepted notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "group invite accepted notification event created")
@@ -546,7 +546,7 @@ func (s *Application) RespondToGroupInvite(ctx context.Context, req models.Handl
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send group invite rejected notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "group invite rejected notification event created")
@@ -592,14 +592,14 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			Payload: &notifpb.NotificationEvent_GroupJoinRequestAccepted{
 				GroupJoinRequestAccepted: &notifpb.GroupJoinRequestAccepted{
 					RequesterUserId: req.RequesterId.Int64(),
-					GroupOwnerId:    req.GroupId.Int64(),
+					GroupOwnerId:    req.OwnerId.Int64(),
 					GroupId:         req.GroupId.Int64(),
 					GroupName:       group.GroupTitle,
 				},
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send group join request accepted notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "group join request accepted notification event created")
@@ -629,7 +629,7 @@ func (s *Application) HandleGroupJoinRequest(ctx context.Context, req models.Han
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send group join request accepted notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "group join request accepted notification event created")
@@ -995,7 +995,28 @@ func (s *Application) GetPendingGroupJoinRequestsCount(ctx context.Context, req 
 	}
 
 	return count, nil
+}
 
+func (s *Application) GetGroupBasicInfo(ctx context.Context, req models.GroupId) (models.Group, error) {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateBatch(ct.Id(req)); err != nil {
+		return models.Group{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
+	}
+
+	row, err := s.db.GetGroupBasicInfo(ctx, int64(req))
+	if err != nil {
+		return models.Group{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+
+	group := models.Group{
+		GroupId:          ct.Id(row.ID),
+		GroupOwnerId:     ct.Id(row.GroupOwner),
+		GroupTitle:       ct.Title(row.GroupTitle),
+		GroupDescription: ct.About(row.GroupDescription),
+		GroupImage:       ct.Id(row.GroupImageID),
+	}
+	return group, nil
 }
 
 // ---------------------------------------------------------------------

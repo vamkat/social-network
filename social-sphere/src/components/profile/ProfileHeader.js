@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Globe, UserPlus, UserCheck, UserMinus, Clock, Lock } from "lucide-react";
+import { Calendar, Globe, UserPlus, UserCheck, UserMinus, Clock, Lock, Check, X } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
 import { followUser } from "@/actions/requests/follow-user";
 import { unfollowUser } from "@/actions/requests/unfollow-user";
+import { handleFollowRequest } from "@/actions/requests/handle-request";
 import { updatePrivacyAction } from "@/actions/profile/settings";
 import Tooltip from "../ui/Tooltip";
 
@@ -16,6 +17,43 @@ export function ProfileHeader({ user }) {
     const [isPending, setIsPending] = useState(user.is_pending);
     const [isLoading, setIsLoading] = useState(false);
     const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+    const [userAskedToFollow, setUserAskedToFollow] = useState(user.follow_request_from_profile_owner);
+    const [requestLoading, setRequestLoading] = useState(false);
+
+    const handleAcceptRequest = async () => {
+        if (requestLoading) return;
+        setRequestLoading(true);
+        try {
+            const response = await handleFollowRequest({ requesterId: user.user_id, accept: true });
+            if (response.success) {
+                setUserAskedToFollow(false);
+            } else {
+                console.error("Error accepting follow request:", response.error);
+            }
+        } catch (error) {
+            console.error("Unexpected error accepting follow request:", error);
+        } finally {
+            setRequestLoading(false);
+        }
+    };
+
+    const handleDeclineRequest = async () => {
+        if (requestLoading) return;
+        setRequestLoading(true);
+        try {
+            const response = await handleFollowRequest({ requesterId: user.user_id, accept: false });
+            if (response.success) {
+                setUserAskedToFollow(false);
+            } else {
+                console.error("Error declining follow request:", response.error);
+            }
+        } catch (error) {
+            console.error("Unexpected error declining follow request:", error);
+        } finally {
+            setRequestLoading(false);
+        }
+    };
 
     const handleFollow = async () => {
         if (isLoading) return;
@@ -130,8 +168,10 @@ export function ProfileHeader({ user }) {
                                     <p className="text-(--muted) text-base">@{user.username}</p>
                                 </div>
 
+
                                 {/* Action Buttons */}
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                    <div className="flex items-center gap-2">
                                     {user.own_profile ? (
                                         <>
                                             {/* Privacy Toggle */}
@@ -199,7 +239,43 @@ export function ProfileHeader({ user }) {
                                             )}
                                         </button>
                                     )}
+                                    </div>
+                                    {/* Pending Follow Request from Profile Owner */}
+                                    {userAskedToFollow && !user.own_profile && (
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="text-[13px] text-(--muted)">Pending request from {user.first_name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <Tooltip content="Decline">
+                                                    <button
+                                                        onClick={handleDeclineRequest}
+                                                        disabled={requestLoading}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                                                            requestLoading
+                                                                ? "opacity-70 cursor-wait"
+                                                                : "bg-(--muted)/10 text-(--muted) border border-(--border) hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
+                                                        }`}
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </Tooltip>
+                                                <Tooltip content="Accept">
+                                                    <button
+                                                        onClick={handleAcceptRequest}
+                                                        disabled={requestLoading}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                                                            requestLoading
+                                                                ? "opacity-70 cursor-wait"
+                                                                : "bg-(--accent) text-white hover:bg-(--accent-hover) shadow-lg shadow-(--accent)/20"
+                                                        }`}
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                    </button>
+                                                </Tooltip>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
+
                             </div>
                         </div>
 

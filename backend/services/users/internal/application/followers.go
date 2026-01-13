@@ -154,7 +154,7 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send new follow request notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "Follow request notification event created")
@@ -180,7 +180,7 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send new follower notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "new follower notification event created")
@@ -261,7 +261,7 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to follow request accepted notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "follow request accepted notification event created")
@@ -291,7 +291,7 @@ func (s *Application) HandleFollowRequest(ctx context.Context, req models.Handle
 			},
 		}
 
-		if err := s.createAndSendNotificationEvent(ctx, event); err != nil {
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
 			tele.Error(ctx, "failed to send follow request rejected notification: @1", "error", err.Error())
 		}
 		tele.Info(ctx, "follow request rejected notification event created")

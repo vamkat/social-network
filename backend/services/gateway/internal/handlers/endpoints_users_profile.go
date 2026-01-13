@@ -53,45 +53,47 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 		tele.Info(ctx, "retrieved user profile. @1", "grpcResp", grpcResp)
 
 		type userProfile struct {
-			UserId            ct.Id          `json:"user_id"`
-			Username          ct.Username    `json:"username"`
-			FirstName         ct.Name        `json:"first_name"`
-			LastName          ct.Name        `json:"last_name"`
-			DateOfBirth       ct.DateOfBirth `json:"date_of_birth"`
-			Avatar            ct.Id          `json:"avatar,omitempty"`
-			AvatarURL         string         `json:"avatar_url,omitempty"`
-			About             ct.About       `json:"about,omitempty"`
-			Public            bool           `json:"public"`
-			CreatedAt         time.Time      `json:"created_at"`
-			Email             fmt.Stringer   `json:"email"`
-			FollowersCount    int64          `json:"followers_count"`
-			FollowingCount    int64          `json:"following_count"`
-			GroupsCount       int64          `json:"groups_count"`
-			OwnedGroupsCount  int64          `json:"owned_groups_count"`
-			ViewerIsFollowing bool           `json:"viewer_is_following"`
-			OwnProfile        bool           `json:"own_profile"`
-			IsPending         bool           `json:"is_pending"`
+			UserId                        ct.Id          `json:"user_id"`
+			Username                      ct.Username    `json:"username"`
+			FirstName                     ct.Name        `json:"first_name"`
+			LastName                      ct.Name        `json:"last_name"`
+			DateOfBirth                   ct.DateOfBirth `json:"date_of_birth"`
+			Avatar                        ct.Id          `json:"avatar,omitempty"`
+			AvatarURL                     string         `json:"avatar_url,omitempty"`
+			About                         ct.About       `json:"about,omitempty"`
+			Public                        bool           `json:"public"`
+			CreatedAt                     time.Time      `json:"created_at"`
+			Email                         fmt.Stringer   `json:"email"`
+			FollowersCount                int64          `json:"followers_count"`
+			FollowingCount                int64          `json:"following_count"`
+			GroupsCount                   int64          `json:"groups_count"`
+			OwnedGroupsCount              int64          `json:"owned_groups_count"`
+			ViewerIsFollowing             bool           `json:"viewer_is_following"`
+			OwnProfile                    bool           `json:"own_profile"`
+			IsPending                     bool           `json:"is_pending"`
+			FollowRequestFromProfileOwner bool           `json:"follow_request_from_profile_owner"`
 		}
 
 		userProfileResponse := userProfile{
-			UserId:            ct.Id(grpcResp.UserId),
-			Username:          ct.Username(grpcResp.Username),
-			FirstName:         ct.Name(grpcResp.FirstName),
-			LastName:          ct.Name(grpcResp.LastName),
-			DateOfBirth:       ct.DateOfBirth(grpcResp.DateOfBirth.AsTime()),
-			Avatar:            ct.Id(grpcResp.Avatar),
-			AvatarURL:         grpcResp.AvatarUrl,
-			About:             ct.About(grpcResp.About),
-			Public:            grpcResp.Public,
-			CreatedAt:         grpcResp.CreatedAt.AsTime(),
-			Email:             ct.Email(grpcResp.Email),
-			FollowersCount:    grpcResp.FollowersCount,
-			FollowingCount:    grpcResp.FollowingCount,
-			GroupsCount:       grpcResp.GroupsCount,
-			OwnedGroupsCount:  grpcResp.OwnedGroupsCount,
-			ViewerIsFollowing: grpcResp.ViewerIsFollowing,
-			OwnProfile:        grpcResp.OwnProfile,
-			IsPending:         grpcResp.IsPending,
+			UserId:                        ct.Id(grpcResp.UserId),
+			Username:                      ct.Username(grpcResp.Username),
+			FirstName:                     ct.Name(grpcResp.FirstName),
+			LastName:                      ct.Name(grpcResp.LastName),
+			DateOfBirth:                   ct.DateOfBirth(grpcResp.DateOfBirth.AsTime()),
+			Avatar:                        ct.Id(grpcResp.Avatar),
+			AvatarURL:                     grpcResp.AvatarUrl,
+			About:                         ct.About(grpcResp.About),
+			Public:                        grpcResp.Public,
+			CreatedAt:                     grpcResp.CreatedAt.AsTime(),
+			Email:                         ct.Email(grpcResp.Email),
+			FollowersCount:                grpcResp.FollowersCount,
+			FollowingCount:                grpcResp.FollowingCount,
+			GroupsCount:                   grpcResp.GroupsCount,
+			OwnedGroupsCount:              grpcResp.OwnedGroupsCount,
+			ViewerIsFollowing:             grpcResp.ViewerIsFollowing,
+			OwnProfile:                    grpcResp.OwnProfile,
+			IsPending:                     grpcResp.IsPending,
+			FollowRequestFromProfileOwner: grpcResp.FollowRequestFromProfileOwner,
 		}
 
 		tele.Info(ctx, "transformed profile struct. @1", "response", userProfileResponse)

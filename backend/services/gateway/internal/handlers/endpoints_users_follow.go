@@ -201,7 +201,7 @@ func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 		}
 
 		type reqBody struct {
-			RequesterId int64 `json:"requester_id"`
+			RequesterId ct.Id `json:"requester_id"`
 			Accept      bool  `json:"accept"`
 		}
 
@@ -213,7 +213,7 @@ func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 
 		req := &users.HandleFollowRequestRequest{
 			UserId:      claims.UserId,
-			RequesterId: body.RequesterId,
+			RequesterId: body.RequesterId.Int64(),
 			Accept:      body.Accept,
 		}
 

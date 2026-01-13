@@ -177,7 +177,7 @@ body {
 .text-image-fill {
   @apply inline-block;
   background-image: url(/fill.png);
-  background-size: 140% 140%;
+  background-size: 180% 180%;
   background-position: center center;
   background-clip: text;
   -webkit-background-clip: text;

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Heart, MessageCircle, Pencil, Trash2, MoreHorizontal, Share2, Globe, Lock, Users, User, ChevronDown } from "lucide-react";
 import PostImage from "./PostImage";
@@ -221,22 +220,22 @@ export default function PostCard({ post, onDelete }) {
 
         // Fetch full post data to get selected_audience_users
         const fetchedPost = await getPost(post.post_id);
-        if (!fetchedPost) {
+        if (!fetchedPost.post) {
             setError("Failed to load post data");
             return;
         }
 
         setPostDraft(postContent);
-        const postPrivacy = fetchedPost.audience || "everyone";
+        const postPrivacy = fetchedPost.post.audience || "everyone";
         setPrivacy(postPrivacy);
 
         // If privacy is "selected", load the followers and set the selected ones
         if (postPrivacy === "selected") {
             await fetchFollowers();
             // Set selected followers from fetched post's selected_audience_users
-            if (fetchedPost.selected_audience_users && Array.isArray(fetchedPost.selected_audience_users)) {
+            if (fetchedPost.post.selected_audience_users && Array.isArray(fetchedPost.post.selected_audience_users)) {
                 // Ensure IDs are strings for consistent comparison
-                setSelectedFollowers(fetchedPost.selected_audience_users.map(user => String(user.id)));
+                setSelectedFollowers(fetchedPost.post.selected_audience_users.map(user => String(user.id)));
             }
         }
 
@@ -349,8 +348,6 @@ export default function PostCard({ post, onDelete }) {
                     setError("Failed to validate image upload");
                     return;
                 }
-
-                console.log("url: ", validateResp.download_url);
                 setImage(validateResp.download_url);
             } else if (removeExistingImage) {
                 // User removed the existing image

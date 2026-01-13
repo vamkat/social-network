@@ -4,7 +4,6 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function getGroupPosts({ groupId, limit, offset }) {
     try {
-        console.log("what: ", groupId);
         const response = await serverApiRequest("/group/posts", {
             method: "POST",
             body: JSON.stringify({

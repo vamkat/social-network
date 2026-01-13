@@ -32,7 +32,7 @@ type Querier interface {
 	GetFollowingIds(ctx context.Context, followerID int64) ([]int64, error)
 	GetGroupInfo(ctx context.Context, id int64) (GetGroupInfoRow, error)
 	GetGroupInviterId(ctx context.Context, arg GetGroupInviterIdParams) (int64, error)
-	GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupInfoRow, error)
+	GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupBasicInfoRow, error)
 	GetGroupMembers(ctx context.Context, arg GetGroupMembersParams) ([]GetGroupMembersRow, error)
 	GetMutualFollowers(ctx context.Context, arg GetMutualFollowersParams) ([]GetMutualFollowersRow, error)
 	GetPendingGroupJoinRequests(ctx context.Context, arg GetPendingGroupJoinRequestsParams) ([]GetPendingGroupJoinRequestsRow, error)
