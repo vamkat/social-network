@@ -27,7 +27,6 @@ func (e *EventCreator) CreateAndSendNotificationEvent(ctx context.Context, event
 	}
 
 	metadata := map[string]string{
-		"source":     "users",
 		"request_id": requestId,
 		"trace_id":   traceId,
 	}

@@ -69,24 +69,25 @@ type UserProfileRequest struct {
 }
 
 type UserProfileResponse struct {
-	UserId            ct.Id          `json:"user_id"`
-	Username          ct.Username    `json:"username"`
-	FirstName         ct.Name        `json:"first_name"`
-	LastName          ct.Name        `json:"last_name"`
-	DateOfBirth       ct.DateOfBirth `json:"date_of_birth"`
-	AvatarId          ct.Id          `json:"avatar_id" validate:"nullable"`
-	AvatarURL         string         `json:"avatar_url"`
-	About             ct.About       `json:"about"`
-	Public            bool           `json:"public"`
-	CreatedAt         ct.GenDateTime `json:"created_at"`
-	Email             ct.Email       `json:"email"`
-	FollowersCount    int64          `json:"followers_count"`
-	FollowingCount    int64          `json:"following_count"`
-	GroupsCount       int64          `json:"groups_count"`
-	OwnedGroupsCount  int64          `json:"owned_groups_count"`
-	ViewerIsFollowing bool           `json:"viewer_is_following"`
-	OwnProfile        bool           `json:"own_profile"`
-	IsPending         bool           `json:"is_pending"`
+	UserId                        ct.Id          `json:"user_id"`
+	Username                      ct.Username    `json:"username"`
+	FirstName                     ct.Name        `json:"first_name"`
+	LastName                      ct.Name        `json:"last_name"`
+	DateOfBirth                   ct.DateOfBirth `json:"date_of_birth"`
+	AvatarId                      ct.Id          `json:"avatar_id" validate:"nullable"`
+	AvatarURL                     string         `json:"avatar_url"`
+	About                         ct.About       `json:"about"`
+	Public                        bool           `json:"public"`
+	CreatedAt                     ct.GenDateTime `json:"created_at"`
+	Email                         ct.Email       `json:"email"`
+	FollowersCount                int64          `json:"followers_count"`
+	FollowingCount                int64          `json:"following_count"`
+	GroupsCount                   int64          `json:"groups_count"`
+	OwnedGroupsCount              int64          `json:"owned_groups_count"`
+	ViewerIsFollowing             bool           `json:"viewer_is_following"`
+	OwnProfile                    bool           `json:"own_profile"`
+	IsPending                     bool           `json:"is_pending"`
+	FollowRequestFromProfileOwner bool           `json:"follow_request_from_profile_owner"`
 }
 
 type UpdateProfileRequest struct {

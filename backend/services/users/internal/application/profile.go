@@ -107,6 +107,17 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 		return models.UserProfileResponse{}, ce.Wrap(nil, err)
 	}
 
+	//now check if the profile owner has a pending follow request towards the viewer
+	reverseFollowingParams := models.FollowUserReq{
+		FollowerId:   req.UserId,
+		TargetUserId: req.RequesterId,
+	}
+
+	profile.FollowRequestFromProfileOwner, err = s.isFollowRequestPending(ctx, reverseFollowingParams)
+	if err != nil {
+		return models.UserProfileResponse{}, ce.Wrap(nil, err)
+	}
+
 	if req.RequesterId == req.UserId {
 		profile.OwnProfile = true
 	}

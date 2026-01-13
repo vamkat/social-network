@@ -990,6 +990,29 @@ func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupReque
 	return &emptypb.Empty{}, nil
 }
 
+func (s *UsersHandler) GetGroupBasicInfo(ctx context.Context, req *pb.IdReq) (*pb.Group, error) {
+	tele.Info(ctx, "GetGroupBasicInfo called with @1", "request", req.String())
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+
+	g, err := s.Application.GetGroupBasicInfo(ctx, models.GroupId(req.Id))
+	if err != nil {
+		tele.Error(ctx, "Error in GetGroupBasicInfo. @1", "error", err.Error(), "request", req.String())
+		return nil, ce.GRPCStatus(err)
+	}
+
+	return &pb.Group{
+		GroupId:          g.GroupId.Int64(),
+		GroupOwnerId:     g.GroupOwnerId.Int64(),
+		GroupTitle:       g.GroupTitle.String(),
+		GroupDescription: g.GroupDescription.String(),
+		GroupImageId:     g.GroupImage.Int64(),
+	}, nil
+
+}
+
 // PROFILE
 func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int64Value) (*cm.User, error) {
 	tele.Info(ctx, "GetBasicUserInfo called with @1", "request", req.String())
@@ -1079,24 +1102,25 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 	tele.Debug(ctx, "get user profile @1", "profile", profile)
 
 	return &pb.UserProfileResponse{
-		UserId:            profile.UserId.Int64(),
-		Username:          profile.Username.String(),
-		FirstName:         profile.FirstName.String(),
-		LastName:          profile.LastName.String(),
-		DateOfBirth:       profile.DateOfBirth.ToProto(),
-		Avatar:            profile.AvatarId.Int64(),
-		AvatarUrl:         profile.AvatarURL,
-		About:             profile.About.String(),
-		Public:            profile.Public,
-		CreatedAt:         profile.CreatedAt.ToProto(),
-		Email:             profile.Email.String(),
-		FollowersCount:    profile.FollowersCount,
-		FollowingCount:    profile.FollowingCount,
-		GroupsCount:       profile.GroupsCount,
-		OwnedGroupsCount:  profile.OwnedGroupsCount,
-		ViewerIsFollowing: profile.ViewerIsFollowing,
-		OwnProfile:        profile.OwnProfile,
-		IsPending:         profile.IsPending,
+		UserId:                        profile.UserId.Int64(),
+		Username:                      profile.Username.String(),
+		FirstName:                     profile.FirstName.String(),
+		LastName:                      profile.LastName.String(),
+		DateOfBirth:                   profile.DateOfBirth.ToProto(),
+		Avatar:                        profile.AvatarId.Int64(),
+		AvatarUrl:                     profile.AvatarURL,
+		About:                         profile.About.String(),
+		Public:                        profile.Public,
+		CreatedAt:                     profile.CreatedAt.ToProto(),
+		Email:                         profile.Email.String(),
+		FollowersCount:                profile.FollowersCount,
+		FollowingCount:                profile.FollowingCount,
+		GroupsCount:                   profile.GroupsCount,
+		OwnedGroupsCount:              profile.OwnedGroupsCount,
+		ViewerIsFollowing:             profile.ViewerIsFollowing,
+		OwnProfile:                    profile.OwnProfile,
+		IsPending:                     profile.IsPending,
+		FollowRequestFromProfileOwner: profile.FollowRequestFromProfileOwner,
 	}, nil
 }
 

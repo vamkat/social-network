@@ -6,7 +6,9 @@ import (
 	"social-network/services/posts/internal/client"
 	ds "social-network/services/posts/internal/db/dbservice"
 	ct "social-network/shared/go/ct"
+	"social-network/shared/go/kafgo"
 	"social-network/shared/go/models"
+	"social-network/shared/go/notifevents"
 	postgresql "social-network/shared/go/postgre"
 	rds "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
@@ -27,6 +29,7 @@ type Application struct {
 	clients        ClientsInterface
 	userRetriever  UserRetriever
 	mediaRetriever *retrievemedia.MediaRetriever
+	eventProducer  *notifevents.EventCreator
 }
 
 // UsersBatchClient abstracts the single RPC used by the hydrator to fetch basic user info.
@@ -44,6 +47,7 @@ type RedisCache interface {
 // UserRetriever defines the subset of behavior used by application for user hydration.
 type UserRetriever interface {
 	GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id]models.User, error)
+	GetUser(ctx context.Context, userID ct.Id) (models.User, error)
 }
 
 // ClientsInterface defines the methods that Application needs from clients.
@@ -54,10 +58,11 @@ type ClientsInterface interface {
 	CreateNewEvent(ctx context.Context, userId, groupId, eventId int64, groupName, eventTitle string) error
 	CreatePostLike(ctx context.Context, userId, likerUserId, postId int64, likerUsername string) error
 	CreatePostComment(ctx context.Context, userId, commenterId, postId int64, commenterUsername, commentContent string) error
+	GetGroupBasicInfo(ctx context.Context, groupId int64) (models.Group, error)
 }
 
 // NewApplication constructs a new Application with transaction support
-func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients, redisConnector *rds.RedisClient) (*Application, error) {
+func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients, redisConnector *rds.RedisClient, eventProducer *kafgo.KafkaProducer) (*Application, error) {
 	var txRunner TxRunner
 	var err error
 	if pool != nil {
@@ -75,6 +80,7 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients,
 		clients:        clients,
 		mediaRetriever: retrieveMedia,
 		userRetriever:  ur.NewUserRetriever(clients.UserClient, redisConnector, retrieveMedia, 3*time.Minute),
+		eventProducer:  notifevents.NewEventProducer(eventProducer),
 	}, nil
 }
 

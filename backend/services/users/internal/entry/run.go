@@ -96,8 +96,6 @@ func Run() error {
 	eventProducer, close, err := kafgo.NewKafkaProducer([]string{cfgs.KafkaBrokers})
 	if err != nil {
 		tele.Warn(ctx, "failed to initialize kafka producer: @1", "error", err.Error())
-		// Don't fatal here if kafka is not ready, better to have the service running without notifications
-	} else {
 		defer close()
 		tele.Info(ctx, "initialized kafka producer")
 	}

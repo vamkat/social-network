@@ -7,6 +7,8 @@ import (
 	"social-network/shared/gen-go/notifications"
 	notifpb "social-network/shared/gen-go/notifications"
 	userpb "social-network/shared/gen-go/users"
+	"social-network/shared/go/ct"
+	"social-network/shared/go/models"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -128,4 +130,20 @@ func (c *Clients) CreatePostComment(ctx context.Context, userId, commenterId, po
 	}
 	_, err := c.NotifsClient.CreatePostComment(ctx, req)
 	return err
+}
+
+func (c *Clients) GetGroupBasicInfo(ctx context.Context, groupId int64) (models.Group, error) {
+	g, err := c.UserClient.GetGroupBasicInfo(ctx, &userpb.IdReq{Id: groupId})
+	if err != nil {
+		return models.Group{}, err
+	}
+
+	group := models.Group{
+		GroupId:          ct.Id(g.GroupId),
+		GroupOwnerId:     ct.Id(g.GroupOwnerId),
+		GroupTitle:       ct.Title(g.GroupTitle),
+		GroupDescription: ct.About(g.GroupDescription),
+		GroupImage:       ct.Id(g.GroupImageId),
+	}
+	return group, nil
 }

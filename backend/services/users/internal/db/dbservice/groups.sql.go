@@ -244,7 +244,7 @@ SELECT
   group_owner,
   group_title,
   group_description,
-  group_image_id,
+  group_image_id
 FROM groups
 WHERE id=$1
   AND deleted_at IS NULL
@@ -258,9 +258,9 @@ type GetGroupBasicInfoRow struct {
 	GroupImageID     int64
 }
 
-func (q *Queries) GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupInfoRow, error) {
+func (q *Queries) GetGroupBasicInfo(ctx context.Context, id int64) (GetGroupBasicInfoRow, error) {
 	row := q.db.QueryRow(ctx, getGroupInfo, id)
-	var i GetGroupInfoRow
+	var i GetGroupBasicInfoRow
 	err := row.Scan(
 		&i.ID,
 		&i.GroupOwner,

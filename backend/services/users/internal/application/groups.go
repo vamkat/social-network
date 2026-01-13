@@ -995,7 +995,28 @@ func (s *Application) GetPendingGroupJoinRequestsCount(ctx context.Context, req 
 	}
 
 	return count, nil
+}
 
+func (s *Application) GetGroupBasicInfo(ctx context.Context, req models.GroupId) (models.Group, error) {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateBatch(ct.Id(req)); err != nil {
+		return models.Group{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
+	}
+
+	row, err := s.db.GetGroupBasicInfo(ctx, int64(req))
+	if err != nil {
+		return models.Group{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+
+	group := models.Group{
+		GroupId:          ct.Id(row.ID),
+		GroupOwnerId:     ct.Id(row.GroupOwner),
+		GroupTitle:       ct.Title(row.GroupTitle),
+		GroupDescription: ct.About(row.GroupDescription),
+		GroupImage:       ct.Id(row.GroupImageID),
+	}
+	return group, nil
 }
 
 // ---------------------------------------------------------------------

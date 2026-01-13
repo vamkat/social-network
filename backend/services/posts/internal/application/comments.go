@@ -5,6 +5,7 @@ import (
 	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
+	notifpb "social-network/shared/gen-go/notifications"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -60,26 +61,35 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 	}
 
 	//create notification
-	userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{req.CreatorId})
+	commenter, err := s.userRetriever.GetUser(ctx, ct.Id(req.CreatorId))
 	if err != nil {
-		tele.Error(ctx, "failed to GetUsers for @1: @2 ", "userId", req.CreatorId, "error", err.Error())
-		return commentId, nil //return with no error but without creating non-essential notif
-	}
-	var commenterUsername string
-	if u, ok := userMap[req.CreatorId]; ok {
-		commenterUsername = u.Username.String()
-	}
-	basicPost, err := s.db.GetBasicPostByID(ctx, req.ParentId.Int64())
-	if err != nil {
-		tele.Error(ctx, "get GetBasicPostByID failed for post @1: @2 ", "post id", req.ParentId, "error", err.Error())
-		return commentId, nil //return with no error but without creating non-essential notif
+		tele.Error(ctx, "Could not get basic user info for id @1 for comment created event: @2", "userId", req.CreatorId, "error", err.Error())
 	}
 
-	err = s.clients.CreatePostComment(ctx, basicPost.CreatorID, req.CreatorId.Int64(), req.ParentId.Int64(), commenterUsername, req.Body.String())
-	if err != nil {
-		tele.Error(ctx, "CreatePostComment notification failed for comment @1: @2", "comment id", commentId, "error", err.Error())
-		return commentId, nil //return with no error but without creating non-essential notif
+	// basicPost, err := s.db.GetBasicPostByID(ctx, req.ParentId.Int64())
+	// if err != nil {
+	// 	tele.Error(ctx, "Could not get basic post info for id @1 for comment created event: @2", "postId", req.ParentId, "error", err.Error())
+	// }
+
+	// build the notification event
+	event := &notifpb.NotificationEvent{
+		EventType: notifpb.EventType_POST_COMMENT_CREATED,
+		Payload: &notifpb.NotificationEvent_PostCommentCreated{
+			PostCommentCreated: &notifpb.PostCommentCreated{
+				PostId:            req.ParentId.Int64(),
+				CommentId:         commentId,
+				CommenterUserId:   req.CreatorId.Int64(),
+				CommenterUsername: commenter.Username.String(),
+				Body:              req.Body.String(),
+			},
+		},
 	}
+
+	if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+		tele.Error(ctx, "failed to send new comment notification: @1", "error", err.Error())
+	}
+	tele.Info(ctx, "new comment notification event created")
+
 	return commentId, nil
 }
 

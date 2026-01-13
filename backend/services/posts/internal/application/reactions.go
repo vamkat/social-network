@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
+	notifpb "social-network/shared/gen-go/notifications"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
+	tele "social-network/shared/go/telemetry"
 )
 
 func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.GenericReq) error {
@@ -39,22 +41,35 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 	}
 	if action == "added" {
 		//create notification
-		userMap, err := s.userRetriever.GetUsers(ctx, ct.Ids{req.RequesterId})
+		liker, err := s.userRetriever.GetUser(ctx, ct.Id(req.RequesterId))
 		if err != nil {
 			//log error
 		}
-		var likerUsername string
-		if u, ok := userMap[req.RequesterId]; ok {
-			likerUsername = u.Username.String()
+
+		//HOW IS THIS NOT NEEDED?
+		// row, err := s.db.GetEntityCreatorAndGroup(ctx, req.EntityId.Int64())
+		// if err != nil {
+		// 	//log and don't proceed to notif
+		// }
+
+		// build the notification event
+		event := &notifpb.NotificationEvent{
+			EventType: notifpb.EventType_POST_LIKED,
+			Payload: &notifpb.NotificationEvent_PostLiked{
+				PostLiked: &notifpb.PostLiked{
+					PostId:        req.EntityId.Int64(),
+					LikerUserId:   req.RequesterId.Int64(),
+					LikerUsername: liker.Username.String(),
+					Aggregate:     true,
+				},
+			},
 		}
-		row, err := s.db.GetEntityCreatorAndGroup(ctx, req.EntityId.Int64())
-		if err != nil {
-			//log and don't proceed to notif
+
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to send new reaction notification: @1", "error", err.Error())
 		}
-		err = s.clients.CreatePostLike(ctx, row.CreatorID, req.RequesterId.Int64(), req.EntityId.Int64(), likerUsername)
-		if err != nil {
-			//log error
-		}
+		tele.Info(ctx, "new reaction notification event created")
+
 	} else {
 		//remove notification or not? how?
 	}
