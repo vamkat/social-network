@@ -10,7 +10,7 @@ import { handleFollowRequest } from "@/actions/requests/handle-request";
 import { updatePrivacyAction } from "@/actions/profile/settings";
 import Tooltip from "../ui/Tooltip";
 
-export function ProfileHeader({ user }) {
+export function ProfileHeader({ user, onUnfollow=null }) {
     const [isFollowing, setIsFollowing] = useState(user.viewer_is_following);
     const [isPublic, setIsPublic] = useState(user.public);
     const [isHovering, setIsHovering] = useState(false);
@@ -65,7 +65,7 @@ export function ProfileHeader({ user }) {
                 const response = await unfollowUser(user.user_id);
                 if (response.success) {
                     setIsFollowing(false);
-                    // setIsPending(false); // Unfollowing removes pending status implicitly if it existed (though usually you follow -> unfollow)
+                    if (onUnfollow) onUnfollow({isPublic, isFollowing: false});
                 } else {
                     console.error("Error unfollowing user:", response.error);
                 }
