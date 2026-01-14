@@ -16,65 +16,6 @@ import (
 	"time"
 )
 
-// Returns an existing or creates a new conversation for a user and a target user.
-// If 'retrieveOther' is true the target user's basic info is also fetched.
-// DEPRECATED
-func (h *Handlers) GetOrCreatePrivateConversation() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
-		if !ok {
-			tele.Error(ctx, "problem fetching claims")
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "can't find claims")
-			return
-		}
-		userId := claims.UserId
-
-		type req struct {
-			OtherUserId   ct.Id `json:"other_user_id"`
-			RetrieveOther bool  `json:"retrieve_other"`
-		}
-		httpReq := models.GetOrCreatePrivateConvReq{}
-
-		decoder := json.NewDecoder(r.Body)
-		defer r.Body.Close()
-		if err := decoder.Decode(&httpReq); err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if err := ct.ValidateStruct(httpReq); err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
-			return
-		}
-
-		res, err := h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
-			User:                 userId,
-			Interlocutor:         httpReq.InterlocutorId.Int64(),
-			RetrieveInterlocutor: httpReq.RetrieveInterlocutor,
-		})
-
-		httpCode, _ := gorpc.Classify(err)
-		if err != nil {
-			err = ce.ParseGrpcErr(err)
-			utils.ErrorJSON(ctx, w, httpCode, err.Error())
-			return
-		}
-
-		err = utils.WriteJSON(ctx, w,
-			httpCode,
-			&models.GetOrCreatePrivateConvResp{
-				ConversationId:  ct.Id(res.ConversationId),
-				Interlocutor:    mapping.MapUserFromProto(res.Interlocutor),
-				LastReadMessage: ct.Id(res.LastReadMessage),
-				IsNew:           res.IsNew,
-			})
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
-		}
-	}
-}
-
 // Creates a new message in a conversation. If the conversation does not exist it creates a new one.
 func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

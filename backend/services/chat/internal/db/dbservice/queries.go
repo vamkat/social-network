@@ -72,26 +72,6 @@ const (
 	// ====================================
 	// PRIVATE_CONVERSATIONS
 	// ====================================
-	getOrCreatePrivateConv = `
-	WITH ins AS (
-		INSERT INTO private_conversations (user_a, user_b)
-		VALUES (
-			LEAST($1::bigint, $2::bigint),
-			GREATEST($1::bigint, $2::bigint)
-		)
-		ON CONFLICT (user_a, user_b) DO NOTHING
-		RETURNING *
-	)
-	SELECT *
-	FROM ins
-	UNION ALL
-	SELECT *
-	FROM private_conversations c
-	WHERE user_a = LEAST($1, $2)
-		AND user_b = GREATEST($1, $2)
-		AND c.deleted_at IS NULL 
-		AND NOT EXISTS (SELECT 1 FROM ins);
-	`
 
 	createMsgAndConv = `
 	WITH conv AS (

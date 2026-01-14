@@ -1,28 +1,7 @@
 @baseUrl = http://localhost:8081
 @token= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMSwiZXhwIjoxNzgxNTk2NTk1LCJpYXQiOjE3NjU4NzE3OTV9.t26_Z2z_7PbcCo232SlQIIo1maR7nPJ8o627yybHGkw"
 
-### 1) LOGIN 1
-POST {{baseUrl}}/login
-Content-Type: application/json
-
-{
-  "identifier": "johndoe",
-  "password": "StrongPassword123!"
-}
-### 1) LOGIN 2
-POST {{baseUrl}}/login
-Content-Type: application/json
-
-{
-  "identifier": "johnfoe",
-  "password": "StrongPassword123!"
-}
-
-### 2) LOGOUT
-POST {{baseUrl}}/logout
-Content-Type: application/json
-
-### Register user
+### Register user 1
 POST {{baseUrl}}/register
 Content-Type: application/json
 Host: minio:9000
@@ -35,6 +14,45 @@ Host: minio:9000
   "about": "Software engineer and coffee lover",
   "public": true,
   "email": "john.foe@example.com",
+  "password": "StrongPassword123!"
+}
+
+### Register user 2
+POST {{baseUrl}}/register
+Content-Type: application/json
+Host: minio:9000
+
+{
+  "username": "johndoe",
+  "first_name": "John",
+  "last_name": "Doe",
+  "date_of_birth": "1995-04-12",
+  "about": "Software engineer and coffee lover",
+  "public": true,
+  "email": "john.doe@example.com",
+  "password": "StrongPassword123!"
+}
+
+### LOGOUT
+POST {{baseUrl}}/logout
+Content-Type: application/json
+
+
+### LOGIN DOE
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "identifier": "johndoe",
+  "password": "StrongPassword123!"
+}
+
+### LOGIN FOE
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "identifier": "johnfoe",
   "password": "StrongPassword123!"
 }
 

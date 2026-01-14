@@ -73,12 +73,6 @@ type Querier interface {
 	GetNextPrivateMsgs(ctx context.Context,
 		arg md.GetPrivateMsgsReq) (res md.GetPrivateMsgsResp, err error)
 
-	// Creates new conversation between two users or fetches an existing.
-	// Returns conversation Id and conversations last message id.
-	GetOrCreatePrivateConv(ctx context.Context,
-		arg md.GetOrCreatePrivateConvReq,
-	) (res NewPrivateConversation, err error)
-
 	// Fetches paginated conversation details, conversation members,
 	// Ids and unread messages count for a user and a group.
 	GetPrivateConvs(ctx context.Context,

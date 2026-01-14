@@ -312,138 +312,6 @@ func (x *GetGroupMessagesResponse) GetMessages() []*GroupMessage {
 	return nil
 }
 
-// Request message to get or create a private conversation between two users.
-// Includes user IDs and a flag to retrieve interlocutor details.
-type GetOrCreatePrivateConvRequest struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	User                 int64                  `protobuf:"varint,1,opt,name=user,proto3" json:"user,omitempty"`
-	Interlocutor         int64                  `protobuf:"varint,2,opt,name=interlocutor,proto3" json:"interlocutor,omitempty"`
-	RetrieveInterlocutor bool                   `protobuf:"varint,3,opt,name=retrieve_interlocutor,json=retrieveInterlocutor,proto3" json:"retrieve_interlocutor,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
-}
-
-func (x *GetOrCreatePrivateConvRequest) Reset() {
-	*x = GetOrCreatePrivateConvRequest{}
-	mi := &file_chat_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetOrCreatePrivateConvRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetOrCreatePrivateConvRequest) ProtoMessage() {}
-
-func (x *GetOrCreatePrivateConvRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetOrCreatePrivateConvRequest.ProtoReflect.Descriptor instead.
-func (*GetOrCreatePrivateConvRequest) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetOrCreatePrivateConvRequest) GetUser() int64 {
-	if x != nil {
-		return x.User
-	}
-	return 0
-}
-
-func (x *GetOrCreatePrivateConvRequest) GetInterlocutor() int64 {
-	if x != nil {
-		return x.Interlocutor
-	}
-	return 0
-}
-
-func (x *GetOrCreatePrivateConvRequest) GetRetrieveInterlocutor() bool {
-	if x != nil {
-		return x.RetrieveInterlocutor
-	}
-	return false
-}
-
-// Response message for getting or creating a private conversation.
-// Contains conversation ID, interlocutor details, last read message ID, and if it's new.
-type GetOrCreatePrivateConvResponse struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId  int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	Interlocutor    *common.User           `protobuf:"bytes,2,opt,name=interlocutor,proto3" json:"interlocutor,omitempty"`
-	LastReadMessage int64                  `protobuf:"varint,3,opt,name=last_read_message,json=lastReadMessage,proto3" json:"last_read_message,omitempty"`
-	IsNew           bool                   `protobuf:"varint,4,opt,name=is_new,json=isNew,proto3" json:"is_new,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *GetOrCreatePrivateConvResponse) Reset() {
-	*x = GetOrCreatePrivateConvResponse{}
-	mi := &file_chat_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetOrCreatePrivateConvResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetOrCreatePrivateConvResponse) ProtoMessage() {}
-
-func (x *GetOrCreatePrivateConvResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetOrCreatePrivateConvResponse.ProtoReflect.Descriptor instead.
-func (*GetOrCreatePrivateConvResponse) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *GetOrCreatePrivateConvResponse) GetConversationId() int64 {
-	if x != nil {
-		return x.ConversationId
-	}
-	return 0
-}
-
-func (x *GetOrCreatePrivateConvResponse) GetInterlocutor() *common.User {
-	if x != nil {
-		return x.Interlocutor
-	}
-	return nil
-}
-
-func (x *GetOrCreatePrivateConvResponse) GetLastReadMessage() int64 {
-	if x != nil {
-		return x.LastReadMessage
-	}
-	return 0
-}
-
-func (x *GetOrCreatePrivateConvResponse) GetIsNew() bool {
-	if x != nil {
-		return x.IsNew
-	}
-	return false
-}
-
 // Request message for retrieving a paginated list of private conversations for a user.
 // Includes user ID, date before which to fetch, and limit.
 type GetPrivateConversationsRequest struct {
@@ -457,7 +325,7 @@ type GetPrivateConversationsRequest struct {
 
 func (x *GetPrivateConversationsRequest) Reset() {
 	*x = GetPrivateConversationsRequest{}
-	mi := &file_chat_proto_msgTypes[6]
+	mi := &file_chat_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -469,7 +337,7 @@ func (x *GetPrivateConversationsRequest) String() string {
 func (*GetPrivateConversationsRequest) ProtoMessage() {}
 
 func (x *GetPrivateConversationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[6]
+	mi := &file_chat_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -482,7 +350,7 @@ func (x *GetPrivateConversationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPrivateConversationsRequest.ProtoReflect.Descriptor instead.
 func (*GetPrivateConversationsRequest) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{6}
+	return file_chat_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetPrivateConversationsRequest) GetUserId() int64 {
@@ -521,7 +389,7 @@ type PrivateConversationPreview struct {
 
 func (x *PrivateConversationPreview) Reset() {
 	*x = PrivateConversationPreview{}
-	mi := &file_chat_proto_msgTypes[7]
+	mi := &file_chat_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -533,7 +401,7 @@ func (x *PrivateConversationPreview) String() string {
 func (*PrivateConversationPreview) ProtoMessage() {}
 
 func (x *PrivateConversationPreview) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[7]
+	mi := &file_chat_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -546,7 +414,7 @@ func (x *PrivateConversationPreview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrivateConversationPreview.ProtoReflect.Descriptor instead.
 func (*PrivateConversationPreview) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{7}
+	return file_chat_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PrivateConversationPreview) GetConversationId() int64 {
@@ -595,7 +463,7 @@ type GetPrivateConversationsResponse struct {
 
 func (x *GetPrivateConversationsResponse) Reset() {
 	*x = GetPrivateConversationsResponse{}
-	mi := &file_chat_proto_msgTypes[8]
+	mi := &file_chat_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -607,7 +475,7 @@ func (x *GetPrivateConversationsResponse) String() string {
 func (*GetPrivateConversationsResponse) ProtoMessage() {}
 
 func (x *GetPrivateConversationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[8]
+	mi := &file_chat_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +488,7 @@ func (x *GetPrivateConversationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPrivateConversationsResponse.ProtoReflect.Descriptor instead.
 func (*GetPrivateConversationsResponse) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{8}
+	return file_chat_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetPrivateConversationsResponse) GetConversations() []*PrivateConversationPreview {
@@ -643,7 +511,7 @@ type CreatePrivateMessageRequest struct {
 
 func (x *CreatePrivateMessageRequest) Reset() {
 	*x = CreatePrivateMessageRequest{}
-	mi := &file_chat_proto_msgTypes[9]
+	mi := &file_chat_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +523,7 @@ func (x *CreatePrivateMessageRequest) String() string {
 func (*CreatePrivateMessageRequest) ProtoMessage() {}
 
 func (x *CreatePrivateMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[9]
+	mi := &file_chat_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +536,7 @@ func (x *CreatePrivateMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePrivateMessageRequest.ProtoReflect.Descriptor instead.
 func (*CreatePrivateMessageRequest) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{9}
+	return file_chat_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CreatePrivateMessageRequest) GetSenderId() int64 {
@@ -710,7 +578,7 @@ type PrivateMessage struct {
 
 func (x *PrivateMessage) Reset() {
 	*x = PrivateMessage{}
-	mi := &file_chat_proto_msgTypes[10]
+	mi := &file_chat_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -722,7 +590,7 @@ func (x *PrivateMessage) String() string {
 func (*PrivateMessage) ProtoMessage() {}
 
 func (x *PrivateMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[10]
+	mi := &file_chat_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -735,7 +603,7 @@ func (x *PrivateMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrivateMessage.ProtoReflect.Descriptor instead.
 func (*PrivateMessage) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{10}
+	return file_chat_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PrivateMessage) GetId() int64 {
@@ -809,7 +677,7 @@ type GetPrivateMessagesRequest struct {
 
 func (x *GetPrivateMessagesRequest) Reset() {
 	*x = GetPrivateMessagesRequest{}
-	mi := &file_chat_proto_msgTypes[11]
+	mi := &file_chat_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -821,7 +689,7 @@ func (x *GetPrivateMessagesRequest) String() string {
 func (*GetPrivateMessagesRequest) ProtoMessage() {}
 
 func (x *GetPrivateMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[11]
+	mi := &file_chat_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -834,7 +702,7 @@ func (x *GetPrivateMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPrivateMessagesRequest.ProtoReflect.Descriptor instead.
 func (*GetPrivateMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{11}
+	return file_chat_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetPrivateMessagesRequest) GetUserId() int64 {
@@ -884,7 +752,7 @@ type GetPrivateMessagesResponse struct {
 
 func (x *GetPrivateMessagesResponse) Reset() {
 	*x = GetPrivateMessagesResponse{}
-	mi := &file_chat_proto_msgTypes[12]
+	mi := &file_chat_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -896,7 +764,7 @@ func (x *GetPrivateMessagesResponse) String() string {
 func (*GetPrivateMessagesResponse) ProtoMessage() {}
 
 func (x *GetPrivateMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[12]
+	mi := &file_chat_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -909,7 +777,7 @@ func (x *GetPrivateMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPrivateMessagesResponse.ProtoReflect.Descriptor instead.
 func (*GetPrivateMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{12}
+	return file_chat_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetPrivateMessagesResponse) GetHaveMore() bool {
@@ -939,7 +807,7 @@ type UpdateLastReadPrivateMessageRequest struct {
 
 func (x *UpdateLastReadPrivateMessageRequest) Reset() {
 	*x = UpdateLastReadPrivateMessageRequest{}
-	mi := &file_chat_proto_msgTypes[13]
+	mi := &file_chat_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -951,7 +819,7 @@ func (x *UpdateLastReadPrivateMessageRequest) String() string {
 func (*UpdateLastReadPrivateMessageRequest) ProtoMessage() {}
 
 func (x *UpdateLastReadPrivateMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_proto_msgTypes[13]
+	mi := &file_chat_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +832,7 @@ func (x *UpdateLastReadPrivateMessageRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use UpdateLastReadPrivateMessageRequest.ProtoReflect.Descriptor instead.
 func (*UpdateLastReadPrivateMessageRequest) Descriptor() ([]byte, []int) {
-	return file_chat_proto_rawDescGZIP(), []int{13}
+	return file_chat_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateLastReadPrivateMessageRequest) GetConversationId() int64 {
@@ -1018,15 +886,6 @@ const file_chat_proto_rawDesc = "" +
 	"\x18GetGroupMessagesResponse\x12\x1b\n" +
 	"\thave_more\x18\x01 \x01(\bR\bhaveMore\x12.\n" +
 	"\bmessages\x18\x02 \x03(\v2\x12.chat.GroupMessageR\bmessages\"\x8c\x01\n" +
-	"\x1dGetOrCreatePrivateConvRequest\x12\x12\n" +
-	"\x04user\x18\x01 \x01(\x03R\x04user\x12\"\n" +
-	"\finterlocutor\x18\x02 \x01(\x03R\finterlocutor\x123\n" +
-	"\x15retrieve_interlocutor\x18\x03 \x01(\bR\x14retrieveInterlocutor\"\xbe\x01\n" +
-	"\x1eGetOrCreatePrivateConvResponse\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x120\n" +
-	"\finterlocutor\x18\x02 \x01(\v2\f.common.UserR\finterlocutor\x12*\n" +
-	"\x11last_read_message\x18\x03 \x01(\x03R\x0flastReadMessage\x12\x15\n" +
-	"\x06is_new\x18\x04 \x01(\bR\x05isNew\"\x8c\x01\n" +
 	"\x1eGetPrivateConversationsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12;\n" +
 	"\vbefore_date\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -1070,12 +929,11 @@ const file_chat_proto_rawDesc = "" +
 	"#UpdateLastReadPrivateMessageRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12/\n" +
-	"\x14last_read_message_id\x18\x03 \x01(\x03R\x11lastReadMessageId2\xc9\x06\n" +
+	"\x14last_read_message_id\x18\x03 \x01(\x03R\x11lastReadMessageId2\xe4\x05\n" +
 	"\vChatService\x12I\n" +
 	"\x12CreateGroupMessage\x12\x1f.chat.CreateGroupMessageRequest\x1a\x12.chat.GroupMessage\x12Y\n" +
 	"\x18GetPreviousGroupMessages\x12\x1d.chat.GetGroupMessagesRequest\x1a\x1e.chat.GetGroupMessagesResponse\x12U\n" +
-	"\x14GetNextGroupMessages\x12\x1d.chat.GetGroupMessagesRequest\x1a\x1e.chat.GetGroupMessagesResponse\x12c\n" +
-	"\x16GetOrCreatePrivateConv\x12#.chat.GetOrCreatePrivateConvRequest\x1a$.chat.GetOrCreatePrivateConvResponse\x12f\n" +
+	"\x14GetNextGroupMessages\x12\x1d.chat.GetGroupMessagesRequest\x1a\x1e.chat.GetGroupMessagesResponse\x12f\n" +
 	"\x17GetPrivateConversations\x12$.chat.GetPrivateConversationsRequest\x1a%.chat.GetPrivateConversationsResponse\x12O\n" +
 	"\x14CreatePrivateMessage\x12!.chat.CreatePrivateMessageRequest\x1a\x14.chat.PrivateMessage\x12_\n" +
 	"\x1aGetPreviousPrivateMessages\x12\x1f.chat.GetPrivateMessagesRequest\x1a .chat.GetPrivateMessagesResponse\x12[\n" +
@@ -1094,66 +952,61 @@ func file_chat_proto_rawDescGZIP() []byte {
 	return file_chat_proto_rawDescData
 }
 
-var file_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_chat_proto_goTypes = []any{
 	(*CreateGroupMessageRequest)(nil),           // 0: chat.CreateGroupMessageRequest
 	(*GroupMessage)(nil),                        // 1: chat.GroupMessage
 	(*GetGroupMessagesRequest)(nil),             // 2: chat.GetGroupMessagesRequest
 	(*GetGroupMessagesResponse)(nil),            // 3: chat.GetGroupMessagesResponse
-	(*GetOrCreatePrivateConvRequest)(nil),       // 4: chat.GetOrCreatePrivateConvRequest
-	(*GetOrCreatePrivateConvResponse)(nil),      // 5: chat.GetOrCreatePrivateConvResponse
-	(*GetPrivateConversationsRequest)(nil),      // 6: chat.GetPrivateConversationsRequest
-	(*PrivateConversationPreview)(nil),          // 7: chat.PrivateConversationPreview
-	(*GetPrivateConversationsResponse)(nil),     // 8: chat.GetPrivateConversationsResponse
-	(*CreatePrivateMessageRequest)(nil),         // 9: chat.CreatePrivateMessageRequest
-	(*PrivateMessage)(nil),                      // 10: chat.PrivateMessage
-	(*GetPrivateMessagesRequest)(nil),           // 11: chat.GetPrivateMessagesRequest
-	(*GetPrivateMessagesResponse)(nil),          // 12: chat.GetPrivateMessagesResponse
-	(*UpdateLastReadPrivateMessageRequest)(nil), // 13: chat.UpdateLastReadPrivateMessageRequest
-	(*common.User)(nil),                         // 14: common.User
-	(*timestamppb.Timestamp)(nil),               // 15: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                       // 16: google.protobuf.Empty
+	(*GetPrivateConversationsRequest)(nil),      // 4: chat.GetPrivateConversationsRequest
+	(*PrivateConversationPreview)(nil),          // 5: chat.PrivateConversationPreview
+	(*GetPrivateConversationsResponse)(nil),     // 6: chat.GetPrivateConversationsResponse
+	(*CreatePrivateMessageRequest)(nil),         // 7: chat.CreatePrivateMessageRequest
+	(*PrivateMessage)(nil),                      // 8: chat.PrivateMessage
+	(*GetPrivateMessagesRequest)(nil),           // 9: chat.GetPrivateMessagesRequest
+	(*GetPrivateMessagesResponse)(nil),          // 10: chat.GetPrivateMessagesResponse
+	(*UpdateLastReadPrivateMessageRequest)(nil), // 11: chat.UpdateLastReadPrivateMessageRequest
+	(*common.User)(nil),                         // 12: common.User
+	(*timestamppb.Timestamp)(nil),               // 13: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                       // 14: google.protobuf.Empty
 }
 var file_chat_proto_depIdxs = []int32{
-	14, // 0: chat.GroupMessage.sender:type_name -> common.User
-	15, // 1: chat.GroupMessage.created_at:type_name -> google.protobuf.Timestamp
-	15, // 2: chat.GroupMessage.updated_at:type_name -> google.protobuf.Timestamp
-	15, // 3: chat.GroupMessage.deleted_at:type_name -> google.protobuf.Timestamp
+	12, // 0: chat.GroupMessage.sender:type_name -> common.User
+	13, // 1: chat.GroupMessage.created_at:type_name -> google.protobuf.Timestamp
+	13, // 2: chat.GroupMessage.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 3: chat.GroupMessage.deleted_at:type_name -> google.protobuf.Timestamp
 	1,  // 4: chat.GetGroupMessagesResponse.messages:type_name -> chat.GroupMessage
-	14, // 5: chat.GetOrCreatePrivateConvResponse.interlocutor:type_name -> common.User
-	15, // 6: chat.GetPrivateConversationsRequest.before_date:type_name -> google.protobuf.Timestamp
-	15, // 7: chat.PrivateConversationPreview.updated_at:type_name -> google.protobuf.Timestamp
-	14, // 8: chat.PrivateConversationPreview.interlocutor:type_name -> common.User
-	10, // 9: chat.PrivateConversationPreview.last_message:type_name -> chat.PrivateMessage
-	7,  // 10: chat.GetPrivateConversationsResponse.conversations:type_name -> chat.PrivateConversationPreview
-	14, // 11: chat.PrivateMessage.sender:type_name -> common.User
-	15, // 12: chat.PrivateMessage.created_at:type_name -> google.protobuf.Timestamp
-	15, // 13: chat.PrivateMessage.updated_at:type_name -> google.protobuf.Timestamp
-	15, // 14: chat.PrivateMessage.deleted_at:type_name -> google.protobuf.Timestamp
-	10, // 15: chat.GetPrivateMessagesResponse.messages:type_name -> chat.PrivateMessage
-	0,  // 16: chat.ChatService.CreateGroupMessage:input_type -> chat.CreateGroupMessageRequest
-	2,  // 17: chat.ChatService.GetPreviousGroupMessages:input_type -> chat.GetGroupMessagesRequest
-	2,  // 18: chat.ChatService.GetNextGroupMessages:input_type -> chat.GetGroupMessagesRequest
-	4,  // 19: chat.ChatService.GetOrCreatePrivateConv:input_type -> chat.GetOrCreatePrivateConvRequest
-	6,  // 20: chat.ChatService.GetPrivateConversations:input_type -> chat.GetPrivateConversationsRequest
-	9,  // 21: chat.ChatService.CreatePrivateMessage:input_type -> chat.CreatePrivateMessageRequest
-	11, // 22: chat.ChatService.GetPreviousPrivateMessages:input_type -> chat.GetPrivateMessagesRequest
-	11, // 23: chat.ChatService.GetNextPrivateMessages:input_type -> chat.GetPrivateMessagesRequest
-	13, // 24: chat.ChatService.UpdateLastReadPrivateMessage:input_type -> chat.UpdateLastReadPrivateMessageRequest
-	1,  // 25: chat.ChatService.CreateGroupMessage:output_type -> chat.GroupMessage
-	3,  // 26: chat.ChatService.GetPreviousGroupMessages:output_type -> chat.GetGroupMessagesResponse
-	3,  // 27: chat.ChatService.GetNextGroupMessages:output_type -> chat.GetGroupMessagesResponse
-	5,  // 28: chat.ChatService.GetOrCreatePrivateConv:output_type -> chat.GetOrCreatePrivateConvResponse
-	8,  // 29: chat.ChatService.GetPrivateConversations:output_type -> chat.GetPrivateConversationsResponse
-	10, // 30: chat.ChatService.CreatePrivateMessage:output_type -> chat.PrivateMessage
-	12, // 31: chat.ChatService.GetPreviousPrivateMessages:output_type -> chat.GetPrivateMessagesResponse
-	12, // 32: chat.ChatService.GetNextPrivateMessages:output_type -> chat.GetPrivateMessagesResponse
-	16, // 33: chat.ChatService.UpdateLastReadPrivateMessage:output_type -> google.protobuf.Empty
-	25, // [25:34] is the sub-list for method output_type
-	16, // [16:25] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	13, // 5: chat.GetPrivateConversationsRequest.before_date:type_name -> google.protobuf.Timestamp
+	13, // 6: chat.PrivateConversationPreview.updated_at:type_name -> google.protobuf.Timestamp
+	12, // 7: chat.PrivateConversationPreview.interlocutor:type_name -> common.User
+	8,  // 8: chat.PrivateConversationPreview.last_message:type_name -> chat.PrivateMessage
+	5,  // 9: chat.GetPrivateConversationsResponse.conversations:type_name -> chat.PrivateConversationPreview
+	12, // 10: chat.PrivateMessage.sender:type_name -> common.User
+	13, // 11: chat.PrivateMessage.created_at:type_name -> google.protobuf.Timestamp
+	13, // 12: chat.PrivateMessage.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 13: chat.PrivateMessage.deleted_at:type_name -> google.protobuf.Timestamp
+	8,  // 14: chat.GetPrivateMessagesResponse.messages:type_name -> chat.PrivateMessage
+	0,  // 15: chat.ChatService.CreateGroupMessage:input_type -> chat.CreateGroupMessageRequest
+	2,  // 16: chat.ChatService.GetPreviousGroupMessages:input_type -> chat.GetGroupMessagesRequest
+	2,  // 17: chat.ChatService.GetNextGroupMessages:input_type -> chat.GetGroupMessagesRequest
+	4,  // 18: chat.ChatService.GetPrivateConversations:input_type -> chat.GetPrivateConversationsRequest
+	7,  // 19: chat.ChatService.CreatePrivateMessage:input_type -> chat.CreatePrivateMessageRequest
+	9,  // 20: chat.ChatService.GetPreviousPrivateMessages:input_type -> chat.GetPrivateMessagesRequest
+	9,  // 21: chat.ChatService.GetNextPrivateMessages:input_type -> chat.GetPrivateMessagesRequest
+	11, // 22: chat.ChatService.UpdateLastReadPrivateMessage:input_type -> chat.UpdateLastReadPrivateMessageRequest
+	1,  // 23: chat.ChatService.CreateGroupMessage:output_type -> chat.GroupMessage
+	3,  // 24: chat.ChatService.GetPreviousGroupMessages:output_type -> chat.GetGroupMessagesResponse
+	3,  // 25: chat.ChatService.GetNextGroupMessages:output_type -> chat.GetGroupMessagesResponse
+	6,  // 26: chat.ChatService.GetPrivateConversations:output_type -> chat.GetPrivateConversationsResponse
+	8,  // 27: chat.ChatService.CreatePrivateMessage:output_type -> chat.PrivateMessage
+	10, // 28: chat.ChatService.GetPreviousPrivateMessages:output_type -> chat.GetPrivateMessagesResponse
+	10, // 29: chat.ChatService.GetNextPrivateMessages:output_type -> chat.GetPrivateMessagesResponse
+	14, // 30: chat.ChatService.UpdateLastReadPrivateMessage:output_type -> google.protobuf.Empty
+	23, // [23:31] is the sub-list for method output_type
+	15, // [15:23] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_chat_proto_init() }
@@ -1167,7 +1020,7 @@ func file_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_proto_rawDesc), len(file_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

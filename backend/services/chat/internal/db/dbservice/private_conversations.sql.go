@@ -23,30 +23,6 @@ type NewPrivateConversation struct {
 	DeletedAt          ct.GenDateTime `validation:"nullable"`
 }
 
-// Creates a private conversation if a conversation between the same 2 users does not exist.
-// DEPRECATED
-func (q *Queries) GetOrCreatePrivateConv(ctx context.Context,
-	arg md.GetOrCreatePrivateConvReq,
-) (res NewPrivateConversation, err error) {
-	input := fmt.Sprintf("arg: %#v", arg)
-	var pm NewPrivateConversation
-	row := q.db.QueryRow(ctx, getOrCreatePrivateConv, arg.UserId.Int64(), arg.InterlocutorId.Int64())
-	err = row.Scan(
-		&pm.Id,
-		&pm.UserA,
-		&pm.UserB,
-		&pm.LastReadMessageIdA,
-		&pm.LastReadMessageIdB,
-		&pm.CreatedAt,
-		&pm.UpdatedAt,
-		&pm.DeletedAt,
-	)
-	if err != nil {
-		return res, ce.New(nil, err, input)
-	}
-	return res, nil
-}
-
 func (q *Queries) GetPrivateConvs(ctx context.Context,
 	arg md.GetPrivateConvsReq) (res []md.PrivateConvsPreview, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)

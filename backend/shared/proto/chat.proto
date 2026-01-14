@@ -53,22 +53,6 @@ message GetGroupMessagesResponse {
 // Private Conversations
 // =====================
 
-// Request message to get or create a private conversation between two users.
-// Includes user IDs and a flag to retrieve interlocutor details.
-message GetOrCreatePrivateConvRequest {
-  int64 user = 1;
-  int64 interlocutor = 2;
-  bool retrieve_interlocutor = 3;
-}
-
-// Response message for getting or creating a private conversation.
-// Contains conversation ID, interlocutor details, last read message ID, and if it's new.
-message GetOrCreatePrivateConvResponse {
-  int64 conversation_id = 1;
-  common.User interlocutor = 2;
-  int64 last_read_message = 3;
-  bool is_new = 4;
-}
 
 // Request message for retrieving a paginated list of private conversations for a user.
 // Includes user ID, date before which to fetch, and limit.
@@ -170,13 +154,6 @@ service ChatService {
     GetGroupMessagesRequest
   ) returns (
     GetGroupMessagesResponse
-  );
-
-  // Gets an existing private conversation or creates a new one between two users.
-  rpc GetOrCreatePrivateConv(
-    GetOrCreatePrivateConvRequest
-  ) returns (
-    GetOrCreatePrivateConvResponse
   );
 
   // Retrieves a paginated list of private conversations for a user.

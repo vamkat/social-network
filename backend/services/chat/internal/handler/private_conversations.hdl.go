@@ -15,45 +15,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// GetOrCreatePrivateConv creates a new private conversation between two users
-// or returns an existing one if it already exists.
-// DEPRECATED
-func (h *ChatHandler) GetOrCreatePrivateConv(
-	ctx context.Context,
-	params *pb.GetOrCreatePrivateConvRequest,
-) (*pb.GetOrCreatePrivateConvResponse, error) {
-
-	tele.Info(ctx, "get or create private conversation called @1", "request", params.String())
-
-	// Call application layer
-	res, err := h.Application.GetOrCreatePrivateConv(ctx, md.GetOrCreatePrivateConvReq{
-		UserId:               ct.Id(params.User),
-		InterlocutorId:       ct.Id(params.Interlocutor),
-		RetrieveInterlocutor: params.RetrieveInterlocutor,
-	})
-	if err != nil {
-		tele.Error(ctx, "get or create private conversation error",
-			"request", params.String(),
-			"error", err.Error(),
-		)
-		return nil, ce.GRPCStatus(err)
-	}
-
-	resp := &pb.GetOrCreatePrivateConvResponse{
-		ConversationId:  res.ConversationId.Int64(),
-		Interlocutor:    mp.MapUserToProto(res.Interlocutor),
-		LastReadMessage: res.LastReadMessage.Int64(),
-		IsNew:           res.IsNew,
-	}
-
-	tele.Info(ctx, "get or create private conversation success. @1 @2",
-		"request", params.String(),
-		"response", resp.String(),
-	)
-
-	return resp, nil
-}
-
 func (h *ChatHandler) GetPrivateConversations(
 	ctx context.Context,
 	params *pb.GetPrivateConversationsRequest,

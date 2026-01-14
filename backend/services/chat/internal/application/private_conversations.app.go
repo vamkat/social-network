@@ -15,61 +15,6 @@ var (
 	ErrNotConnected = errors.New("users are not connected")
 )
 
-// Creates new conversation between two users or fetches an existing.
-// Returns convesation id, last read message id (if existing) and other user basic info if opted via RetrieveOther.
-func (c *ChatService) GetOrCreatePrivateConv(ctx context.Context,
-	params md.GetOrCreatePrivateConvReq) (res md.GetOrCreatePrivateConvResp, Err *ce.Error) {
-
-	input := fmt.Sprintf("user ids: %d, %d", params.UserId, params.InterlocutorId)
-
-	if err := ct.ValidateStruct(params); err != nil {
-		return res, ce.Wrap(ce.ErrInvalidArgument, err, input)
-	}
-
-	connected, Err := c.Clients.AreConnected(ctx, params.UserId, params.InterlocutorId)
-	if Err != nil {
-		return res, ce.Wrap(nil, Err, input)
-	}
-
-	if !connected {
-		return res, ce.New(ce.ErrPermissionDenied, ErrNotConnected, input)
-	}
-
-	newPC, err := c.Queries.GetOrCreatePrivateConv(ctx, params)
-	if err != nil {
-		return res, ce.Wrap(ce.ErrInternal, Err, input)
-	}
-
-	var isNew bool
-	if newPC.LastReadMessageIdA == 0 && newPC.LastReadMessageIdB == 0 {
-		isNew = true
-	}
-
-	var lastRead ct.Id
-	if newPC.UserA == params.UserId {
-		lastRead = newPC.LastReadMessageIdA
-	} else {
-		lastRead = newPC.LastReadMessageIdB
-	}
-
-	var otherUser md.User = md.User{UserId: params.InterlocutorId}
-	if params.RetrieveInterlocutor {
-		receiver, err := c.RetriveUsers.GetUser(ctx, params.InterlocutorId)
-		if err != nil {
-			return res, ce.Wrap(nil, err, input)
-		}
-		otherUser = receiver
-	}
-
-	res = md.GetOrCreatePrivateConvResp{
-		ConversationId:  newPC.Id,
-		Interlocutor:    otherUser,
-		LastReadMessage: lastRead,
-		IsNew:           isNew,
-	}
-	return res, nil
-}
-
 // Returns a sorted paginated list of private conversations
 // older that the given BeforeDate where user with UserId is a member.
 // Respose per PC includes last message and unread count from users side.

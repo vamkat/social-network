@@ -23,7 +23,6 @@ const (
 	ChatService_CreateGroupMessage_FullMethodName           = "/chat.ChatService/CreateGroupMessage"
 	ChatService_GetPreviousGroupMessages_FullMethodName     = "/chat.ChatService/GetPreviousGroupMessages"
 	ChatService_GetNextGroupMessages_FullMethodName         = "/chat.ChatService/GetNextGroupMessages"
-	ChatService_GetOrCreatePrivateConv_FullMethodName       = "/chat.ChatService/GetOrCreatePrivateConv"
 	ChatService_GetPrivateConversations_FullMethodName      = "/chat.ChatService/GetPrivateConversations"
 	ChatService_CreatePrivateMessage_FullMethodName         = "/chat.ChatService/CreatePrivateMessage"
 	ChatService_GetPreviousPrivateMessages_FullMethodName   = "/chat.ChatService/GetPreviousPrivateMessages"
@@ -43,8 +42,6 @@ type ChatServiceClient interface {
 	GetPreviousGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error)
 	// Retrieves next group messages (newer than the boundary message) for a group.
 	GetNextGroupMessages(ctx context.Context, in *GetGroupMessagesRequest, opts ...grpc.CallOption) (*GetGroupMessagesResponse, error)
-	// Gets an existing private conversation or creates a new one between two users.
-	GetOrCreatePrivateConv(ctx context.Context, in *GetOrCreatePrivateConvRequest, opts ...grpc.CallOption) (*GetOrCreatePrivateConvResponse, error)
 	// Retrieves a paginated list of private conversations for a user.
 	GetPrivateConversations(ctx context.Context, in *GetPrivateConversationsRequest, opts ...grpc.CallOption) (*GetPrivateConversationsResponse, error)
 	// Creates a new private message and returns the created message details.
@@ -89,16 +86,6 @@ func (c *chatServiceClient) GetNextGroupMessages(ctx context.Context, in *GetGro
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetGroupMessagesResponse)
 	err := c.cc.Invoke(ctx, ChatService_GetNextGroupMessages_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chatServiceClient) GetOrCreatePrivateConv(ctx context.Context, in *GetOrCreatePrivateConvRequest, opts ...grpc.CallOption) (*GetOrCreatePrivateConvResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetOrCreatePrivateConvResponse)
-	err := c.cc.Invoke(ctx, ChatService_GetOrCreatePrivateConv_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +154,6 @@ type ChatServiceServer interface {
 	GetPreviousGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error)
 	// Retrieves next group messages (newer than the boundary message) for a group.
 	GetNextGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error)
-	// Gets an existing private conversation or creates a new one between two users.
-	GetOrCreatePrivateConv(context.Context, *GetOrCreatePrivateConvRequest) (*GetOrCreatePrivateConvResponse, error)
 	// Retrieves a paginated list of private conversations for a user.
 	GetPrivateConversations(context.Context, *GetPrivateConversationsRequest) (*GetPrivateConversationsResponse, error)
 	// Creates a new private message and returns the created message details.
@@ -197,9 +182,6 @@ func (UnimplementedChatServiceServer) GetPreviousGroupMessages(context.Context, 
 }
 func (UnimplementedChatServiceServer) GetNextGroupMessages(context.Context, *GetGroupMessagesRequest) (*GetGroupMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNextGroupMessages not implemented")
-}
-func (UnimplementedChatServiceServer) GetOrCreatePrivateConv(context.Context, *GetOrCreatePrivateConvRequest) (*GetOrCreatePrivateConvResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrCreatePrivateConv not implemented")
 }
 func (UnimplementedChatServiceServer) GetPrivateConversations(context.Context, *GetPrivateConversationsRequest) (*GetPrivateConversationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPrivateConversations not implemented")
@@ -287,24 +269,6 @@ func _ChatService_GetNextGroupMessages_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ChatServiceServer).GetNextGroupMessages(ctx, req.(*GetGroupMessagesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChatService_GetOrCreatePrivateConv_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrCreatePrivateConvRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChatServiceServer).GetOrCreatePrivateConv(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ChatService_GetOrCreatePrivateConv_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServiceServer).GetOrCreatePrivateConv(ctx, req.(*GetOrCreatePrivateConvRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -417,10 +381,6 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNextGroupMessages",
 			Handler:    _ChatService_GetNextGroupMessages_Handler,
-		},
-		{
-			MethodName: "GetOrCreatePrivateConv",
-			Handler:    _ChatService_GetOrCreatePrivateConv_Handler,
 		},
 		{
 			MethodName: "GetPrivateConversations",
