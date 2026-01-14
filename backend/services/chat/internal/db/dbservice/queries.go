@@ -93,57 +93,6 @@ const (
 		AND NOT EXISTS (SELECT 1 FROM ins);
 	`
 
-	newPrivateMessage = `
-	WITH inserted_message AS (
-		INSERT INTO private_messages (conversation_id, sender_id, message_text)
-		SELECT
-			c.id,
-			$2 AS sender_id,
-			$3 AS message_text
-		FROM private_conversations c
-		WHERE c.id = $1
-			AND c.deleted_at IS NULL
-			AND ($2 = c.user_a OR $2 = c.user_b)
-		RETURNING
-			id,
-			conversation_id,
-			sender_id,
-			message_text,
-			created_at,
-			updated_at,
-			deleted_at
-	),
-	updated_conversation AS (
-		UPDATE private_conversations pc
-		SET
-			last_read_message_id_a = CASE
-				WHEN pc.user_a = im.sender_id THEN im.id
-				ELSE pc.last_read_message_id_a
-			END,
-			last_read_message_id_b = CASE
-				WHEN pc.user_b = im.sender_id THEN im.id
-				ELSE pc.last_read_message_id_b
-			END
-		FROM inserted_message im
-		WHERE pc.id = im.conversation_id
-	)
-	SELECT
-		im.id,
-		im.conversation_id,
-		im.sender_id,
-		CASE
-			WHEN pc.user_a = im.sender_id THEN pc.user_b
-			ELSE pc.user_a
-		END AS receiver_id,
-		im.message_text,
-		im.created_at,
-		im.updated_at,
-		im.deleted_at
-	FROM inserted_message im
-	JOIN private_conversations pc
-		ON pc.id = im.conversation_id;
-    `
-
 	createMsgAndConv = `
 	WITH conv AS (
 		INSERT INTO private_conversations (user_a, user_b)
@@ -266,10 +215,12 @@ const (
 	FROM private_conversations pc
 	JOIN private_messages pm
 	ON pm.conversation_id = pc.id
-	WHERE pc.id = $1
-	AND $2 IN (pc.user_a, pc.user_b)
+	WHERE pc.deleted_at IS NULL
 	AND pm.deleted_at IS NULL
 	AND pm.id < $3
+	AND (
+		(pc.user_a = LEAST($1::bigint, $2::bigint) AND pc.user_b = GREATEST($1::bigint, $2::bigint))
+		)
 	ORDER BY pm.id DESC
 	LIMIT $4;
 	`
@@ -279,10 +230,12 @@ const (
 	FROM private_conversations pc
 	JOIN private_messages pm
 	ON pm.conversation_id = pc.id
-	WHERE pc.id = $1
-	AND $2 IN (pc.user_a, pc.user_b)
+	WHERE pc.deleted_at IS NULL
 	AND pm.deleted_at IS NULL
 	AND pm.id > $3
+	AND (
+		(pc.user_a = LEAST($1::bigint, $2::bigint) AND pc.user_b = GREATEST($1::bigint, $2::bigint))
+		)
 	ORDER BY pm.id ASC
 	LIMIT $4;
 	`

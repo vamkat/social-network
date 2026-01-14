@@ -7,18 +7,10 @@ set -euo pipefail
 cleanup() {
   echo
   echo "🛑 Stopping all services..."
-  if [[ -f "$PID_FILE" ]]; then
-    # Send SIGTERM first
-    xargs -a "$PID_FILE" kill -TERM 2>/dev/null || true
-
-    # Wait 5 seconds for graceful shutdown
-    sleep 5
-
-    # Force kill anything left
-    xargs -a "$PID_FILE" kill -KILL 2>/dev/null || true
-
-    rm -f "$PID_FILE"
-  fi
+  # Kill all child processes of this script
+  pkill -P $$
+  sleep 15
+  pkill -P $$
 }
 
 trap cleanup INT TERM EXIT

@@ -17,7 +17,7 @@ type CreateGroupMsgReq struct {
 type GetGroupMsgsReq struct {
 	GroupId           ct.Id    `json:"user_id"`
 	UserId            ct.Id    `json:"member_id"`
-	BoundaryMessageId ct.Id    `json:"boundary_message_id" validation:"nullable"`
+	BoundaryMessageId ct.Id    `json:"boundary_message_id" validate:"nullable"`
 	Limit             ct.Limit `json:"limit"`
 }
 
@@ -27,9 +27,9 @@ type GroupMsg struct {
 	GroupId       ct.Id
 	Sender        User
 	MessageText   ct.MsgBody
-	CreatedAt     ct.GenDateTime `validation:"nullable"`
-	UpdatedAt     ct.GenDateTime `validation:"nullable"`
-	DeletedAt     ct.GenDateTime `validation:"nullable"`
+	CreatedAt     ct.GenDateTime `validate:"nullable"`
+	UpdatedAt     ct.GenDateTime `validate:"nullable"`
+	DeletedAt     ct.GenDateTime `validate:"nullable"`
 }
 
 type GetGroupMsgsResp struct {
@@ -50,21 +50,20 @@ type GetOrCreatePrivateConvReq struct {
 type GetOrCreatePrivateConvResp struct {
 	ConversationId  ct.Id
 	Interlocutor    User
-	LastReadMessage ct.Id `validation:"nullable"`
+	LastReadMessage ct.Id `validate:"nullable"`
 	IsNew           bool
 }
 
 type CreatePrivateMsgReq struct {
-	// ConversationId ct.Id      `json:"conversation_id"`
 	SenderId       ct.Id      `json:"sender_id"`
 	InterlocutorId ct.Id      `json:"interlocutor_id"`
 	MessageText    ct.MsgBody `json:"message_text"`
 }
 
 type GetPrivateMsgsReq struct {
-	ConversationId    ct.Id    `json:"conversation_id"`
 	UserId            ct.Id    `json:"user_id"`
-	BoundaryMessageId ct.Id    `json:"boundary_message_id" validation:"nullable"`
+	InterlocutorId    ct.Id    `json:"interlocutor_id"`
+	BoundaryMessageId ct.Id    `json:"boundary_message_id" validate:"nullable"`
 	Limit             ct.Limit `json:"limit"`
 	RetrieveUsers     bool     `json:"retrieve_users"`
 }
@@ -92,11 +91,11 @@ type PrivateMsg struct {
 	Id             ct.Id          `json:"id"`
 	ConversationId ct.Id          `json:"conversation_id"`
 	Sender         User           `json:"sender"`
-	ReceiverId     ct.Id          `json:"receiver_id,omitempty" validation:"nullable"`
+	ReceiverId     ct.Id          `json:"receiver_id,omitempty" validate:"nullable"`
 	MessageText    ct.MsgBody     `json:"message_text"`
-	CreatedAt      ct.GenDateTime `json:"created_at" validation:"nullable"`
-	UpdatedAt      ct.GenDateTime `json:"updated_at" validation:"nullable"`
-	DeletedAt      ct.GenDateTime `json:"deleted_at" validation:"nullable"`
+	CreatedAt      ct.GenDateTime `json:"created_at" validate:"nullable"`
+	UpdatedAt      ct.GenDateTime `json:"updated_at" validate:"nullable"`
+	DeletedAt      ct.GenDateTime `json:"deleted_at" validate:"nullable"`
 }
 
 type UpdateLastReadMsgParams struct {
@@ -108,7 +107,7 @@ type UpdateLastReadMsgParams struct {
 type ConversationMember struct {
 	ConversationId    ct.Id
 	UserId            ct.Id
-	LastReadMessageId ct.Id `validation:"nullable"`
+	LastReadMessageId ct.Id `validate:"nullable"`
 	JoinedAt          ct.GenDateTime
-	DeletedAt         ct.GenDateTime `validation:"nullable"`
+	DeletedAt         ct.GenDateTime `validate:"nullable"`
 }

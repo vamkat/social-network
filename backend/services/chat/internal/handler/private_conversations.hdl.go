@@ -124,7 +124,7 @@ func (h *ChatHandler) GetPreviousPrivateMessages(
 
 	// Call application layer
 	res, err := h.Application.GetPreviousPMs(ctx, md.GetPrivateMsgsReq{
-		ConversationId:    ct.Id(params.ConversationId),
+		InterlocutorId:    ct.Id(params.InterlocutorId),
 		UserId:            ct.Id(params.UserId),
 		BoundaryMessageId: ct.Id(params.BoundaryMessageId),
 		Limit:             ct.Limit(params.Limit),
@@ -158,7 +158,7 @@ func (h *ChatHandler) GetNextPrivateMessages(
 
 	// Call application layer
 	res, err := h.Application.GetNextPMs(ctx, md.GetPrivateMsgsReq{
-		ConversationId:    ct.Id(params.ConversationId),
+		InterlocutorId:    ct.Id(params.InterlocutorId),
 		UserId:            ct.Id(params.UserId),
 		BoundaryMessageId: ct.Id(params.BoundaryMessageId),
 		Limit:             ct.Limit(params.Limit),

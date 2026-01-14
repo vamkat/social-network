@@ -122,8 +122,8 @@ message PrivateMessage {
 // Request message for retrieving private messages.
 // Specifies conversation ID, user ID, boundary message ID for pagination, limit, and user retrieval flag.
 message GetPrivateMessagesRequest {
-  int64 conversation_id = 1;
-  int64 user_id = 2;
+  int64 user_id = 1;
+  int64 interlocutor_id = 2;
   int64 boundary_message_id = 3;
   int32 limit = 4;
   bool retrieve_users = 5;

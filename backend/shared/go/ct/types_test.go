@@ -234,12 +234,13 @@ func TestValidateStruct(t *testing.T) {
 		Email    ct.Email    // required
 		About    ct.About    `validate:"nullable"`
 		Username ct.Username `validate:"nullable"`
+		Id       ct.Id       `validate:"nullable"`
 	}
 
 	ok := TestReq{
 		Name:     "John Doe",
 		Email:    "valid@example.com",
-		About:    "This is ok",
+		About:    "",
 		Username: "user_1",
 	}
 

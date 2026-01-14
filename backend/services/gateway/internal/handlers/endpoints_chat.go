@@ -176,6 +176,9 @@ func (h *Handlers) GetPrivateConversations() http.HandlerFunc {
 func (h *Handlers) GetPrivateMessagesPag() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		tele.Info(ctx, "get private messages paginated called")
+
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
 		if !ok {
 			tele.Error(ctx, "problem fetching claims")
@@ -183,36 +186,45 @@ func (h *Handlers) GetPrivateMessagesPag() http.HandlerFunc {
 			return
 		}
 
+		tele.Debug(ctx, "1. get private messages reached here ")
 		v := r.URL.Query()
+		tele.Debug(ctx, "1.1 get private messages reached here ")
 		userId := claims.UserId
-		convId, err1 := utils.ParamGet(v, "conv-id", ct.Id(0), true)
+		interlocutorId, err1 := utils.ParamGet(v, "interlocutor-id", ct.Id(0), true)
 		boundary, err2 := utils.ParamGet(v, "boundary", int64(0), false)
-		limit, err3 := utils.ParamGet(v, "limit", int32(100), true)
+		limit, err3 := utils.ParamGet(v, "limit", 100, true)
+		tele.Debug(ctx, "1.5 get private messages reached here ")
 		retrieveusers, err4 := utils.ParamGet(v, "retrieve-users", false, false)
+		tele.Debug(ctx, "1.6 get private messages reached here ")
 		getPrevious, err5 := utils.ParamGet(v, "get-previous", true, false)
 
+		tele.Debug(ctx, "2. get private messages reached here ")
 		if err := errors.Join(err1, err2, err3, err4, err5); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
-		if err := ct.ValidateBatch(convId, ct.Limit(limit)); err != nil {
+		tele.Debug(ctx, "3. get private messages reached here ")
+		if err := ct.ValidateBatch(interlocutorId, ct.Limit(limit)); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
 		}
 
+		tele.Debug(ctx, "4. get private messages reached here ")
 		getFunc := h.ChatService.GetPreviousPrivateMessages
 		if !getPrevious {
 			getFunc = h.ChatService.GetNextPrivateMessages
 		}
 
 		grpcResponse, err := getFunc(ctx, &chat.GetPrivateMessagesRequest{
-			ConversationId:    convId.Int64(),
 			UserId:            userId,
+			InterlocutorId:    interlocutorId.Int64(),
 			BoundaryMessageId: boundary,
-			Limit:             limit,
+			Limit:             int32(limit),
 			RetrieveUsers:     retrieveusers,
 		})
 
+		tele.Debug(ctx, "get private messages @1 @2", "grpcRes", grpcResponse, "error", err)
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
 			err = ce.ParseGrpcErr(err)

@@ -798,8 +798,8 @@ func (x *PrivateMessage) GetDeletedAt() *timestamppb.Timestamp {
 // Specifies conversation ID, user ID, boundary message ID for pagination, limit, and user retrieval flag.
 type GetPrivateMessagesRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId    int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	UserId            int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId            int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	InterlocutorId    int64                  `protobuf:"varint,2,opt,name=interlocutor_id,json=interlocutorId,proto3" json:"interlocutor_id,omitempty"`
 	BoundaryMessageId int64                  `protobuf:"varint,3,opt,name=boundary_message_id,json=boundaryMessageId,proto3" json:"boundary_message_id,omitempty"`
 	Limit             int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	RetrieveUsers     bool                   `protobuf:"varint,5,opt,name=retrieve_users,json=retrieveUsers,proto3" json:"retrieve_users,omitempty"`
@@ -837,16 +837,16 @@ func (*GetPrivateMessagesRequest) Descriptor() ([]byte, []int) {
 	return file_chat_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *GetPrivateMessagesRequest) GetConversationId() int64 {
+func (x *GetPrivateMessagesRequest) GetUserId() int64 {
 	if x != nil {
-		return x.ConversationId
+		return x.UserId
 	}
 	return 0
 }
 
-func (x *GetPrivateMessagesRequest) GetUserId() int64 {
+func (x *GetPrivateMessagesRequest) GetInterlocutorId() int64 {
 	if x != nil {
-		return x.UserId
+		return x.InterlocutorId
 	}
 	return 0
 }
@@ -1058,9 +1058,9 @@ const file_chat_proto_rawDesc = "" +
 	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x129\n" +
 	"\n" +
 	"deleted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tdeletedAt\"\xca\x01\n" +
-	"\x19GetPrivateMessagesRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12.\n" +
+	"\x19GetPrivateMessagesRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12'\n" +
+	"\x0finterlocutor_id\x18\x02 \x01(\x03R\x0einterlocutorId\x12.\n" +
 	"\x13boundary_message_id\x18\x03 \x01(\x03R\x11boundaryMessageId\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12%\n" +
 	"\x0eretrieve_users\x18\x05 \x01(\bR\rretrieveUsers\"k\n" +
