@@ -186,7 +186,7 @@ func (h *Handlers) GetPrivateMessagesPag() http.HandlerFunc {
 		v := r.URL.Query()
 		userId := claims.UserId
 		convId, err1 := utils.ParamGet(v, "conv-id", ct.Id(0), true)
-		boundary, err2 := utils.ParamGet(v, "boundary", int64(0), true)
+		boundary, err2 := utils.ParamGet(v, "boundary", int64(0), false)
 		limit, err3 := utils.ParamGet(v, "limit", int32(100), true)
 		retrieveusers, err4 := utils.ParamGet(v, "retrieve-users", false, false)
 		getPrevious, err5 := utils.ParamGet(v, "get-previous", true, false)
@@ -326,6 +326,56 @@ func (h *Handlers) GetGroupMessagesPag() http.HandlerFunc {
 			HaveMore: grpcResponse.HaveMore,
 			Messages: mapping.MapGroupMessagesFromProto(grpcResponse.Messages),
 		})
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
+		}
+	}
+}
+
+func (h *Handlers) UpdateLastRead() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		if !ok {
+			tele.Error(ctx, "problem fetching claims")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "can't find claims")
+			return
+		}
+
+		userId := claims.UserId
+		type req struct {
+			ConversationId    ct.Id `json:"conversation_id"`
+			LastReadMessageId ct.Id `json:"last_read_message_id"`
+		}
+		httpReq := req{}
+
+		decoder := json.NewDecoder(r.Body)
+		defer r.Body.Close()
+		if err := decoder.Decode(&httpReq); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if err := ct.ValidateStruct(httpReq); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
+		grpcResponse, err := h.ChatService.UpdateLastReadPrivateMessage(ctx,
+			&chat.UpdateLastReadPrivateMessageRequest{
+				UserId:            userId,
+				ConversationId:    httpReq.ConversationId.Int64(),
+				LastReadMessageId: httpReq.LastReadMessageId.Int64(),
+			})
+
+		httpCode, _ := gorpc.Classify(err)
+		if err != nil {
+			err = ce.ParseGrpcErr(err)
+			utils.ErrorJSON(ctx, w, httpCode, err.Error())
+			return
+		}
+
+		err = utils.WriteJSON(ctx, w, httpCode, grpcResponse)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 		}

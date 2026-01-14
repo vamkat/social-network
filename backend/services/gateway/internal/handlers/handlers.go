@@ -661,5 +661,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.GetGroupMessagesPag()))
 
+	mux.HandleFunc("/chat/update-last-read-pm",
+		Chain("/chat/update-last-read-pm").
+			AllowedMethod("POST").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.UpdateLastRead()))
+
 	return mux
 }

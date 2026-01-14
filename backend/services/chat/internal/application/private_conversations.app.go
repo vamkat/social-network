@@ -178,6 +178,7 @@ func (c *ChatService) UpdateLastReadPrivateMsg(ctx context.Context, arg md.Updat
 
 	err := c.Queries.UpdateLastReadPrivateMsg(ctx, arg)
 	if err != nil {
+		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
 		return ce.Wrap(nil, err, input)
 	}
 	return nil

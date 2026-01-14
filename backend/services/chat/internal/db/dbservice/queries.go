@@ -297,9 +297,9 @@ const (
 		last_read_message_id_b = CASE
 			WHEN user_b = $2 THEN $3
 			ELSE last_read_message_id_b
-		END,
+		END
 	WHERE id = $1
-	AND (user_a = $3 OR user_b = $3)
+	AND (user_a = $2 OR user_b = $2)
 	AND deleted_at IS NULL;
 	`
 )

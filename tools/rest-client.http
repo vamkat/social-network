@@ -1,12 +1,20 @@
 @baseUrl = http://localhost:8081
 @token= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMSwiZXhwIjoxNzgxNTk2NTk1LCJpYXQiOjE3NjU4NzE3OTV9.t26_Z2z_7PbcCo232SlQIIo1maR7nPJ8o627yybHGkw"
 
-### 1) LOGIN
+### 1) LOGIN 1
 POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
   "identifier": "johndoe",
+  "password": "StrongPassword123!"
+}
+### 1) LOGIN 2
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "identifier": "johnfoe",
   "password": "StrongPassword123!"
 }
 
@@ -43,6 +51,19 @@ Content-Type: application/json
 ### get conversations
 GET {{baseUrl}}/chat/get-private-conversations?limit=10
 Content-Type: application/json
+
+### get messages
+GET {{baseUrl}}/chat/get-pms-paginated?conv-id=2VolejRejNmG&limit=10
+Content-Type: application/json
+
+### update last read
+POST {{baseUrl}}/chat/update-last-read-pm
+Content-Type: application/json
+
+{
+  "conversation_id":"2VolejRejNmG",
+  "last_read_message_id":"J4openRe7Az1"
+}
 
 
 ### Upload file
