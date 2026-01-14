@@ -43,8 +43,7 @@ POST {{baseUrl}}/chat/create-pm
 Content-Type: application/json
 
 {
-  "sender_id":"ZOpnel5aKBzy",
-  "interlocutor_id":"GWpmbk5ezJn4",
+  "interlocutor_id":"ZOpnel5aKBzy",
   "message_body":"test check check"  
 }
 
@@ -68,6 +67,26 @@ Content-Type: application/json
   "conversation_id":"2VolejRejNmG",
   "last_read_message_id":"J4openRe7Az1"
 }
+
+### groups/create
+POST {{baseUrl}}/groups/create
+Content-Type: application/json
+
+{
+  "group_title": "Go Developers Forever!!",
+  "group_description": "A group for people who love writing Go"
+}
+
+### Send group msg
+POST {{baseUrl}}/chat/create-group-message
+
+{
+  "group_id":"2VolejRejNmG",
+  "message_body":"group group group"
+}
+
+### Get Group Conv
+GET {{baseUrl}}/chat/get-group-messages-paginated?group-id=2VolejRejNmG&limit=10
 
 
 ### Upload file

@@ -43,9 +43,9 @@ const (
     WHERE gc.group_id = $1
       AND gm.deleted_at IS NULL
 	  AND gc.deleted_at IS NULL
-      AND gm.id < $3
+      AND gm.id < $2
     ORDER BY gm.id DESC
-    LIMIT $4;
+    LIMIT $3;
 	`
 
 	getNextGroupMsgs = `
@@ -64,9 +64,9 @@ const (
     WHERE gc.group_id = $1
       AND gm.deleted_at IS NULL
 	  AND gc.deleted_at IS NULL
-      AND gm.id > $3
+      AND gm.id > $2
     ORDER BY gm.id ASC
-    LIMIT $4;
+    LIMIT $3;
 	`
 
 	// ====================================

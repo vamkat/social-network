@@ -654,7 +654,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 
 	mux.HandleFunc("/chat/get-group-messages-paginated",
 		Chain("/chat/get-group-messages-paginated").
-			AllowedMethod("POST").
+			AllowedMethod("GET").
 			RateLimit(IP, 20, 5).
 			Auth().
 			EnrichContext().
