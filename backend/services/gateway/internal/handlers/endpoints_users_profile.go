@@ -201,7 +201,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			LastName    ct.Name        `json:"last_name"`
 			DateOfBirth ct.DateOfBirth `json:"date_of_birth"`
 			About       ct.About       `json:"about" validate:"nullable"`
-			AvatarId    ct.Id          `json:"avatar_id"`
+			AvatarId    ct.Id          `json:"avatar_id" validate:"nullable"`
 
 			AvatarName string `json:"avatar_name"`
 			AvatarSize int64  `json:"avatar_size"`

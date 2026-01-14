@@ -108,7 +108,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			GroupId          ct.Id  `json:"group_id"`
 			GroupTitle       string `json:"group_title"`
 			GroupDescription string `json:"group_description"`
-			GroupImageId     ct.Id  `json:"group_image_id"`
+			GroupImageId     ct.Id  `json:"group_image_id" validate:"nullable"`
 
 			GroupImageName string `json:"group_image_name"`
 			GroupImageSize int64  `json:"group_image_size"`
