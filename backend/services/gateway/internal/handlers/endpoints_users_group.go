@@ -108,6 +108,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			GroupId          ct.Id  `json:"group_id"`
 			GroupTitle       string `json:"group_title"`
 			GroupDescription string `json:"group_description"`
+			GroupImageId     ct.Id  `json:"group_image_id"`
 
 			GroupImageName string `json:"group_image_name"`
 			GroupImageSize int64  `json:"group_image_size"`
@@ -128,7 +129,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			return
 		}
 
-		var GroupImageId ct.Id
+		GroupImageId := httpReq.GroupImageId
 		var uploadURL string
 
 		if httpReq.GroupImageSize != 0 {
