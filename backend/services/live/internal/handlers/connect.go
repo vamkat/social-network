@@ -198,7 +198,10 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			})
 			if err != nil {
 				tele.Error(ctx, "failed to create private message @1", "error", err.Error())
-				websocketConn.WriteJSON(ce.ParseGrpcErr(err, payload).Error())
+				err = websocketConn.WriteJSON(ce.ParseGrpcErr(err, payload).Error())
+				if err != nil {
+					tele.Error(ctx, "sent error back to caller @1", "payload", payload)
+				}
 				continue
 			}
 			err = websocketConn.WriteJSON(mapping.MapPMFromProto(res))

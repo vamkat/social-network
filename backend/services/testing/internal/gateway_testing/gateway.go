@@ -574,7 +574,11 @@ func (cl *fakeClient) DoRequest(
 	}
 
 	if err != nil {
-		return resp, fmt.Errorf("%s at %s failed: %w, body: %s", label, url, err, bodyToString(resp))
+		str := "[resp was nil...]"
+		if resp != nil {
+			str = bodyToString(resp)
+		}
+		return resp, fmt.Errorf("%s at %s failed: %w, body: %s", label, url, err, str)
 	}
 
 	if !slices.Contains(expectedStates, resp.StatusCode) {
