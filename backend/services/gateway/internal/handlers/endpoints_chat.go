@@ -88,10 +88,10 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 
 		userId := claims.UserId
 		type req struct {
-			ConversationId ct.Id      `json:"conversation_id"`
+			InterlocutorId ct.Id      `json:"interlocutor_id"`
 			Message        ct.MsgBody `json:"message_body"`
 		}
-		httpReq := models.CreatePrivateMsgReq{}
+		httpReq := req{}
 
 		decoder := json.NewDecoder(r.Body)
 		defer r.Body.Close()
@@ -109,7 +109,7 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 			&chat.CreatePrivateMessageRequest{
 				SenderId:       userId,
 				InterlocutorId: httpReq.InterlocutorId.Int64(),
-				MessageText:    httpReq.MessageText.String(),
+				MessageText:    httpReq.Message.String(),
 			})
 
 		httpCode, _ := gorpc.Classify(err)

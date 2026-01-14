@@ -188,10 +188,7 @@ const (
 		im.created_at, 
 		im.updated_at, 
 		im.deleted_at
-	FROM inserted_message im
-	-- CROSS JOIN forces the update CTE to run.
-	-- If 'inserted_message' is empty (blocked), this result is also empty.
-	CROSS JOIN updated_conversation uc;
+	FROM inserted_message im;
 	`
 
 	getPrivateConvs = `
@@ -202,18 +199,18 @@ const (
 
 			-- determine other user
 			CASE
-				WHEN pc.user_id_a = $1 THEN pc.user_id_b
-				ELSE pc.user_id_a
+				WHEN pc.user_a = $1 THEN pc.user_b
+				ELSE pc.user_a
 			END AS other_user_id,
 
 			-- determine last read message for this user
 			CASE
-				WHEN pc.user_id_a = $1 THEN pc.last_read_message_id_a
+				WHEN pc.user_a = $1 THEN pc.last_read_message_id_a
 				ELSE pc.last_read_message_id_b
 			END AS last_read_message_id
 
 		FROM private_conversations pc
-		WHERE $1 IN (pc.user_id_a, pc.user_id_b)
+		WHERE $1 IN (pc.user_a, pc.user_b)
 		AND pc.updated_at < $2
 	)
 

@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/go/batching"
+	ce "social-network/shared/go/commonerrors"
 	"social-network/shared/go/ct"
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
+	"social-network/shared/go/mapping"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 	"strings"
@@ -183,34 +185,25 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			}
 			delete(subcriptions, payload)
 		case "ch":
-
-			// _, err = h.ChatService.GetOrCreatePrivateConv(ctx, &chat.GetOrCreatePrivateConvRequest{
-			// 	User:              clientId,
-			// 	OtherUser:         2,
-			// 	RetrieveOtherUser: false,
-			// })
-			// if err != nil {
-			// 	tele.Error(ctx, "failed to get or create private conversation @1", "error", err.Error())
-			// }
-
-			// type chatMessage struct {
-			// 	Category       string     `json:"category"`
-			// 	ConversationId ct.Id      `json:"conversation_id"`
-			// 	Body           ct.MsgBody `json:"body"`
-			// }
-			// message := &chatMessage{}
 			message := &models.CreatePrivateMsgReq{}
 			err = json.Unmarshal([]byte(payload), message)
 			if err != nil {
 				tele.Error(ctx, "failed to unmarshal chat message @1", "error", err.Error())
+				continue
 			}
-			_, err = h.ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
+			res, err := h.ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
 				SenderId:       clientId,
 				InterlocutorId: message.InterlocutorId.Int64(),
 				MessageText:    message.MessageText.String(),
 			})
 			if err != nil {
 				tele.Error(ctx, "failed to create private message @1", "error", err.Error())
+				websocketConn.WriteJSON(ce.ParseGrpcErr(err, payload).Error())
+				continue
+			}
+			err = websocketConn.WriteJSON(mapping.MapPMFromProto(res))
+			if err != nil {
+				tele.Error(ctx, "failed to write back to caller @1 @2", "payload", payload, "error", err.Error())
 			}
 		}
 	}

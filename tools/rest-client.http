@@ -6,8 +6,8 @@ POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "identifier": "myuser1234",
-  "password": "superSecret123"
+  "identifier": "johndoe",
+  "password": "StrongPassword123!"
 }
 
 ### 2) LOGOUT
@@ -20,19 +20,30 @@ Content-Type: application/json
 Host: minio:9000
 
 {
-  "username": "johnaoe",
+  "username": "johnfoe",
   "first_name": "John",
   "last_name": "Doe",
   "date_of_birth": "1995-04-12",
   "about": "Software engineer and coffee lover",
   "public": true,
-  "email": "john.aoe@example.com",
-  "password": "StrongPassword123!",
-
-  "avatar_name": "avatar.png",
-  "avatar_size": 397,
-  "avatar_type": "image/jpg"
+  "email": "john.foe@example.com",
+  "password": "StrongPassword123!"
 }
+
+### Send message
+POST {{baseUrl}}/chat/create-pm
+Content-Type: application/json
+
+{
+  "sender_id":"ZOpnel5aKBzy",
+  "interlocutor_id":"GWpmbk5ezJn4",
+  "message_body":"test check check"  
+}
+
+### get conversations
+GET {{baseUrl}}/chat/get-private-conversations?limit=10
+Content-Type: application/json
+
 
 ### Upload file
 PUT http://minio:9000/uploads-originals/6476b142-e64d-43ed-b6b3-95e80be13ba6?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20251216%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251216T202445Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=57b9a69ff965a6bbc565003016f333fc3c4aa994637e3a9451641bac0340158a

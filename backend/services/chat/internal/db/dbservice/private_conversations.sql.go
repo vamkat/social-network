@@ -55,7 +55,12 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 		return res, ce.New(ce.ErrInvalidArgument, err, input)
 	}
 
-	rows, err := q.db.Query(ctx, getPrivateConvs)
+	rows, err := q.db.Query(ctx,
+		getPrivateConvs,
+		arg.UserId.Int64(),
+		arg.BeforeDateUpdated,
+		arg.Limit,
+	)
 	if err != nil {
 		return res, ce.New(ce.ErrInternal, err, input)
 	}
