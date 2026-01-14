@@ -745,11 +745,16 @@ func (s *Application) UpdateGroup(ctx context.Context, req *models.UpdateGroupRe
 		return ce.New(ce.ErrPermissionDenied, fmt.Errorf("user %v is not the owner of group %v", req.RequesterId, req.GroupId), input).WithPublic("permission denied")
 	}
 
+	groupImageId := req.GroupImage.Int64()
+	if req.DeleteImage {
+		groupImageId = 0
+	}
+
 	rowsAffected, err := s.db.UpdateGroup(ctx, ds.UpdateGroupParams{
 		ID:               req.GroupId.Int64(),
 		GroupTitle:       req.GroupTitle.String(),
 		GroupDescription: req.GroupDescription.String(),
-		GroupImageID:     req.GroupImage.Int64(),
+		GroupImageID:     groupImageId,
 	})
 
 	if err != nil {

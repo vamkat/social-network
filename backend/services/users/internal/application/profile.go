@@ -231,13 +231,18 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 		Valid: true,
 	}
 
+	avatarId := req.AvatarId.Int64()
+	if req.DeleteImage {
+		avatarId = 0
+	}
+
 	row, err := s.db.UpdateUserProfile(ctx, ds.UpdateUserProfileParams{
 		ID:          req.UserId.Int64(),
 		Username:    req.Username.String(),
 		FirstName:   req.FirstName.String(),
 		LastName:    req.LastName.String(),
 		DateOfBirth: dob,
-		AvatarID:    req.AvatarId.Int64(),
+		AvatarID:    avatarId,
 		AboutMe:     req.About.String(),
 	})
 	if err != nil {

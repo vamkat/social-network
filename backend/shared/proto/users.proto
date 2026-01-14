@@ -428,6 +428,7 @@ message UpdateGroupRequest{
   string group_title       = 3;
   string group_description = 4;
   int64  group_image_id    = 5; //can be 0 if no image
+  bool   delete_image      = 6;
 }
 
 // GET USER PROFILE
@@ -453,6 +454,7 @@ message UpdateProfileRequest {
   google.protobuf.Timestamp date_of_birth = 5;
   int64                     avatar        = 6; //can be 0 if no image
   string                    about         = 7; //can be empty string
+  bool                      delete_image  = 8;
 }
 
 //Request message for updating own profile privacy

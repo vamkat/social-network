@@ -201,7 +201,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			LastName    ct.Name        `json:"last_name"`
 			DateOfBirth ct.DateOfBirth `json:"date_of_birth"`
 			About       ct.About       `json:"about" validate:"nullable"`
-			AvatarId    ct.Id          `json:"avatar_id" validate:"nullable"`
+			DeleteImage bool           `json:"delete_image"`
 
 			AvatarName string `json:"avatar_name"`
 			AvatarSize int64  `json:"avatar_size"`
@@ -222,7 +222,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			return
 		}
 
-		AvatarId := httpReq.AvatarId
+		var AvatarId ct.Id
 		var uploadURL string
 		if httpReq.AvatarSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
@@ -251,6 +251,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			DateOfBirth: httpReq.DateOfBirth.ToProto(),
 			Avatar:      AvatarId.Int64(),
 			About:       httpReq.About.String(),
+			DeleteImage: httpReq.DeleteImage,
 		}
 
 		grpcResp, err := s.UsersService.UpdateUserProfile(ctx, grpcRequest)
