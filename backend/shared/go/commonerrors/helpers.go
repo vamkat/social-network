@@ -1,9 +1,14 @@
 package commonerrors
 
 import (
+	"context"
+	"errors"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Returns c error if c is not nil and is a defined error
@@ -52,4 +57,35 @@ func getStack(depth int, skip int) string {
 	}
 
 	return builder.String()
+}
+
+// Helper mapper from error to grpc code.
+func ToGRPCCode(err error) codes.Code {
+	if err == nil {
+		return codes.OK
+	}
+
+	// Propagate gRPC status errors
+	if st, ok := status.FromError(err); ok {
+		return st.Code()
+	}
+
+	// Handle context errors
+	if errors.Is(err, context.DeadlineExceeded) {
+		return codes.DeadlineExceeded
+	}
+	if errors.Is(err, context.Canceled) {
+		return codes.Canceled
+	}
+
+	// Handle domain error
+	var e *Error
+	if errors.As(err, &e) {
+		if code, ok := classToGRPC[e.class]; ok {
+			return code
+		}
+	}
+
+	// 4. Fallback
+	return codes.Unknown
 }

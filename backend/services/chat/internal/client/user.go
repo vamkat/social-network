@@ -14,7 +14,7 @@ import (
 func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*cm.ListUsers, *ce.Error) {
 	resp, err := c.UserClient.GetBatchBasicUserInfo(ctx, req)
 	if err != nil {
-		return nil, ce.ParseGrpcErr(err, req.String())
+		return nil, ce.DecodeProto(err, req.String())
 	}
 	return resp, nil
 }
@@ -23,7 +23,7 @@ func (c *Clients) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserIds) (*
 func (c *Clients) GetImages(ctx context.Context, req *media.GetImagesRequest) (*media.GetImagesResponse, *ce.Error) {
 	resp, err := c.MediaClient.GetImages(ctx, req)
 	if err != nil {
-		return nil, ce.ParseGrpcErr(err, req.String())
+		return nil, ce.DecodeProto(err, req.String())
 	}
 	return resp, nil
 }
@@ -36,7 +36,7 @@ func (c *Clients) IsGroupMember(ctx context.Context,
 		UserId:  userId.Int64(),
 	})
 	if err != nil {
-		return false, ce.ParseGrpcErr(err, input)
+		return false, ce.DecodeProto(err, input)
 	}
 	return resp.GetValue(), nil
 }
@@ -48,7 +48,7 @@ func (c *Clients) AreConnected(ctx context.Context, userA, userB ct.Id) (bool, *
 		TargetUserId: userB.Int64(),
 	})
 	if err != nil {
-		return false, ce.ParseGrpcErr(err, input)
+		return false, ce.DecodeProto(err, input)
 	}
 
 	connected := resp.FollowerFollowsTarget || resp.TargetFollowsFollower

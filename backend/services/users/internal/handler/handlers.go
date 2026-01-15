@@ -42,7 +42,7 @@ func (s *UsersHandler) RegisterUser(ctx context.Context, req *pb.RegisterUserReq
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in RegisterUser. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &pb.RegisterUserResponse{
@@ -74,7 +74,7 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in LoginUser. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &cm.User{
@@ -108,7 +108,7 @@ func (s *UsersHandler) UpdateUserPassword(ctx context.Context, req *pb.UpdatePas
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in UpdateUserPassword. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -135,7 +135,7 @@ func (s *UsersHandler) UpdateUserEmail(ctx context.Context, req *pb.UpdateEmailR
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in UpdateUserEmail. @1", "error", err.Error(), "req", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -167,7 +167,7 @@ func (s *UsersHandler) GetFollowersPaginated(ctx context.Context, req *pb.Pagina
 	resp, err := s.Application.GetFollowersPaginated(ctx, pag)
 	if err != nil {
 		tele.Error(ctx, "Error in GetFollowersPaginated. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -198,7 +198,7 @@ func (s *UsersHandler) GetFollowingPaginated(ctx context.Context, req *pb.Pagina
 	resp, err := s.Application.GetFollowingPaginated(ctx, pag)
 	if err != nil {
 		tele.Warn(ctx, "Error in GetFollowingPaginated. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -225,7 +225,7 @@ func (s *UsersHandler) FollowUser(ctx context.Context, req *pb.FollowUserRequest
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in FollowUser. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &pb.FollowUserResponse{
@@ -256,7 +256,7 @@ func (s *UsersHandler) UnFollowUser(ctx context.Context, req *pb.FollowUserReque
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in UnFollowUser. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -287,7 +287,7 @@ func (s *UsersHandler) HandleFollowRequest(ctx context.Context, req *pb.HandleFo
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in HandleFollowRequest. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -305,7 +305,7 @@ func (s *UsersHandler) GetFollowingIds(ctx context.Context, req *wrapperspb.Int6
 	resp, err := s.Application.GetFollowingIds(ctx, ct.Id(userId))
 	if err != nil {
 		tele.Error(ctx, "Error in GetFollowingIds. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &cm.UserIds{Values: resp}, nil
 }
@@ -324,7 +324,7 @@ func (s *UsersHandler) GetFollowSuggestions(ctx context.Context, req *wrapperspb
 	resp, err := s.Application.GetFollowSuggestions(ctx, ct.Id(userId))
 	if err != nil {
 		tele.Error(ctx, "Error in GetFollowSuggestions. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return usersToPB(resp), nil
@@ -353,7 +353,7 @@ func (s *UsersHandler) IsFollowing(ctx context.Context, req *pb.IsFollowingReque
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in IsFollowing. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return wrapperspb.Bool(resp), nil
@@ -382,7 +382,7 @@ func (s *UsersHandler) AreFollowingEachOther(ctx context.Context, req *pb.Follow
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in AreFollowingEachOther. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &pb.AreFollowingEachOtherResponse{
@@ -420,7 +420,7 @@ func (s *UsersHandler) GetAllGroupsPaginated(ctx context.Context, req *pb.Pagina
 	resp, err := s.Application.GetAllGroupsPaginated(ctx, pag)
 	if err != nil {
 		tele.Error(ctx, "Error in GetAllGroupsPaginated. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return groupsToPb(resp), nil
 }
@@ -452,7 +452,7 @@ func (s *UsersHandler) GetUserGroupsPaginated(ctx context.Context, req *pb.Pagin
 	resp, err := s.Application.GetUserGroupsPaginated(ctx, pag)
 	if err != nil {
 		tele.Error(ctx, "Error in GetUserGroupsPaginated. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return groupsToPb(resp), nil
 }
@@ -480,7 +480,7 @@ func (s *UsersHandler) GetGroupInfo(ctx context.Context, req *pb.GeneralGroupReq
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetGroupInfo. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &pb.Group{
@@ -528,7 +528,7 @@ func (s *UsersHandler) GetGroupMembers(ctx context.Context, req *pb.GroupMembers
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetGroupMembers. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return groupUsersToPB(resp), nil
 }
@@ -563,7 +563,7 @@ func (s *UsersHandler) GetPendingGroupJoinRequests(ctx context.Context, req *pb.
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetPendingGroupJoinRequests. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -590,7 +590,7 @@ func (s *UsersHandler) GetPendingGroupJoinRequestsCount(ctx context.Context, req
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetPendingGroupJoinRequestsCount. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &pb.CountResp{Id: resp}, nil
 }
@@ -625,7 +625,7 @@ func (s *UsersHandler) GetFollowersNotInvitedToGroup(ctx context.Context, req *p
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetFollowersNotInvitedToGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -660,7 +660,7 @@ func (s *UsersHandler) SearchGroups(ctx context.Context, req *pb.GroupSearchRequ
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in SearchGroups. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return groupsToPb(resp), nil
@@ -690,7 +690,7 @@ func (s *UsersHandler) InviteToGroup(ctx context.Context, req *pb.InviteToGroupR
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in InviteToGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -716,7 +716,7 @@ func (s *UsersHandler) IsGroupMember(ctx context.Context, req *pb.GeneralGroupRe
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in IsGroupMember. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return wrapperspb.Bool(resp), nil
 }
@@ -744,7 +744,7 @@ func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRe
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in RequestJoinGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -772,7 +772,7 @@ func (s *UsersHandler) CancelGroupJoinRequest(ctx context.Context, req *pb.Group
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in CancelJoinGroupRequest. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -803,7 +803,7 @@ func (s *UsersHandler) RespondToGroupInvite(ctx context.Context, req *pb.HandleG
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in RespondToGroupInvite. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -841,7 +841,7 @@ func (s *UsersHandler) HandleGroupJoinRequest(ctx context.Context, req *pb.Handl
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in HandleGroupJoinRequest. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -869,7 +869,7 @@ func (s *UsersHandler) LeaveGroup(ctx context.Context, req *pb.GeneralGroupReque
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in LeaveGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -903,7 +903,7 @@ func (s *UsersHandler) RemoveFromGroup(ctx context.Context, req *pb.RemoveFromGr
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in RemoveFromGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -943,7 +943,7 @@ func (s *UsersHandler) CreateGroup(ctx context.Context, req *pb.CreateGroupReque
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in CreateGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return wrapperspb.Int64(int64(resp)), nil
 }
@@ -986,7 +986,7 @@ func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupReque
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in UpdateGroup. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -1001,7 +1001,7 @@ func (s *UsersHandler) GetGroupBasicInfo(ctx context.Context, req *pb.IdReq) (*p
 	g, err := s.Application.GetGroupBasicInfo(ctx, models.GroupId(req.Id))
 	if err != nil {
 		tele.Error(ctx, "Error in GetGroupBasicInfo. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &pb.Group{
@@ -1030,7 +1030,7 @@ func (s *UsersHandler) GetBasicUserInfo(ctx context.Context, req *wrapperspb.Int
 	u, err := s.Application.GetBasicUserInfo(ctx, ct.Id(req.GetValue()))
 	if err != nil {
 		tele.Error(ctx, "Error in GetBasicUserInfo. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &cm.User{
@@ -1057,7 +1057,7 @@ func (s *UsersHandler) GetBatchBasicUserInfo(ctx context.Context, req *cm.UserId
 	users, err := s.Application.GetBatchBasicUserInfo(ctx, ids)
 	if err != nil {
 		tele.Error(ctx, "Error in GetBatchBasicUserInfo. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	pbUsers := make([]*cm.User, 0, len(users))
@@ -1097,7 +1097,7 @@ func (s *UsersHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfil
 	profile, err := s.Application.GetUserProfile(ctx, userProfileRequest)
 	if err != nil {
 		tele.Error(ctx, "Error in GetUserProfile. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	tele.Debug(ctx, "get user profile @1", "profile", profile)
@@ -1148,7 +1148,7 @@ func (s *UsersHandler) SearchUsers(ctx context.Context, req *pb.UserSearchReques
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in SearchUsers. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return usersToPB(resp), nil
 }
@@ -1177,7 +1177,7 @@ func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProf
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in UpdateUserProfile. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	dob := timestamppb.New(resp.DateOfBirth.Time())
@@ -1217,7 +1217,7 @@ func (s *UsersHandler) UpdateProfilePrivacy(ctx context.Context, req *pb.UpdateP
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in UpdateProfilePrivacy. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -1232,7 +1232,7 @@ func (s *UsersHandler) RemoveImages(ctx context.Context, req *pb.FailedImageIds)
 	err := s.Application.RemoveImages(ctx, req.ImgIds)
 	if err != nil {
 		tele.Error(ctx, "Error in RemoveImages. @1", "error", err.Error(), "request", req.String())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }

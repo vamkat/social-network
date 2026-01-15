@@ -218,7 +218,7 @@ func TestGRPCStatus_DoesNotMutateError(t *testing.T) {
 	err := Wrap(ErrUnauthenticated, root, "auth").
 		WithPublic("authentication required")
 
-	_ = GRPCStatus(err)
+	_ = EncodeProto(err)
 
 	// publicMsg must remain unchanged
 	var ce *Error
@@ -231,7 +231,7 @@ func TestGRPCStatus_MultipleWrapedCodes(t *testing.T) {
 	root := New(ErrUnknown, errors.New("token expired"))
 	err := Wrap(ErrUnauthenticated, root, "auth")
 
-	out := GRPCStatus(err)
+	out := EncodeProto(err)
 	require.NotNil(t, out)
 
 	st, ok := status.FromError(out)
@@ -243,7 +243,7 @@ func TestGRPCStatus_MultipleWrapedCodes(t *testing.T) {
 func TestGRPCStatus_DefaultPublicMessage(t *testing.T) {
 	err := Wrap(ErrInternal, errors.New("panic"), "handler")
 
-	st, ok := status.FromError(GRPCStatus(err))
+	st, ok := status.FromError(EncodeProto(err))
 	require.True(t, ok)
 
 	assert.Equal(t, codes.Internal, st.Code())

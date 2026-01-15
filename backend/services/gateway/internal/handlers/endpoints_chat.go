@@ -55,7 +55,7 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, httpCode, err.Error())
 			return
 		}
@@ -100,7 +100,7 @@ func (h *Handlers) GetPrivateConversations() http.HandlerFunc {
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, httpCode, err.Error())
 			return
 		}
@@ -160,7 +160,7 @@ func (h *Handlers) GetPrivateMessagesPag() http.HandlerFunc {
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, httpCode, err.Error())
 			return
 		}
@@ -209,7 +209,7 @@ func (h *Handlers) CreateGroupMsg() http.HandlerFunc {
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, httpCode, err.Error())
 			return
 		}
@@ -263,7 +263,7 @@ func (h *Handlers) GetGroupMessagesPag() http.HandlerFunc {
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, httpCode, err.Error())
 			return
 		}
@@ -316,7 +316,7 @@ func (h *Handlers) UpdateLastRead() http.HandlerFunc {
 
 		httpCode, _ := gorpc.Classify(err)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, httpCode, err.Error())
 			return
 		}

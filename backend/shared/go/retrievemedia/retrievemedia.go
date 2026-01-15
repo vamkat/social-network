@@ -60,7 +60,7 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 
 		resp, err := h.client.GetImages(ctx, req)
 		if err != nil {
-			return nil, nil, ce.ParseGrpcErr(err, input)
+			return nil, nil, ce.DecodeProto(err, input)
 		}
 
 		// merge with redis map
@@ -151,7 +151,7 @@ func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant me
 		Variant: variant,
 	})
 	if err != nil {
-		return "", ce.ParseGrpcErr(err, input)
+		return "", ce.DecodeProto(err, input)
 	}
 
 	//if err, check if need to delete image

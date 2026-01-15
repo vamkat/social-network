@@ -68,7 +68,7 @@ func (m *MediaHandler) UploadImage(ctx context.Context,
 	)
 	if err != nil {
 		tele.Error(ctx, "failed to generate upload image url. @1 @2", "request:", req.String(), "error:", err.(*ce.Error).Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	res := &pb.UploadImageResponse{
 		FileId:    int64(fileId),
@@ -102,7 +102,7 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	downUrl, err := m.Application.GetPublicImage(ctx, ct.Id(req.ImageId), mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		tele.Error(ctx, "get image error", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	res := &pb.GetImageResponse{
@@ -128,7 +128,7 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 	downUrls, failedIds, err := m.Application.GetImages(ctx, ids, mapping.PbToCtFileVariant(req.Variant))
 	if err != nil {
 		tele.Error(ctx, "get images error", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	// Build response
@@ -169,7 +169,7 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 	url, err := m.Application.ValidateAndGenerateVariants(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
 		tele.Error(ctx, "validate image error", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	res := &pb.ValidateUploadResponse{DownloadUrl: url}
 	tele.Info(ctx, "validate image success. @1 @2", "request", req.String(), "response", res.String())

@@ -29,7 +29,7 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 	}
 	isFollowing, err := s.clients.IsFollowing(ctx, req.requesterId, targetUserId)
 	if err != nil {
-		return false, ce.ParseGrpcErr(err, input)
+		return false, ce.DecodeProto(err, input)
 	}
 
 	var isMember bool
@@ -37,7 +37,7 @@ func (s *Application) hasRightToView(ctx context.Context, req accessContext) (bo
 		isMember, err = s.clients.IsGroupMember(ctx, req.requesterId, row.GroupID)
 		tele.Info(ctx, "isMember is @1", "isMember", isMember)
 		if err != nil {
-			return false, ce.ParseGrpcErr(err, input)
+			return false, ce.DecodeProto(err, input)
 		}
 	}
 

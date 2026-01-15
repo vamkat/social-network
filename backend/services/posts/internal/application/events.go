@@ -27,7 +27,7 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 
 	isMember, err := s.clients.IsGroupMember(ctx, req.CreatorId.Int64(), req.GroupId.Int64())
 	if err != nil {
-		return 0, ce.ParseGrpcErr(err, input)
+		return 0, ce.DecodeProto(err, input)
 	}
 	if !isMember {
 		return 0, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not group member"), input).WithPublic("permission denied")
@@ -202,7 +202,7 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 
 	isMember, err := s.clients.IsGroupMember(ctx, req.RequesterId.Int64(), req.EntityId.Int64())
 	if err != nil {
-		return []models.Event{}, ce.ParseGrpcErr(err, input)
+		return []models.Event{}, ce.DecodeProto(err, input)
 	}
 	if !isMember {
 		return []models.Event{}, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not group member"), input).WithPublic("permission denied")

@@ -22,7 +22,7 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 
 	idsRequesterFollows, err := s.clients.GetFollowingIds(ctx, req.RequesterId.Int64())
 	if err != nil {
-		return nil, ce.ParseGrpcErr(err, input)
+		return nil, ce.DecodeProto(err, input)
 	}
 
 	rows, err := s.db.GetPersonalizedFeed(ctx, ds.GetPersonalizedFeedParams{
@@ -182,7 +182,7 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 
 	isFollowing, err := s.clients.IsFollowing(ctx, req.RequesterId.Int64(), int64(req.CreatorId))
 	if err != nil {
-		return nil, ce.ParseGrpcErr(err, input)
+		return nil, ce.DecodeProto(err, input)
 	}
 
 	rows, err := s.db.GetUserPostsPaginated(ctx, ds.GetUserPostsPaginatedParams{
@@ -273,7 +273,7 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 
 	isMember, err := s.clients.IsGroupMember(ctx, req.RequesterId.Int64(), req.GroupId.Int64())
 	if err != nil {
-		return nil, ce.ParseGrpcErr(err, input)
+		return nil, ce.DecodeProto(err, input)
 	}
 	if !isMember {
 		return nil, ce.New(ce.ErrPermissionDenied, fmt.Errorf("user is not group member"), input).WithPublic("permission denied")

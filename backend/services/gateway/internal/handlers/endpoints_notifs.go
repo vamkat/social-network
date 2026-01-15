@@ -58,7 +58,7 @@ func (h *Handlers) GetUserNotifications() http.HandlerFunc {
 		})
 
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -86,7 +86,7 @@ func (s *Handlers) GetUnreadNotificationsCount() http.HandlerFunc {
 			&wrapperspb.Int64Value{Value: claims.UserId},
 		)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -124,7 +124,7 @@ func (s *Handlers) MarkNotificationAsRead() http.HandlerFunc {
 		})
 
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -149,7 +149,7 @@ func (s *Handlers) MarkAllAsRead() http.HandlerFunc {
 			Value: claims.UserId,
 		})
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -185,7 +185,7 @@ func (s *Handlers) DeleteNotification() http.HandlerFunc {
 			UserId:         claims.UserId,
 		})
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -211,7 +211,7 @@ func (s *Handlers) GetNotificationPreferences() http.HandlerFunc {
 			&wrapperspb.Int64Value{Value: claims.UserId},
 		)
 		if err != nil {
-			err = ce.ParseGrpcErr(err)
+			err = ce.DecodeProto(err)
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 			return
 		}

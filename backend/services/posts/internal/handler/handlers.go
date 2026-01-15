@@ -32,7 +32,7 @@ func (s *PostsHandler) GetPostById(ctx context.Context, req *pb.GenericReq) (*pb
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetPostById. @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	selectedUsers := make([]*cm.User, 0, len(post.SelectedAudienceUsers))
@@ -86,7 +86,7 @@ func (s *PostsHandler) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in CreatePost. @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &pb.IdResp{Id: postId}, nil
 }
@@ -102,7 +102,7 @@ func (s *PostsHandler) DeletePost(ctx context.Context, req *pb.GenericReq) (*emp
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in DeletePost. @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -123,7 +123,7 @@ func (s *PostsHandler) EditPost(ctx context.Context, req *pb.EditPostReq) (*empt
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in EditPost. @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -139,7 +139,7 @@ func (s *PostsHandler) GetMostPopularPostInGroup(ctx context.Context, req *pb.Si
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetMostPopularPostInGroup. @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	return &pb.Post{
@@ -176,7 +176,7 @@ func (s *PostsHandler) GetPersonalizedFeed(ctx context.Context, req *pb.GetPerso
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetPersonalizedFeed. @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
 	for _, p := range posts {
@@ -216,7 +216,7 @@ func (s *PostsHandler) GetPublicFeed(ctx context.Context, req *pb.GenericPaginat
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetPublicFeed @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
 	for _, p := range posts {
@@ -257,7 +257,7 @@ func (s *PostsHandler) GetUserPostsPaginated(ctx context.Context, req *pb.GetUse
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetUserPostsPaginated @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
 	for _, p := range posts {
@@ -298,7 +298,7 @@ func (s *PostsHandler) GetGroupPostsPaginated(ctx context.Context, req *pb.GetGr
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetGroupPostsPaginated @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbPosts := make([]*pb.Post, 0, len(posts))
 	for _, p := range posts {
@@ -339,7 +339,7 @@ func (s *PostsHandler) CreateComment(ctx context.Context, req *pb.CreateCommentR
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in CreateComment @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &pb.IdResp{Id: commentId}, nil
 }
@@ -358,7 +358,7 @@ func (s *PostsHandler) EditComment(ctx context.Context, req *pb.EditCommentReq) 
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in EditComment @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -374,7 +374,7 @@ func (s *PostsHandler) DeleteComment(ctx context.Context, req *pb.GenericReq) (*
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in DeleteComment @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -392,7 +392,7 @@ func (s *PostsHandler) GetCommentsByParentId(ctx context.Context, req *pb.Entity
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetCommentsByParentId @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbComments := make([]*pb.Comment, 0, len(comments))
 	for _, c := range comments {
@@ -432,7 +432,7 @@ func (s *PostsHandler) CreateEvent(ctx context.Context, req *pb.CreateEventReq) 
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in CreateEvent @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &pb.IdResp{Id: eventId}, nil
 }
@@ -448,7 +448,7 @@ func (s *PostsHandler) DeleteEvent(ctx context.Context, req *pb.GenericReq) (*em
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in DeleteEvent @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -469,7 +469,7 @@ func (s *PostsHandler) EditEvent(ctx context.Context, req *pb.EditEventReq) (*em
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in EditEvent @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -487,7 +487,7 @@ func (s *PostsHandler) GetEventsByGroupId(ctx context.Context, req *pb.EntityIdP
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetEventsByGroupId @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbEvents := make([]*pb.Event, 0, len(events))
 	for _, e := range events {
@@ -533,7 +533,7 @@ func (s *PostsHandler) RespondToEvent(ctx context.Context, req *pb.RespondToEven
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in RespondToEvent @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -550,7 +550,7 @@ func (s *PostsHandler) RemoveEventResponse(ctx context.Context, req *pb.GenericR
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in RemoveEventResponse @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -565,7 +565,7 @@ func (s *PostsHandler) SuggestUsersByPostActivity(ctx context.Context, req *pb.S
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in SuggestUsersByPostActivity @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	pbUsers := make([]*cm.User, 0, len(users))
 	for _, u := range users {
@@ -590,7 +590,7 @@ func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.Gener
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in ToggleOrInsertReaction @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -603,7 +603,7 @@ func (s *PostsHandler) GetPostAudienceForComment(ctx context.Context, req *pb.Si
 	audience, err := s.Application.GetPostAudienceForComment(ctx, req.Id)
 	if err != nil {
 		tele.Error(ctx, "Error in GetPostAudienceForComment @1 @2", "request", req.String(), "error", err.Error())
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 	return &pb.AudienceResp{
 		Audience: audience,

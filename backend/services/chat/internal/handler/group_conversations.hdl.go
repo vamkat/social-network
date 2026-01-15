@@ -33,7 +33,7 @@ func (h *ChatHandler) CreateGroupMessage(
 			"request", params.String(),
 			"error", err.Error(),
 		)
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	resp := &pb.GroupMessage{
@@ -75,7 +75,7 @@ func (h *ChatHandler) GetPreviousGroupMessages(
 			"request", params.String(),
 			"error", err.Error(),
 		)
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	resp := &pb.GetGroupMessagesResponse{
@@ -108,7 +108,7 @@ func (h *ChatHandler) GetNextGroupMessages(
 			"request", params.String(),
 			"error", err.Error(),
 		)
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	resp := &pb.GetGroupMessagesResponse{

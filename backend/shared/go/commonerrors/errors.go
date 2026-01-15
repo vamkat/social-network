@@ -79,6 +79,25 @@ func GetSource(err error) string {
 	}
 }
 
+// Checks 'class' then 'err'.
+func (e *Error) Is(target error) bool {
+	// 1. Check if the target matches the classification (e.g., ErrNotFound)
+	// using strict equality (standard for sentinels).
+	if e.class == target {
+		return true
+	}
+
+	// 2. Check if the target matches the specific Error instance pointer.
+	if e == target {
+		return true
+	}
+
+	// 3. Return false.
+	// This signals the `errors` package to call e.Unwrap()
+	// and check the underlying e.err automatically.
+	return false
+}
+
 // Method for errors.IsClass parsing. Returns `Error.code` match.
 func (e *Error) IsClass(target error) bool {
 	return e.class == target
@@ -181,44 +200,13 @@ func (e *Error) WithCode(c error) *Error {
 	return e
 }
 
-// Helper mapper from error to grpc code.
-func ToGRPCCode(err error) codes.Code {
-	if err == nil {
-		return codes.OK
-	}
-
-	// Propagate gRPC status errors
-	if st, ok := status.FromError(err); ok {
-		return st.Code()
-	}
-
-	// Handle context errors
-	if errors.Is(err, context.DeadlineExceeded) {
-		return codes.DeadlineExceeded
-	}
-	if errors.Is(err, context.Canceled) {
-		return codes.Canceled
-	}
-
-	// Handle your domain error
-	var e *Error
-	if errors.As(err, &e) {
-		if code, ok := classToGRPC[e.class]; ok {
-			return code
-		}
-	}
-
-	// 4. Fallback
-	return codes.Unknown
-}
-
 // Coverts a grpc error to commonerrors Error type.
 // The status code is converted to commonerrors type and the status message is wraped inside it as a new error
 // as well as Error.publicMsg
 //
 // Optionaly a msg string is included for additional context.
 // Usefull for downstream error parsing.
-func ParseGrpcErr(err error, input ...string) *Error {
+func DecodeProto(err error, input ...string) *Error {
 	if err == nil {
 		return nil
 	}
@@ -239,7 +227,7 @@ func ParseGrpcErr(err error, input ...string) *Error {
 
 // Converts a commonerrors type Error to grpc status error. Handles context errors first.
 // If the error passed is neither context error or Error unknown is returned.
-func GRPCStatus(err error) error {
+func EncodeProto(err error) error {
 	if err == nil {
 		return nil
 	}

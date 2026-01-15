@@ -54,7 +54,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 	if len(missing) > 0 {
 		resp, err := h.client.GetBatchBasicUserInfo(ctx, &cm.UserIds{Values: missing.Int64()})
 		if err != nil {
-			return nil, ce.ParseGrpcErr(err, input)
+			return nil, ce.DecodeProto(err, input)
 		}
 
 		for _, u := range resp.Users {
@@ -146,7 +146,7 @@ func (h *UserRetriever) GetUser(ctx context.Context, userID ct.Id) (models.User,
 	}
 	resp, err := h.client.GetBasicUserInfo(ctx, wrapperspb.Int64(userID.Int64()))
 	if err != nil {
-		return models.User{}, ce.ParseGrpcErr(err, input)
+		return models.User{}, ce.DecodeProto(err, input)
 	}
 
 	user = models.User{

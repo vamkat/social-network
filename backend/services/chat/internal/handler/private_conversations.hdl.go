@@ -62,7 +62,7 @@ func (h *ChatHandler) CreatePrivateMessage(
 			"request", params.String(),
 			"error", Err.Error(),
 		)
-		return nil, ce.GRPCStatus(Err)
+		return nil, ce.EncodeProto(Err)
 	}
 
 	resp := mp.MapPMToProto(msg)
@@ -96,7 +96,7 @@ func (h *ChatHandler) GetPreviousPrivateMessages(
 			"request", params.String(),
 			"error", err.Error(),
 		)
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	resp := mp.MapGetPMsResp(res)
@@ -130,7 +130,7 @@ func (h *ChatHandler) GetNextPrivateMessages(
 			"request", params.String(),
 			"error", err.Error(),
 		)
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	resp := mp.MapGetPMsResp(res)
@@ -163,7 +163,7 @@ func (h *ChatHandler) UpdateLastReadPrivateMessage(
 			"request", params.String(),
 			"error", err.Error(),
 		)
-		return nil, ce.GRPCStatus(err)
+		return nil, ce.EncodeProto(err)
 	}
 
 	resp := &emptypb.Empty{}

@@ -128,7 +128,7 @@ func (c *ChatService) retrieveMessageSenders(ctx context.Context, msgs []md.Grou
 func (c *ChatService) isMember(ctx context.Context, groupId, memberId ct.Id, input string) *ce.Error {
 	isMember, err := c.Clients.IsGroupMember(ctx, groupId, memberId)
 	if err != nil {
-		return ce.ParseGrpcErr(err, input)
+		return ce.DecodeProto(err, input)
 	}
 
 	if !isMember {
