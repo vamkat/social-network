@@ -89,7 +89,7 @@ func (h *Handlers) createComment() http.HandlerFunc {
 		commentId, err := h.PostsService.CreateComment(ctx, &grpcReq)
 		if err != nil {
 			utils.ReturnHttpError(ctx, w, err)
-			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
+			// utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
 			return
 		}
 		type httpResponse struct {

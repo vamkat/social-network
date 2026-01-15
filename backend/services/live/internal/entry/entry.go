@@ -44,7 +44,7 @@ func Run() {
 	//
 	// CACHE
 	cacheService := redis_connector.NewRedisClient(
-		cfgs.RedisAddr,
+		cfgs.SentinelAddrs,
 		cfgs.RedisPassword,
 		cfgs.RedisDB,
 	)
@@ -57,7 +57,7 @@ func Run() {
 	//
 	//
 	// NATS
-	natsConn, err := nats.Connect(cfgs.NatsHost + ":")
+	natsConn, err := nats.Connect(cfgs.NatsCluster)
 	if err != nil {
 		tele.Fatalf("failed to connect to nats: %s", err.Error())
 	}
@@ -132,9 +132,10 @@ func Run() {
 }
 
 type configs struct {
-	RedisAddr     string `env:"REDIS_ADDR"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-	RedisDB       int    `env:"REDIS_DB"`
+	RedisAddr     string   `env:"REDIS_ADDR"`
+	SentinelAddrs []string `env:"SENTINEL_ADDRS"`
+	RedisPassword string   `env:"REDIS_PASSWORD"`
+	RedisDB       int      `env:"REDIS_DB"`
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
@@ -147,7 +148,8 @@ type configs struct {
 	PassSecret                string `env:"PASSWORD_SECRET"`
 	EncrytpionKey             string `env:"ENC_KEY"`
 
-	NatsHost string `env:"NATS_HOST"`
+	NatsHost    string `env:"NATS_HOST"`
+	NatsCluster string `env:"NATS_CLUSTER"`
 
 	ChatGRPCAddr string `env:"CHAT_GRPC_ADDR"`
 }
@@ -155,6 +157,7 @@ type configs struct {
 func getConfigs() configs { // sensible defaults
 	cfgs := configs{
 		RedisAddr:                 "redis:6379",
+		SentinelAddrs:             []string{"redis:26379"},
 		RedisPassword:             "",
 		RedisDB:                   0,
 		HTTPAddr:                  "0.0.0.0:8082",
@@ -166,6 +169,7 @@ func getConfigs() configs { // sensible defaults
 		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 		NatsHost:                  "nats",
+		NatsCluster:               "NATS_CLUSTER",
 		ChatGRPCAddr:              "chat:50051",
 	}
 
@@ -174,6 +178,5 @@ func getConfigs() configs { // sensible defaults
 	if err != nil {
 		tele.Fatalf("failed to load env variables into config struct: %v", err)
 	}
-
 	return cfgs
 }

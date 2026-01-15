@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Users, Send, Bell, User, LogOut, Settings, HeartPulse, Search, Loader2 } from "lucide-react";
+import { Activity, Users, Send, Bell, User, LogOut, Settings, HeartPulse, Search, Loader2, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Link from "next/link";
@@ -9,12 +9,17 @@ import { useStore } from "@/store/store";
 import { logout } from "@/actions/auth/logout";
 import { SearchUsers } from "@/actions/search/search-users";
 import { getImageUrl } from "@/actions/auth/get-image-url";
+import { getConv } from "@/actions/chat/get-conv";
 
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+    const [conversations, setConversations] = useState([]);
+    const [isLoadingConversations, setIsLoadingConversations] = useState(false);
     const dropdownRef = useRef(null);
+    const messagesRef = useRef(null);
     const searchRef = useRef(null);
     const user = useStore((state) => state.user);
     const setUser = useStore((state) => state.setUser);
@@ -57,6 +62,9 @@ export default function Navbar() {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsDropdownOpen(false);
             }
+            if (messagesRef.current && !messagesRef.current.contains(event.target)) {
+                setIsMessagesOpen(false);
+            }
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setShowSearchResults(false);
             }
@@ -67,6 +75,61 @@ export default function Navbar() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    // Fetch conversations when messages dropdown opens
+    const handleMessagesClick = async () => {
+        const willOpen = !isMessagesOpen;
+        setIsMessagesOpen(willOpen);
+
+        if (willOpen) {
+            setIsLoadingConversations(true);
+            try {
+                const result = await getConv({ first: true, limit: 5 });
+                if (result.success && result.data) {
+                    setConversations(result.data);
+                }
+            } catch (error) {
+                console.error("Error fetching conversations:", error);
+            } finally {
+                setIsLoadingConversations(false);
+            }
+        }
+    };
+
+    // Format relative time
+    const formatRelativeTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return "now";
+        if (diffMins < 60) return `${diffMins}m`;
+        if (diffHours < 24) return `${diffHours}h`;
+        if (diffDays < 7) return `${diffDays}d`;
+        return date.toLocaleDateString();
+    };
+
+    // Truncate message text
+    const truncateMessage = (text, maxLength = 30) => {
+        if (!text) return "";
+        return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    };
+
+    // Check if conversation has unread messages for current user
+    // Only unread if last message sender is NOT me (someone else sent it)
+    const hasUnreadMessages = (conv) => {
+        return conv.UnreadCount > 0 && conv.LastMessage?.sender?.id !== user?.id;
+    };
+
+    // Get total unread count across all conversations
+    const getTotalUnreadCount = () => {
+        return conversations.reduce((total, conv) => {
+            return total + (hasUnreadMessages(conv) ? conv.UnreadCount : 0);
+        }, 0);
+    };
 
     // Debounced Search
     useEffect(() => {
@@ -265,21 +328,106 @@ export default function Navbar() {
                         {/* Divider */}
                         <div className="h-6 w-px bg-(--border) mx-0.5 sm:mx-1" />
 
-                        {/* Messages */}
-                        <Tooltip content="Messages">
-                            <Link
-                                href="/messages"
-                                className={`relative p-2 sm:p-2.5 rounded-full transition-all ${isActive('/messages')
-                                    ? "bg-(--accent)/10 text-(--accent)"
-                                    : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
-                                    }`}
-                            >
-                                <Send className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isActive('/messages') ? 2.5 : 2} />
-                                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
-                                    1
-                                </span>
-                            </Link>
-                        </Tooltip>
+                        {/* Messages Dropdown */}
+                        <div className="relative" ref={messagesRef}>
+                            <Tooltip content="Messages" active={!isMessagesOpen}>
+                                <button
+                                    onClick={handleMessagesClick}
+                                    className={`relative p-2 sm:p-2.5 rounded-full transition-all cursor-pointer ${isMessagesOpen
+                                        ? "bg-(--accent)/10 text-(--accent)"
+                                        : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
+                                        }`}
+                                >
+                                    <Send className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isMessagesOpen ? 2.5 : 2} />
+                                    {getTotalUnreadCount() > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
+                                            {getTotalUnreadCount()}
+                                        </span>
+                                    )}
+                                </button>
+                            </Tooltip>
+
+                            {/* Messages Dropdown Menu */}
+                            {isMessagesOpen && (
+                                <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 rounded-2xl border border-(--border) bg-background shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-100">
+                                    <div className="p-4 border-b border-(--border)">
+                                        <h3 className="text-sm font-semibold text-foreground">Messages</h3>
+                                    </div>
+
+                                    <div className="max-h-80 overflow-y-auto">
+                                        {isLoadingConversations ? (
+                                            <div className="flex items-center justify-center py-8">
+                                                <Loader2 className="w-5 h-5 text-(--muted) animate-spin" />
+                                            </div>
+                                        ) : conversations.length > 0 ? (
+                                            <div className="py-1">
+                                                {conversations.map((conv) => (
+                                                    <button
+                                                        key={conv.ConversationId}
+                                                        onClick={() => {
+                                                            setIsMessagesOpen(false);
+                                                            router.push(`/messages/${conv.ConversationId}`);
+                                                        }}
+                                                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors cursor-pointer text-left"
+                                                    >
+                                                        {/* Avatar */}
+                                                        <div className="relative shrink-0">
+                                                            <div className="w-11 h-11 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden border border-(--border)">
+                                                                {conv.Interlocutor?.avatar_url ? (
+                                                                    <img
+                                                                        src={conv.Interlocutor.avatar_url}
+                                                                        alt={conv.Interlocutor.username || "User"}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <User className="w-5 h-5 text-(--muted)" />
+                                                                )}
+                                                            </div>
+                                                            {hasUnreadMessages(conv) && (
+                                                                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
+                                                                    {conv.UnreadCount}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Content */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <p className={`text-sm truncate ${hasUnreadMessages(conv) ? "font-semibold text-foreground" : "font-medium text-foreground"}`}>
+                                                                    {conv.Interlocutor?.username || "Unknown User"}
+                                                                </p>
+                                                                <span className="text-xs text-(--muted) shrink-0">
+                                                                    {formatRelativeTime(conv.UpdatedAt)}
+                                                                </span>
+                                                            </div>
+                                                            <p className={`text-sm mt-0.5 truncate ${hasUnreadMessages(conv) ? "text-foreground" : "text-(--muted)"}`}>
+                                                                {truncateMessage(conv.LastMessage?.message_text)}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="py-8 text-center">
+                                                <MessageCircle className="w-8 h-8 text-(--muted) mx-auto mb-2" />
+                                                <p className="text-sm text-(--muted)">No conversations yet</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* See all messages link */}
+                                    <div className="border-t border-(--border)">
+                                        <Link
+                                            href="/messages"
+                                            onClick={() => setIsMessagesOpen(false)}
+                                            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-(--accent) hover:bg-(--muted)/5 transition-colors"
+                                        >
+                                            See all messages
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Notifications */}
                         <Tooltip content="Notifications">

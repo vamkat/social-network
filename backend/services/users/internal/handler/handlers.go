@@ -982,6 +982,7 @@ func (s *UsersHandler) UpdateGroup(ctx context.Context, req *pb.UpdateGroupReque
 		GroupTitle:       ct.Title(groupTitle),
 		GroupDescription: ct.About(groupDescription),
 		GroupImage:       ct.Id(groupImage),
+		DeleteImage:      req.GetDeleteImage(),
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in UpdateGroup. @1", "error", err.Error(), "request", req.String())
@@ -1172,6 +1173,7 @@ func (s *UsersHandler) UpdateUserProfile(ctx context.Context, req *pb.UpdateProf
 		DateOfBirth: ct.DateOfBirth(req.GetDateOfBirth().AsTime()),
 		AvatarId:    ct.Id(req.GetAvatar()),
 		About:       ct.About(req.GetAbout()),
+		DeleteImage: req.GetDeleteImage(),
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in UpdateUserProfile. @1", "error", err.Error(), "request", req.String())

@@ -26,14 +26,23 @@ type RedisClient struct {
 	client *redis.Client
 }
 
-func NewRedisClient(addr string, password string, db int) *RedisClient {
+func NewRedisClient(sentinelAddrs []string, password string, db int) *RedisClient {
+
 	redisClient := &RedisClient{
-		client: redis.NewClient(&redis.Options{
-			Addr:     addr,
-			Password: password,
-			DB:       db,
+		client: redis.NewFailoverClient(&redis.FailoverOptions{
+			MasterName:    "master",
+			SentinelAddrs: sentinelAddrs,
+			Password:      password,
+			DB:            db,
 		}),
 	}
+	// redisClient2 := &RedisClient{
+	// 	client: redis.NewClient(&redis.Options{
+	// 		Addr:     addr,
+	// 		Password: password,
+	// 		DB:       db,
+	// 	}),
+	// }
 
 	return redisClient
 }

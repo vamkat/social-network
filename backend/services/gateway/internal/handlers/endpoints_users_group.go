@@ -108,6 +108,8 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			GroupId          ct.Id  `json:"group_id"`
 			GroupTitle       string `json:"group_title"`
 			GroupDescription string `json:"group_description"`
+			GroupImageId     ct.Id  `json:"group_image_id" validate:"nullable"`
+			DeleteImage      bool   `json:"delete_image"`
 
 			GroupImageName string `json:"group_image_name"`
 			GroupImageSize int64  `json:"group_image_size"`
@@ -128,7 +130,10 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			return
 		}
 
-		var GroupImageId ct.Id
+		var groupImageId ct.Id
+		if httpReq.GroupImageId > 0 {
+			groupImageId = httpReq.GroupImageId
+		}
 		var uploadURL string
 
 		if httpReq.GroupImageSize != 0 {
@@ -145,7 +150,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			GroupImageId = ct.Id(mediaRes.FileId)
+			groupImageId = ct.Id(mediaRes.FileId)
 			uploadURL = mediaRes.GetUploadUrl()
 		}
 
@@ -154,7 +159,8 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			GroupId:          httpReq.GroupId.Int64(),
 			GroupTitle:       httpReq.GroupTitle,
 			GroupDescription: httpReq.GroupDescription,
-			GroupImageId:     GroupImageId.Int64(),
+			GroupImageId:     groupImageId.Int64(),
+			DeleteImage:      httpReq.DeleteImage,
 		}
 
 		_, err := s.UsersService.UpdateGroup(ctx, &updateGroupRequest)
@@ -172,7 +178,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 
 		resp := createGroupDataResponse{
 			GroupId:   ct.Id(httpReq.GroupId),
-			FileId:    GroupImageId,
+			FileId:    groupImageId,
 			UploadUrl: uploadURL,
 		}
 

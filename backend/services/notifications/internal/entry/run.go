@@ -11,8 +11,8 @@ import (
 	"social-network/services/notifications/internal/db/sqlc"
 	"social-network/services/notifications/internal/events"
 	"social-network/services/notifications/internal/handler"
-	pb "social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/chat"
+	pb "social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/posts"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
@@ -20,10 +20,11 @@ import (
 	tele "social-network/shared/go/telemetry"
 
 	"social-network/shared/go/gorpc"
-	postgresql "social-network/shared/go/postgre"
 	"social-network/shared/go/kafgo"
-	"google.golang.org/protobuf/proto"
+	postgresql "social-network/shared/go/postgre"
 	"syscall"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func Run() error {
@@ -114,21 +115,23 @@ func Run() error {
 }
 
 type configs struct {
-	RedisAddr     string `env:"REDIS_ADDR"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-	RedisDB       int    `env:"REDIS_DB"`
+	RedisAddr     string   `env:"REDIS_ADDR"`
+	SentinelAddrs []string `env:"SENTINEL_ADDRS"`
+	RedisPassword string   `env:"REDIS_PASSWORD"`
+	RedisDB       int      `env:"REDIS_DB"`
 
 	UsersGRPCAddr  string `env:"USERS_GRPC_ADDR"`
 	PostsGRPCAddr  string `env:"POSTS_GRPC_ADDR"`
 	ChatGRPCAddr   string `env:"CHAT_GRPC_ADDR"`
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
 
-	KafkaBrokers   []string `env:"KAFKA_BROKERS"` // Comma-separated list of Kafka brokers
+	KafkaBrokers []string `env:"KAFKA_BROKERS"` // Comma-separated list of Kafka brokers
 }
 
 func getConfigs() configs { // sensible defaults
 	cfgs := configs{
 		RedisAddr:     "redis:6379",
+		SentinelAddrs: []string{"redis:26379"},
 		RedisPassword: "",
 		RedisDB:       0,
 		UsersGRPCAddr: "users:50051",
@@ -142,7 +145,7 @@ func getConfigs() configs { // sensible defaults
 	if err != nil {
 		tele.Fatalf("failed to load env variables into config struct: %v", err)
 	}
-
+	fmt.Println("brokers:", cfgs.KafkaBrokers)
 	return cfgs
 }
 
@@ -153,11 +156,12 @@ func startKafkaConsumer(ctx context.Context, app *application.Application) error
 	if len(cfgs.KafkaBrokers) == 0 {
 		cfgs.KafkaBrokers = []string{"kafka:9092"} // Default broker
 	}
-
+	fmt.Println("borkers2:", cfgs.KafkaBrokers)
+	tele.Info(context.Background(), fmt.Sprintln("borkers2:", cfgs.KafkaBrokers))
 	// Initialize Kafka consumer
 	kafkaConsumer, err := kafgo.NewKafkaConsumer(
 		cfgs.KafkaBrokers,
-		"notifications",  // Consumer group name for notifications
+		"notifications", // Consumer group name for notifications
 	)
 	if err != nil {
 		tele.Error(ctx, "failed to create kafka consumer: @1", "error", err.Error())
@@ -214,7 +218,6 @@ func startKafkaConsumer(ctx context.Context, app *application.Application) error
 
 	return nil
 }
-
 
 // processNotificationEvent processes a single notification event from Kafka
 func processNotificationEvent(ctx context.Context, record *kafgo.Record, eventHandler *events.EventHandler) error {

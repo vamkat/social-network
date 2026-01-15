@@ -201,6 +201,8 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			LastName    ct.Name        `json:"last_name"`
 			DateOfBirth ct.DateOfBirth `json:"date_of_birth"`
 			About       ct.About       `json:"about" validate:"nullable"`
+			AvatarId    ct.Id          `json:"avatar_id" validate:"nullable"`
+			DeleteImage bool           `json:"delete_image"`
 
 			AvatarName string `json:"avatar_name"`
 			AvatarSize int64  `json:"avatar_size"`
@@ -221,7 +223,10 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			return
 		}
 
-		var AvatarId ct.Id
+		var avatarId ct.Id
+		if httpReq.AvatarId > 0 {
+			avatarId = httpReq.AvatarId
+		}
 		var uploadURL string
 		if httpReq.AvatarSize != 0 {
 			exp := time.Duration(10 * time.Minute).Seconds()
@@ -237,7 +242,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 				utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			AvatarId = ct.Id(mediaRes.FileId)
+			avatarId = ct.Id(mediaRes.FileId)
 			uploadURL = mediaRes.GetUploadUrl()
 		}
 
@@ -248,8 +253,9 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			FirstName:   httpReq.FirstName.String(),
 			LastName:    httpReq.LastName.String(),
 			DateOfBirth: httpReq.DateOfBirth.ToProto(),
-			Avatar:      AvatarId.Int64(),
+			Avatar:      avatarId.Int64(),
 			About:       httpReq.About.String(),
+			DeleteImage: httpReq.DeleteImage,
 		}
 
 		grpcResp, err := s.UsersService.UpdateUserProfile(ctx, grpcRequest)
@@ -266,7 +272,7 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 		}
 		httpResp := httpResponse{
 			UserId:    ct.Id(grpcResp.UserId),
-			FileId:    AvatarId,
+			FileId:    avatarId,
 			UploadUrl: uploadURL}
 
 		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)

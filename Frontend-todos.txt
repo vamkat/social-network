@@ -1,28 +1,13 @@
 ======== This week TODOs ========
 
-- Group Page (page with all groups - pagination feature, search bar, modal for group creation) - DONE?
+Chat 
 
-- Single group page /groups/{id} (REAL MEN DONT CRY) :
-1. {IF OWNER} =>
-    1. Update group
-    2. Ability to invite others - in progress
-    3. Section to accept invitation requests? both in notif and tab in group page
-    4. Section to see all members
-    5. CreatePost , CreateEvent (seperate sections/pages/tabs)
+userProf and groups UPDATE (delete_image);
 
-2. {IF MEMBER} =>
-    1. Ability to invite others
-    2. Section to see all members
-    3. CreatePost , CreateEvent (seperate sections/pages/tabs)
-
-3. {IF NOTHING} =>
-    1. group info
-    2. only one post diplay?
-    3. Ability to request in
+Pagination in search results (users, groups);
 
 ======== LATER TODOs ========
 
 PROPER RESPONSE HANDLING - ERROR HANDLING
 ENSURE VALIDATION EVERYWHERE
 GLOBAL LOGGER
-MIDDLEWARE

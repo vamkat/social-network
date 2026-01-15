@@ -70,12 +70,6 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                     console.error("Error unfollowing user:", response.error);
                 }
             } else if (isPending) {
-                // If pending, maybe we want to cancel request?
-                // For now, let's treat clicking on Pending as Unfollow/Cancel Request which usually hits the same unfollow endpoint or a specifics cancel endpoint.
-                // Assuming unfollowUser handles cancelling requests too or we need a specific cancel action.
-                // Assuming unfollow works for cancelling pending requests as well for now based on typical implementations, 
-                // but strictly speaking we might need a cancelRequest action if the backend distinguishes.
-                // Since I didn't create cancel-request, I'll try unfollowUser.
                 const response = await unfollowUser(user.user_id);
                 if (response.success) {
                     setIsPending(false);

@@ -1,0 +1,35 @@
+"use server";
+
+import { serverApiRequest } from "@/lib/server-api";
+
+export async function getMessages({ interlocutorId, boundary = null, limit = 50, retrieveUsers = false, getPrevious = true }) {
+    try {
+        let url = `/chat/get-pms-paginated?interlocutor-id=${interlocutorId}&limit=${limit}`;
+
+        if (boundary) {
+            url += `&boundary=${boundary}`;
+        }
+        if (retrieveUsers) {
+            url += `&retrieve-users=${retrieveUsers}`;
+        }
+        if (!getPrevious) {
+            url += `&get-previous=${getPrevious}`;
+        }
+
+        console.log("sending to: ", url)
+
+        const response = await serverApiRequest(url, {
+            method: "GET",
+            forwardCookies: true,
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        return { success: true, data: response };
+
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        return { success: false, error: error.message };
+    }
+}

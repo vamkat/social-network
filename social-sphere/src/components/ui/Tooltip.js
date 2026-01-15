@@ -1,4 +1,13 @@
-export default function Tooltip({ content, children }) {
+export default function Tooltip({ content, active=true, children }) {
+
+    if (active === false) {
+        return (
+            <div className="group/tooltip relative inline-flex">
+            {children}
+        </div>
+        )
+    }
+
     return (
         <div className="group/tooltip relative inline-flex">
             {children}

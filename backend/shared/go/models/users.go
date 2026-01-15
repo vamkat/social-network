@@ -98,6 +98,7 @@ type UpdateProfileRequest struct {
 	DateOfBirth ct.DateOfBirth `json:"date_of_birth"`
 	AvatarId    ct.Id          `json:"avatar_id" validate:"nullable"`
 	About       ct.About       `json:"about" validate:"nullable"`
+	DeleteImage bool           `json:"delete_image"`
 }
 
 type UpdateProfilePrivacyRequest struct {
@@ -211,6 +212,7 @@ type UpdateGroupRequest struct {
 	GroupTitle       ct.Title `json:"group_title"`
 	GroupDescription ct.About `json:"group_description"`
 	GroupImage       ct.Id    `json:"group_image_id" validate:"nullable"`
+	DeleteImage      bool     `json:"delete_image"`
 }
 
 // -------------------------------------------

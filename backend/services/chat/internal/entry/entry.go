@@ -30,19 +30,22 @@ import (
 )
 
 type configs struct {
-	RedisAddr                 string `env:"REDIS_ADDR"`
-	RedisPassword             string `env:"REDIS_PASSWORD"`
-	RedisDB                   int    `env:"REDIS_DB"`
-	DatabaseConn              string `env:"DATABASE_URL"`
-	GrpcServerPort            string `env:"GRPC_SERVER_PORT"`
-	NotificationsAdress       string `env:"NOTIFICATIONS_GRPC_ADDR"`
-	UsersAdress               string `env:"USERS_GRPC_ADDR"`
-	MediaGRPCAddr             string `env:"MEDIA_GRPC_ADDR"`
-	EnableDebugLogs           bool   `env:"ENABLE_DEBUG_LOGS"`
-	SimplePrint               bool   `env:"ENABLE_SIMPLE_PRINT"`
-	OtelResourceAttributes    string `end:"OTEL_RESOURCE_ATTRIBUTES"`
-	TelemetryCollectorAddress string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
-	NatsHost                  string `env:"NATS_HOST"`
+	RedisAddr                 string   `env:"REDIS_ADDR"`
+	SentinelAddrs             []string `env:"SENTINEL_ADDRS"`
+	RedisPassword             string   `env:"REDIS_PASSWORD"`
+	RedisDB                   int      `env:"REDIS_DB"`
+	DatabaseConn              string   `env:"DATABASE_URL"`
+	GrpcServerPort            string   `env:"GRPC_SERVER_PORT"`
+	NotificationsAdress       string   `env:"NOTIFICATIONS_GRPC_ADDR"`
+	UsersAdress               string   `env:"USERS_GRPC_ADDR"`
+	MediaGRPCAddr             string   `env:"MEDIA_GRPC_ADDR"`
+	EnableDebugLogs           bool     `env:"ENABLE_DEBUG_LOGS"`
+	SimplePrint               bool     `env:"ENABLE_SIMPLE_PRINT"`
+	OtelResourceAttributes    string   `end:"OTEL_RESOURCE_ATTRIBUTES"`
+	TelemetryCollectorAddress string   `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	NatsHost                  string   `env:"NATS_HOST"`
+	NatsCluster               string   `env:"NATS_CLUSTER"`
+	KafkaBrokers              []string `end:"KAFKA_BROKERS"`
 }
 
 var cfgs configs
@@ -55,6 +58,9 @@ func init() {
 		NotificationsAdress: "notifications:50051",
 		UsersAdress:         "users:50051",
 		NatsHost:            "nats",
+		NatsCluster:         "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222",
+		KafkaBrokers:        []string{"kafka:9092"},
+		SentinelAddrs:       []string{"26379"},
 	}
 	configutil.LoadConfigs(&cfgs)
 }
@@ -101,7 +107,7 @@ func Run() error {
 	//
 	//
 	// NATS
-	natsConn, err := nats.Connect(cfgs.NatsHost + ":")
+	natsConn, err := nats.Connect(cfgs.NatsCluster)
 	if err != nil {
 		tele.Fatalf("failed to connect to nats: %s", err.Error())
 	}
@@ -112,7 +118,7 @@ func Run() error {
 	//
 	//
 	// KAFKA PRODUCER
-	eventProducer, close, err := kafgo.NewKafkaProducer([]string{"localhost:9092"})
+	eventProducer, close, err := kafgo.NewKafkaProducer(cfgs.KafkaBrokers)
 	if err != nil {
 		tele.Fatal("wtf")
 	}
@@ -220,7 +226,7 @@ func initClients() client.Clients {
 	//
 	// CACHE
 	redisClient := rds.NewRedisClient(
-		cfgs.RedisAddr, cfgs.RedisPassword, cfgs.RedisDB,
+		cfgs.SentinelAddrs, cfgs.RedisPassword, cfgs.RedisDB,
 	)
 
 	return client.NewClients(
