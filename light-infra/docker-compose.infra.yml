@@ -1,6 +1,9 @@
 networks:
   social-network:
     external: true
+    name: "social-network"
+  redis:
+    driver: bridge
 
 volumes:
   users-db-data:
@@ -84,13 +87,42 @@ services:
     networks: 
       - social-network
 
-  redis:
-    image: redis:7
-    container_name: redis
+  redis-master:
+    image: redis:8.4.0-alpine
+    command:
+      [
+        "redis-server",
+        "--bind", "0.0.0.0",
+        "--port", "6379",
+        "--protected-mode", "no",
+        "--save", "",
+        "--replica-announce-ip", "127.0.0.1",
+        "--replica-announce-port", "6379"
+      ]
     ports:
       - "6379:6379"
-    networks: 
+    networks:
       - social-network
+      - redis
+
+  sentinel-1:
+    image: redis:8.4.0-alpine
+    command: >
+      sh -c "
+      echo 'port 26379' > /tmp/sentinel.conf &&
+      echo 'bind 0.0.0.0' >> /tmp/sentinel.conf &&
+      echo 'sentinel resolve-hostnames yes' >> /tmp/sentinel.conf &&
+      echo 'sentinel announce-ip 127.0.0.1' >> /tmp/sentinel.conf &&
+      echo 'sentinel announce-port 26379' >> /tmp/sentinel.conf &&
+      echo 'sentinel monitor master 127.0.0.1 6379 1' >> /tmp/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds master 5000' >> /tmp/sentinel.conf &&
+      echo 'sentinel failover-timeout master 10000' >> /tmp/sentinel.conf &&
+      echo 'sentinel parallel-syncs master 1' >> /tmp/sentinel.conf &&
+      redis-sentinel /tmp/sentinel.conf
+      "
+    ports:
+      - "26379:26379"
+
 
   minio:
     image: minio/minio:latest

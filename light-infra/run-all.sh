@@ -19,9 +19,10 @@ trap cleanup INT TERM EXIT
 # Shared environment (all services)
 ######################################
 
-export REDIS_ADDR=localhost:6379
-export REDIS_PASSWORD=
-export REDIS_DB=0
+unset REDIS_ADDR
+export REDIS_USE_SENTINEL=true
+export SENTINEL_ADDRS=localhost:26379
+export REDIS_MASTER_SET=master
 export TELEMETRY_COLLECTOR_ADDR=localhost:4317
 
 export USERS_GRPC_ADDR=localhost:50051
@@ -136,7 +137,7 @@ echo
 ######################################
 
 (
-  export NATS_HOST=localhost
+  export NATS_HOST=localhost:6222
 
   cd "$BACKEND_DIR"
   go run ./services/live/cmd/main.go 2>&1 | sed 's/^/[LIVE] /'

@@ -43,100 +43,6 @@ run-services: run-migrations run-all
 # Run ALL services (parallel, blocking)
 ######################################
 
-run-all:
-	@echo "Starting all services..."
-	@trap 'kill 0' INT TERM; \
-	\
-	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	TELEMETRY_COLLECTOR_ADDR=localhost:4317 \
-	go run -C ../backend ./services/gateway/cmd/main.go & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5437/social_media?sslmode=disable \
-	MIGRATE_PATH=services/media/internal/db/migrations \
-	GRPC_SERVER_PORT=:50055 \
-	MINIO_ENDPOINT=localhost:9000 \
-	MINIO_ACCESS_KEY=minioadmin \
-	MINIO_SECRET_KEY=minioadmin \
-	go run -C ../backend ./services/media/cmd/server/main.go & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable \
-	MIGRATE_PATH=services/chat/internal/db/migrations \
-	GRPC_SERVER_PORT=:50053 \
-	NATS_HOST=localhost \
-	go run -C ../backend ./services/chat/cmd/server/main.go 2>&1 | sed 's/^/[CHAT] /' & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5434/social_posts?sslmode=disable \
-	GRPC_SERVER_PORT=:50052 \
-	go run -C ../backend ./services/posts/cmd/server/main.go 2>&1 | sed 's/^/[POSTS] /' & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5433/social_users?sslmode=disable \
-	MIGRATE_PATH=services/users/internal/db/migrations \
-	GRPC_SERVER_PORT=:50051 \
-	go run -C ../backend ./services/users/cmd/server/main.go 2>&1 | sed 's/^/[USERS] /' & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5436/social_notifications?sslmode=disable \
-	MIGRATE_PATH=services/notifications/internal/db/migrations \
-	GRPC_SERVER_PORT=:50054 \
-	go run -C ../backend ./services/notifications/cmd/server/main.go 2>&1 | sed 's/^/[NOTIFICATIONS] /' & \
-	\
-	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	NATS_HOST=localhost \
-    go run -C ../backend ./services/live/cmd/main.go 2>&1 | sed 's/^/[LIVE] /' & \
-	\
-	wait
-
-run-all:
-	@echo "Starting all services..."
-	@bash -c '\
-	set -e; \
-	trap "echo Stopping...; kill -- -$$" INT TERM EXIT; \
-	\
-	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	TELEMETRY_COLLECTOR_ADDR=localhost:4317 \
-	go run -C ../backend ./services/gateway/cmd/main.go & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5437/social_media?sslmode=disable \
-	MIGRATE_PATH=services/media/internal/db/migrations \
-	GRPC_SERVER_PORT=:50055 \
-	MINIO_ENDPOINT=localhost:9000 \
-	MINIO_ACCESS_KEY=minioadmin \
-	MINIO_SECRET_KEY=minioadmin \
-	go run -C ../backend ./services/media/cmd/server/main.go & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable \
-	MIGRATE_PATH=services/chat/internal/db/migrations \
-	GRPC_SERVER_PORT=:50053 \
-	NATS_HOST=localhost \
-	go run -C ../backend ./services/chat/cmd/server/main.go 2>&1 | sed "s/^/[CHAT] /" & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5434/social_posts?sslmode=disable \
-	GRPC_SERVER_PORT=:50052 \
-	go run -C ../backend ./services/posts/cmd/server/main.go 2>&1 | sed "s/^/[POSTS] /" & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5433/social_users?sslmode=disable \
-	MIGRATE_PATH=services/users/internal/db/migrations \
-	GRPC_SERVER_PORT=:50051 \
-	go run -C ../backend ./services/users/cmd/server/main.go 2>&1 | sed "s/^/[USERS] /" & \
-	\
-	DATABASE_URL=postgres://postgres:secret@localhost:5436/social_notifications?sslmode=disable \
-	MIGRATE_PATH=services/notifications/internal/db/migrations \
-	GRPC_SERVER_PORT=:50054 \
-	go run -C ../backend ./services/notifications/cmd/server/main.go 2>&1 | sed "s/^/[NOTIFICATIONS] /" & \
-	\
-	ENC_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	JWT_KEY=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	PASSWORD_SECRET=a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28= \
-	NATS_HOST=localhost \
-	go run -C ../backend ./services/live/cmd/main.go 2>&1 | sed "s/^/[LIVE] /" & \
-	\
-	wait'
-
 
 build-all:
 	@echo "Starting building..."
@@ -299,4 +205,3 @@ boom:
 	$(MAKE) docker-up
 	$(MAKE) run-migrations
 	./run-all.sh
-# 	$(MAKE) run-all
