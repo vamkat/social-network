@@ -68,11 +68,11 @@ EXECUTE FUNCTION update_timestamp();
 CREATE OR REPLACE FUNCTION set_variants_processing()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only act if status was changed to 'complete'
     IF NEW.status = 'complete' AND OLD.status IS DISTINCT FROM NEW.status THEN
         UPDATE file_variants
         SET status = 'processing'
-        WHERE file_id = NEW.id;
+        WHERE file_id = NEW.id
+            AND status <> 'complete';
     END IF;
 
     RETURN NEW;

@@ -25,6 +25,11 @@ type Querier interface {
 	GetVariant(ctx context.Context, fileId ct.Id,
 		variant ct.FileVariant) (fm File, err error)
 
+	GetAllVariants(
+		ctx context.Context,
+		fileId ct.Id,
+	) (fms []File, err error)
+
 	GetVariants(
 		ctx context.Context,
 		fileIds ct.Ids,
@@ -33,7 +38,7 @@ type Querier interface {
 
 	UpdateVariantStatusAndSize(
 		ctx context.Context,
-		fileId ct.Id,
+		varId ct.Id,
 		status ct.UploadStatus,
 		size int64,
 	) error

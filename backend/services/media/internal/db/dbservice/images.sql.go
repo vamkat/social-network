@@ -211,6 +211,53 @@ func (q *Queries) GetVariant(
 	return fm, err
 }
 
+func (q *Queries) GetAllVariants(
+	ctx context.Context,
+	fileId ct.Id,
+) (fms []File, err error) {
+
+	const query = `
+		SELECT
+			f.id,
+			f.filename,
+			v.mime_type,
+			v.size_bytes,
+			v.bucket,
+			v.object_key,
+			f.visibility,
+			v.status,
+			v.variant
+		FROM files f
+		JOIN file_variants v ON v.file_id = f.id
+		WHERE f.id = $1
+	`
+
+	rows, err := q.db.Query(ctx, query, fileId)
+	for rows.Next() {
+		var fm File
+		if err := rows.Scan(
+			&fm.Id,
+			&fm.Filename,
+			&fm.MimeType,
+			&fm.SizeBytes,
+			&fm.Bucket,
+			&fm.ObjectKey,
+			&fm.Visibility,
+			&fm.Status,
+			&fm.Variant,
+		); err != nil {
+			return nil, err
+		}
+		fms = append(fms, fm)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return fms, nil
+}
+
 // Missing rows is no error
 func (q *Queries) GetVariants(
 	ctx context.Context,
@@ -282,7 +329,7 @@ func (q *Queries) GetVariants(
 // No rows is error explicitly
 func (q *Queries) UpdateVariantStatusAndSize(
 	ctx context.Context,
-	fileId ct.Id,
+	varId ct.Id,
 	status ct.UploadStatus,
 	size int64,
 ) error {
@@ -292,10 +339,10 @@ func (q *Queries) UpdateVariantStatusAndSize(
 		SET 
 			status = $2,
 			size_bytes = $3
-		WHERE file_id = $1
+		WHERE id = $1
 	`
 
-	res, err := q.db.Exec(ctx, query, fileId, status, size)
+	res, err := q.db.Exec(ctx, query, varId, status, size)
 	if err != nil {
 		return err
 	}

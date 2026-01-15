@@ -10,7 +10,6 @@ import (
 
 	_ "golang.org/x/image/webp"
 
-	"io"
 	"math"
 	"social-network/services/media/internal/configs"
 	ct "social-network/shared/go/ct"
@@ -36,13 +35,8 @@ func NewImageconvertor(c configs.FileConstraints) *ImageConvertor {
 // Returns a bytes.Buffer containing the converted image or an error if reading, decoding, resizing,
 // or encoding fails. Ensures the input does not exceed the maximum allowed upload size.
 func (i *ImageConvertor) ConvertImageToVariant(
-	r io.Reader, variant ct.FileVariant,
+	buf []byte, variant ct.FileVariant,
 ) (out bytes.Buffer, err error) {
-
-	buf, err := io.ReadAll(r)
-	if err != nil {
-		return out, fmt.Errorf("failed to read object: %w", err)
-	}
 
 	if int64(len(buf)) > i.Configs.MaxImageUpload {
 		return out, fmt.Errorf("image size exceeds limit")

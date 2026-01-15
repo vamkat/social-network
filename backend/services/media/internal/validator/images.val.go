@@ -71,7 +71,6 @@ type ImageValidator struct {
 //   - This function reads the entire image into memory, which may be a concern for very large images.
 //   - The function is defensive, designed to prevent invalid or malicious images from being processed.
 func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
-	errMsg := "image validator: validate image"
 
 	// 1️⃣ Enforce max upload size
 	limited := io.LimitReader(r, v.Config.MaxImageUpload+1)
@@ -80,13 +79,12 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 		return ce.Wrap(
 			ce.ErrInternal,
 			fmt.Errorf("read failed: %w", err),
-			errMsg+": limit reader")
+			"limit reader")
 	}
 
 	if int64(len(buf)) > v.Config.MaxImageUpload {
 		return ce.Wrap(ce.ErrPermissionDenied,
-			ErrImageTooLarge,
-			errMsg,
+			fmt.Errorf("%w: actual: %d, max allowed: %d", ErrImageTooLarge, len(buf), v.Config.MaxImageUpload),
 		).WithPublic(fmt.Sprintf("image too large. Max size %v", v.Config.MaxImageUpload))
 	}
 
@@ -96,7 +94,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 		return ce.Wrap(
 			ce.ErrPermissionDenied,
 			fmt.Errorf("%w: %s", ErrUnsupportedType, mime),
-			errMsg,
+			"detect content type",
 		).WithPublic(fmt.Sprintf("unsuported mime type %v", mime))
 	}
 
@@ -106,7 +104,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 		return ce.Wrap(
 			ce.ErrPermissionDenied,
 			ErrInvalidImage,
-			errMsg+": first pass decode",
+			"first pass decode",
 		).WithPublic("unsupported file type")
 	}
 
@@ -115,7 +113,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 		return ce.Wrap(
 			ce.ErrPermissionDenied,
 			ErrInvalidDimension,
-			errMsg+": decompression bomb check",
+			"decompression bomb check",
 		).WithPublic("invalid dimensions")
 	}
 
@@ -127,7 +125,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 				cfg.Width,
 				cfg.Height,
 			),
-			errMsg,
+			"dimentions check",
 		).WithPublic("invalid dimensions")
 	}
 
@@ -136,7 +134,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 		return ce.Wrap(
 			ce.ErrPermissionDenied,
 			fmt.Errorf("%w: %s", ErrUnsupportedType, format),
-			errMsg+": allowed mimes check",
+			"allowed mimes check",
 		).WithPublic(fmt.Sprintf("unsuported mime type %v", format))
 	}
 
@@ -145,7 +143,7 @@ func (v *ImageValidator) ValidateImage(ctx context.Context, r io.Reader) error {
 	if err != nil {
 		return ce.Wrap(ce.ErrPermissionDenied,
 			ErrInvalidImage,
-			errMsg+": second pass decode",
+			"second pass decode",
 		).WithPublic("invalid file type")
 	}
 

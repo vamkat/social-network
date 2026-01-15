@@ -27,6 +27,6 @@ type Validator interface {
 type ImageConvertor interface {
 	// ConvertImageToVariant resizes an image to the given variant and encodes it as WebP.
 	ConvertImageToVariant(
-		r io.Reader, variant ct.FileVariant,
+		buf []byte, variant ct.FileVariant,
 	) (out bytes.Buffer, err error)
 }

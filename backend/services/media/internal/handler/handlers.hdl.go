@@ -112,7 +112,6 @@ func (m *MediaHandler) GetImage(ctx context.Context,
 	return res, nil
 }
 
-// TODO: Implement error codes
 func (m *MediaHandler) GetImages(ctx context.Context,
 	req *pb.GetImagesRequest) (*pb.GetImagesResponse, error) {
 	if req == nil || req.ImgIds == nil {
@@ -154,7 +153,8 @@ func (m *MediaHandler) GetImages(ctx context.Context,
 }
 
 // Checks if the upload matches the pre defined file metadata and configs FileService file constraints.
-// If validation fails file cannot be retrived and will be deleted from file service after 24 hours
+// Upon success all requested variants are generated, placed on file service and marked as completed on db rows.
+// If validation fails the file cannot be retrived and will be deleted from file service after 24 hours
 // As an exemption returns a FailedPrecondition upon ErrFailed return thus giving a chance for the file to be validated
 // in the future.
 func (m *MediaHandler) ValidateUpload(ctx context.Context,
@@ -166,7 +166,7 @@ func (m *MediaHandler) ValidateUpload(ctx context.Context,
 	tele.Info(ctx, "validate image called. @1", "request", req.String())
 
 	// Call application
-	url, err := m.Application.ValidateUpload(ctx, ct.Id(req.FileId), req.ReturnUrl)
+	url, err := m.Application.ValidateAndGenerateVariants(ctx, ct.Id(req.FileId), req.ReturnUrl)
 	if err != nil {
 		tele.Error(ctx, "validate image error", "request", req.String(), "error", err.Error())
 		return nil, ce.GRPCStatus(err)

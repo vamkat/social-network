@@ -3,7 +3,9 @@ package application
 import (
 	"context"
 	"net/url"
+	"social-network/services/media/internal/client"
 	md "social-network/services/media/internal/models"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"time"
 )
@@ -27,6 +29,12 @@ type S3Service interface {
 		ctx context.Context,
 		upload md.FileMeta,
 	) error
+
+	ValidateAndCreateVariants(
+		ctx context.Context,
+		fm md.FileMeta,
+		variants []client.VariantToGenerate,
+	) *ce.Error
 
 	GenerateVariant(
 		ctx context.Context,

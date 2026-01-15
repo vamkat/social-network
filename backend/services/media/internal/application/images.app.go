@@ -69,6 +69,7 @@ func (m *MediaService) UploadImage(ctx context.Context,
 			}
 
 			for _, v := range variants {
+				tele.Debug(ctx, "creating variants on db", "input", input, "variants", v)
 				_, err := tx.CreateVariant(ctx, dbservice.File{
 					Id:         fileId,
 					Filename:   req.Filename,
@@ -222,9 +223,6 @@ func (m *MediaService) GetImages(ctx context.Context,
 			return nil, nil, ce.Wrap(ce.ErrInternal, err, errMsg+": s3: generate url")
 		}
 		downUrls[fm.Id] = url.String()
-
-		//For testing with seeds
-		//downUrls[fm.Id] = fm.Filename
 	}
 	return downUrls, failedIds, nil
 }
@@ -232,6 +230,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 // This is a call to validate an already uploaded file.
 // Unvalidated files expire in 24 hours and are automatically
 // deleted from file service.
+// DEPRACATED
 func (m *MediaService) ValidateUpload(ctx context.Context,
 	fileId ct.Id, returnURL bool) (url string, err error) {
 

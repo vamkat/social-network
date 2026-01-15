@@ -53,16 +53,22 @@ func (m *MediaService) processPendingVariants(ctx context.Context) error {
 			v.Variant)
 		if err != nil {
 			tele.Warn(ctx, "Failed to generate variant for @1, @2", "id", v.Id, "variant", v.Variant, "error", err.Error())
-			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
-				ct.Failed, size); updateErr != nil {
+			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx,
+				v.Id,
+				ct.Failed,
+				size,
+			); updateErr != nil {
 				tele.Warn(ctx, "Failed to update status to failed. @1", "error", updateErr.Error())
 			}
 		} else {
-			tele.Info(ctx, "Successfully generated variant for @1  @2", "fileId", v.Id, "variant", v.Variant)
-			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx, v.Id,
-				ct.Complete, size); updateErr != nil {
+			if updateErr := m.Queries.UpdateVariantStatusAndSize(ctx,
+				v.Id,
+				ct.Complete,
+				size,
+			); updateErr != nil {
 				tele.Warn(ctx, "Failed to update status to complete. @1", "error", updateErr.Error())
 			}
+			tele.Info(ctx, "Successfully generated variant for @1  @2", "fileId", v.Id, "variant", v.Variant)
 		}
 	}
 
