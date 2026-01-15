@@ -25,6 +25,7 @@ export SENTINEL_ADDRS=localhost:26379
 export REDIS_MASTER_SET=master
 export TELEMETRY_COLLECTOR_ADDR=localhost:4317
 
+
 export USERS_GRPC_ADDR=localhost:50051
 export POSTS_GRPC_ADDR=localhost:50052
 export CHAT_GRPC_ADDR=localhost:50053
@@ -35,6 +36,8 @@ export SHUTDOWN_TIMEOUT_SECONDS=5
 export ENABLE_DEBUG_LOGS=true
 export ENABLE_SIMPLE_PRINT=true
 export KAFKA_BROKERS=localhost:29092
+
+export NATS_CLUSTER=nats://localhost:4222
 
 ######################################
 # Secrets
@@ -88,7 +91,6 @@ echo
   export DATABASE_URL=postgres://postgres:secret@localhost:5435/social_chat?sslmode=disable
   export MIGRATE_PATH=services/chat/internal/db/migrations
   export GRPC_SERVER_PORT=:50053
-  export NATS_HOST=localhost
 
   cd "$BACKEND_DIR"
   go run ./services/chat/cmd/server/main.go 2>&1 | sed 's/^/[CHAT] /'
@@ -137,7 +139,6 @@ echo
 ######################################
 
 (
-  export NATS_HOST=localhost:6222
 
   cd "$BACKEND_DIR"
   go run ./services/live/cmd/main.go 2>&1 | sed 's/^/[LIVE] /'

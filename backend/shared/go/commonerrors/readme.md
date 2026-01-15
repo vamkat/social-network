@@ -78,8 +78,6 @@ log.Println(err)
 
 This prints the **entire causal chain**. This behavior is **intentional** and meant for **internal logging and debugging**.
 
----
-
 ## Creating Errors
 
 ### Creating a new error (origin point)
@@ -88,7 +86,7 @@ This prints the **entire causal chain**. This behavior is **intentional** and me
 err := New(ErrInternal, sqlErr, "query users")
 ```
 
-* Captures a stack trace
+* Captures a stack trace (depth 3)
 * Sets the error class
 * Records input/context
 
@@ -115,6 +113,19 @@ err = Wrap(nil, err, "repository layer")
 * Keeps the existing classification
 * Adds context only
 
+---
+
+### `WithCode(c error) *Error`
+
+Updates the error’s classification code. If the provided code is invalid, the error class defaults to `ErrUnknown`.
+
+**Parameters:**
+
+* `c` — The new error classification.
+
+**Returns:**
+The same `*Error` instance with the updated `class`.
+
 
 ---
 
@@ -130,6 +141,13 @@ err := Wrap(ErrUnauthenticated, tokenErr, "validate token").
 
 ---
 
+### `Public() string`
+
+Returns the public-facing message set on the error.
+
+**Returns:**
+The `publicMsg` string.
+
 ## Error Inspection
 
 ### Classification (`errors.Is`)
@@ -139,7 +157,7 @@ if errors.Is(err, ErrNotFound) {
 	// handle not found
 }
 ```
-The `Is()` custom method only checks the outer most error `commonerrors.class`. The intention is each error to effectivelly contain only one clasification.
+The `Is()` custom method first checks the outer most error `commonerrors.class` then checks the wraped error. The intention is each error to effectivelly contain only one clasification.
 
 
 ### Accessing the custom error (`errors.As`)
@@ -151,9 +169,7 @@ if errors.As(err, &e) {
 }
 ```
 
----
-
-## Root Cause Extraction
+### Root Cause Extraction
 
 Retrieve the **original underlying error message**:
 
@@ -163,63 +179,72 @@ cause := GetSource(err)
 
 This walks the unwrap chain until the final error.
 
----
+### Compare Class with error
+
+
+A standalone helper function that checks if a given error matches a target `*Error` class.
+
+```go
+IsClass(err error, target *Error) bool
+```
+
+**Parameters:**
+
+* `err` — The error to test.
+* `target` — A reference `*Error` instance representing the target class.
+
+**Returns:**
+`true` if the error matches the target class; otherwise `false`.
+
 
 ## gRPC Integration
 
-### Convert to gRPC code
+### Convert from gRPC status error
 
 ```go
-code := ToGRPCCode(err)
+DecodeProto(err error, input ...string) *Error
 ```
 
-Behavior:
+Converts a gRPC error into a `*Error` type for internal handling.
 
-* Context cancellation & deadlines are handled explicitly
-* Domain errors map via internal code maps
-* Fallback is `codes.Unknown`
+**Features:**
+
+* Maps gRPC status codes (e.g., `NotFound`, `Internal`) to your internal error classification.
+* Preserves the original gRPC error message.
+* Optionally includes additional input context.
+* Assigns a public-facing message using the gRPC error message.
+
+**Parameters:**
+
+* `err` — The gRPC error to convert.
+* `input` — Optional input context strings.
+
+**Returns:**
+A new `*Error` instance representing the converted error.
 
 ---
 
 ### Convert to gRPC status error
 
 ```go
-return GRPCStatus(err)
+EncodeProto(err error) error
 ```
 
-Behavior:
+Converts a `*Error` (or common Go errors) back into a gRPC-compatible error.
 
-* Existing gRPC status errors are propagated
-* Most outer error class prevails over nested error classes
-* Context errors are mapped first
-* Domain errors use `publicMsg` when present
-* Empty public messages fall back to a safe default
-* Internal details are never exposed
+**Features:**
 
----
-
-## Example
-
-```go
-func GetUser(id string) error {
-	user, err := repo.Find(id)
-	if err != nil {
-		return Wrap(ErrNotFound, err, "GetUser").
-			WithPublic("user not found")
-	}
-	return nil
-}
-```
-
----
+* Returns gRPC errors as-is.
+* Converts context errors (`DeadlineExceeded`, `Canceled`) to corresponding gRPC status codes.
+* Converts domain-specific errors (`*Error`) to appropriate gRPC codes with the public message.
+* Defaults to `codes.Unknown` if the error cannot be classified.
 
 ## Best Practices
 
 * **Create errors at failure boundaries**
 * **Wrap errors at layer boundaries**
-* Use `WithPublic` only for client-safe messages
+* **Use `WithPublic` only for client-safe messages**
 
----
 
 ## Non-Goals
 
@@ -233,7 +258,6 @@ The following are intentionally out of scope:
 
 These can be layered on top without changing the core API.
 
----
 
 ## Summary
 
