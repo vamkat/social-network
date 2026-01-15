@@ -142,10 +142,10 @@ export default function GroupsContent() {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    const handleCreateGroupSuccess = (groupId) => {
-        // Redirect to the newly created group page
-        router.push(`/groups/${groupId}`);
-    };
+    // const handleCreateGroupSuccess = (groupId) => {
+    //     // Redirect to the newly created group page
+    //     router.push(`/groups/${groupId}`);
+    // };
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
@@ -334,7 +334,6 @@ export default function GroupsContent() {
             <CreateGroup
                 isOpen={isCreateGroupOpen}
                 onClose={() => setIsCreateGroupOpen(false)}
-                onSuccess={handleCreateGroupSuccess}
             />
         </div>
     );

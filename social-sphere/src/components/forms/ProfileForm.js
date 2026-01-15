@@ -13,6 +13,7 @@ export default function ProfileForm({ user }) {
     const [imageErr, setImageErr] = useState(null);
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar_url || null);
+    const [wantsToDelete, setWantsToDelete] = useState(false);
     const setUser = useStore((state) => state.setUser);
     const currentUser = useStore((state) => state.user);
 
@@ -39,6 +40,7 @@ export default function ProfileForm({ user }) {
     const removeAvatar = () => {
         setAvatarFile(null);
         setAvatarPreview(null);
+        setWantsToDelete(true);
     };
 
     const handleSubmit = async (e) => {
@@ -60,7 +62,18 @@ export default function ProfileForm({ user }) {
             profileData.avatar_name = avatarFile.name;
             profileData.avatar_size = avatarFile.size;
             profileData.avatar_type = avatarFile.type;
+        } else if (wantsToDelete) {
+            profileData.delete_image = wantsToDelete;
+            setUser({
+                    ...currentUser,
+                    avatar_url: null,
+                    fileId: null
+                });
+        } else {
+            profileData.avatar_id = currentUser.fileId;
         }
+        console.log("currentUser: ", currentUser);
+        console.log("SENDING THIS: ", profileData);
 
         try {
             // Validate profile data and avatar

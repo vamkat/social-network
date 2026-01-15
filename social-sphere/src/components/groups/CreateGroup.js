@@ -6,8 +6,9 @@ import { createGroup } from "@/actions/groups/create-group";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { validateImage } from "@/lib/validation";
 import Modal from "@/components/ui/Modal";
+import { useRouter } from "next/navigation";
 
-export default function CreateGroup({ isOpen, onClose, onSuccess }) {
+export default function CreateGroup({ isOpen, onClose }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [imageFile, setImageFile] = useState(null);
@@ -15,6 +16,7 @@ export default function CreateGroup({ isOpen, onClose, onSuccess }) {
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
+    const router = useRouter();
 
     const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
@@ -104,10 +106,7 @@ export default function CreateGroup({ isOpen, onClose, onSuccess }) {
 
             // Success!
             setIsSubmitting(false);
-            handleClose();
-            if (onSuccess) {
-                onSuccess(response.GroupId);
-            }
+            router.push(`/groups/${response.GroupId}`);
         } catch (err) {
             console.error("Failed to create group:", err);
             setError("Failed to create group. Please try again.");
@@ -124,6 +123,12 @@ export default function CreateGroup({ isOpen, onClose, onSuccess }) {
         setError("");
         onClose();
     };
+
+    // const handleSuccClose = () => {
+    //     if (isSubmitting) return;
+
+    //     setError("");
+    // };
 
     return (
         <Modal
