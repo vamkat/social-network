@@ -14,6 +14,7 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
     const [imagePreview, setImagePreview] = useState(null);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [wantsToDelete, setWantsToDelete] = useState(false);
     const fileInputRef = useRef(null);
 
     // Prefill form when group data changes or modal opens
@@ -51,6 +52,7 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
     const handleRemoveImage = () => {
         setImageFile(null);
         setImagePreview(null);
+        setWantsToDelete(true);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -80,9 +82,14 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
 
             // Add image data if a new image is selected
             if (imageFile) {
+                groupData.delete_image = null;
                 groupData.group_image_name = imageFile.name;
                 groupData.group_image_size = imageFile.size;
                 groupData.group_image_type = imageFile.type;
+            } else if (wantsToDelete) {
+                groupData.delete_image = wantsToDelete;
+            } else {
+                groupData.group_image_id = group.group_image_id;
             }
 
             const response = await updateGroup(groupData);
