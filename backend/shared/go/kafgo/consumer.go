@@ -3,6 +3,7 @@ package kafgo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"social-network/shared/go/ct"
 	tele "social-network/shared/go/telemetry"
@@ -43,16 +44,19 @@ type kafkaConsumer struct {
 	cancel            func()
 	isConsuming       bool
 	weAreShuttingDown bool
+	foundRecords      map[uint64]*Record
 }
 
 //ALL TODOs
 //set up proper limits on how many records this consumer can have at the same time.
 //test more that shutdown is graceful enough
 //test that records don't get lost when service gets restarted
-//add comitting remaining documents on shutdown
-//add batching to commits
 //make a trap for detecting out of order documents
-//add major retrying behavior instead of defaulting to a shutdown
+//add major retrying behavior instead of defaulting to a shutdown, or find if such mechanism already exists
+
+//done: ---V
+//add batching to commits
+//add comitting remaining documents on shutdown
 
 // Seeds are used for finding the server, just as many kafka ip's you have.
 //
@@ -88,8 +92,9 @@ func NewKafkaConsumer(seeds []string, group string) (*kafkaConsumer, error) {
 		seeds:        seeds,
 		group:        group,
 		topicDataMap: make(map[string]*topicData),
-		commitBuffer: 1000,
-		topicBuffer:  5000,
+		commitBuffer: 50,
+		topicBuffer:  100,
+		foundRecords: make(map[uint64]*Record),
 	}
 
 	return kfc, nil
@@ -103,13 +108,13 @@ func (kfc *kafkaConsumer) WithCommitBuffer(size int) *kafkaConsumer {
 	return kfc
 }
 
-func (kfc *kafkaConsumer) WithTopicBuffer(size int) *kafkaConsumer {
-	if kfc.isConsuming {
-		panic("don't mess with the consumer while it's consuming!")
-	}
-	kfc.topicBuffer = size
-	return kfc
-}
+// func (kfc *kafkaConsumer) WithTopicBuffer(size int) *kafkaConsumer {
+// 	if kfc.isConsuming {
+// 		panic("don't mess with the consumer while it's consuming!")
+// 	}
+// 	kfc.topicBuffer = size
+// 	return kfc
+// }
 
 var ErrFetch = errors.New("error when fetching")
 var ErrConsumerFunc = errors.New("consumer function error")
@@ -127,6 +132,7 @@ func (kfc *kafkaConsumer) RegisterTopic(topic ct.KafkaTopic) (<-chan *Record, er
 
 	kfc.topics = append(kfc.topics, string(topic))
 	committerData := newCommitRoutine()
+	committerData.TopicChannel = make(chan *Record, kfc.topicBuffer)
 	kfc.topicDataMap[string(topic)] = committerData
 
 	return committerData.TopicChannel, nil
@@ -175,7 +181,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 	for _, topic := range kfc.topics {
 		commitData := kfc.topicDataMap[topic]
 		commitData.CommitChannel = make(chan *Record, kfc.commitBuffer)
-		go kfc.commitRoutine(commitData)
+		go kfc.commitRoutine(topic)
 	}
 
 	go func() {
@@ -201,7 +207,7 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 					kfc.shutdownProcedure(true)
 					return
 				}
-				tele.Info(kfc.context, "consumer fetch successful")
+				tele.Debug(kfc.context, "consumer fetch successful")
 
 				// We can iterate through a record iterator...
 				iter := fetches.RecordIter()
@@ -212,11 +218,9 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 
 					//since the commit routines need to commit the records in the right order
 					//we need keep track of what records have arrived, this is then read by commit routine
-					tele.Info(kfc.context, "consumer before mutex")
 					committerData.Mutex.Lock()
 					committerData.ExpectedIds = append(committerData.ExpectedIds, newId)
 					committerData.Mutex.Unlock()
-					tele.Info(kfc.context, "consumer after mutex")
 
 					Record, err := newRecord(kfc.context, record, committerData.CommitChannel, newId)
 					if err != nil {
@@ -226,16 +230,15 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 					}
 
 					timer.Reset(time.Second * 5)
-					tele.Info(kfc.context, "consumer before timer select")
 					select {
 					case <-timer.C:
 						tele.Error(context.Background(), "SLOW CHANNEL DETECTED")
 						kfc.shutdownProcedure(true)
 						return
 					case committerData.TopicChannel <- Record:
-						tele.Info(kfc.context, "consumer give record to topic channel")
+						// tele.Info(kfc.context, "consumer give record to topic channel")
 					}
-					tele.Info(kfc.context, "consumer after timer select")
+					// tele.Info(kfc.context, "consumer after timer select")
 				}
 			}
 		}
@@ -277,94 +280,105 @@ func (kfc *kafkaConsumer) shutdownProcedure(thereIsSomethingWrong bool) {
 	// timer := time.NewTimer(time.Second * 10) //TODO use me!
 
 	//committing any remaining commits
-	//TODO do this!
+	for _, topic := range kfc.topics {
+		data, ok := kfc.topicDataMap[topic]
+		if !ok {
+			tele.Error(kfc.context, "SHUTDOWN PROCEDURE TOPIC MISSING @1", "topic", topic)
+			panic("failed to find topic in topic data map...")
+		}
+		err := kfc.commitFoundRecords(data)
+		if err != nil {
+			tele.Error(kfc.context, "SHUTDOWN COMMIT ERROR @1", "error", err.Error())
+		}
+	}
 
 	if thereIsSomethingWrong {
 		os.Exit(1)
 	}
 }
 
-//TODO batch commits, small batches
 //TODO add detection trap whenc committing monotinicIds out of order
 
 // commitRoutine listens to the commitChannel and commits records as they come in
-// it batches records to reduce spamming too many requests to kafka <- TODO
 // since records need to be committed in order, it collects record monotinicIds,
 // and by using the expected monotinicIds provided by the consumer routine we only commit the next expected record
 // HOPEFULLY THE RECORD HANDLERS DO THEIR BEST EFFORT TO PROCESS IT, and if it's corrupted then they should commit it to remove it from circulation
 // if a handler is incapable of of processing the record, then it needs to close the channel
 // so that the shutdown operation can begin and restart the pod
-func (kfc *kafkaConsumer) commitRoutine(data *topicData) {
-	foundRecords := make(map[uint64]*Record, 30)
+func (kfc *kafkaConsumer) commitRoutine(topic string) {
+	data := kfc.topicDataMap[topic]
 	for {
 		select {
 		case <-kfc.context.Done():
-			tele.Info(context.Background(), "COMMIT WATCHER ROUTINE CLOSING DUE TO CONTEXT .Done()")
+			tele.Info(kfc.context, "COMMIT WATCHER ROUTINE CLOSING DUE TO CONTEXT .Done()")
 			return
 
 		case newRecord, ok := <-data.CommitChannel:
 			if !ok {
+				//not ok means channel was closed by record handler, which means there's a critical problem and pod needs to be restarted
 				tele.Error(kfc.context, "commitroutine: shutting down due to bad channel")
-				//if not ok, means channel was closed by record handler, which means there's a critical problem and pod needs to be restarted
 				kfc.shutdownProcedure(true)
 				return
 			}
 
 			//add new record to collection of monotonicIds
-			foundRecords[newRecord.monotinicId] = newRecord
-			tele.Info(kfc.context, "new record found of @1. current @2, and expected monoIds @3", "monoId", newRecord.monotinicId, "count", len(foundRecords), "monoIdsLen", len(data.ExpectedIds))
+			kfc.foundRecords[newRecord.monotinicId] = newRecord
+			tele.Debug(kfc.context, "new record found of @1. current @2, and expected monoIds @3", "monoId", newRecord.monotinicId, "count", len(kfc.foundRecords), "monoIdsLen", len(data.ExpectedIds))
 
-			//check if the next expected monoId (assigned by consumer routine) if available
-			data.Mutex.Lock()
-			nextMonoId := data.ExpectedIds[0]
-			data.Mutex.Unlock()
-
-			record, nextExists := foundRecords[nextMonoId]
-			combo := 0
-			if !nextExists {
-				tele.Info(kfc.context, "next record of @1 not found, skipping...", "monoId", nextMonoId)
-			}
-			for nextExists {
-				tele.Info(kfc.context, "inside nextExists")
-				combo++
-				//TODO pool records here instead of doing them one by one
-				ctx, cancel := context.WithTimeout(kfc.context, time.Second*5) //TODO is this the correct context?
-				err := kfc.client.CommitRecords(ctx, record.rec)               //TODO is this the correct context?
-				if err != nil {
-					tele.Error(context.Background(), "COMMIT ERROR FOUND @1", "error", err.Error()) //TODO think what needs to be done here
-					kfc.shutdownProcedure(true)                                                     //TODO this is excessive, but not sure what else to do? other than retry?
-					cancel()
-					return
-				}
-				cancel()
-
-				//the handler of the record is waiting for confirmation that we received it before committing the transaction
-				//so lets confirm it
-				record.confirmChannel <- struct{}{}
-
-				//clean map from committed record
-
-				delete(foundRecords, nextMonoId)
-
-				//time to check if the next found expected monoId is available too
-				data.Mutex.Lock()
-				data.ExpectedIds = data.ExpectedIds[1:]
-				if len(data.ExpectedIds) == 0 {
-					data.Mutex.Unlock()
-					if combo > 1 {
-						tele.Info(kfc.context, "COMBO: @1", "count", combo)
-					}
-					break
-				}
-				nextMonoId = data.ExpectedIds[0]
-				record, nextExists = foundRecords[nextMonoId]
-				data.Mutex.Unlock()
-			}
-			if combo > 1 {
-				tele.Info(kfc.context, "COMBO: @1", "count", combo)
+			err := kfc.commitFoundRecords(data)
+			if err != nil {
+				kfc.shutdownProcedure(true)
 			}
 		}
 	}
+}
+
+func (kfc *kafkaConsumer) commitFoundRecords(data *topicData) error {
+	var nextRecordFound bool
+	var highestFoundRecordId uint64
+	var highestRecord *Record //the only record that will be commited, since it also commits all records behind it
+	var recordsCount int      //used to keep track how many contigious records are available
+
+	data.Mutex.Lock()
+
+	//check the current found records for the highest record that we can commit, to avoid commit each individual record one by one up to the highest one
+	for i := range len(data.ExpectedIds) {
+		nextId := data.ExpectedIds[i]
+		record, ok := kfc.foundRecords[nextId]
+		if ok {
+			highestFoundRecordId = nextId
+			highestRecord = record
+			nextRecordFound = true
+			recordsCount++
+
+			//clean map from record that will be committed
+			delete(kfc.foundRecords, highestFoundRecordId)
+
+			//the handler of the record is waiting for confirmation that we received it before committing the transaction
+			//so lets confirm it
+			highestRecord.confirmChannel <- struct{}{}
+		} else {
+			break
+		}
+	}
+	data.Mutex.Unlock()
+
+	if nextRecordFound {
+		//actually commit the highest record found
+		ctx, cancel := context.WithTimeout(kfc.context, time.Second*5) //TODO is this the correct context?
+		err := kfc.client.CommitRecords(ctx, highestRecord.rec)        //TODO is this the correct context?
+		defer cancel()
+		if err != nil {
+			tele.Error(context.Background(), "COMMIT ERROR FOUND @1", "error", err.Error()) //TODO think what needs to be done here
+			return fmt.Errorf("failed to commit, complete shutdown")
+		}
+
+		//since we found a highest record, lets clean up the expectedIds too
+		data.Mutex.Lock()
+		data.ExpectedIds = data.ExpectedIds[recordsCount:]
+		data.Mutex.Unlock()
+	}
+	return nil
 }
 
 func (kfc *kafkaConsumer) validateBeforeStart() error {

@@ -169,7 +169,7 @@ func startKafkaConsumer(ctx context.Context, app *application.Application) error
 	}
 
 	// Configure buffer sizes
-	kafkaConsumer = kafkaConsumer.WithTopicBuffer(1000).WithCommitBuffer(100)
+	kafkaConsumer = kafkaConsumer.WithCommitBuffer(100)
 
 	// Register the notification topic
 	notificationChannel, err := kafkaConsumer.RegisterTopic(ct.KafkaTopic(ct.NotificationTopic))

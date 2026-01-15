@@ -15,6 +15,7 @@ import (
 	"social-network/shared/go/gorpc"
 	redis_connector "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
+	testnats "social-network/shared/go/test-nats"
 	"syscall"
 	"time"
 
@@ -63,6 +64,11 @@ func Run() {
 	}
 	defer natsConn.Drain()
 	tele.Info(ctx, "NATS connected")
+
+	err = testnats.TestNATS(natsConn)
+	if err != nil {
+		tele.Error(ctx, "nats connection test failed: %v", err)
+	}
 
 	//
 	//
