@@ -20,6 +20,11 @@ import (
 func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id]models.User, error) {
 	input := fmt.Sprintf("user retriever: get users: uses ids: %v", userIDs)
 	//========================== STEP 1 : get user info from users ===============================================
+	if len(userIDs) == 0 {
+		tele.Warn(ctx, "get users called with empty ids slice")
+		return nil, nil
+	}
+
 	if err := userIDs.Validate(); err != nil {
 		return nil, ce.New(ce.ErrInvalidArgument, err, input)
 	}

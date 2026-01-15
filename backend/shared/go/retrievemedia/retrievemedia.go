@@ -16,6 +16,11 @@ import (
 func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant media.FileVariant) (map[int64]string, []int64, error) {
 	input := fmt.Sprintf("ids %v, variant: %v", imageIds, variant)
 
+	if len(imageIds) == 0 {
+		tele.Warn(ctx, "get media called with empty ids slice")
+		return nil, nil, nil
+	}
+
 	if err := imageIds.Validate(); err != nil {
 		return nil, nil, ce.New(ce.ErrInvalidArgument, err, input)
 	}
