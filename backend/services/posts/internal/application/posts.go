@@ -65,7 +65,7 @@ func (s *Application) CreatePost(ctx context.Context, req models.CreatePostReq) 
 			}
 			rowsAffected, err := q.InsertPostAudience(ctx, ds.InsertPostAudienceParams{
 				PostID:         postId,
-				AllowedUserIds: audienceIds.Int64(), //does nil work here? TODO test
+				AllowedUserIds: audienceIds.Int64(),
 			})
 			if err != nil {
 				return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)

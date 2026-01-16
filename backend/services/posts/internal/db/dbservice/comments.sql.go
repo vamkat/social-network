@@ -102,7 +102,7 @@ SELECT
 FROM comments c
 WHERE c.parent_id = $1
   AND c.deleted_at IS NULL
-ORDER BY c.created_at DESC -- can change to asc, TODO ask front
+ORDER BY c.created_at DESC 
 OFFSET $3
 LIMIT $4
 `
