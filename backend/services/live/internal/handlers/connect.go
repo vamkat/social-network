@@ -12,7 +12,6 @@ import (
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
 	"social-network/shared/go/mapping"
-	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 	"strings"
 	"sync"
@@ -185,7 +184,12 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			}
 			delete(subcriptions, payload)
 		case "ch":
-			message := &models.CreatePrivateMsgReq{}
+			type createPM struct {
+				InterlocutorId ct.Id      `json:"interlocutor_id"`
+				MessageText    ct.MsgBody `json:"message_text"`
+			}
+
+			message := &createPM{}
 			err = json.Unmarshal([]byte(payload), message)
 			if err != nil {
 				tele.Error(ctx, "failed to unmarshal chat message @1", "error", err.Error())
