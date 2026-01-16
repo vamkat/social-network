@@ -367,19 +367,33 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 
 	// ============== create notification ===============================
 
-	//create notification (waiting for batch notification)
-	// inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
-	// if err != nil {
-	// 	//WHAT DO DO WITH ERROR HERE?
-	// }
-	// group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
-	// if err != nil {
-	// 	//WHAT DO DO WITH ERROR HERE?
-	// }
-	// err = s.clients.CreateGroupInvite(ctx, req.InvitedId.Int64(), req.InviterId.Int64(), req.GroupId.Int64(), group.GroupTitle, inviter.Username.String())
-	// if err != nil {
-	// 	//WHAT DO DO WITH ERROR HERE?
-	// }
+	// create notification (waiting for batch notification)
+	inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
+	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+	if err != nil {
+		//WHAT DO DO WITH ERROR HERE?
+	}
+	event := &notifpb.NotificationEvent{
+		EventType: notifpb.EventType_GROUP_INVITE_CREATED,
+		Payload: &notifpb.NotificationEvent_GroupInviteCreated{
+			GroupInviteCreated: &notifpb.GroupInviteCreated{
+				InvitedUserId:   req.InvitedIds.Int64(),
+				InviterUserId:   req.InviterId.Int64(),
+				GroupId:         req.GroupId.Int64(),
+				GroupName:       group.GroupTitle,
+				InviterUsername: inviter.Username.String(),
+			},
+		},
+	}
+
+	if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+		tele.Error(ctx, "failed to send new follower notification: @1", "error", err.Error())
+	}
+	tele.Info(ctx, "new follower notification event created")
+
 	return nil
 }
 

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	ds "social-network/services/posts/internal/db/dbservice"
 	"social-network/shared/gen-go/media"
-	notifpb "social-network/shared/gen-go/notifications"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -72,25 +71,26 @@ func (s *Application) CreateEvent(ctx context.Context, req models.CreateEventReq
 	if err != nil {
 		tele.Error(ctx, "Could not get basic group info for id @1 for new event notif: @2", "userId", req.GroupId, "error", err.Error())
 	}
+	_ = group
 
-	// build the notification event
-	event := &notifpb.NotificationEvent{
-		EventType: notifpb.EventType_NEW_EVENT_CREATED,
-		Payload: &notifpb.NotificationEvent_NewEventCreated{
-			NewEventCreated: &notifpb.NewEventCreated{
-				UserId:     req.CreatorId.Int64(), //WHICH USER? EVENT CREATOR?
-				GroupId:    req.GroupId.Int64(),
-				EventId:    eventId,
-				GroupName:  group.GroupTitle.String(),
-				EventTitle: req.Title.String(),
-			},
-		},
-	}
+	// // build the notification event
+	// event := &notifpb.NotificationEvent{
+	// 	EventType: notifpb.EventType_NEW_EVENT_CREATED,
+	// 	Payload: &notifpb.NotificationEvent_NewEventCreated{
+	// 		NewEventCreated: &notifpb.NewEventCreated{
+	// 			UserId:     req.CreatorId.Int64(), //WHICH USER? EVENT CREATOR?
+	// 			GroupId:    req.GroupId.Int64(),
+	// 			EventId:    eventId,
+	// 			GroupName:  group.GroupTitle.String(),
+	// 			EventTitle: req.Title.String(),
+	// 		},
+	// 	},
+	// }
 
-	if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
-		tele.Error(ctx, "failed to send new event notification: @1", "error", err.Error())
-	}
-	tele.Info(ctx, "new event notification event created")
+	// if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+	// 	tele.Error(ctx, "failed to send new event notification: @1", "error", err.Error())
+	// }
+	// tele.Info(ctx, "new event notification event created")
 
 	return eventId, nil
 }

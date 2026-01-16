@@ -3,12 +3,15 @@ package application
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	db "social-network/services/notifications/internal/db/sqlc"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // CreateNotification creates a new notification
@@ -32,7 +35,7 @@ func (a *Application) CreateNotificationWithAggregation(ctx context.Context, use
 
 	if err != nil {
 		// If no existing notification found (which is normal), create a new one
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return a.createNotification(ctx, userID, notifType, title, message, sourceService, sourceEntityID, needsAction, payload, 1)
 		}
 		return nil, fmt.Errorf("failed to check for existing notification: %w", err)
@@ -57,13 +60,13 @@ func (a *Application) CreateNotificationWithAggregation(ctx context.Context, use
 
 	// Convert database notification to our model
 	notification := &Notification{
-		ID:             updatedNotification.ID,
-		UserID:         updatedNotification.UserID,
-		Type:           NotificationType(updatedNotification.NotifType),
-		SourceService:  updatedNotification.SourceService,
-		Title:          a.formatAggregatedTitle(title, int64(newCount)),
-		Message:        a.formatAggregatedMessage(message, int64(newCount)),
-		Count:          newCount,
+		ID:            updatedNotification.ID,
+		UserID:        updatedNotification.UserID,
+		Type:          NotificationType(updatedNotification.NotifType),
+		SourceService: updatedNotification.SourceService,
+		Title:         a.formatAggregatedTitle(title, int64(newCount)),
+		Message:       a.formatAggregatedMessage(message, int64(newCount)),
+		Count:         newCount,
 	}
 
 	// Handle optional fields with proper type conversion
@@ -124,12 +127,12 @@ func (a *Application) createNotification(ctx context.Context, userID int64, noti
 
 	// Convert database notification to our model
 	notification := &Notification{
-		ID:    dbNotification.ID,
-		UserID: dbNotification.UserID,
-		Type:  NotificationType(dbNotification.NotifType),
+		ID:            dbNotification.ID,
+		UserID:        dbNotification.UserID,
+		Type:          NotificationType(dbNotification.NotifType),
 		SourceService: dbNotification.SourceService,
-		Title:          title,
-		Message:        message,
+		Title:         title,
+		Message:       message,
 	}
 
 	// Handle optional fields with proper type conversion
@@ -241,10 +244,10 @@ func (a *Application) GetNotification(ctx context.Context, notificationID, userI
 	}
 
 	notification := &Notification{
-		ID:             dbNotification.ID,
-		UserID:         dbNotification.UserID,
-		Type:           NotificationType(dbNotification.NotifType),
-		SourceService:  dbNotification.SourceService,
+		ID:            dbNotification.ID,
+		UserID:        dbNotification.UserID,
+		Type:          NotificationType(dbNotification.NotifType),
+		SourceService: dbNotification.SourceService,
 	}
 
 	// Handle optional fields with proper type conversion
@@ -290,10 +293,10 @@ func (a *Application) GetUserNotifications(ctx context.Context, userID int64, li
 	notifications := make([]*Notification, len(dbNotifications))
 	for i, dbNotif := range dbNotifications {
 		notification := &Notification{
-			ID:             dbNotif.ID,
-			UserID:         dbNotif.UserID,
-			Type:           NotificationType(dbNotif.NotifType),
-			SourceService:  dbNotif.SourceService,
+			ID:            dbNotif.ID,
+			UserID:        dbNotif.UserID,
+			Type:          NotificationType(dbNotif.NotifType),
+			SourceService: dbNotif.SourceService,
 		}
 
 		// Handle optional fields with proper type conversion
@@ -382,8 +385,8 @@ func (a *Application) DeleteNotification(ctx context.Context, notificationID, us
 // CreateDefaultNotificationTypes ensures default notification types are in the database
 func (a *Application) CreateDefaultNotificationTypes(ctx context.Context) error {
 	defaultTypes := []struct {
-		Type          string
-		Category      string
+		Type           string
+		Category       string
 		DefaultEnabled bool
 	}{
 		{string(FollowRequest), "social", true},
