@@ -139,13 +139,13 @@ func (a *Application) CreateGroupJoinRequestNotification(ctx context.Context, gr
 }
 
 // CreateNewEventNotification creates a notification when a new event is created in a group the user is part of
-func (a *Application) CreateNewEventNotification(ctx context.Context, userID, groupID, eventID int64, groupName, eventTitle string) error {
+func (a *Application) CreateNewEventNotification(ctx context.Context, userID, eventCreatorID, groupID, eventID int64, groupName, eventTitle string) error {
 	tele.Debug(ctx, "create new event notification called")
-	return a.CreateNewEventForMultipleUsers(ctx, []int64{userID}, groupID, eventID, groupName, eventTitle)
+	return a.CreateNewEventForMultipleUsers(ctx, []int64{userID}, eventCreatorID, groupID, eventID, groupName, eventTitle)
 }
 
 // CreateNewEventForMultipleUsers creates a notification when a new event is created in a group for multiple users
-func (a *Application) CreateNewEventForMultipleUsers(ctx context.Context, userIDs []int64, groupID, eventID int64, groupName, eventTitle string) error {
+func (a *Application) CreateNewEventForMultipleUsers(ctx context.Context, userIDs []int64, eventCreatorID, groupID, eventID int64, groupName, eventTitle string) error {
 	title := fmt.Sprintf("New Event: %s", eventTitle)
 	message := fmt.Sprintf("New event \"%s\" was created in group \"%s\"", eventTitle, groupName)
 
@@ -159,6 +159,9 @@ func (a *Application) CreateNewEventForMultipleUsers(ctx context.Context, userID
 
 	// Create notifications for each user
 	for _, userID := range userIDs {
+		if userID == eventCreatorID {
+			continue
+		}
 		_, err := a.CreateNotificationWithAggregation(
 			ctx,
 			userID,   // recipient

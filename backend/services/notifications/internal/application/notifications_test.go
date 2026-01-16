@@ -74,7 +74,7 @@ func TestGetNotification(t *testing.T) {
 	notificationID := int64(1)
 	userID := int64(10)
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"requester_id": "2",
+		"requester_id":   "2",
 		"requester_name": "testuser",
 	})
 
@@ -123,7 +123,7 @@ func TestGetUserNotifications(t *testing.T) {
 	offset := int32(0)
 
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"requester_id": "2",
+		"requester_id":   "2",
 		"requester_name": "testuser",
 	})
 
@@ -362,11 +362,11 @@ func TestCreateGroupJoinRequestNotification(t *testing.T) {
 	requesterUsername := "testuser"
 
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"requester_id":  "2",
+		"requester_id":   "2",
 		"requester_name": "testuser",
-		"group_id":      "100",
-		"group_name":    "Test Group",
-		"action":        "accept_or_decline",
+		"group_id":       "100",
+		"group_name":     "Test Group",
+		"action":         "accept_or_decline",
 	})
 
 	expectedNotification := sqlc.Notification{
@@ -401,17 +401,18 @@ func TestCreateNewEventNotification(t *testing.T) {
 
 	ctx := context.Background()
 	userID := int64(1)
+	eventCreatorID := int64(2)
 	groupID := int64(100)
 	eventID := int64(200)
 	groupName := "Test Group"
 	eventTitle := "Test Event"
 
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"group_id":      "100",
-		"group_name":    "Test Group",
-		"event_id":      "200",
-		"event_title":   "Test Event",
-		"action":        "view_event",
+		"group_id":    "100",
+		"group_name":  "Test Group",
+		"event_id":    "200",
+		"event_title": "Test Event",
+		"action":      "view_event",
 	})
 
 	expectedNotification := sqlc.Notification{
@@ -432,7 +433,7 @@ func TestCreateNewEventNotification(t *testing.T) {
 
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
-	err := app.CreateNewEventNotification(ctx, userID, groupID, eventID, groupName, eventTitle)
+	err := app.CreateNewEventNotification(ctx, userID, eventCreatorID, groupID, eventID, groupName, eventTitle)
 
 	assert.NoError(t, err)
 
@@ -483,7 +484,7 @@ func TestCreateNotificationWithAggregationNoExisting(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, notification)
-	assert.Equal(t, int32(1), notification.Count)  // Should be 1 since no existing notification was found
+	assert.Equal(t, int32(1), notification.Count) // Should be 1 since no existing notification was found
 	assert.Equal(t, userID, notification.UserID)
 	assert.Equal(t, notifType, notification.Type)
 
@@ -553,7 +554,7 @@ func TestCreateNotificationWithAggregationExisting(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, notification)
-	assert.Equal(t, int32(3), notification.Count)  // Should be 3 (existing count 2 + 1)
+	assert.Equal(t, int32(3), notification.Count) // Should be 3 (existing count 2 + 1)
 	assert.Equal(t, userID, notification.UserID)
 	assert.Equal(t, notifType, notification.Type)
 
@@ -601,7 +602,7 @@ func TestCreateNotificationWithAggregationDisabled(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, notification)
-	assert.Equal(t, int32(1), notification.Count)  // Should be 1 since aggregation is disabled
+	assert.Equal(t, int32(1), notification.Count) // Should be 1 since aggregation is disabled
 	assert.Equal(t, userID, notification.UserID)
 	assert.Equal(t, notifType, notification.Type)
 
@@ -701,10 +702,10 @@ func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
 	groupName := "Test Group"
 
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"invited_id":    "2",
-		"invited_name":  "inviteduser",
-		"group_id":      "100",
-		"group_name":    "Test Group",
+		"invited_id":   "2",
+		"invited_name": "inviteduser",
+		"group_id":     "100",
+		"group_name":   "Test Group",
 	})
 
 	expectedNotification := sqlc.Notification{
@@ -745,10 +746,10 @@ func TestCreateGroupInviteRejectedNotification(t *testing.T) {
 	groupName := "Test Group"
 
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"invited_id":    "2",
-		"invited_name":  "inviteduser",
-		"group_id":      "100",
-		"group_name":    "Test Group",
+		"invited_id":   "2",
+		"invited_name": "inviteduser",
+		"group_id":     "100",
+		"group_name":   "Test Group",
 	})
 
 	expectedNotification := sqlc.Notification{
@@ -867,17 +868,18 @@ func TestCreateNewEventForMultipleUsers(t *testing.T) {
 
 	ctx := context.Background()
 	userIDs := []int64{1, 2, 3} // Multiple users
+	eventCreatorID := int64(2)
 	groupID := int64(100)
 	eventID := int64(200)
 	groupName := "Test Group"
 	eventTitle := "Test Event"
 
 	payloadBytes, _ := json.Marshal(map[string]string{
-		"group_id":      "100",
-		"group_name":    "Test Group",
-		"event_id":      "200",
-		"event_title":   "Test Event",
-		"action":        "view_event",
+		"group_id":    "100",
+		"group_name":  "Test Group",
+		"event_id":    "200",
+		"event_title": "Test Event",
+		"action":      "view_event",
 	})
 
 	// Expect CreateNotification to be called 3 times (once for each user)
@@ -901,7 +903,7 @@ func TestCreateNewEventForMultipleUsers(t *testing.T) {
 		mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil).Once()
 	}
 
-	err := app.CreateNewEventForMultipleUsers(ctx, userIDs, groupID, eventID, groupName, eventTitle)
+	err := app.CreateNewEventForMultipleUsers(ctx, userIDs, eventCreatorID, groupID, eventID, groupName, eventTitle)
 
 	assert.NoError(t, err)
 

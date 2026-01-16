@@ -129,11 +129,12 @@ func (h *EventHandler) handleNewEventCreated(ctx context.Context, event *pb.NewE
 	tele.Info(ctx, "handle new event created called with params @1", "params", event)
 	return h.App.CreateNewEventForMultipleUsers(
 		ctx,
-		event.UserId,     // userID
-		event.GroupId,    // groupID
-		event.EventId,    // eventID
-		event.GroupName,  // groupName
-		event.EventTitle, // eventTitle
+		event.UserId,         // userID
+		event.EventCreatorId, //eventCreatorID
+		event.GroupId,        // groupID
+		event.EventId,        // eventID
+		event.GroupName,      // groupName
+		event.EventTitle,     // eventTitle
 	)
 }
 

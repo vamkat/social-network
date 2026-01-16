@@ -20,8 +20,8 @@ type ApplicationService interface {
 	CreateGroupInviteNotification(ctx context.Context, invitedUserID, inviterUserID, groupID int64, groupName, inviterUsername string) error
 	CreateGroupInviteForMultipleUsers(ctx context.Context, invitedUserIDs []int64, inviterUserID, groupID int64, groupName, inviterUsername string) error
 	CreateGroupJoinRequestNotification(ctx context.Context, groupOwnerID, requesterID, groupID int64, groupName, requesterUsername string) error
-	CreateNewEventNotification(ctx context.Context, userID, groupID, eventID int64, groupName, eventTitle string) error
-	CreateNewEventForMultipleUsers(ctx context.Context, userIDs []int64, groupID, eventID int64, groupName, eventTitle string) error
+	CreateNewEventNotification(ctx context.Context, userID, eventCreatorID, groupID, eventID int64, groupName, eventTitle string) error
+	CreateNewEventForMultipleUsers(ctx context.Context, userIDs []int64, eventCreatorID int64, groupID, eventID int64, groupName, eventTitle string) error
 	CreateMentionNotification(ctx context.Context, userID, mentionerID, postID int64, mentionerUsername, postContent, mentionText string) error
 	CreateNewMessageNotification(ctx context.Context, userID, senderID, chatID int64, senderUsername, messageContent string, aggregate bool) error
 	CreateNewMessageForMultipleUsers(ctx context.Context, userIDs []int64, senderID, chatID int64, senderUsername, messageContent string, aggregate bool) error

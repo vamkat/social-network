@@ -163,10 +163,11 @@ message CreateNotificationsResponse {
 // Request to create a new event notification for multiple users
 message CreateNewEventForMultipleUsersRequest {
   repeated int64 user_ids = 1; // recipients
-  int64 group_id = 2; // id of the group
-  int64 event_id = 3; // id of the event
-  string group_name = 4; // name of the group
-  string event_title = 5; // title of the event
+  int64 event_creator_id=2; //event creator
+  int64 group_id = 3; // id of the group
+  int64 event_id = 4; // id of the event
+  string group_name = 5; // name of the group
+  string event_title = 6; // title of the event
 }
 
 // Response for creating a new event notification for multiple users
@@ -264,10 +265,11 @@ message CreateGroupJoinRequestRequest {
 // Request to create a new event notification
 message CreateNewEventRequest {
   int64 user_id = 1; // recipient
-  int64 group_id = 2; // id of the group
-  int64 event_id = 3; // id of the event
-  string group_name = 4; // name of the group
-  string event_title = 5; // title of the event
+  int64 event_creator_id=2; //event creator
+  int64 group_id = 3; // id of the group
+  int64 event_id = 4; // id of the event
+  string group_name = 5; // name of the group
+  string event_title = 6; // title of the event
 }
 
 // Request to create a post like notification

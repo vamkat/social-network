@@ -69,11 +69,11 @@ func TestNotificationTriggerFunctions(t *testing.T) {
 		requesterUsername := "testuser"
 
 		payloadBytes, _ := json.Marshal(map[string]string{
-			"requester_id":  "2",
+			"requester_id":   "2",
 			"requester_name": "testuser",
-			"group_id":      "3",
-			"group_name":    "Test Group",
-			"action":        "accept_or_decline",
+			"group_id":       "3",
+			"group_name":     "Test Group",
+			"action":         "accept_or_decline",
 		})
 
 		expectedNotification := sqlc.Notification{
@@ -102,17 +102,18 @@ func TestNotificationTriggerFunctions(t *testing.T) {
 	// Test CreateNewEventNotification
 	t.Run("CreateNewEventNotification", func(t *testing.T) {
 		userID := int64(1)
+		eventCreatorID := int64(4)
 		groupID := int64(2)
 		eventID := int64(3)
 		groupName := "Test Group"
 		eventTitle := "Test Event"
 
 		payloadBytes, _ := json.Marshal(map[string]string{
-			"group_id":      "2",
-			"group_name":    "Test Group",
-			"event_id":      "3",
-			"event_title":   "Test Event",
-			"action":        "view_event",
+			"group_id":    "2",
+			"group_name":  "Test Group",
+			"event_id":    "3",
+			"event_title": "Test Event",
+			"action":      "view_event",
 		})
 
 		expectedNotification := sqlc.Notification{
@@ -133,7 +134,7 @@ func TestNotificationTriggerFunctions(t *testing.T) {
 
 		mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
-		err := app.CreateNewEventNotification(ctx, userID, groupID, eventID, groupName, eventTitle)
+		err := app.CreateNewEventNotification(ctx, userID, eventCreatorID, groupID, eventID, groupName, eventTitle)
 		assert.NoError(t, err)
 		mockDB.AssertExpectations(t)
 	})
@@ -212,7 +213,7 @@ func TestAggregationFunctionality(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, notification)
-		assert.Equal(t, int32(1), notification.Count)  // Should be 1 since no existing notification was found
+		assert.Equal(t, int32(1), notification.Count) // Should be 1 since no existing notification was found
 		mockDB.AssertExpectations(t)
 	})
 
@@ -266,7 +267,7 @@ func TestAggregationFunctionality(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, notification)
-		assert.Equal(t, int32(3), notification.Count)  // Should be 3 (existing count 2 + 1)
+		assert.Equal(t, int32(3), notification.Count) // Should be 3 (existing count 2 + 1)
 		mockDB.AssertExpectations(t)
 	})
 }

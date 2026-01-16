@@ -337,7 +337,7 @@ func (s *Server) CreateNewEvent(ctx context.Context, req *pb.CreateNewEventReque
 		return nil, status.Error(codes.InvalidArgument, "user_id, group_id, and event_id are required")
 	}
 
-	err := s.Application.CreateNewEventNotification(ctx, req.UserId, req.GroupId, req.EventId, req.GroupName, req.EventTitle)
+	err := s.Application.CreateNewEventNotification(ctx, req.UserId, req.EventCreatorId, req.GroupId, req.EventId, req.GroupName, req.EventTitle)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create new event notification: %v", err)
 	}
@@ -368,7 +368,7 @@ func (s *Server) CreateNewEventForMultipleUsers(ctx context.Context, req *pb.Cre
 		return nil, status.Error(codes.InvalidArgument, "user_ids, group_id, and event_id are required")
 	}
 
-	err := s.Application.CreateNewEventForMultipleUsers(ctx, req.UserIds, req.GroupId, req.EventId, req.GroupName, req.EventTitle)
+	err := s.Application.CreateNewEventForMultipleUsers(ctx, req.UserIds, req.EventCreatorId, req.GroupId, req.EventId, req.GroupName, req.EventTitle)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create new event notifications for multiple users: %v", err)
 	}
