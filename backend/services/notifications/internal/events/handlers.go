@@ -63,11 +63,11 @@ func (h *EventHandler) Handle(ctx context.Context, event *pb.NotificationEvent) 
 func (h *EventHandler) handlePostCommentCreated(ctx context.Context, event *pb.PostCommentCreated) error {
 	return h.App.CreatePostCommentNotification(
 		ctx,
-		event.PostId,            // userId (post owner)
+		event.PostCreatorId,     // userId (post owner)
 		event.CommenterUserId,   // commenterId
 		event.PostId,            // postId
 		event.CommenterUsername, // commenterUsername
-		event.Body,              // commentContent
+		event.Body,              // postContent
 		event.Aggregate,         // aggregate - use value from event
 	)
 }

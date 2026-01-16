@@ -211,16 +211,16 @@ func (a *Application) CreatePostLikeNotification(ctx context.Context, userID, li
 }
 
 // CreatePostCommentNotification creates a notification when someone comments on a user's post
-func (a *Application) CreatePostCommentNotification(ctx context.Context, userID, commenterID, postID int64, commenterUsername, commentContent string, aggregate bool) error {
+func (a *Application) CreatePostCommentNotification(ctx context.Context, userID, commenterID, postID int64, commenterUsername, postContent string, aggregate bool) error {
 	title := "New Comment"
 	message := fmt.Sprintf("%s commented on your post", commenterUsername)
 
 	payload := map[string]string{
-		"commenter_id":    fmt.Sprintf("%d", commenterID),
-		"commenter_name":  commenterUsername,
-		"post_id":         fmt.Sprintf("%d", postID),
-		"comment_content": commentContent,
-		"action":          "view_post",
+		"commenter_id":   fmt.Sprintf("%d", commenterID),
+		"commenter_name": commenterUsername,
+		"post_id":        fmt.Sprintf("%d", postID),
+		"post_content":   postContent,
+		"action":         "view_post",
 	}
 
 	_, err := a.CreateNotificationWithAggregation(
@@ -327,14 +327,14 @@ func (a *Application) CreateFollowRequestAcceptedNotification(ctx context.Contex
 
 	_, err := a.CreateNotification(
 		ctx,
-		requesterUserID,           // recipient (the original requester)
-		FollowRequestAccepted,     // type
-		title,                     // title
-		message,                   // message
-		"users",                   // source service
-		targetUserID,              // source entity ID
-		false,                     // doesn't need action (just informational)
-		payload,                   // payload
+		requesterUserID,       // recipient (the original requester)
+		FollowRequestAccepted, // type
+		title,                 // title
+		message,               // message
+		"users",               // source service
+		targetUserID,          // source entity ID
+		false,                 // doesn't need action (just informational)
+		payload,               // payload
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create follow request accepted notification: %w", err)
@@ -355,14 +355,14 @@ func (a *Application) CreateFollowRequestRejectedNotification(ctx context.Contex
 
 	_, err := a.CreateNotification(
 		ctx,
-		requesterUserID,           // recipient (the original requester)
-		FollowRequestRejected,     // type
-		title,                     // title
-		message,                   // message
-		"users",                   // source service
-		targetUserID,              // source entity ID
-		false,                     // doesn't need action (just informational)
-		payload,                   // payload
+		requesterUserID,       // recipient (the original requester)
+		FollowRequestRejected, // type
+		title,                 // title
+		message,               // message
+		"users",               // source service
+		targetUserID,          // source entity ID
+		false,                 // doesn't need action (just informational)
+		payload,               // payload
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create follow request rejected notification: %w", err)
@@ -377,22 +377,22 @@ func (a *Application) CreateGroupInviteAcceptedNotification(ctx context.Context,
 	message := fmt.Sprintf("%s accepted your group invitation to '%s'", invitedUsername, groupName)
 
 	payload := map[string]string{
-		"invited_id":    fmt.Sprintf("%d", invitedUserID),
-		"invited_name":  invitedUsername,
-		"group_id":      fmt.Sprintf("%d", groupID),
-		"group_name":    groupName,
+		"invited_id":   fmt.Sprintf("%d", invitedUserID),
+		"invited_name": invitedUsername,
+		"group_id":     fmt.Sprintf("%d", groupID),
+		"group_name":   groupName,
 	}
 
 	_, err := a.CreateNotification(
 		ctx,
-		inviterUserID,             // recipient (the original inviter)
-		GroupInviteAccepted,       // type
-		title,                     // title
-		message,                   // message
-		"users",                   // source service
-		groupID,                   // source entity ID (the group)
-		false,                     // doesn't need action (just informational)
-		payload,                   // payload
+		inviterUserID,       // recipient (the original inviter)
+		GroupInviteAccepted, // type
+		title,               // title
+		message,             // message
+		"users",             // source service
+		groupID,             // source entity ID (the group)
+		false,               // doesn't need action (just informational)
+		payload,             // payload
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create group invite accepted notification: %w", err)
@@ -407,22 +407,22 @@ func (a *Application) CreateGroupInviteRejectedNotification(ctx context.Context,
 	message := fmt.Sprintf("%s declined your group invitation to '%s'", invitedUsername, groupName)
 
 	payload := map[string]string{
-		"invited_id":    fmt.Sprintf("%d", invitedUserID),
-		"invited_name":  invitedUsername,
-		"group_id":      fmt.Sprintf("%d", groupID),
-		"group_name":    groupName,
+		"invited_id":   fmt.Sprintf("%d", invitedUserID),
+		"invited_name": invitedUsername,
+		"group_id":     fmt.Sprintf("%d", groupID),
+		"group_name":   groupName,
 	}
 
 	_, err := a.CreateNotification(
 		ctx,
-		inviterUserID,             // recipient (the original inviter)
-		GroupInviteRejected,       // type
-		title,                     // title
-		message,                   // message
-		"users",                   // source service
-		groupID,                   // source entity ID (the group)
-		false,                     // doesn't need action (just informational)
-		payload,                   // payload
+		inviterUserID,       // recipient (the original inviter)
+		GroupInviteRejected, // type
+		title,               // title
+		message,             // message
+		"users",             // source service
+		groupID,             // source entity ID (the group)
+		false,               // doesn't need action (just informational)
+		payload,             // payload
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create group invite rejected notification: %w", err)
@@ -444,14 +444,14 @@ func (a *Application) CreateGroupJoinRequestAcceptedNotification(ctx context.Con
 
 	_, err := a.CreateNotification(
 		ctx,
-		requesterUserID,             // recipient (the original requester)
-		GroupJoinRequestAccepted,    // type
-		title,                       // title
-		message,                     // message
-		"users",                     // source service
-		groupID,                     // source entity ID (the group)
-		false,                       // doesn't need action (just informational)
-		payload,                     // payload
+		requesterUserID,          // recipient (the original requester)
+		GroupJoinRequestAccepted, // type
+		title,                    // title
+		message,                  // message
+		"users",                  // source service
+		groupID,                  // source entity ID (the group)
+		false,                    // doesn't need action (just informational)
+		payload,                  // payload
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create group join request accepted notification: %w", err)
@@ -473,14 +473,14 @@ func (a *Application) CreateGroupJoinRequestRejectedNotification(ctx context.Con
 
 	_, err := a.CreateNotification(
 		ctx,
-		requesterUserID,             // recipient (the original requester)
-		GroupJoinRequestRejected,    // type
-		title,                       // title
-		message,                     // message
-		"users",                     // source service
-		groupID,                     // source entity ID (the group)
-		false,                       // doesn't need action (just informational)
-		payload,                     // payload
+		requesterUserID,          // recipient (the original requester)
+		GroupJoinRequestRejected, // type
+		title,                    // title
+		message,                  // message
+		"users",                  // source service
+		groupID,                  // source entity ID (the group)
+		false,                    // doesn't need action (just informational)
+		payload,                  // payload
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create group join request rejected notification: %w", err)

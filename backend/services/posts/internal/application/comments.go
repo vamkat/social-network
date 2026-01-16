@@ -81,11 +81,12 @@ func (s *Application) CreateComment(ctx context.Context, req models.CreateCommen
 		EventType: notifpb.EventType_POST_COMMENT_CREATED,
 		Payload: &notifpb.NotificationEvent_PostCommentCreated{
 			PostCommentCreated: &notifpb.PostCommentCreated{
+				PostCreatorId:     basicPost.CreatorID,
 				PostId:            req.ParentId.Int64(),
 				CommentId:         commentId,
 				CommenterUserId:   req.CreatorId.Int64(),
 				CommenterUsername: commenter.Username.String(),
-				Body:              req.Body.String(),
+				Body:              basicPost.PostBody,
 			},
 		},
 	}

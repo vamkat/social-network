@@ -2437,12 +2437,13 @@ func (x *CreateGroupJoinRequestRejectedRequest) GetGroupName() string {
 // Specific event payload messages
 type PostCommentCreated struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	PostId            int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	CommentId         int64                  `protobuf:"varint,2,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
-	CommenterUserId   int64                  `protobuf:"varint,3,opt,name=commenter_user_id,json=commenterUserId,proto3" json:"commenter_user_id,omitempty"`
-	CommenterUsername string                 `protobuf:"bytes,4,opt,name=commenter_username,json=commenterUsername,proto3" json:"commenter_username,omitempty"`
-	Body              string                 `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
-	Aggregate         bool                   `protobuf:"varint,6,opt,name=aggregate,proto3" json:"aggregate,omitempty"`
+	PostCreatorId     int64                  `protobuf:"varint,1,opt,name=post_creator_id,json=postCreatorId,proto3" json:"post_creator_id,omitempty"`
+	PostId            int64                  `protobuf:"varint,2,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	CommentId         int64                  `protobuf:"varint,3,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	CommenterUserId   int64                  `protobuf:"varint,4,opt,name=commenter_user_id,json=commenterUserId,proto3" json:"commenter_user_id,omitempty"`
+	CommenterUsername string                 `protobuf:"bytes,5,opt,name=commenter_username,json=commenterUsername,proto3" json:"commenter_username,omitempty"`
+	Body              string                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
+	Aggregate         bool                   `protobuf:"varint,7,opt,name=aggregate,proto3" json:"aggregate,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -2475,6 +2476,13 @@ func (x *PostCommentCreated) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PostCommentCreated.ProtoReflect.Descriptor instead.
 func (*PostCommentCreated) Descriptor() ([]byte, []int) {
 	return file_notifications_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *PostCommentCreated) GetPostCreatorId() int64 {
+	if x != nil {
+		return x.PostCreatorId
+	}
+	return 0
 }
 
 func (x *PostCommentCreated) GetPostId() int64 {
@@ -4034,15 +4042,16 @@ const file_notifications_proto_rawDesc = "" +
 	"\x0egroup_owner_id\x18\x02 \x01(\x03R\fgroupOwnerId\x12\x19\n" +
 	"\bgroup_id\x18\x03 \x01(\x03R\agroupId\x12\x1d\n" +
 	"\n" +
-	"group_name\x18\x04 \x01(\tR\tgroupName\"\xd9\x01\n" +
-	"\x12PostCommentCreated\x12\x17\n" +
-	"\apost_id\x18\x01 \x01(\x03R\x06postId\x12\x1d\n" +
+	"group_name\x18\x04 \x01(\tR\tgroupName\"\x81\x02\n" +
+	"\x12PostCommentCreated\x12&\n" +
+	"\x0fpost_creator_id\x18\x01 \x01(\x03R\rpostCreatorId\x12\x17\n" +
+	"\apost_id\x18\x02 \x01(\x03R\x06postId\x12\x1d\n" +
 	"\n" +
-	"comment_id\x18\x02 \x01(\x03R\tcommentId\x12*\n" +
-	"\x11commenter_user_id\x18\x03 \x01(\x03R\x0fcommenterUserId\x12-\n" +
-	"\x12commenter_username\x18\x04 \x01(\tR\x11commenterUsername\x12\x12\n" +
-	"\x04body\x18\x05 \x01(\tR\x04body\x12\x1c\n" +
-	"\taggregate\x18\x06 \x01(\bR\taggregate\"\x8d\x01\n" +
+	"comment_id\x18\x03 \x01(\x03R\tcommentId\x12*\n" +
+	"\x11commenter_user_id\x18\x04 \x01(\x03R\x0fcommenterUserId\x12-\n" +
+	"\x12commenter_username\x18\x05 \x01(\tR\x11commenterUsername\x12\x12\n" +
+	"\x04body\x18\x06 \x01(\tR\x04body\x12\x1c\n" +
+	"\taggregate\x18\a \x01(\bR\taggregate\"\x8d\x01\n" +
 	"\tPostLiked\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\x03R\x06postId\x12\"\n" +
 	"\rliker_user_id\x18\x02 \x01(\x03R\vlikerUserId\x12%\n" +

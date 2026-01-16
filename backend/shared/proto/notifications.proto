@@ -394,12 +394,13 @@ enum EventType {
 
 // Specific event payload messages
 message PostCommentCreated {
-  int64 post_id = 1;
-  int64 comment_id = 2;
-  int64 commenter_user_id = 3;
-  string commenter_username = 4;
-  string body = 5;
-  bool aggregate = 6;
+  int64 post_creator_id =1;
+  int64 post_id = 2;
+  int64 comment_id = 3;
+  int64 commenter_user_id = 4;
+  string commenter_username = 5;
+  string body = 6;
+  bool aggregate = 7;
 }
 
 message PostLiked {
