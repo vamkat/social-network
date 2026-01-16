@@ -138,17 +138,34 @@ func (m *MediaService) markStatusComplete(
 			)
 		}
 
-		// Update variants
+		ids := make([]ct.Id, 0, len(vars))
+		sizes := make([]int64, 0, len(vars))
+
 		for _, v := range vars {
-			// Todo: Make this more efficient with an atomic query
-			if err := tx.UpdateVariantStatusAndSize(ctx, v.Id, ct.Complete, v.Size); err != nil {
-				return ce.Wrap(
-					ce.ErrInternal,
-					fmt.Errorf("%w: failed to update variant status: %v", err, v),
-				)
-			}
-			tele.Debug(ctx, "updated variant status to complete", "variant", v.ObjKey)
+			ids = append(ids, v.Id)
+			sizes = append(sizes, v.Size)
 		}
+
+		if err := tx.UpdateVariantsStatusAndSize(ctx, ids, ct.Complete, sizes); err != nil {
+			return ce.Wrap(
+				ce.ErrInternal,
+				fmt.Errorf("failed to update variant statuses: %w", err),
+			)
+		}
+
+		tele.Debug(ctx, "updated variant statuses to complete", "count", len(vars))
+
+		// Update variants
+		// for _, v := range vars {
+		// 	// Todo: Make this more efficient with an atomic query
+		// 	if err := tx.UpdateVariantStatusAndSize(ctx, v.Id, ct.Complete, v.Size); err != nil {
+		// 		return ce.Wrap(
+		// 			ce.ErrInternal,
+		// 			fmt.Errorf("%w: failed to update variant status: %v", err, v),
+		// 		)
+		// 	}
+		// 	tele.Debug(ctx, "updated variant status to complete", "variant", v.ObjKey)
+		// }
 
 		return nil
 	})

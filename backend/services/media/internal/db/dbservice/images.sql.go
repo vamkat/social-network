@@ -3,6 +3,7 @@ package dbservice
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	ct "social-network/shared/go/ct"
 )
 
@@ -324,6 +325,40 @@ func (q *Queries) GetVariants(
 	}
 
 	return fms, notComplete, nil
+}
+
+func (q *Queries) UpdateVariantsStatusAndSize(
+	ctx context.Context,
+	ids []ct.Id,
+	status ct.UploadStatus,
+	sizes []int64,
+) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	if len(ids) != len(sizes) {
+		return fmt.Errorf("ids and sizes length mismatch")
+	}
+
+	const query = `
+		UPDATE file_variants AS fv
+		SET
+			status = $2,
+			size_bytes = u.size_bytes
+		FROM UNNEST($1::bigint[], $3::bigint[]) AS u(id, size_bytes)
+		WHERE fv.id = u.id
+	`
+
+	cmd, err := q.db.Exec(ctx, query, ids, status, sizes)
+	if err != nil {
+		return err
+	}
+
+	if cmd.RowsAffected() != int64(len(ids)) {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 // No rows is error explicitly

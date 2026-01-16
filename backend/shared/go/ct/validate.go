@@ -93,48 +93,6 @@ func ValidateStruct(s any) error {
 			}
 			continue
 		}
-
-		// --- SLICE VALIDATION ---
-		// if fieldVal.Kind() == reflect.Slice {
-
-		// 	// Treat empty slice as nil for required check
-		// 	if fieldVal.IsNil() || fieldVal.Len() == 0 {
-		// 		if !nullable {
-		// 			allErrors = append(allErrors, fmt.Sprintf("%s: required field missing", fieldType.Name))
-		// 		}
-		// 		continue
-		// 	}
-
-		// 	// Skip primitive slices for element validation
-		// 	if isPrimitive {
-		// 		continue
-		// 	}
-
-		// 	// Validate each element (customtypes / Validator)
-		// 	for j := 0; j < fieldVal.Len(); j++ {
-		// 		elem := fieldVal.Index(j).Interface()
-		// 		elemVal := reflect.ValueOf(elem)
-
-		// 		if vElem, ok := elem.(Validator); ok {
-		// 			// Check if element is zero/empty when elements are required
-		// 			if isZeroValue(elemVal) {
-		// 				allErrors = append(allErrors,
-		// 					fmt.Sprintf("%s[%d]: required element missing", fieldType.Name, j))
-		// 				continue
-		// 			}
-
-		// 			if err := vElem.Validate(); err != nil {
-		// 				allErrors = append(allErrors,
-		// 					fmt.Sprintf("%s[%d]: %v", fieldType.Name, j, err))
-		// 			}
-		// 		} else {
-		// 			// Non-Validator element in a non-primitive slice
-		// 			allErrors = append(allErrors,
-		// 				fmt.Sprintf("%s[%d]: element does not implement Validator", fieldType.Name, j))
-		// 		}
-		// 	}
-		// 	continue
-		// }
 	}
 
 	if len(allErrors) > 0 {

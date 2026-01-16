@@ -22,7 +22,7 @@ type Error struct {
 // Returns a string of the full stack of errors. For each error the string contains:
 //   - Error.code: Classification: ErrNotFound, ErrInternal, etc. Enusured to never be nil
 //   - Error.input: The input given to the func returning or wraping: args, structs
-//   - Error.err: The wraped error down the chain.
+//   - Error.err: The wraped error down the chain for higher to lower level
 func (e *Error) Error() string {
 	if e == nil {
 		return ""
@@ -68,8 +68,30 @@ func (e *Error) Public() string {
 	return e.publicMsg
 }
 
+func (e *Error) Stack() string {
+	var err *Error
+	if e == nil || !errors.As(e, &err) {
+		return ""
+	}
+	var builder strings.Builder
+	builder.WriteString("\n        ")
+	start := strings.Index(e.stack, "-> ")
+	end := strings.Index(e.stack, "\n          ")
+	builder.WriteString(e.stack[start:end])
+	builder.WriteString(": ")
+	builder.WriteString(e.class.Error())
+	if errors.As(e.err, &err) {
+		builder.WriteString(e.err.(*Error).Stack())
+	} else {
+		builder.WriteString("\n        ")
+		builder.WriteString(e.err.Error())
+
+	}
+	return builder.String()
+}
+
 // Returns the original most underlying error by calling Unwrap until next err is nil.
-func GetSource(err error) string {
+func Source(err error) string {
 	for {
 		u := errors.Unwrap(err)
 		if u == nil {
@@ -117,7 +139,7 @@ func (e *Error) Unwrap() error {
 }
 
 // Creates a new Error with class and optional input.
-func New(class error, err error, input ...string) *Error {
+func New(class error, err error, input ...any) *Error {
 	if err == nil {
 		return nil
 	}
@@ -145,7 +167,7 @@ func New(class error, err error, input ...string) *Error {
 //   - If kind is nil and the err is not media error or lacks kind then kind is set to ErrUnknownClass.
 //
 // It is recommended to only use nil kind if the underlying error is of type Error and its kind is not nil.
-func Wrap(class error, err error, input ...string) *Error {
+func Wrap(class error, err error, input ...any) *Error {
 	if err == nil {
 		return nil
 	}
@@ -206,7 +228,7 @@ func (e *Error) WithCode(c error) *Error {
 //
 // Optionaly a msg string is included for additional context.
 // Usefull for downstream error parsing.
-func DecodeProto(err error, input ...string) *Error {
+func DecodeProto(err error, input ...any) *Error {
 	if err == nil {
 		return nil
 	}

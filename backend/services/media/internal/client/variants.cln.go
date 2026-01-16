@@ -11,7 +11,6 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-// TODO: Generate many variants for the same file
 func (c *Clients) GenerateVariant(
 	ctx context.Context,
 	srcBucket string,

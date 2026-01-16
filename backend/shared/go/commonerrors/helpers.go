@@ -3,6 +3,8 @@ package commonerrors
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -21,11 +23,87 @@ func parseCode(c error) error {
 	return c
 }
 
-func getInput(input ...string) string {
-	if len(input) > 0 {
-		return input[0]
+// func getInput(input ...string) string {
+// 	if len(input) > 0 {
+// 		return input[0]
+// 	}
+// 	return ""
+// }
+
+type namedValue struct {
+	name  string
+	value any
+}
+
+func Named(name string, value any) namedValue {
+	return namedValue{name: name, value: value}
+}
+
+func getInput(args ...any) string {
+	var b strings.Builder
+
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case namedValue:
+			b.WriteString(fmt.Sprintf("%s = %s\n", v.name, formatValue(v.value)))
+		default:
+			b.WriteString(formatValue(arg))
+			b.WriteString("\n")
+		}
 	}
-	return ""
+
+	return strings.TrimRight(b.String(), "\n")
+}
+
+func formatValue(v any) string {
+	if v == nil {
+		return "nil"
+	}
+
+	val := reflect.ValueOf(v)
+	typ := reflect.TypeOf(v)
+
+	switch val.Kind() {
+
+	case reflect.Struct:
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("%s {\n", typ.Name()))
+		for i := 0; i < val.NumField(); i++ {
+			field := typ.Field(i)
+			b.WriteString(fmt.Sprintf(
+				"  %s: %v\n",
+				field.Name,
+				val.Field(i).Interface(),
+			))
+		}
+		b.WriteString("}")
+		return b.String()
+
+	case reflect.Map:
+		var b strings.Builder
+		b.WriteString("map {\n")
+		for _, key := range val.MapKeys() {
+			b.WriteString(fmt.Sprintf(
+				"  %v: %v\n",
+				key.Interface(),
+				val.MapIndex(key).Interface(),
+			))
+		}
+		b.WriteString("}")
+		return b.String()
+
+	case reflect.Slice, reflect.Array:
+		var b strings.Builder
+		b.WriteString("[ ")
+		for i := 0; i < val.Len(); i++ {
+			b.WriteString(fmt.Sprintf("%v, ", val.Index(i).Interface()))
+		}
+		b.WriteString("]")
+		return b.String()
+
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 func getStack(depth int, skip int) string {
@@ -46,7 +124,7 @@ func getStack(depth int, skip int) string {
 		start := strings.LastIndex(name, "/")
 		builder.WriteString("level ")
 		builder.WriteString(strconv.Itoa(count))
-		builder.WriteString(": ")
+		builder.WriteString(" -> ")
 		builder.WriteString(name[start+1:])
 		builder.WriteString(" at l. ")
 		builder.WriteString(strconv.Itoa(frame.Line))
@@ -60,7 +138,7 @@ func getStack(depth int, skip int) string {
 }
 
 // Helper mapper from error to grpc code.
-func ToGRPCCode(err error) codes.Code {
+func GetCode(err error) codes.Code {
 	if err == nil {
 		return codes.OK
 	}

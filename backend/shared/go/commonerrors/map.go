@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// TODO: Rename these to ErrCode... for clarity
 var (
 	// ErrOK indicates successful completion.
 	// This error should generally not be returned; use nil instead.

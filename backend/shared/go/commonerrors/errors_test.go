@@ -65,6 +65,16 @@ func TestError_Unwrap(t *testing.T) {
 	assert.Equal(t, underlying, errors.Unwrap(err))
 }
 
+func TestNew(t *testing.T) {
+	err := New(nil, root())
+	assert.Equal(t, `
+   class: unknown error
+  origin: level 1 -> commonerrors.TestNew at l. 69
+          level 2 -> testing.tRunner at l. 1934
+   Generic Error: sql: no rows
+`, err.Error())
+}
+
 func TestWrap(t *testing.T) {
 	underlying := errors.New("underlying")
 
@@ -115,7 +125,7 @@ func TestWithPublic(t *testing.T) {
 	assert.Equal(t, "public message", err.publicMsg)
 }
 
-func TestToGRPCCode(t *testing.T) {
+func TestGetCode(t *testing.T) {
 	tests := []struct {
 		name     string
 		err      error
@@ -134,7 +144,7 @@ func TestToGRPCCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, ToGRPCCode(tt.err))
+			assert.Equal(t, tt.expected, GetCode(tt.err))
 		})
 	}
 }
@@ -210,7 +220,7 @@ func TestGetSource_MultiWrap(t *testing.T) {
 		"handler",
 	)
 
-	assert.Equal(t, "disk full", GetSource(err))
+	assert.Equal(t, "disk full", Source(err))
 }
 
 func TestGRPCStatus_DoesNotMutateError(t *testing.T) {
@@ -256,8 +266,153 @@ func Test_ErrorFormating(t *testing.T) {
 	assert.Equal(t, `
    class: internal error
    input: handler
-  origin: level 1: commonerrors.Test_ErrorFormating at l. 254
-          level 2: testing.tRunner at l. 1934
+  origin: level 1 -> commonerrors.Test_ErrorFormating at l. 254
+          level 2 -> testing.tRunner at l. 1934
    Generic Error: panic
 `, s)
+}
+
+func Test_Stack(t *testing.T) {
+	root := New(nil, err1(root()))
+	e1 := Wrap(nil, root)
+	e2 := Wrap(nil, e1)
+	e3 := Wrap(nil, e2)
+	stack := e3.Stack()
+	assert.Equal(t, `
+        -> commonerrors.Test_Stack at l. 279: unknown error
+        -> commonerrors.Test_Stack at l. 278: unknown error
+        -> commonerrors.Test_Stack at l. 277: unknown error
+        -> commonerrors.Test_Stack at l. 276: unknown error
+        -> commonerrors.err1 at l. 192: not found
+        sql: no rows`, stack)
+}
+
+func TestGetInputFormatting(t *testing.T) {
+	type Sample struct {
+		A int
+		B string
+	}
+
+	tests := []struct {
+		name     string
+		input    []any
+		expected string
+	}{
+		{
+			name: "single named primitive",
+			input: []any{
+				Named("argA", 42),
+			},
+			expected: "argA = 42",
+		},
+		{
+			name: "multiple named primitives",
+			input: []any{
+				Named("argA", 1),
+				Named("argB", "hello"),
+			},
+			expected: "argA = 1\nargB = hello",
+		},
+		{
+			name: "struct formatting",
+			input: []any{
+				Sample{A: 10, B: "x"},
+			},
+			expected: strings.TrimSpace(`
+Sample {
+  A: 10
+  B: x
+}`),
+		},
+		{
+			name: "named struct",
+			input: []any{
+				Named("payload", Sample{A: 1, B: "y"}),
+			},
+			expected: strings.TrimSpace(`
+payload = Sample {
+  A: 1
+  B: y
+}`),
+		},
+		{
+			name: "map formatting",
+			input: []any{
+				map[string]int{"a": 1},
+			},
+			expected: strings.TrimSpace(`
+map {
+  a: 1
+}`),
+		},
+		{
+			name: "slice formatting",
+			input: []any{
+				[]string{"x", "y"},
+			},
+			expected: strings.TrimSpace(`
+[ x, y, ]`),
+		},
+		{
+			name: "mixed inputs",
+			input: []any{
+				Named("id", 7),
+				Sample{A: 2, B: "z"},
+				[]int{1, 2},
+			},
+			expected: strings.TrimSpace(`
+id = 7
+Sample {
+  A: 2
+  B: z
+}
+[ 1, 2 ]`),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out := getInput(tt.input...)
+			if out != tt.expected {
+				t.Fatalf("unexpected output:\n--- got ---\n%s\n--- want ---\n%s",
+					out, tt.expected)
+			}
+		})
+	}
+}
+
+func TestWrapCapturesFormattedInput(t *testing.T) {
+	type Req struct {
+		UserID string
+		Count  int
+	}
+
+	baseErr := errors.New("db failure")
+
+	e := Wrap(
+		ErrInternal,
+		baseErr,
+		Named("userID", "u123"),
+		Req{UserID: "u123", Count: 3},
+		map[string]int{"x": 9},
+	)
+
+	if e == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	expected := strings.TrimSpace(`
+userID = u123
+Req {
+  UserID: u123
+  Count: 3
+}
+map {
+  x: 9
+}`)
+
+	if e.input != expected {
+		t.Fatalf("input formatting mismatch:\n--- got ---\n%s\n--- want ---\n%s",
+			e.input, expected)
+	}
 }
