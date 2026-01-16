@@ -429,8 +429,14 @@ func TestNestedStruct(t *testing.T) {
 		C nestedStruct
 	}
 
-	n := getInput(parent{A: "s", B: 42, C: nestedStruct{a: "b", B: 12, C: map[int]int{1: 3}}})
-	assert.Equal(t, `
+	n := getInput(
+		Named(
+			"My Custom name",
+			parent{A: "s", B: 42, C: nestedStruct{a: "b", B: 12, C: map[int]int{1: 3}}},
+		),
+	)
+	assert.Equal(t,
+		`My Custom name = 
 parent {
   A: s
   B: 42

@@ -59,6 +59,7 @@ func formatValue(v any) string {
 	return formatValueIndented(v, 0, make(map[uintptr]bool))
 }
 
+// TODO: Needs more testing with nested values
 func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 	defer func() {
 		if r := recover(); r != nil {
