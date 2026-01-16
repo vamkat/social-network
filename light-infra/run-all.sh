@@ -19,7 +19,6 @@ trap cleanup INT TERM EXIT
 # Shared environment (all services)
 ######################################
 
-# export REDIS_USE_SENTINEL=true
 export SENTINEL_ADDRS=localhost:26379
 export REDIS_MASTER_SET=master
 export TELEMETRY_COLLECTOR_ADDR=localhost:4317

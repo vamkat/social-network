@@ -23,13 +23,6 @@ func parseCode(c error) error {
 	return c
 }
 
-// func getInput(input ...string) string {
-// 	if len(input) > 0 {
-// 		return input[0]
-// 	}
-// 	return ""
-// }
-
 type namedValue struct {
 	name  string
 	value any

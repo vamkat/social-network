@@ -23,13 +23,13 @@ func (c *ChatService) GetPrivateConversationById(ctx context.Context,
 		return md.PrivateConvsPreview{}, ce.Wrap(ce.ErrInvalidArgument, err, input)
 	}
 
-	// areConnected, Err := c.Clients.AreConnected(ctx, arg.UserId, arg.InterlocutorId)
-	// if Err != nil {
-	// 	return res, Err
-	// }
-	// if !areConnected {
-	// 	return res, ce.New(ce.ErrPermissionDenied, ErrNotConnected, input).WithPublic("users are not connected")
-	// }
+	areConnected, Err := c.Clients.AreConnected(ctx, arg.UserId, arg.InterlocutorId)
+	if Err != nil {
+		return res, Err
+	}
+	if !areConnected {
+		return res, ce.New(ce.ErrPermissionDenied, ErrNotConnected, input).WithPublic("users are not connected")
+	}
 
 	conv, err := c.Queries.GetPrivateConvById(ctx, arg)
 	if err != nil {
@@ -79,15 +79,23 @@ func (c *ChatService) GetPrivateConversations(ctx context.Context,
 
 // Creates a private message and returns an id
 func (c *ChatService) CreatePrivateMessage(ctx context.Context,
-	params md.CreatePrivateMsgReq) (msg md.PrivateMsg, Err *ce.Error) {
+	arg md.CreatePrivateMsgReq) (msg md.PrivateMsg, Err *ce.Error) {
 
-	input := fmt.Sprintf("params: %#v", params)
-	err := ct.ValidateStruct(params)
+	input := fmt.Sprintf("params: %#v", arg)
+	err := ct.ValidateStruct(arg)
 	if err != nil {
 		return msg, ce.New(ce.ErrInvalidArgument, err, input)
 	}
 
-	msg, err = c.Queries.CreateNewPrivateMessage(ctx, params)
+	areConnected, Err := c.Clients.AreConnected(ctx, arg.SenderId, arg.InterlocutorId)
+	if Err != nil {
+		return msg, Err
+	}
+	if !areConnected {
+		return msg, ce.New(ce.ErrPermissionDenied, ErrNotConnected, input).WithPublic("users are not connected")
+	}
+
+	msg, err = c.Queries.CreateNewPrivateMessage(ctx, arg)
 
 	if err != nil {
 		return msg, ce.Wrap(nil, err, input)
@@ -99,12 +107,12 @@ func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
 	}
 
-	err = c.NatsConn.Publish(ct.PrivateMessageKey(params.InterlocutorId), messageBytes)
+	err = c.NatsConn.Publish(ct.PrivateMessageKey(arg.InterlocutorId), messageBytes)
 	if err != nil {
 		err = ce.New(ce.ErrInternal, err, input)
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
 	}
-	msg.ReceiverId = params.InterlocutorId
+	msg.ReceiverId = arg.InterlocutorId
 	return msg, nil
 }
 
@@ -122,7 +130,7 @@ func (c *ChatService) GetPreviousPMs(ctx context.Context,
 	}
 
 	if arg.RetrieveUsers {
-		if err := c.retrievePrivatMessageSenders(ctx, res.Messages, input); err != nil {
+		if err := c.retrievePrivateMessageSenders(ctx, res.Messages, input); err != nil {
 			tele.Error(ctx, "failed to retrieve users for messages", "input", input, "error", err)
 		}
 	}
@@ -144,7 +152,7 @@ func (c *ChatService) GetNextPMs(ctx context.Context,
 	}
 
 	if arg.RetrieveUsers {
-		if err := c.retrievePrivatMessageSenders(ctx, res.Messages, input); err != nil {
+		if err := c.retrievePrivateMessageSenders(ctx, res.Messages, input); err != nil {
 			tele.Error(ctx, "failed to retrieve users for messages", "input", input, "error", err)
 		}
 	}
@@ -166,7 +174,7 @@ func (c *ChatService) UpdateLastReadPrivateMsg(ctx context.Context, arg md.Updat
 	return nil
 }
 
-func (c *ChatService) retrievePrivatMessageSenders(ctx context.Context, msgs []md.PrivateMsg, input string) error {
+func (c *ChatService) retrievePrivateMessageSenders(ctx context.Context, msgs []md.PrivateMsg, input string) error {
 	allMemberIDs := make(ct.Ids, 0)
 	for _, r := range msgs {
 		allMemberIDs = append(allMemberIDs, r.Sender.UserId)
