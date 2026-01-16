@@ -56,6 +56,16 @@ func getInput(args ...any) string {
 }
 
 func formatValue(v any) string {
+	return formatValueIndented(v, 0, make(map[uintptr]bool))
+}
+
+func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
+	defer func() {
+		if r := recover(); r != nil {
+			out = "<unprintable>"
+		}
+	}()
+
 	if v == nil {
 		return "nil"
 	}
@@ -63,42 +73,94 @@ func formatValue(v any) string {
 	val := reflect.ValueOf(v)
 	typ := reflect.TypeOf(v)
 
+	// Unwrap interfaces
+	for val.Kind() == reflect.Interface {
+		if val.IsNil() {
+			return "nil"
+		}
+		val = val.Elem()
+		typ = val.Type()
+	}
+
+	// Handle pointers (with cycle detection)
+	if val.Kind() == reflect.Pointer {
+		if val.IsNil() {
+			return "nil"
+		}
+		ptr := val.Pointer()
+		if seen[ptr] {
+			return "<cycle>"
+		}
+		seen[ptr] = true
+		return formatValueIndented(val.Elem().Interface(), depth, seen)
+	}
+
+	indent := strings.Repeat("  ", depth)
+	nextIndent := strings.Repeat("  ", depth+1)
+
 	switch val.Kind() {
 
 	case reflect.Struct:
 		var b strings.Builder
-		b.WriteString(fmt.Sprintf("%s {\n", typ.Name()))
-		for i := 0; i < val.NumField(); i++ {
-			field := typ.Field(i)
-			b.WriteString(fmt.Sprintf(
-				"  %s: %v\n",
-				field.Name,
-				val.Field(i).Interface(),
-			))
+		name := typ.Name()
+		if name == "" {
+			name = "struct"
 		}
-		b.WriteString("}")
+
+		b.WriteString("\n" + indent + name + " {\n")
+
+		for i := 0; i < val.NumField(); i++ {
+			fieldType := typ.Field(i)
+			fieldVal := val.Field(i)
+
+			b.WriteString(nextIndent + fieldType.Name + ": ")
+
+			if fieldVal.CanInterface() {
+				b.WriteString(formatValueIndented(
+					fieldVal.Interface(),
+					depth+1,
+					seen,
+				))
+			} else {
+				b.WriteString("<unexported>")
+			}
+			b.WriteString("\n")
+		}
+
+		b.WriteString(indent + "}")
 		return b.String()
 
 	case reflect.Map:
 		var b strings.Builder
 		b.WriteString("map {\n")
+
 		for _, key := range val.MapKeys() {
+			b.WriteString(nextIndent)
 			b.WriteString(fmt.Sprintf(
-				"  %v: %v\n",
+				"%v: %s\n",
 				key.Interface(),
-				val.MapIndex(key).Interface(),
+				formatValueIndented(val.MapIndex(key).Interface(), depth+1, seen),
 			))
 		}
-		b.WriteString("}")
+
+		b.WriteString(indent + "}")
 		return b.String()
 
 	case reflect.Slice, reflect.Array:
 		var b strings.Builder
-		b.WriteString("[ ")
+		b.WriteString("[\n")
+
 		for i := 0; i < val.Len(); i++ {
-			b.WriteString(fmt.Sprintf("%v, ", val.Index(i).Interface()))
+			b.WriteString(nextIndent)
+			b.WriteString(formatValueIndented(
+				val.Index(i).Interface(),
+				depth+1,
+				seen,
+			))
+			b.WriteString("\n")
 		}
-		b.WriteString("]")
+
+		b.WriteString(indent + "]")
 		return b.String()
 
 	default:

@@ -388,11 +388,11 @@ func TestWrapCapturesFormattedInput(t *testing.T) {
 	}
 
 	baseErr := errors.New("db failure")
-
+	s := "u123"
 	e := Wrap(
 		ErrInternal,
 		baseErr,
-		Named("userID", "u123"),
+		Named("userID", s),
 		Req{UserID: "u123", Count: 3},
 		map[string]int{"x": 9},
 	)
@@ -415,4 +415,32 @@ map {
 		t.Fatalf("input formatting mismatch:\n--- got ---\n%s\n--- want ---\n%s",
 			e.input, expected)
 	}
+}
+
+func TestNestedStruct(t *testing.T) {
+	type nestedStruct struct {
+		a string
+		B int
+		C map[int]int
+	}
+	type parent struct {
+		A string
+		B int
+		C nestedStruct
+	}
+
+	n := getInput(parent{A: "s", B: 42, C: nestedStruct{a: "b", B: 12, C: map[int]int{1: 3}}})
+	assert.Equal(t, `
+parent {
+  A: s
+  B: 42
+  C: 
+  nestedStruct {
+    a: <unexported>
+    B: 12
+    C: map {
+      1: 3
+    }
+  }
+}`, n)
 }
