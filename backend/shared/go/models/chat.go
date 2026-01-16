@@ -79,6 +79,11 @@ type GetPrivateConvsReq struct {
 	BeforeDateUpdated ct.GenDateTime `json:"before_date_updated"`
 	Limit             ct.Limit       `json:"limit"`
 }
+type GetPrivateConvByIdReq struct {
+	UserId         ct.Id `json:"user_id"`
+	ConversationId ct.Id `json:"conversation_id"`
+	InterlocutorId ct.Id `json:"interlocutor_id"`
+}
 
 type PrivateConvsPreview struct {
 	ConversationId ct.Id

@@ -68,6 +68,49 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 	}
 }
 
+func (h *Handlers) GetPrivateConversationById() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		if !ok {
+			tele.Error(ctx, "problem fetching claims")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "can't find claims")
+			return
+		}
+
+		v := r.URL.Query()
+		userId := claims.UserId
+
+		interlocutorId, err1 := utils.ParamGet(v, "interlocutor-id", ct.Id(0), true)
+
+		convId, err2 := utils.ParamGet(v, "conversation-id", ct.Id(0), true)
+
+		if err := errors.Join(err1, err2); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
+		grpcResponse, err := h.ChatService.GetPrivateConversationById(ctx, &chat.GetPrivateConversationByIdRequest{
+			UserId:         userId,
+			InterlocutorId: interlocutorId.Int64(),
+			ConversationId: convId.Int64(),
+		})
+
+		httpCode, _ := gorpc.Classify(err)
+		if err != nil {
+			err = ce.DecodeProto(err)
+			utils.ErrorJSON(ctx, w, httpCode, err.Error())
+			return
+		}
+
+		err = utils.WriteJSON(ctx, w,
+			httpCode,
+			mapping.MapConversationFromProto(grpcResponse))
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
+		}
+	}
+}
 func (h *Handlers) GetPrivateConversations() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

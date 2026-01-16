@@ -73,6 +73,10 @@ type Querier interface {
 	GetNextPrivateMsgs(ctx context.Context,
 		arg md.GetPrivateMsgsReq) (res md.GetPrivateMsgsResp, err error)
 
+	GetPrivateConvById(ctx context.Context,
+		arg md.GetPrivateConvByIdReq,
+	) (md.PrivateConvsPreview, error)
+
 	// Fetches paginated conversation details, conversation members,
 	// Ids and unread messages count for a user and a group.
 	GetPrivateConvs(ctx context.Context,

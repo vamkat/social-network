@@ -64,7 +64,8 @@ Content-Type: application/json
   "interlocutor_id":"GWpmbk5ezJn4",
   "message_body":"this is doe to foe"  
 }
-### Send message to foe
+
+### Send message to Doe
 POST {{baseUrl}}/chat/create-pm
 Content-Type: application/json
 
@@ -77,8 +78,13 @@ Content-Type: application/json
 GET {{baseUrl}}/chat/get-private-conversations?limit=10
 Content-Type: application/json
 
+
 ### get messages
 GET {{baseUrl}}/chat/get-pms-paginated?interlocutor-id=ZOpnel5aKBzy&limit=2
+Content-Type: application/json
+
+### get conversation by Id
+GET {{baseUrl}}/chat/get-private-conversation-by-id?conversation-id=2VolejRejNmG&interlocutor-id=GWpmbk5ezJn4
 Content-Type: application/json
 
 ### get messages

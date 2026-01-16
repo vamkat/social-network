@@ -6,17 +6,31 @@ import (
 	md "social-network/shared/go/models"
 )
 
+func MapConversationToProto(conv md.PrivateConvsPreview) *pb.PrivateConversationPreview {
+	return &pb.PrivateConversationPreview{
+		ConversationId: conv.ConversationId.Int64(),
+		UpdatedAt:      conv.UpdatedAt.ToProto(),
+		Interlocutor:   MapUserToProto(conv.Interlocutor),
+		LastMessage:    MapPMToProto(conv.LastMessage),
+		UnreadCount:    int32(conv.UnreadCount),
+	}
+}
+
+func MapConversationFromProto(conv *pb.PrivateConversationPreview) md.PrivateConvsPreview {
+	return md.PrivateConvsPreview{
+		ConversationId: ct.Id(conv.ConversationId),
+		UpdatedAt:      ct.GenDateTime(conv.UpdatedAt.AsTime()),
+		Interlocutor:   MapUserFromProto(conv.Interlocutor),
+		LastMessage:    MapPMFromProto(conv.LastMessage),
+		UnreadCount:    int(conv.UnreadCount),
+	}
+
+}
+
 func MapConversationsToProto(cs []md.PrivateConvsPreview) []*pb.PrivateConversationPreview {
 	convs := make([]*pb.PrivateConversationPreview, 0, len(cs))
 	for _, conv := range cs {
-		c := &pb.PrivateConversationPreview{
-			ConversationId: conv.ConversationId.Int64(),
-			UpdatedAt:      conv.UpdatedAt.ToProto(),
-			Interlocutor:   MapUserToProto(conv.Interlocutor),
-			LastMessage:    MapPMToProto(conv.LastMessage),
-			UnreadCount:    int32(conv.UnreadCount),
-		}
-		convs = append(convs, c)
+		convs = append(convs, MapConversationToProto(conv))
 	}
 	return convs
 }
@@ -24,14 +38,7 @@ func MapConversationsToProto(cs []md.PrivateConvsPreview) []*pb.PrivateConversat
 func MapConversationsFromProto(cs []*pb.PrivateConversationPreview) []md.PrivateConvsPreview {
 	convs := make([]md.PrivateConvsPreview, 0, len(cs))
 	for _, conv := range cs {
-		c := md.PrivateConvsPreview{
-			ConversationId: ct.Id(conv.ConversationId),
-			UpdatedAt:      ct.GenDateTime(conv.UpdatedAt.AsTime()),
-			Interlocutor:   MapUserFromProto(conv.Interlocutor),
-			LastMessage:    MapPMFromProto(conv.LastMessage),
-			UnreadCount:    int(conv.UnreadCount),
-		}
-		convs = append(convs, c)
+		convs = append(convs, MapConversationFromProto(conv))
 	}
 	return convs
 }

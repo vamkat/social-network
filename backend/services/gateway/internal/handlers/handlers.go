@@ -615,6 +615,15 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 			RateLimit(USERID, 20, 5).
 			Finalize(h.CreatePrivateMsg()))
 
+	mux.HandleFunc("/chat/get-private-conversation-by-id",
+		Chain("/chat/get-private-conversation-by-id").
+			AllowedMethod("GET").
+			RateLimit(IP, 20, 5).
+			Auth().
+			EnrichContext().
+			RateLimit(USERID, 20, 5).
+			Finalize(h.GetPrivateConversationById()))
+
 	mux.HandleFunc("/chat/get-private-conversations",
 		Chain("/chat/get-private-conversations").
 			AllowedMethod("GET").

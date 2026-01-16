@@ -15,6 +15,29 @@ var (
 	ErrNotConnected = errors.New("users are not connected")
 )
 
+func (c *ChatService) GetPrivateConversationById(ctx context.Context,
+	arg md.GetPrivateConvByIdReq,
+) (res md.PrivateConvsPreview, Err *ce.Error) {
+	input := fmt.Sprintf("arg: %#v", arg)
+	if err := ct.ValidateStruct(arg); err != nil {
+		return md.PrivateConvsPreview{}, ce.Wrap(ce.ErrInvalidArgument, err, input)
+	}
+
+	// areConnected, Err := c.Clients.AreConnected(ctx, arg.UserId, arg.InterlocutorId)
+	// if Err != nil {
+	// 	return res, Err
+	// }
+	// if !areConnected {
+	// 	return res, ce.New(ce.ErrPermissionDenied, ErrNotConnected, input).WithPublic("users are not connected")
+	// }
+
+	conv, err := c.Queries.GetPrivateConvById(ctx, arg)
+	if err != nil {
+		return res, ce.Wrap(nil, Err, input)
+	}
+	return conv, nil
+}
+
 // Returns a sorted paginated list of private conversations
 // older that the given BeforeDate where user with UserId is a member.
 // Respose per PC includes last message and unread count from users side.

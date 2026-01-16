@@ -120,6 +120,67 @@ const (
 	FROM inserted_message im;
 	`
 
+	getPrivateConvById = `
+	WITH user_conversation AS (
+		SELECT
+			pc.id AS conversation_id,
+			pc.updated_at,
+
+			CASE
+				WHEN pc.user_a = $1 THEN pc.user_b
+				ELSE pc.user_a
+			END AS other_user_id,
+
+			CASE
+				WHEN pc.user_a = $1 THEN pc.last_read_message_id_a
+				ELSE pc.last_read_message_id_b
+			END AS last_read_message_id
+
+		FROM private_conversations pc
+		WHERE pc.id = $2
+			AND $1 IN (pc.user_a, pc.user_b)
+	)
+
+	SELECT
+		uc.conversation_id,
+		uc.updated_at,
+		uc.other_user_id,
+
+		lm.id           AS last_message_id,
+		lm.sender_id    AS last_message_sender_id,
+		lm.message_text AS last_message_text,
+		lm.created_at   AS last_message_created_at,
+
+		COUNT(pm.id) FILTER (
+			WHERE pm.id > COALESCE(uc.last_read_message_id, 0)
+		) AS unread_count
+
+	FROM user_conversation uc
+
+	LEFT JOIN LATERAL (
+		SELECT pm.id, pm.sender_id, pm.message_text, pm.created_at
+		FROM private_messages pm
+		WHERE pm.conversation_id = uc.conversation_id
+			AND pm.deleted_at IS NULL
+		ORDER BY pm.id DESC
+		LIMIT 1
+	) lm ON true
+
+	LEFT JOIN private_messages pm
+		ON pm.conversation_id = uc.conversation_id
+		AND pm.deleted_at IS NULL
+
+	GROUP BY
+		uc.conversation_id,
+		uc.updated_at,
+		uc.other_user_id,
+		uc.last_read_message_id,
+		lm.id,
+		lm.sender_id,
+		lm.message_text,
+		lm.created_at;
+	`
+
 	getPrivateConvs = `
 	WITH user_conversations AS (
 		SELECT

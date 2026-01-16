@@ -15,6 +15,37 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Retrieves a single conversation preview by conversation id.
+// Includes conversation ID, last update time, interlocutor,
+// last message, and unread count.
+func (h *ChatHandler) GetPrivateConversationById(
+	ctx context.Context,
+	params *pb.GetPrivateConversationByIdRequest,
+) (*pb.PrivateConversationPreview, error) {
+	tele.Info(ctx, "get private conversation by id called: @1", "params", params.String())
+
+	conv, err := h.Application.GetPrivateConversationById(ctx, md.GetPrivateConvByIdReq{
+		UserId:         ct.Id(params.UserId),
+		ConversationId: ct.Id(params.ConversationId),
+		InterlocutorId: ct.Id(params.InterlocutorId),
+	})
+	if err != nil {
+		tele.Error(ctx, "get private conversations by id @1 \n\n@2\n\n",
+			"request", params.String(),
+			"error", err.Error(),
+		)
+		return nil, ce.EncodeProto(err)
+	}
+
+	res := mp.MapConversationToProto(conv)
+
+	tele.Info(ctx, "get private conversations succes: @1 @2",
+		"response", res.String(),
+	)
+	return res, nil
+}
+
+// Retrieves a paginated list of private conversations for a user.
 func (h *ChatHandler) GetPrivateConversations(
 	ctx context.Context,
 	params *pb.GetPrivateConversationsRequest,
@@ -31,6 +62,7 @@ func (h *ChatHandler) GetPrivateConversations(
 			"request", params.String(),
 			"error", err.Error(),
 		)
+		return nil, ce.EncodeProto(err)
 	}
 
 	res := &pb.GetPrivateConversationsResponse{
@@ -38,13 +70,12 @@ func (h *ChatHandler) GetPrivateConversations(
 	}
 
 	tele.Info(ctx, "get private conversations succes: @1 @2",
-		"params", params.String(),
 		"response", res.String(),
 	)
 	return res, nil
 }
 
-// CreatePrivateMessage creates a new private message in a conversation.
+// Creates a new private message and returns the created message details.
 func (h *ChatHandler) CreatePrivateMessage(
 	ctx context.Context,
 	params *pb.CreatePrivateMessageRequest,
@@ -74,7 +105,7 @@ func (h *ChatHandler) CreatePrivateMessage(
 	return resp, nil
 }
 
-// GetPreviousPrivateMessages returns messages older than the boundary message ID.
+// Retrieves previous private messages (older than the boundary message) in a conversation.
 func (h *ChatHandler) GetPreviousPrivateMessages(
 	ctx context.Context,
 	params *pb.GetPrivateMessagesRequest,
@@ -108,7 +139,7 @@ func (h *ChatHandler) GetPreviousPrivateMessages(
 	return resp, nil
 }
 
-// GetNextPrivateMessages returns messages newer than the boundary message ID.
+// Retrieves next private messages (newer than the boundary message) in a conversation.
 func (h *ChatHandler) GetNextPrivateMessages(
 	ctx context.Context,
 	params *pb.GetPrivateMessagesRequest,
@@ -142,8 +173,7 @@ func (h *ChatHandler) GetNextPrivateMessages(
 	return resp, nil
 }
 
-// UpdateLastReadPrivateMessage updates the last read message pointer
-// for a user in a private conversation.
+// Updates the last read message pointer for a user in a private conversation.
 func (h *ChatHandler) UpdateLastReadPrivateMessage(
 	ctx context.Context,
 	params *pb.UpdateLastReadPrivateMessageRequest,

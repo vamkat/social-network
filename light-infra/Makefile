@@ -9,7 +9,8 @@
 	run-migrations \
 	migrate-media migrate-users migrate-posts migrate-chat migrate-notifications\
 	create-network \
-	docker-up docker-down
+	docker-up docker-down \
+	tmux stop
 
 ######################################
 # Shared environment (all services)
@@ -205,3 +206,17 @@ boom:
 	$(MAKE) docker-up
 	$(MAKE) run-migrations
 	./run-all.sh
+
+######################################
+# Run light
+######################################
+
+tmux:
+	$(MAKE) docker-up
+	$(MAKE) run-migrations
+	./run-all.tmux.sh
+
+stop:
+	tmux kill-session -t social-backend
+	docker compose -f docker-compose.infra.yml down
+

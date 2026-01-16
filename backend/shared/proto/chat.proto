@@ -53,6 +53,13 @@ message GetGroupMessagesResponse {
 // Private Conversations
 // =====================
 
+// Request for retrieving a single conversation by id.
+message GetPrivateConversationByIdRequest {
+  int64 user_id = 1;
+  int64 conversation_id = 2;
+  int64 interlocutor_id = 3;
+}
+
 
 // Request message for retrieving a paginated list of private conversations for a user.
 // Includes user ID, date before which to fetch, and limit.
@@ -63,7 +70,8 @@ message GetPrivateConversationsRequest {
 }
 
 // Preview of a private conversation.
-// Includes conversation ID, last update time, interlocutor, last message, and unread count.
+// Includes conversation ID, last update time, interlocutor, 
+// last message, and unread count.
 message PrivateConversationPreview {
   int64 conversation_id = 1;
   google.protobuf.Timestamp updated_at = 2;
@@ -154,6 +162,15 @@ service ChatService {
     GetGroupMessagesRequest
   ) returns (
     GetGroupMessagesResponse
+  );
+
+  // Retrieves a single conversation preview by conversation id.
+  // Includes conversation ID, last update time, interlocutor, 
+  // last message, and unread count.
+  rpc GetPrivateConversationById(
+    GetPrivateConversationByIdRequest
+  ) returns (
+    PrivateConversationPreview
   );
 
   // Retrieves a paginated list of private conversations for a user.

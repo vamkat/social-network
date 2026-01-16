@@ -23,6 +23,44 @@ type NewPrivateConversation struct {
 	DeletedAt          ct.GenDateTime `validation:"nullable"`
 }
 
+func (q *Queries) GetPrivateConvById(ctx context.Context,
+	arg md.GetPrivateConvByIdReq,
+) (res md.PrivateConvsPreview, err error) {
+	input := fmt.Sprintf("arg: %#v", arg)
+
+	if err := ct.ValidateStruct(arg); err != nil {
+		return res, ce.New(ce.ErrInvalidArgument, err, input)
+	}
+
+	row := q.db.QueryRow(
+		ctx,
+		getPrivateConvById,
+		arg.UserId,
+		arg.ConversationId,
+	)
+
+	err = row.Scan(
+		&res.ConversationId,
+		&res.UpdatedAt,
+		&res.Interlocutor.UserId,
+		&res.LastMessage.Id,
+		&res.LastMessage.Sender.UserId,
+		&res.LastMessage.MessageText,
+		&res.LastMessage.CreatedAt,
+		&res.UnreadCount,
+	)
+
+	if err == pgx.ErrNoRows {
+		return res, ce.New(ce.ErrNotFound, err, input).WithPublic("conversation not found")
+	}
+
+	if err != nil {
+		return res, ce.New(ce.ErrInternal, err, input)
+	}
+
+	return res, nil
+}
+
 func (q *Queries) GetPrivateConvs(ctx context.Context,
 	arg md.GetPrivateConvsReq) (res []md.PrivateConvsPreview, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
