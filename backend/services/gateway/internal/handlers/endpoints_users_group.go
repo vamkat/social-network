@@ -104,6 +104,8 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			panic(1)
 		}
 
+		//TODO get from url the group id
+
 		type updateGroupData struct {
 			GroupId          ct.Id  `json:"group_id"`
 			GroupTitle       string `json:"group_title"`
