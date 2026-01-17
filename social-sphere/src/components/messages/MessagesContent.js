@@ -109,9 +109,6 @@ export default function MessagesContent({
                 convId: msg.conversation_id,
             });
 
-            console.log("result from getConvByID: ", JSON.stringify(result, null, 2));
-
-            console.log("result.success:", result.success, "result.data:", !!result.data);
             if (result.success && result.data) {
                 setConversations((prev) => {
                     // Check if already added (race condition prevention)
@@ -239,7 +236,7 @@ export default function MessagesContent({
 
     // Handle conversation selection - navigate to /messages/[id]
     const handleSelectConversation = (conv) => {
-        const id = conv.Interlocutor?.id || conv.ConversationId;
+        const id = conv.Interlocutor?.id;
         router.push(`/messages/${id}`);
     };
 

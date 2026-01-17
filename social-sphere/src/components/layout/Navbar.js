@@ -451,7 +451,7 @@ export default function Navbar() {
                                                         key={conv.ConversationId}
                                                         onClick={() => {
                                                             setIsMessagesOpen(false);
-                                                            router.push(`/messages/${conv.Interlocutor?.id || conv.ConversationId}`);
+                                                            router.push(`/messages/${conv.Interlocutor?.id}`);
                                                         }}
                                                         className="w-full flex items-start gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors cursor-pointer text-left"
                                                     >

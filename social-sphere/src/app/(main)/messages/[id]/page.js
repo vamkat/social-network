@@ -11,7 +11,7 @@ export default async function ConversationPage({ params }) {
 
     // Find the selected conversation from the list
     const selectedConversation = conversations.find(
-        (conv) => conv.ConversationId === id || conv.Interlocutor?.id === id
+        (conv) => conv.Interlocutor?.id === id
     );
 
     // Fetch messages for the selected conversation if found
