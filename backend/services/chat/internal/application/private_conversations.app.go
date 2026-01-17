@@ -35,6 +35,12 @@ func (c *ChatService) GetPrivateConversationById(ctx context.Context,
 	if err != nil {
 		return res, ce.Wrap(nil, Err, input)
 	}
+
+	conv.Interlocutor, err = c.RetriveUsers.GetUser(ctx, conv.Interlocutor.UserId)
+	if err != nil {
+		return conv, ce.Wrap(nil, err, input)
+	}
+
 	return conv, nil
 }
 
