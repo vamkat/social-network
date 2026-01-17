@@ -61,10 +61,11 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 			EventType: notifpb.EventType_POST_LIKED,
 			Payload: &notifpb.NotificationEvent_PostLiked{
 				PostLiked: &notifpb.PostLiked{
-					PostId:        req.EntityId.Int64(),
-					LikerUserId:   req.RequesterId.Int64(),
-					LikerUsername: liker.Username.String(),
-					Aggregate:     true,
+					EntityCreatorId: row.CreatorID,
+					PostId:          req.EntityId.Int64(),
+					LikerUserId:     req.RequesterId.Int64(),
+					LikerUsername:   liker.Username.String(),
+					Aggregate:       true,
 				},
 			},
 		}

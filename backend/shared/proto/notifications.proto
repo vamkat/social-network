@@ -406,10 +406,11 @@ message PostCommentCreated {
 }
 
 message PostLiked {
-  int64 post_id = 1;
-  int64 liker_user_id = 2;
-  string liker_username = 3;
-  bool aggregate = 4;
+  int64 entity_creator_id=1;
+  int64 post_id = 2;
+  int64 liker_user_id = 3;
+  string liker_username = 4;
+  bool aggregate = 5;
 }
 
 message FollowRequestCreated {

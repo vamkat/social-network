@@ -2544,13 +2544,14 @@ func (x *PostCommentCreated) GetAggregate() bool {
 }
 
 type PostLiked struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	LikerUserId   int64                  `protobuf:"varint,2,opt,name=liker_user_id,json=likerUserId,proto3" json:"liker_user_id,omitempty"`
-	LikerUsername string                 `protobuf:"bytes,3,opt,name=liker_username,json=likerUsername,proto3" json:"liker_username,omitempty"`
-	Aggregate     bool                   `protobuf:"varint,4,opt,name=aggregate,proto3" json:"aggregate,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	EntityCreatorId int64                  `protobuf:"varint,1,opt,name=entity_creator_id,json=entityCreatorId,proto3" json:"entity_creator_id,omitempty"`
+	PostId          int64                  `protobuf:"varint,2,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	LikerUserId     int64                  `protobuf:"varint,3,opt,name=liker_user_id,json=likerUserId,proto3" json:"liker_user_id,omitempty"`
+	LikerUsername   string                 `protobuf:"bytes,4,opt,name=liker_username,json=likerUsername,proto3" json:"liker_username,omitempty"`
+	Aggregate       bool                   `protobuf:"varint,5,opt,name=aggregate,proto3" json:"aggregate,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PostLiked) Reset() {
@@ -2581,6 +2582,13 @@ func (x *PostLiked) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PostLiked.ProtoReflect.Descriptor instead.
 func (*PostLiked) Descriptor() ([]byte, []int) {
 	return file_notifications_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *PostLiked) GetEntityCreatorId() int64 {
+	if x != nil {
+		return x.EntityCreatorId
+	}
+	return 0
 }
 
 func (x *PostLiked) GetPostId() int64 {
@@ -4077,12 +4085,13 @@ const file_notifications_proto_rawDesc = "" +
 	"\x11commenter_user_id\x18\x04 \x01(\x03R\x0fcommenterUserId\x12-\n" +
 	"\x12commenter_username\x18\x05 \x01(\tR\x11commenterUsername\x12\x12\n" +
 	"\x04body\x18\x06 \x01(\tR\x04body\x12\x1c\n" +
-	"\taggregate\x18\a \x01(\bR\taggregate\"\x8d\x01\n" +
-	"\tPostLiked\x12\x17\n" +
-	"\apost_id\x18\x01 \x01(\x03R\x06postId\x12\"\n" +
-	"\rliker_user_id\x18\x02 \x01(\x03R\vlikerUserId\x12%\n" +
-	"\x0eliker_username\x18\x03 \x01(\tR\rlikerUsername\x12\x1c\n" +
-	"\taggregate\x18\x04 \x01(\bR\taggregate\"\x97\x01\n" +
+	"\taggregate\x18\a \x01(\bR\taggregate\"\xb9\x01\n" +
+	"\tPostLiked\x12*\n" +
+	"\x11entity_creator_id\x18\x01 \x01(\x03R\x0fentityCreatorId\x12\x17\n" +
+	"\apost_id\x18\x02 \x01(\x03R\x06postId\x12\"\n" +
+	"\rliker_user_id\x18\x03 \x01(\x03R\vlikerUserId\x12%\n" +
+	"\x0eliker_username\x18\x04 \x01(\tR\rlikerUsername\x12\x1c\n" +
+	"\taggregate\x18\x05 \x01(\bR\taggregate\"\x97\x01\n" +
 	"\x14FollowRequestCreated\x12$\n" +
 	"\x0etarget_user_id\x18\x01 \x01(\x03R\ftargetUserId\x12*\n" +
 	"\x11requester_user_id\x18\x02 \x01(\x03R\x0frequesterUserId\x12-\n" +

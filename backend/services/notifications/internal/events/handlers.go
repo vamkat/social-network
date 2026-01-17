@@ -76,11 +76,11 @@ func (h *EventHandler) handlePostCommentCreated(ctx context.Context, event *pb.P
 func (h *EventHandler) handlePostLiked(ctx context.Context, event *pb.PostLiked) error {
 	return h.App.CreatePostLikeNotification(
 		ctx,
-		event.PostId,        // userId (post owner)
-		event.LikerUserId,   // likerId
-		event.PostId,        // postId
-		event.LikerUsername, // likerUsername
-		event.Aggregate,     // aggregate - use value from event
+		event.EntityCreatorId, // userId (post owner)
+		event.LikerUserId,     // likerId
+		event.PostId,          // postId
+		event.LikerUsername,   // likerUsername
+		event.Aggregate,       // aggregate - use value from event
 	)
 }
 
