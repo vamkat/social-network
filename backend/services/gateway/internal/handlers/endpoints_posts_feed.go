@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"social-network/shared/gen-go/posts"
@@ -21,16 +22,18 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GenericPaginatedReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.GenericPaginatedReq{
 			RequesterId: claims.UserId,
-			Limit:       body.Limit.Int32(),
-			Offset:      body.Offset.Int32(),
+			Limit:       limit,
+			Offset:      offset,
 		}
 
 		grpcResp, err := h.PostsService.GetPublicFeed(ctx, &grpcReq)
@@ -86,16 +89,18 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GetPersonalizedFeedReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.GetPersonalizedFeedReq{
 			RequesterId: claims.UserId,
-			Limit:       body.Limit.Int32(),
-			Offset:      body.Offset.Int32(),
+			Limit:       limit,
+			Offset:      offset,
 		}
 
 		grpcResp, err := h.PostsService.GetPersonalizedFeed(ctx, &grpcReq)
@@ -151,17 +156,20 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GetUserPostsReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		creatorId, err1 := utils.PathValueGet(r, "userId", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.GetUserPostsReq{
 			RequesterId: claims.UserId,
-			CreatorId:   body.CreatorId.Int64(),
-			Limit:       body.Limit.Int32(),
-			Offset:      body.Offset.Int32(),
+			CreatorId:   creatorId.Int64(),
+			Limit:       limit,
+			Offset:      offset,
 		}
 
 		grpcResp, err := h.PostsService.GetUserPostsPaginated(ctx, &grpcReq)
@@ -200,7 +208,7 @@ func (h *Handlers) getUserPostsPaginated() http.HandlerFunc {
 
 		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send user %v posts: %v", body.CreatorId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send user %v posts: %v", creatorId, err.Error()))
 			return
 		}
 
@@ -217,17 +225,20 @@ func (h *Handlers) getGroupPostsPaginated() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GetGroupPostsReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		groupId, err1 := utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.GetGroupPostsReq{
 			RequesterId: claims.UserId,
-			GroupId:     body.GroupId.Int64(),
-			Limit:       body.Limit.Int32(),
-			Offset:      body.Offset.Int32(),
+			GroupId:     groupId.Int64(),
+			Limit:       limit,
+			Offset:      offset,
 		}
 
 		grpcResp, err := h.PostsService.GetGroupPostsPaginated(ctx, &grpcReq)
@@ -266,7 +277,7 @@ func (h *Handlers) getGroupPostsPaginated() http.HandlerFunc {
 
 		err = utils.WriteJSON(ctx, w, http.StatusOK, postsResponse)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send group %v posts: %v", body.GroupId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send group %v posts: %v", groupId, err.Error()))
 			return
 		}
 

@@ -23,15 +23,15 @@ func (h *Handlers) getPostById() http.HandlerFunc {
 		if !ok {
 			panic(1)
 		}
-		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		postId, err := utils.PathValueGet(r, "post_id", ct.Id(0), true)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.GenericReq{
 			RequesterId: int64(claims.UserId),
-			EntityId:    body.EntityId.Int64(),
+			EntityId:    postId.Int64(),
 		}
 
 		grpcResp, err := h.PostsService.GetPostById(ctx, &grpcReq)
@@ -91,18 +91,14 @@ func (h *Handlers) getMostPopularPostInGroup() http.HandlerFunc {
 		ctx := r.Context()
 		tele.Info(ctx, "getMostPopularPostInGroup handler called")
 
-		// claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
-		// if !ok {
-		// 	panic(1)
-		// }
-		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		groupId, err := utils.PathValueGet(r, "group_id", ct.Id(0), true)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.SimpleIdReq{
-			Id: body.EntityId.Int64(),
+			Id: groupId.Int64(),
 		}
 
 		grpcResp, err := h.PostsService.GetMostPopularPostInGroup(ctx, &grpcReq)
@@ -254,7 +250,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 		}
 
 		type EditPostJSONRequest struct {
-			PostId      ct.Id       `json:"post_id"`
+			PostId      ct.Id
 			NewBody     ct.PostBody `json:"post_body"`
 			Audience    ct.Audience `json:"audience"`
 			AudienceIds ct.Ids      `json:"audience_ids" validate:"nullable"`
@@ -271,6 +267,13 @@ func (h *Handlers) editPost() http.HandlerFunc {
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var err error
+		httpReq.PostId, err = utils.PathValueGet(r, "post_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -316,7 +319,7 @@ func (h *Handlers) editPost() http.HandlerFunc {
 			DeleteImage: httpReq.DeleteImage,
 		}
 
-		_, err := h.PostsService.EditPost(ctx, &grpcReq)
+		_, err = h.PostsService.EditPost(ctx, &grpcReq)
 		if err != nil {
 			utils.ReturnHttpError(ctx, w, err)
 			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create post: %v", err.Error()))
@@ -347,15 +350,15 @@ func (h *Handlers) deletePost() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		postId, err := utils.PathValueGet(r, "post_id", ct.Id(0), true)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		grpcReq := posts.GenericReq{
 			RequesterId: int64(claims.UserId),
-			EntityId:    body.EntityId.Int64(),
+			EntityId:    postId.Int64(),
 		}
 
 		_, err = h.PostsService.DeletePost(ctx, &grpcReq)

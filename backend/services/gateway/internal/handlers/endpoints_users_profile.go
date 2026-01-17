@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"social-network/shared/gen-go/media"
@@ -11,7 +12,6 @@ import (
 	"social-network/shared/go/jwt"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
-	"strings"
 	"time"
 )
 
@@ -20,23 +20,17 @@ func (h *Handlers) getUserProfile() http.HandlerFunc {
 		ctx := r.Context()
 		tele.Info(ctx, "getUserProfile handler called")
 
-		pathParts := strings.Split(r.URL.Path, "/")
-		if pathParts[len(pathParts)-1] == "" {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "missing user_id in URL path")
-			return
-		}
-
-		userId, err := ct.DecryptId(pathParts[len(pathParts)-1])
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "invalid user_id query param")
-			return
-		}
-
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
 		if !ok {
 			panic(1)
 		}
 		requesterId := int64(claims.UserId)
+
+		userId, err := utils.PathValueGet(r, "userId", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
 
 		grpcReq := users.GetUserProfileRequest{
 			UserId:      userId.Int64(),
@@ -111,20 +105,17 @@ func (s *Handlers) searchUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		type reqBody struct {
-			Query string `json:"query"`
-			Limit int32  `json:"limit"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		query, err1 := utils.PathValueGet(r, "query", "", true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		if err := errors.Join(err1, err2); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.UserSearchRequest{
-			SearchTerm: body.Query,
-			Limit:      body.Limit,
+			SearchTerm: query,
+			Limit:      limit,
 		}
 
 		grpcResp, err := s.UsersService.SearchUsers(ctx, req)

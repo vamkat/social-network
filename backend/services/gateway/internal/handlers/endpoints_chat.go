@@ -29,7 +29,7 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 
 		userId := claims.UserId
 		type req struct {
-			InterlocutorId ct.Id      `json:"interlocutor_id"`
+			InterlocutorId ct.Id
 			Message        ct.MsgBody `json:"message_body"`
 		}
 		httpReq := req{}
@@ -38,6 +38,13 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var err error
+		httpReq.InterlocutorId, err = utils.PathValueGet(r, "interlocutor_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -81,9 +88,8 @@ func (h *Handlers) GetPrivateConversationById() http.HandlerFunc {
 		v := r.URL.Query()
 		userId := claims.UserId
 
-		interlocutorId, err1 := utils.ParamGet(v, "interlocutor-id", ct.Id(0), true)
-
-		convId, err2 := utils.ParamGet(v, "conversation-id", ct.Id(0), true)
+		interlocutorId, err1 := utils.PathValueGet(r, "interlocutor_id", ct.Id(0), true)
+		convId, err2 := utils.ParamGet(v, "conversation_id", ct.Id(0), true)
 
 		if err := errors.Join(err1, err2); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
@@ -125,10 +131,9 @@ func (h *Handlers) GetPrivateConversations() http.HandlerFunc {
 		userId := claims.UserId
 
 		end := time.Now().AddDate(100, 0, 0)
-		beforeDate, err1 := utils.ParamGet(v, "before-date", end, false)
-
-		limit, err2 := utils.ParamGet(v, "limit", 100, true)
+		beforeDate, err1 := utils.ParamGet(v, "before_date", end, false)
 		beforeDateCt := ct.GenDateTime(beforeDate)
+		limit, err2 := utils.ParamGet(v, "limit", 1, false)
 
 		if err := errors.Join(err1, err2); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
@@ -172,11 +177,11 @@ func (h *Handlers) GetPrivateMessagesPag() http.HandlerFunc {
 
 		v := r.URL.Query()
 		userId := claims.UserId
-		interlocutorId, err1 := utils.ParamGet(v, "interlocutor-id", ct.Id(0), true)
+		interlocutorId, err1 := utils.PathValueGet(r, "interlocutor_id", ct.Id(0), true)
 		boundary, err2 := utils.ParamGet(v, "boundary", ct.Id(0), false)
 		limit, err3 := utils.ParamGet(v, "limit", 100, true)
-		retrieveusers, err4 := utils.ParamGet(v, "retrieve-users", false, false)
-		getPrevious, err5 := utils.ParamGet(v, "get-previous", true, false)
+		retrieveusers, err4 := utils.ParamGet(v, "retrieve_users", false, false)
+		getPrevious, err5 := utils.ParamGet(v, "get_previous", true, false)
 
 		if err := errors.Join(err1, err2, err3, err4, err5); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())

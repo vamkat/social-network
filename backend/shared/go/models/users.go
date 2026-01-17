@@ -220,7 +220,7 @@ type UpdateGroupRequest struct {
 // -------------------------------------------
 
 type FollowUserReq struct {
-	FollowerId   ct.Id `json:"follower_id"`
+	FollowerId   ct.Id
 	TargetUserId ct.Id `json:"target_user_id"`
 }
 

@@ -10,8 +10,6 @@ import (
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
 	tele "social-network/shared/go/telemetry"
-	"strconv"
-	"strings"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -29,22 +27,11 @@ func (h *Handlers) GetUserNotifications() http.HandlerFunc {
 		v := r.URL.Query()
 		limit, err1 := utils.ParamGet(v, "limit", 100, true)
 		offset, err2 := utils.ParamGet(v, "offset", 0, true)
-		notifTypesRaw, err3 := utils.ParamGet(v, "notification_types", "", true)
-		unreadOnly, err4 := utils.ParamGet(v, "limit", false, true)
+		unreadOnly, err3 := utils.ParamGet(v, "read_only", false, true)
 		userId := claims.UserId
 
 		notifTypes := []notifications.NotificationType{}
-		var err5 error
-		for part := range strings.SplitSeq(notifTypesRaw, ",") {
-			val, err := strconv.Atoi(part)
-			if err != nil {
-				err5 = err
-				break
-			}
-			notifTypes = append(notifTypes, notifications.NotificationType(val))
-		}
-
-		if err := errors.Join(err1, err2, err3, err4, err5); err != nil {
+		if err := errors.Join(err1, err2, err3); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
@@ -171,11 +158,8 @@ func (s *Handlers) DeleteNotification() http.HandlerFunc {
 		}
 
 		v := r.URL.Query()
-		notifIdRaw, err := utils.ParamGet(v, "notification_id", "", true)
-
-		notifId, err := ct.DecryptId(notifIdRaw)
+		notifId, err := utils.ParamGet(v, "notification_id", ct.Id(0), true)
 		if err != nil {
-			tele.Warn(ctx, "problem decrypting notification id: @1", "error", err.Error())
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad notification id")
 			return
 		}

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/posts"
@@ -68,27 +69,20 @@ func (s *Handlers) getFollowSuggestions() http.HandlerFunc {
 func (s *Handlers) getFollowersPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		// claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
-		// if !ok {
-		// 	panic(1)
-		// }
 
-		type reqBody struct {
-			UserId ct.Id `json:"user_id"`
-			Limit  int32 `json:"limit"`
-			Offset int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		userId, err1 := utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := users.Pagination{
-			UserId: body.UserId.Int64(),
-			Limit:  body.Limit,
-			Offset: body.Offset,
+			UserId: userId.Int64(),
+			Limit:  limit,
+			Offset: offset,
 		}
 
 		grpcResp, err := s.UsersService.GetFollowersPaginated(ctx, &req)
@@ -121,22 +115,19 @@ func (s *Handlers) getFollowingPaginated() http.HandlerFunc {
 		// 	panic(1)
 		// }
 
-		type reqBody struct {
-			UserId ct.Id `json:"user_id"`
-			Limit  int32 `json:"limit"`
-			Offset int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		userId, err1 := utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.Pagination{
-			UserId: body.UserId.Int64(),
-			Limit:  body.Limit,
-			Offset: body.Offset,
+			UserId: userId.Int64(),
+			Limit:  limit,
+			Offset: offset,
 		}
 
 		grpcResp, err := s.UsersService.GetFollowingPaginated(ctx, req)
@@ -176,6 +167,12 @@ func (s *Handlers) followUser() http.HandlerFunc {
 			return
 		}
 
+		body.TargetUserId, err = utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
 		req := users.FollowUserRequest{
 			FollowerId:   claims.UserId,
 			TargetUserId: body.TargetUserId.Int64(),
@@ -201,13 +198,19 @@ func (s *Handlers) handleFollowRequest() http.HandlerFunc {
 		}
 
 		type reqBody struct {
-			RequesterId ct.Id `json:"requester_id"`
-			Accept      bool  `json:"accept"`
+			RequesterId ct.Id
+			Accept      bool `json:"accept"`
 		}
 
 		body, err := utils.JSON2Struct(&reqBody{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		body.RequesterId, err = utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -239,6 +242,12 @@ func (s *Handlers) unFollowUser() http.HandlerFunc {
 		body, err := utils.JSON2Struct(&models.FollowUserReq{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		body.FollowerId, err = utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 

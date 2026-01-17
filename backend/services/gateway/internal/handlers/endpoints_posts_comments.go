@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"social-network/shared/gen-go/media"
@@ -124,11 +125,20 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 			return
 		}
 
+		v := r.URL.Query()
+		commentId, err1 := utils.PathValueGet(r, "comment_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
 		grpcReq := posts.EntityIdPaginatedReq{
 			RequesterId: claims.UserId,
-			EntityId:    body.EntityId.Int64(),
-			Limit:       body.Limit.Int32(),
-			Offset:      body.Offset.Int32(),
+			EntityId:    commentId.Int64(),
+			Limit:       limit,
+			Offset:      offset,
 		}
 
 		grpcResp, err := h.PostsService.GetCommentsByParentId(ctx, &grpcReq)
@@ -183,7 +193,7 @@ func (h *Handlers) editComment() http.HandlerFunc {
 		}
 
 		type EditCommentJSONRequest struct {
-			CommentId   ct.Id          `json:"comment_id"`
+			CommentId   ct.Id
 			Body        ct.CommentBody `json:"comment_body"`
 			DeleteImage bool           `json:"delete_image"`
 
@@ -198,6 +208,12 @@ func (h *Handlers) editComment() http.HandlerFunc {
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			return
+		}
+		var err error
+		httpReq.CommentId, err = utils.PathValueGet(r, "comment_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -234,7 +250,7 @@ func (h *Handlers) editComment() http.HandlerFunc {
 			DeleteImage: httpReq.DeleteImage,
 		}
 
-		_, err := h.PostsService.EditComment(ctx, &grpcReq)
+		_, err = h.PostsService.EditComment(ctx, &grpcReq)
 		if err != nil {
 			utils.ReturnHttpError(ctx, w, err)
 			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to create comment: %v", err.Error()))
@@ -267,6 +283,12 @@ func (h *Handlers) deleteComment() http.HandlerFunc {
 		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		body.EntityId, err = utils.PathValueGet(r, "comment_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 

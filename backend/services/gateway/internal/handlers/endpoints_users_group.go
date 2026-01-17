@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
@@ -104,10 +105,8 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			panic(1)
 		}
 
-		//TODO get from url the group id
-
 		type updateGroupData struct {
-			GroupId          ct.Id  `json:"group_id"`
+			GroupId          ct.Id
 			GroupTitle       string `json:"group_title"`
 			GroupDescription string `json:"group_description"`
 			GroupImageId     ct.Id  `json:"group_image_id" validate:"nullable"`
@@ -124,6 +123,13 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 		defer r.Body.Close()
 		if err := decoder.Decode(&httpReq); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var err error
+		httpReq.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -165,7 +171,7 @@ func (s *Handlers) updateGroup() http.HandlerFunc {
 			DeleteImage:      httpReq.DeleteImage,
 		}
 
-		_, err := s.UsersService.UpdateGroup(ctx, &updateGroupRequest)
+		_, err = s.UsersService.UpdateGroup(ctx, &updateGroupRequest)
 		if err != nil {
 			utils.ReturnHttpError(ctx, w, err)
 			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "Could not update group: "+err.Error())
@@ -196,21 +202,18 @@ func (s *Handlers) getAllGroupsPaginated() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			Limit  int32 `json:"limit"`
-			Offset int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := users.Pagination{
 			UserId: claims.UserId,
-			Limit:  body.Limit,
-			Offset: body.Offset,
+			Limit:  limit,
+			Offset: offset,
 		}
 
 		grpcResp, err := s.UsersService.GetAllGroupsPaginated(ctx, &req)
@@ -250,18 +253,15 @@ func (s *Handlers) getGroupInfo() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			GroupId ct.Id `json:"group_id"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
+		var err error
+		groupId, err := utils.PathValueGet(r, "group_id", ct.Id(0), true)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.GeneralGroupRequest{
-			GroupId: body.GroupId.Int64(),
+			GroupId: groupId.Int64(),
 			UserId:  claims.UserId,
 		}
 
@@ -298,23 +298,20 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			GroupId ct.Id `json:"group_id"`
-			Limit   int32 `json:"limit"`
-			Offset  int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		groupId, err1 := utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.GroupMembersRequest{
 			UserId:  claims.UserId,
-			GroupId: body.GroupId.Int64(),
-			Limit:   body.Limit,
-			Offset:  body.Offset,
+			GroupId: groupId.Int64(),
+			Limit:   limit,
+			Offset:  offset,
 		}
 
 		grpcResp, err := s.UsersService.GetGroupMembers(ctx, req)
@@ -349,21 +346,18 @@ func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			Limit  int32 `json:"limit"`
-			Offset int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.Pagination{
 			UserId: claims.UserId,
-			Limit:  body.Limit,
-			Offset: body.Offset,
+			Limit:  limit,
+			Offset: offset,
 		}
 
 		grpcResp, err := s.UsersService.GetUserGroupsPaginated(ctx, req)
@@ -410,6 +404,12 @@ func (s *Handlers) handleGroupJoinRequest() http.HandlerFunc {
 			return
 		}
 
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
 		req := &users.HandleJoinRequest{
 			OwnerId:     claims.UserId,
 			GroupId:     body.GroupId.Int64(),
@@ -442,6 +442,12 @@ func (s *Handlers) cancelGroupJoinRequest() http.HandlerFunc {
 			return
 		}
 
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
 		req := &users.GroupJoinRequest{
 			GroupId:     body.GroupId.Int64(),
 			RequesterId: claims.UserId,
@@ -469,6 +475,12 @@ func (s *Handlers) inviteToGroup() http.HandlerFunc {
 		body, err := utils.JSON2Struct(&models.InviteToGroupReq{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -505,6 +517,12 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 			return
 		}
 
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
 		req := &users.GeneralGroupRequest{
 			UserId:  claims.UserId,
 			GroupId: body.GroupId.Int64(),
@@ -532,6 +550,12 @@ func (s *Handlers) removeFromGroup() http.HandlerFunc {
 		body, err := utils.JSON2Struct(&models.RemoveFromGroupRequest{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -564,6 +588,12 @@ func (s *Handlers) requestJoinGroup() http.HandlerFunc {
 		body, err := utils.JSON2Struct(&models.GroupJoinRequest{}, r)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			return
+		}
+
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
@@ -603,6 +633,12 @@ func (s *Handlers) respondToGroupInvite() http.HandlerFunc {
 			return
 		}
 
+		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
 		req := &users.HandleGroupInviteRequest{
 			InvitedId: claims.UserId,
 			GroupId:   body.GroupId.Int64(),
@@ -628,22 +664,19 @@ func (s *Handlers) searchGroups() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			Query  string `json:"query"`
-			Limit  int32  `json:"limit"`
-			Offset int32  `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		query, err1 := utils.ParamGet(v, "query", "", true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.GroupSearchRequest{
-			SearchTerm: body.Query,
-			Limit:      body.Limit,
-			Offset:     body.Offset,
+			SearchTerm: query,
+			Limit:      limit,
+			Offset:     offset,
 			UserId:     claims.UserId,
 		}
 
@@ -687,23 +720,20 @@ func (s *Handlers) getPendingGroupJoinRequests() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			GroupId ct.Id `json:"group_id"`
-			Limit   int32 `json:"limit"`
-			Offset  int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		groupId, err1 := utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.GroupMembersRequest{
 			UserId:  claims.UserId,
-			GroupId: body.GroupId.Int64(),
-			Limit:   body.Limit,
-			Offset:  body.Offset,
+			GroupId: groupId.Int64(),
+			Limit:   limit,
+			Offset:  offset,
 		}
 
 		grpcResp, err := s.UsersService.GetPendingGroupJoinRequests(ctx, req)
@@ -737,18 +767,14 @@ func (s *Handlers) getPendingGroupJoinRequestsCount() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			GroupId ct.Id `json:"group_id"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
+		groupId, err := utils.PathValueGet(r, "group_id", ct.Id(0), true)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.GeneralGroupRequest{
-			GroupId: body.GroupId.Int64(),
+			GroupId: groupId.Int64(),
 			UserId:  claims.UserId,
 		}
 
@@ -773,23 +799,20 @@ func (s *Handlers) GetFollowersNotInvitedToGroup() http.HandlerFunc {
 			panic(1)
 		}
 
-		type reqBody struct {
-			GroupId ct.Id `json:"group_id"`
-			Limit   int32 `json:"limit"`
-			Offset  int32 `json:"offset"`
-		}
-
-		body, err := utils.JSON2Struct(&reqBody{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		v := r.URL.Query()
+		groupId, err1 := utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.GroupMembersRequest{
 			UserId:  claims.UserId,
-			GroupId: body.GroupId.Int64(),
-			Limit:   body.Limit,
-			Offset:  body.Offset,
+			GroupId: groupId.Int64(),
+			Limit:   limit,
+			Offset:  offset,
 		}
 
 		grpcResp, err := s.UsersService.GetFollowersNotInvitedToGroup(ctx, req)

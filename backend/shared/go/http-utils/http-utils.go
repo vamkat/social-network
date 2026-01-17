@@ -128,7 +128,7 @@ func ReturnHttpError(ctx context.Context, w http.ResponseWriter, err error) {
 // 	return filetype, nil
 // }
 
-func ParamGet[T int | int32 | int64 | string | bool | time.Time | ct.Id](values url.Values, key string, defaultValue T, mustExit bool) (T, error) {
+func ParamGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](values url.Values, key string, defaultValue T, mustExit bool) (T, error) {
 	if !values.Has(key) {
 		if mustExit {
 			return defaultValue, fmt.Errorf("required value %s missing", key)
@@ -136,6 +136,18 @@ func ParamGet[T int | int32 | int64 | string | bool | time.Time | ct.Id](values 
 		return defaultValue, nil
 	}
 	val, err := transform(values.Get(key), defaultValue)
+	return val.(T), err
+}
+
+func PathValueGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](r *http.Request, key string, defaultValue T, mustExit bool) (T, error) {
+	rawVal := r.PathValue(key)
+	if rawVal == "" {
+		if mustExit {
+			return defaultValue, fmt.Errorf("required value %s missing", key)
+		}
+		return defaultValue, nil
+	}
+	val, err := transform(rawVal, defaultValue)
 	return val.(T), err
 }
 
@@ -160,6 +172,12 @@ func transform(str string, target any) (any, error) {
 		return time.Parse(time.RFC3339, str)
 	case ct.Id:
 		return ct.DecodeId(str)
+	case ct.FileVariant:
+		if str == "" {
+			return nil, fmt.Errorf("file_variant missing %w", ErrMissingValue)
+		}
+		variant := ct.FileVariant(str)
+		return variant, variant.Validate()
 
 	default:
 		panic("you passed an incompatible type!")
