@@ -16,27 +16,33 @@ func (h *Handlers) getPublicFeed() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		tele.Info(ctx, "getPublicFeed handler called")
-
+		tele.Info(ctx, "-1")
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
 		if !ok {
-			panic(1)
+			tele.Info(ctx, "0")
+			panic(1) //TODO remove all these panics
 		}
-
+		tele.Info(ctx, "1")
 		v := r.URL.Query()
+		tele.Info(ctx, "2")
 		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+		tele.Info(ctx, "3")
 		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+		tele.Info(ctx, "4")
 		if err := errors.Join(err1, err2); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
-
+		tele.Info(ctx, "5")
 		grpcReq := posts.GenericPaginatedReq{
 			RequesterId: claims.UserId,
 			Limit:       limit,
 			Offset:      offset,
 		}
 
+		tele.Info(ctx, "6")
 		grpcResp, err := h.PostsService.GetPublicFeed(ctx, &grpcReq)
+		tele.Info(ctx, "7")
 		if err != nil {
 			utils.ReturnHttpError(ctx, w, err)
 			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get public feed: "+err.Error())
@@ -85,28 +91,35 @@ func (h *Handlers) getPersonalizedFeed() http.HandlerFunc {
 		tele.Info(ctx, "getPersonalizedFeed handler called")
 
 		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		tele.Info(ctx, "-3")
 		if !ok {
-			panic(1)
+			tele.Error(ctx, "problem fetching claims")
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "problem with jwt claims")
+			return
 		}
-
+		tele.Info(ctx, "-2")
 		v := r.URL.Query()
+		tele.Info(ctx, "-1")
 		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+		tele.Info(ctx, "0")
 		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+		tele.Info(ctx, "1")
 		if err := errors.Join(err1, err2); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
-
+		tele.Info(ctx, "2")
 		grpcReq := posts.GetPersonalizedFeedReq{
 			RequesterId: claims.UserId,
 			Limit:       limit,
 			Offset:      offset,
 		}
+		tele.Info(ctx, "3")
 
 		grpcResp, err := h.PostsService.GetPersonalizedFeed(ctx, &grpcReq)
 		if err != nil {
 			utils.ReturnHttpError(ctx, w, err)
-			//utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "failed to get personalized feed: "+err.Error())
 			return
 		}
 

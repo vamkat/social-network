@@ -184,8 +184,8 @@ func (m *MiddleSystem) RateLimit(rateLimitType rateLimitType, limit int, duratio
 		ok, err := m.ratelimiter.Allow(ctx, rateLimitKey, limit, durationSeconds)
 		if err != nil {
 			tele.Info(ctx, "ratelimiter @1 for @2", "error", err.Error(), "endpoint", r.URL)
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "you broke the rate limiter")
-			return false, nil
+			// utils.ErrorJSON(ctx, w, http.StatusInternalServerError, "you broke the rate limiter")
+			return true, nil
 		}
 		if !ok {
 			tele.Info(ctx, "rate limited for @1, reached @2 per @3", "key", rateLimitKey, "limit", limit, "seconds", durationSeconds)

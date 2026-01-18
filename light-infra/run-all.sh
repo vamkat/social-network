@@ -62,7 +62,7 @@ echo
 
 (
   cd "$BACKEND_DIR"
-  go run ./services/gateway/cmd/main.go
+  # go run ./services/gateway/cmd/main.go
 ) &
 
 ######################################

@@ -315,7 +315,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		// USERS ======================================
 		// USERS ======================================
 
-		// users_id url --DONE
+		//  url --DONE
 
 	SetEndpoint("/users/{user_id}/follow").
 		AllowedMethod("POST").
@@ -378,7 +378,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 
 		//userid url --DONE
 
-	SetEndpoint("/users/{users_id}/unfollow").
+	SetEndpoint("/users/{user_id}/unfollow").
 		AllowedMethod("POST").
 		RateLimit(IP, 20, 5).
 		Auth().

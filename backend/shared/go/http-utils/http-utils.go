@@ -128,27 +128,37 @@ func ReturnHttpError(ctx context.Context, w http.ResponseWriter, err error) {
 // 	return filetype, nil
 // }
 
-func ParamGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](values url.Values, key string, defaultValue T, mustExit bool) (T, error) {
+var ErrParamGet = errors.New("param get is fucked up")
+
+func ParamGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](values url.Values, key string, defaultValue T, mustExist bool) (T, error) {
 	if !values.Has(key) {
-		if mustExit {
+		if mustExist {
 			return defaultValue, fmt.Errorf("required value %s missing", key)
 		}
 		return defaultValue, nil
 	}
 	val, err := transform(values.Get(key), defaultValue)
-	return val.(T), err
+	typedVal, ok := val.(T)
+	if !ok {
+		return typedVal, ErrParamGet
+	}
+	return typedVal, err
 }
 
-func PathValueGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](r *http.Request, key string, defaultValue T, mustExit bool) (T, error) {
+func PathValueGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](r *http.Request, key string, defaultValue T, mustExist bool) (T, error) {
 	rawVal := r.PathValue(key)
 	if rawVal == "" {
-		if mustExit {
+		if mustExist {
 			return defaultValue, fmt.Errorf("required value %s missing", key)
 		}
 		return defaultValue, nil
 	}
 	val, err := transform(rawVal, defaultValue)
-	return val.(T), err
+	typedVal, ok := val.(T)
+	if !ok {
+		return typedVal, ErrParamGet
+	}
+	return typedVal, err
 }
 
 var ErrMissingValue = errors.New("missing value")
@@ -161,7 +171,11 @@ func transform(str string, target any) (any, error) {
 	case int:
 		return strconv.Atoi(str)
 	case int32:
-		return strconv.ParseInt(str, 10, 32)
+		val, err := strconv.ParseInt(str, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		return int32(val), nil
 	case int64:
 		return strconv.ParseInt(str, 10, 64)
 	case string:
@@ -180,6 +194,7 @@ func transform(str string, target any) (any, error) {
 		return variant, variant.Validate()
 
 	default:
+		tele.Error(context.Background(), "bad transform target type passed! @1", "type", fmt.Sprintf("%T", target))
 		panic("you passed an incompatible type!")
 	}
 }
