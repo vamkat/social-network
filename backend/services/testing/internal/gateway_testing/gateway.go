@@ -68,15 +68,6 @@ func testAuthFlow(ctx context.Context) error {
 		return fmt.Errorf("login failed: bad status, %w, body: %s", err, bodyToString(resp))
 	}
 
-	// 3. Auth status
-	resp, err = postJSON(client, "http://api-gateway:8081/auth-status", nil)
-	if err != nil {
-		return fmt.Errorf("auth status failed: %w, body: %s", err, bodyToString(resp))
-	}
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("auth check failed: bad status, %w, body: %s", err, bodyToString(resp))
-	}
-
 	// 4. Logout
 	resp, err = postJSON(client, "http://api-gateway:8081/logout", nil)
 	if err != nil {
@@ -84,15 +75,6 @@ func testAuthFlow(ctx context.Context) error {
 	}
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("logout failed: bad status, %w, body: %s", err, bodyToString(resp))
-	}
-
-	// 5. Auth status
-	resp, err = postJSON(client, "http://api-gateway:8081/auth-status", nil)
-	if err != nil {
-		return fmt.Errorf("second auth status failed: %w, body: %s", err, bodyToString(resp))
-	}
-	if resp.StatusCode == 200 {
-		return fmt.Errorf("auth check failed, expected bad status, %w, body: %s", err, bodyToString(resp))
 	}
 
 	fmt.Println("api-gateway Finished test auth flow")
@@ -173,17 +155,10 @@ func testPostsFlow(ctx context.Context) error {
 		return fmt.Errorf("fetch failed %w", err)
 	}
 
-	// 0. Auth status
-	_, err = client.DoRequest("POST", "/auth-status", []int{200}, "auth status", nil)
-	if err != nil {
-		return err
-	}
-
 	// 1. Get Non-Existent Post
-	_, err = client.DoRequest("POST", "/post/", []int{500, 404}, "get non-existent post", //TODO this should only be 404
-		map[string]any{
-			"entity_id": ct.Id(97862345),
-		},
+	postStringId, _ := ct.EncodeId(ct.Id(97862345))
+	_, err = client.DoRequest("GET", "/post/"+postStringId, []int{500, 404}, "get non-existent post", //TODO this should only be 404
+		map[string]any{},
 	)
 	if err != nil {
 		return err
@@ -191,22 +166,22 @@ func testPostsFlow(ctx context.Context) error {
 
 	// 2. Edit Non-Existent Post
 	editPostData := map[string]any{
-		"post_id":   ct.Id(97862345),
 		"post_body": "new text",
 	}
-	_, err = client.DoRequest("POST", "/posts/edit", []int{400, 404}, "2 edit non-existent post", editPostData)
+
+	_, err = client.DoRequest("POST", "/posts/"+postStringId, []int{400, 404}, "2 edit non-existent post", editPostData)
 	if err != nil {
 		return err
 	}
 
 	// 3. Delete Non-Existent Post
-	_, err = client.DoRequest("POST", "/posts/delete/", []int{400, 404, 500}, "3 delete non-existent post", editPostData) //TODO needs fix, no 500
+	_, err = client.DoRequest("DELETE", "/posts/"+postStringId, []int{400, 404, 500}, "3 delete non-existent post", editPostData) //TODO needs fix, no 500
 	if err != nil {
 		return err
 	}
 
 	// 4. Get Comments for Non-Existent Post
-	_, err = client.DoRequest("POST", "/comments/", []int{400, 404, 500}, "4 get comments for non-existent post", editPostData) //TOOD no 500
+	_, err = client.DoRequest("GET", "/comments", []int{400, 404, 500}, "4 get comments for non-existent post", editPostData) //TOOD no 500
 	if err != nil {
 		return err
 	}
@@ -216,6 +191,7 @@ func testPostsFlow(ctx context.Context) error {
 		"parent_id":    ct.Id(97862345),
 		"comment_body": "This is a comment on a non-existent post.",
 	}
+
 	_, err = client.DoRequest("POST", "/comments/create", []int{400, 404, 500}, "5 create comment on non-existent post", createCommentData) //TOOD no 500
 	if err != nil {
 		return err

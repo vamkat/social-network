@@ -45,6 +45,7 @@ type kafkaConsumer struct {
 	isConsuming       bool
 	weAreShuttingDown bool
 	foundRecords      map[uint64]*Record
+	debug             bool
 }
 
 //ALL TODOs
@@ -105,6 +106,11 @@ func (kfc *kafkaConsumer) WithCommitBuffer(size int) *kafkaConsumer {
 		panic("don't mess with the consumer while it's consuming!")
 	}
 	kfc.commitBuffer = size
+	return kfc
+}
+
+func (kfc *kafkaConsumer) WithDebug(newStatus bool) *kafkaConsumer {
+	kfc.debug = newStatus
 	return kfc
 }
 
@@ -207,7 +213,9 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 					kfc.shutdownProcedure(true)
 					return
 				}
-				tele.Debug(kfc.context, "consumer fetch successful")
+				if kfc.debug {
+					tele.Debug(kfc.context, "consumer fetch successful")
+				}
 
 				// We can iterate through a record iterator...
 				iter := fetches.RecordIter()
@@ -236,9 +244,13 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 						kfc.shutdownProcedure(true)
 						return
 					case committerData.TopicChannel <- Record:
-						// tele.Info(kfc.context, "consumer give record to topic channel")
+						if kfc.debug {
+							tele.Info(kfc.context, "consumer give record to topic channel")
+						}
 					}
-					// tele.Info(kfc.context, "consumer after timer select")
+					if kfc.debug {
+						tele.Info(kfc.context, "consumer after timer select")
+					}
 				}
 			}
 		}
@@ -260,7 +272,9 @@ func (kfc *kafkaConsumer) shutdownProcedure(thereIsSomethingWrong bool) {
 	if thereIsSomethingWrong {
 		tele.Error(kfc.context, "SHUTTING DOWN KAFKA CONSUMER")
 	} else {
-		tele.Info(kfc.context, "Shutting down kafka consumer")
+		if kfc.debug {
+			tele.Info(kfc.context, "Shutting down kafka consumer")
+		}
 	}
 
 	//cancelling the context, both of the kafka inner client, and this packages context
@@ -310,7 +324,9 @@ func (kfc *kafkaConsumer) commitRoutine(topic string) {
 	for {
 		select {
 		case <-kfc.context.Done():
-			tele.Info(kfc.context, "COMMIT WATCHER ROUTINE CLOSING DUE TO CONTEXT .Done()")
+			if kfc.debug {
+				tele.Info(kfc.context, "COMMIT WATCHER ROUTINE CLOSING DUE TO CONTEXT .Done()")
+			}
 			return
 
 		case newRecord, ok := <-data.CommitChannel:
@@ -323,7 +339,9 @@ func (kfc *kafkaConsumer) commitRoutine(topic string) {
 
 			//add new record to collection of monotonicIds
 			kfc.foundRecords[newRecord.monotinicId] = newRecord
-			tele.Debug(kfc.context, "new record found of @1. current @2, and expected monoIds @3", "monoId", newRecord.monotinicId, "count", len(kfc.foundRecords), "monoIdsLen", len(data.ExpectedIds))
+			if kfc.debug {
+				tele.Debug(kfc.context, "new record found of @1. current @2, and expected monoIds @3", "monoId", newRecord.monotinicId, "count", len(kfc.foundRecords), "monoIdsLen", len(data.ExpectedIds))
+			}
 
 			err := kfc.commitFoundRecords(data)
 			if err != nil {

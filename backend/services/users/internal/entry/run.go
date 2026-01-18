@@ -100,8 +100,6 @@ func Run() error {
 		tele.Info(ctx, "initialized kafka producer")
 	}
 
-	// kafgo.HugeKafkaTest()
-
 	//
 	//
 	// APPLICATION

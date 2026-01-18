@@ -81,10 +81,10 @@ func (r *Record) Commit(ctx context.Context) error {
 	}
 
 	a.Add(1)
-	tele.Info(ctx, "pre  confirmation of @1, others waiting: @2", "offset", r.rec.Offset, "count", a.Load())
+	// tele.Info(ctx, "pre  confirmation of @1, others waiting: @2", "offset", r.rec.Offset, "count", a.Load())
 	//wait for the commit routine to confirm this record
 	<-r.confirmChannel
-	tele.Info(ctx, "post confirmation of @1, others waiting: @2", "offset", r.rec.Offset, "count", a.Load())
+	// tele.Info(ctx, "post confirmation of @1, others waiting: @2", "offset", r.rec.Offset, "count", a.Load())
 	a.Add(-1)
 
 	return nil
