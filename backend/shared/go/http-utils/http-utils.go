@@ -129,6 +129,7 @@ func ReturnHttpError(ctx context.Context, w http.ResponseWriter, err error) {
 // }
 
 var ErrParamGet = errors.New("param get is fucked up")
+var ErrPathValueGet = errors.New("path value get is fucked up")
 
 func ParamGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct.FileVariant](values url.Values, key string, defaultValue T, mustExist bool) (T, error) {
 	if !values.Has(key) {
@@ -156,7 +157,7 @@ func PathValueGet[T int | int32 | int64 | string | bool | time.Time | ct.Id | ct
 	val, err := transform(rawVal, defaultValue)
 	typedVal, ok := val.(T)
 	if !ok {
-		return typedVal, ErrParamGet
+		return typedVal, ErrPathValueGet
 	}
 	return typedVal, err
 }
