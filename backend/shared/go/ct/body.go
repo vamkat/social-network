@@ -156,6 +156,10 @@ func (eb EventBody) String() string {
 	return string(eb)
 }
 
+// ------------------------------------------------------------
+// EventBody
+// ------------------------------------------------------------
+
 type MsgBody string
 
 func (m MsgBody) MarshalJSON() ([]byte, error) {
@@ -175,7 +179,7 @@ func (m MsgBody) IsValid() bool {
 	if len(m) == 0 {
 		return false
 	}
-	if len(m) < commentBodyCharsMin || len(m) > commentBodyCharsMax {
+	if len(m) < msgBodyCharsMin || len(m) > msgBodyCharsMax {
 		return false
 	}
 
@@ -186,8 +190,8 @@ func (m MsgBody) Validate() error {
 	if !m.IsValid() {
 		return fmt.Errorf("%w message body must be %d–%d chars and contain no control characters. message body lenght: %v",
 			ErrValidation,
-			commentBodyCharsMin,
-			commentBodyCharsMax,
+			msgBodyCharsMin,
+			msgBodyCharsMax,
 			len(m),
 		)
 	}

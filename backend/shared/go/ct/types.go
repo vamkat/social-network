@@ -25,13 +25,15 @@ var Cfgs Configs
 
 const (
 	aboutCharsMin           = 3
-	aboutCharsMax           = 300
+	aboutCharsMax           = 5000
 	postBodyCharsMin        = 3
-	postBodyCharsMax        = 500
+	postBodyCharsMax        = 5000
 	commentBodyCharsMin     = 3
-	commentBodyCharsMax     = 400
+	commentBodyCharsMax     = 3000
 	eventBodyCharsMin       = 3
-	eventBodyCharsMax       = 400
+	eventBodyCharsMax       = 2000
+	msgBodyCharsMin         = 1
+	msgBodyCharsMax         = 1000
 	dobMinAgeInYears        = 13
 	dobMaxAgeInYears        = 120
 	eventDateMaxMonthsAhead = 6
