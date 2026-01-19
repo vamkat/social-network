@@ -2,9 +2,9 @@
 
 Chat 
 
-userProf and groups UPDATE (delete_image);
+update navbar msg counts (backend new endpoint??)
 
-Pagination in search results (users, groups);
+change mark as read behaviour in pm. msg should be marked as read when clicked on a conv.
 
 ======== LATER TODOs ========
 
