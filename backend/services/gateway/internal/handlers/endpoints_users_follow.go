@@ -233,13 +233,7 @@ func (s *Handlers) unFollowUser() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.FollowUserReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
-			return
-		}
-
-		body.FollowerId, err = utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		targetUserId, err := utils.PathValueGet(r, "group_id", ct.Id(0), true)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
@@ -247,7 +241,7 @@ func (s *Handlers) unFollowUser() http.HandlerFunc {
 
 		req := &users.FollowUserRequest{
 			FollowerId:   claims.UserId,
-			TargetUserId: body.TargetUserId.Int64(),
+			TargetUserId: targetUserId.Int64(),
 		}
 
 		_, err = s.UsersService.UnFollowUser(ctx, req)
