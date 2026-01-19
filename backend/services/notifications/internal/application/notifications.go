@@ -9,6 +9,8 @@ import (
 	"time"
 
 	db "social-network/services/notifications/internal/db/sqlc"
+	ct "social-network/shared/go/ct"
+	tele "social-network/shared/go/telemetry"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -95,6 +97,17 @@ func (a *Application) CreateNotificationWithAggregation(ctx context.Context, use
 		}
 	}
 
+	// Publish the notification to NATS for real-time delivery to the live service
+	// We do this asynchronously to not block the notification creation
+	go func() {
+		// Create a background context for the NATS publish operation
+		natsCtx := context.Background()
+		if err := a.publishNotificationToNATS(natsCtx, notification); err != nil {
+			// Log the error but don't fail the notification creation
+			tele.Error(natsCtx, "failed to publish notification to nats in background: @1", "error", err.Error())
+		}
+	}()
+
 	return notification, nil
 }
 
@@ -161,6 +174,17 @@ func (a *Application) createNotification(ctx context.Context, userID int64, noti
 			return nil, fmt.Errorf("failed to unmarshal payload: %w", err)
 		}
 	}
+
+	// Publish the notification to NATS for real-time delivery to the live service
+	// We do this asynchronously to not block the notification creation
+	go func() {
+		// Create a background context for the NATS publish operation
+		natsCtx := context.Background()
+		if err := a.publishNotificationToNATS(natsCtx, notification); err != nil {
+			// Log the error but don't fail the notification creation
+			tele.Error(natsCtx, "failed to publish notification to nats in background: @1", "error", err.Error())
+		}
+	}()
 
 	return notification, nil
 }
@@ -417,5 +441,37 @@ func (a *Application) CreateDefaultNotificationTypes(ctx context.Context) error 
 		}
 	}
 
+	return nil
+}
+
+// publishNotificationToNATS publishes a notification to NATS for real-time delivery to the live service
+func (a *Application) publishNotificationToNATS(ctx context.Context, notification *Notification) error {
+	if a.NatsConn == nil {
+		tele.Warn(ctx, "NATS connection is nil, skipping notification publish")
+		return nil
+	}
+
+	// Marshal the notification to JSON format (similar to chat service)
+	notificationJSON, err := json.Marshal(notification)
+	if err != nil {
+		return fmt.Errorf("failed to marshal notification to JSON: %w", err)
+	}
+
+	// Publish to the user-specific NATS subject
+	subject := ct.NotificationKey(notification.UserID)
+	err = a.NatsConn.Publish(subject, notificationJSON)
+	if err != nil {
+		// Log the error but don't fail the notification creation
+		tele.Error(ctx, "failed to publish notification to nats: @1", "error", err.Error())
+		return fmt.Errorf("failed to publish notification to nats: %w", err)
+	}
+
+	// Flush to ensure the message is sent
+	err = a.NatsConn.Flush()
+	if err != nil {
+		tele.Error(ctx, "failed to flush nats connection: @1", "error", err.Error())
+	}
+
+	tele.Info(ctx, "Published notification to nats for user @1", "userId", notification.UserID)
 	return nil
 }

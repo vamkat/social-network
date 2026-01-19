@@ -78,5 +78,6 @@ func NewApplicationWithMocks(db DBInterface) *Application {
 	return &Application{
 		DB:      db,
 		Clients: nil, // nil for tests
+		NatsConn: nil, // nil for tests
 	}
 }

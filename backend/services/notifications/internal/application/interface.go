@@ -4,6 +4,8 @@ import (
 	"context"
 	"social-network/services/notifications/internal/client"
 	"social-network/services/notifications/internal/db/sqlc"
+
+	"github.com/nats-io/nats.go"
 )
 
 // DBInterface represents the interface for database operations
@@ -25,14 +27,16 @@ type DBInterface interface {
 
 // Update the Application struct to use the interface
 type Application struct {
-	DB      DBInterface
-	Clients *client.Clients
+	DB       DBInterface
+	Clients  *client.Clients
+	NatsConn *nats.Conn
 }
 
 // NewApplication creates a new notification application service
-func NewApplication(db DBInterface, clients *client.Clients) *Application {
+func NewApplication(db DBInterface, clients *client.Clients, natsConn *nats.Conn) *Application {
 	return &Application{
-		DB:      db,
-		Clients: clients,
+		DB:       db,
+		Clients:  clients,
+		NatsConn: natsConn,
 	}
 }

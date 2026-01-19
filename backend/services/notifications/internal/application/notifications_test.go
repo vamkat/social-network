@@ -3,10 +3,10 @@ package application
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -458,8 +458,8 @@ func TestCreateNotificationWithAggregationNoExisting(t *testing.T) {
 
 	payloadBytes, _ := json.Marshal(payload)
 
-	// Expect GetUnreadNotificationByTypeAndEntity to return error (no existing notification)
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(sqlc.Notification{}, fmt.Errorf("sql: no rows in result set"))
+	// Expect GetUnreadNotificationByTypeAndEntity to return pgx.ErrNoRows (no existing notification)
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(sqlc.Notification{}, pgx.ErrNoRows)
 
 	// Expect CreateNotification to be called
 	expectedNotification := sqlc.Notification{
@@ -882,10 +882,15 @@ func TestCreateNewEventForMultipleUsers(t *testing.T) {
 		"action":      "view_event",
 	})
 
-	// Expect CreateNotification to be called 3 times (once for each user)
-	for i, userID := range userIDs {
+	// Expect CreateNotification to be called for each user except the event creator
+	callIndex := 0
+	for _, userID := range userIDs {
+		if userID == eventCreatorID {
+			continue // Skip event creator
+		}
+
 		expectedNotification := sqlc.Notification{
-			ID:             int64(i + 1), // Different ID for each call
+			ID:             int64(callIndex + 1), // Different ID for each call
 			UserID:         userID,
 			NotifType:      string(NewEvent),
 			SourceService:  "posts",
@@ -901,6 +906,7 @@ func TestCreateNewEventForMultipleUsers(t *testing.T) {
 		}
 
 		mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil).Once()
+		callIndex++
 	}
 
 	err := app.CreateNewEventForMultipleUsers(ctx, userIDs, eventCreatorID, groupID, eventID, groupName, eventTitle)
@@ -999,7 +1005,7 @@ func TestCreateNewMessageForMultipleUsers(t *testing.T) {
 
 		// For aggregated messages, expect GetUnreadNotificationByTypeAndEntity to be called first
 		if aggregate {
-			mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(sqlc.Notification{}, fmt.Errorf("sql: no rows in result set")).Once()
+			mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(sqlc.Notification{}, pgx.ErrNoRows).Once()
 		}
 
 		mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil).Once()

@@ -24,6 +24,7 @@ import (
 	postgresql "social-network/shared/go/postgre"
 	"syscall"
 
+	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -67,8 +68,16 @@ func Run() error {
 		log.Fatalf("failed to connect to media service: %v", err)
 	}
 
+	// Initialize NATS connection
+	natsConn, err := nats.Connect(cfgs.NatsCluster)
+	if err != nil {
+		log.Fatalf("failed to connect to nats: %v", err)
+	}
+	defer natsConn.Drain()
+	log.Println("NATS connected")
+
 	clients := client.NewClients(usersService, chatService, postsService)
-	app := application.NewApplication(sqlc.New(pool), clients)
+	app := application.NewApplication(sqlc.New(pool), clients, natsConn)
 
 	// Initialize default notification types
 	if err := app.CreateDefaultNotificationTypes(context.Background()); err != nil {
@@ -126,6 +135,7 @@ type configs struct {
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
 
 	KafkaBrokers []string `env:"KAFKA_BROKERS"` // Comma-separated list of Kafka brokers
+	NatsCluster  string   `env:"NATS_CLUSTER"`  // NATS cluster connection string
 }
 
 func getConfigs() configs { // sensible defaults
@@ -138,6 +148,7 @@ func getConfigs() configs { // sensible defaults
 		PostsGRPCAddr: "posts:50051",
 		ChatGRPCAddr:  "chat:50051",
 		KafkaBrokers:  []string{"kafka:9092"}, // Default Kafka broker
+		NatsCluster:   "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222", // Default NATS cluster
 	}
 
 	// load environment variables if present

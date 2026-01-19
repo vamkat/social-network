@@ -3,10 +3,10 @@ package application
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -187,8 +187,8 @@ func TestAggregationFunctionality(t *testing.T) {
 	payloadBytes, _ := json.Marshal(payload)
 
 	t.Run("Aggregation enabled - New notification when no existing unread notification", func(t *testing.T) {
-		// Expect GetUnreadNotificationByTypeAndEntity to return error (no existing notification)
-		mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(sqlc.Notification{}, fmt.Errorf("sql: no rows in result set"))
+		// Expect GetUnreadNotificationByTypeAndEntity to return pgx.ErrNoRows (no existing notification)
+		mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(sqlc.Notification{}, pgx.ErrNoRows)
 
 		// Expect CreateNotification to be called
 		expectedNotification := sqlc.Notification{
