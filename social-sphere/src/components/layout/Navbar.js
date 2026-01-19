@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Users, Send, Bell, User, LogOut, Settings, HeartPulse, Search, Loader2, MessageCircle, Wifi, WifiOff } from "lucide-react";
+import { Activity, Users, Send, Bell, User, LogOut, Settings, HeartPulse, Search, Loader2, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 import Link from "next/link";
@@ -19,8 +19,6 @@ export default function Navbar() {
     const [isMessagesOpen, setIsMessagesOpen] = useState(false);
     const [conversations, setConversations] = useState([]);
     const [isLoadingConversations, setIsLoadingConversations] = useState(false);
-    const [realtimeUnreadCount, setRealtimeUnreadCount] = useState(0);
-    //cosnt [unreadConversations, setUnreadConversations] = useState(0);
     const dropdownRef = useRef(null);
     const messagesRef = useRef(null);
     const searchRef = useRef(null);
@@ -38,12 +36,6 @@ export default function Navbar() {
     // Handle incoming private messages - update conversations in real-time
     const handleNewMessage = useCallback((msg) => {
         console.log("[Navbar] New message received:", msg);
-
-        // Increment realtime unread count for messages from others
-        if (msg.sender?.id !== user?.id) {
-            console.log("Counting message: ", msg.message_text);
-            setRealtimeUnreadCount((prev) => prev + 1);
-        }
 
         // Update conversations list if we have it loaded
         setConversations((prev) => {
@@ -157,8 +149,6 @@ export default function Navbar() {
                 const result = await getConv({ first: true, limit: 5 });
                 if (result.success && result.data) {
                     setConversations(result.data);
-                    // Reset realtime count since we now have fresh data
-                    // setRealtimeUnreadCount(0);
                 }
             } catch (error) {
                 console.error("Error fetching conversations:", error);
@@ -200,14 +190,9 @@ export default function Navbar() {
         return conv.UnreadCount > 0 && conv.LastMessage?.sender?.id !== user?.id;
     };
 
-    const getTotalUnreadMessagesPerConv = (conv) => {
-
-    }
-
     // How many conversations have unread msgs
     const getTotalUnreadCount = () => {
         let conversationUnread = 0;
-        console.log("conversations: ", conversations);
         conversations.map((conv) => {
             if (hasUnreadMessages(conv)) {
                 conversationUnread += 1;

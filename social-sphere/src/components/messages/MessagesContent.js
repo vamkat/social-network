@@ -54,6 +54,7 @@ export default function MessagesContent({
 
         // Add message to the current conversation if it matches
         const currentConv = selectedConvRef.current;
+        console.log("CUrrent: ",currentConv)
         if (currentConv) {
             const interlocutorId = currentConv.Interlocutor?.id;
 
@@ -76,6 +77,7 @@ export default function MessagesContent({
             const existingIndex = prev.findIndex((conv) => conv.Interlocutor?.id === senderId);
 
             if (existingIndex !== -1) {
+                console.log("conversation exists")
                 // Update existing conversation
                 const updated = prev.map((conv, idx) => {
                     if (idx === existingIndex) {
@@ -96,9 +98,11 @@ export default function MessagesContent({
             } else {
                 // New conversation - mark for fetching full data
                 isNewConversation = true;
+                console.log("New")
                 return prev;
             }
         });
+        console.log("OK")
 
         // If new conversation, fetch full data from server
         if (isNewConversation) {
@@ -376,7 +380,7 @@ export default function MessagesContent({
                         <div>
                             {conversations.map((conv) => (
                                 <button
-                                    key={conv.ConversationId}
+                                    key={conv.Interlocutor.id}
                                     onClick={() => handleSelectConversation(conv)}
                                     className={`w-full flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer text-left border-b border-(--border)/50 ${
                                         selectedConv?.ConversationId === conv.ConversationId
