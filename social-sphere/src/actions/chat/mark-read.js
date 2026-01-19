@@ -4,7 +4,7 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function markAsRead({convID , lastMsgID}) {
     try {
-        const apiResp = await serverApiRequest("/chat/update-last-read-pm", {
+        const apiResp = await serverApiRequest("/my/chat/read", {
             method: "POST",
             body: JSON.stringify({
                 conversation_id: convID,

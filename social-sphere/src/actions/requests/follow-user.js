@@ -7,7 +7,10 @@ export async function followUser(userId) {
         const url = `/users/${userId}/follow`;
         const response = await serverApiRequest(url, {
             method: "POST",
-            forwardCookies: true
+            forwardCookies: true,
+            headers: {
+                "Content-Type": "application/json"
+            }
         });
         return { success: true, data: response };
     } catch (error) {

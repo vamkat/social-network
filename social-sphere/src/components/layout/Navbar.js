@@ -20,6 +20,7 @@ export default function Navbar() {
     const [conversations, setConversations] = useState([]);
     const [isLoadingConversations, setIsLoadingConversations] = useState(false);
     const [realtimeUnreadCount, setRealtimeUnreadCount] = useState(0);
+    //cosnt [unreadConversations, setUnreadConversations] = useState(0);
     const dropdownRef = useRef(null);
     const messagesRef = useRef(null);
     const searchRef = useRef(null);
@@ -40,6 +41,7 @@ export default function Navbar() {
 
         // Increment realtime unread count for messages from others
         if (msg.sender?.id !== user?.id) {
+            console.log("Counting message: ", msg.message_text);
             setRealtimeUnreadCount((prev) => prev + 1);
         }
 
@@ -156,7 +158,7 @@ export default function Navbar() {
                 if (result.success && result.data) {
                     setConversations(result.data);
                     // Reset realtime count since we now have fresh data
-                    setRealtimeUnreadCount(0);
+                    // setRealtimeUnreadCount(0);
                 }
             } catch (error) {
                 console.error("Error fetching conversations:", error);
@@ -165,6 +167,10 @@ export default function Navbar() {
             }
         }
     };
+
+    const clicked = (conv) => {
+        console.log("clicked on: ", conv);
+    }
 
     // Format relative time
     const formatRelativeTime = (dateString) => {
@@ -194,13 +200,19 @@ export default function Navbar() {
         return conv.UnreadCount > 0 && conv.LastMessage?.sender?.id !== user?.id;
     };
 
-    // Get total unread count across all conversations + realtime
+    const getTotalUnreadMessagesPerConv = (conv) => {
+
+    }
+
+    // How many conversations have unread msgs
     const getTotalUnreadCount = () => {
-        const conversationUnread = conversations.reduce((total, conv) => {
-            return total + (hasUnreadMessages(conv) ? conv.UnreadCount : 0);
-        }, 0);
-        // Include realtime unread that might not be in conversations yet
-        return conversationUnread + realtimeUnreadCount;
+        let conversationUnread = 0;
+        console.log("conversations: ", conversations);
+        conversations.map((conv) => {
+            if (hasUnreadMessages(conv)) {
+                conversationUnread += 1;
+        }});
+        return conversationUnread;
     };
 
     // Debounced Search
@@ -450,6 +462,7 @@ export default function Navbar() {
                                                     <button
                                                         key={conv.ConversationId}
                                                         onClick={() => {
+                                                            clicked(conv);
                                                             setIsMessagesOpen(false);
                                                             router.push(`/messages/${conv.Interlocutor?.id}`);
                                                         }}

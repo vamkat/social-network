@@ -4,7 +4,7 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function sendMsg({interlocutor , msg}) {
     try {
-        const url = `/chat/private/${interlocutor}`;
+        const url = `/my/chat/${interlocutor}`;
         const apiResp = await serverApiRequest(url, {
             method: "POST",
             body: JSON.stringify({

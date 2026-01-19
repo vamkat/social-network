@@ -4,7 +4,7 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function getMessages({ interlocutorId, boundary = null, limit = 50, retrieveUsers = false, getPrevious = true }) {
     try {
-        let url = `/chat/get-pms-paginated?interlocutor-id=${interlocutorId}&limit=${limit}`;
+        let url = `/my/chat/${interlocutorId}?limit=${limit}`;
 
         if (boundary) {
             url += `&boundary=${boundary}`;

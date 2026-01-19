@@ -24,8 +24,6 @@ export default async function GroupPage({ params }) {
     const response = await getGroupPosts({ groupId: id, limit: 10 });
     posts = response.data;
   } else {
-    // else is just a visitor 
-    // add most popular here
     const response = await getMostPopular(id);
     posts = response.data;
   }
