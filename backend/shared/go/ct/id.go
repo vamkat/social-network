@@ -13,7 +13,10 @@ import (
 	"github.com/speps/go-hashids/v2"
 )
 
-// Allows null values.
+// ------------------------------------------------------------
+// Id
+// ------------------------------------------------------------
+
 // When Umarshaled to JSON format the int64 value is encrypted using "github.com/speps/go-hashids/v2".
 // Relies on enviromental variable "ENC_KEY" to be present.
 type Id int64
@@ -126,7 +129,7 @@ func (e Id) Int64() int64 {
 }
 
 // ------------------------------------------------------------
-// Id
+// UnsafeId
 // ------------------------------------------------------------
 
 // Validation requires for the int64 value to be above zero.

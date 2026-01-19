@@ -57,6 +57,7 @@ func (q *Queries) GetPrivateConvById(ctx context.Context,
 	if err != nil {
 		return res, ce.New(ce.ErrInternal, err, input)
 	}
+	res.LastMessage.ConversationId = res.ConversationId
 
 	return res, nil
 }
@@ -72,7 +73,7 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 	rows, err := q.db.Query(ctx,
 		getPrivateConvs,
 		arg.UserId.Int64(),
-		arg.BeforeDateUpdated,
+		arg.BeforeDateUpdated.Time(),
 		arg.Limit,
 	)
 	if err != nil {
@@ -104,11 +105,13 @@ func (q *Queries) GetPrivateConvs(ctx context.Context,
 // Creates or fetches existing conversation between Sender and Interlocutor and creates a message with reference to conversation id.
 func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePrivateMsgReq) (msg md.PrivateMsg, err error) {
 	input := fmt.Sprintf("arg: %#v", arg)
-
+	userA := min(arg.SenderId.Int64(), arg.InterlocutorId.Int64())
+	userB := max(arg.SenderId.Int64(), arg.InterlocutorId.Int64())
 	row := q.db.QueryRow(ctx,
 		createMsgAndConv,
+		userA,
+		userB,
 		arg.SenderId,
-		arg.InterlocutorId,
 		arg.MessageText,
 	)
 
@@ -121,6 +124,7 @@ func (q *Queries) CreateNewPrivateMessage(ctx context.Context, arg md.CreatePriv
 		&msg.UpdatedAt,
 		&msg.DeletedAt,
 	)
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return msg, ce.New(ce.ErrPermissionDenied, err, input).

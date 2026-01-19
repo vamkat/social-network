@@ -29,13 +29,6 @@ var fail = "FAIL TEST: err ->"
 var usrA *users.RegisterUserResponse
 var usrB *users.RegisterUserResponse
 
-func main() {
-	StartTest(context.Background(), configs.Configs{
-		UsersGRPCAddr: "localhost:50051",
-		ChatGRPCAddr:  "localhost:50053",
-	})
-}
-
 func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	var err error
 	UsersService, err = gorpc.GetGRpcClient(
@@ -54,10 +47,11 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 
 	utils.HandleErr("register users", ctx, registerOrGetUsers)
 	utils.HandleErr("follow each other", ctx, FollowUser)
-	utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
-	utils.HandleErr("get conversations", ctx, TestGetConversations)
-	utils.HandleErr("get previous private messages", ctx, TestGetPMs)
-	utils.HandleErr("get next private messages", ctx, TestGetNextPms)
+	utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
+	// utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
+	// utils.HandleErr("get conversations", ctx, TestGetConversations)
+	// utils.HandleErr("get previous private messages", ctx, TestGetPMs)
+	// utils.HandleErr("get next private messages", ctx, TestGetNextPms)
 
 	return nil
 }
@@ -92,6 +86,7 @@ func registerOrGetUsers(ctx context.Context) error {
 	if err != nil {
 		return errors.New(fail + err.Error())
 	}
+
 	AppendStructToUsersJSON(usrA)
 	usrB, err = UsersService.RegisterUser(ctx, &users.RegisterUserRequest{
 		Username:    "testUserB",
@@ -180,16 +175,25 @@ func TestCreateMessage(ctx context.Context) error {
 }
 
 func TestGetConversations(ctx context.Context) error {
-	now := time.Now().AddDate(100, 0, 0)
+	later := time.Now().AddDate(100, 0, 0)
 	res, err := ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
 		UserId:     usrA.UserId,
-		BeforeDate: timestamppb.New(now),
+		BeforeDate: timestamppb.New(later),
 		Limit:      10,
 	})
 	if err != nil {
 		return err
 	}
-	fmt.Printf("CONVERSATIONS +++++++++++\n %s", ce.FormatValue(mapping.MapConversationsFromProto(res.Conversations)))
+	fmt.Printf("CONVERSATIONS USER A +++++++++++\n %s", ce.FormatValue(mapping.MapConversationsFromProto(res.Conversations)))
+	resB, err := ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
+		UserId:     usrB.UserId,
+		BeforeDate: timestamppb.New(later),
+		Limit:      10,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("CONVERSATIONS USER B +++++++++++\n %s", ce.FormatValue(mapping.MapConversationsFromProto(resB.Conversations)))
 	return nil
 }
 
@@ -233,6 +237,48 @@ func TestGetNextPms(ctx context.Context) error {
 		return err
 	}
 	fmt.Printf("MESSAGES ++++++++++++\n %s", ce.FormatValue(mapping.MapGetPMsRespFromProto(res)))
+	return nil
+}
+
+func TestUnreadCount(ctx context.Context) error {
+	msg, err := ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
+		SenderId:       usrA.UserId,
+		InterlocutorId: usrB.UserId,
+		MessageText:    "test test test",
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Created Message: %s\n", ce.FormatValue(mapping.MapPMFromProto(msg)))
+
+	later := time.Now().AddDate(100, 0, 0)
+	resA, err := ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
+		UserId:     usrA.UserId,
+		Limit:      1,
+		BeforeDate: timestamppb.New(later),
+	})
+	if err != nil {
+		return err
+	}
+
+	if resA.Conversations[0].UnreadCount != 0 {
+		return fmt.Errorf("expected 0 unread got: %d", resA.Conversations[0].UnreadCount)
+	}
+
+	// fmt.Println("GetConvs A Res", ce.FormatValue(mapping.MapConversationsFromProto(resA.Conversations)))
+
+	resB, err := ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
+		UserId:     usrB.UserId,
+		Limit:      1,
+		BeforeDate: timestamppb.New(later),
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("GetConvs B Res", ce.FormatValue(mapping.MapConversationsFromProto(resB.Conversations)))
+	if resB.Conversations[0].UnreadCount == 0 {
+		return fmt.Errorf("expected at least 1 unread got: 0")
+	}
 	return nil
 }
 

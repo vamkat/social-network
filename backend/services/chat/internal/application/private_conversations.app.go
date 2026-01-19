@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"social-network/services/chat/internal/db/dbservice"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	md "social-network/shared/go/models"
@@ -100,8 +101,23 @@ func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 	if !areConnected {
 		return msg, ce.New(ce.ErrPermissionDenied, ErrNotConnected, input).WithPublic("users are not connected")
 	}
-
-	msg, err = c.Queries.CreateNewPrivateMessage(ctx, arg)
+	c.txRunner.RunTx(ctx, func(q *dbservice.Queries) error {
+		msg, err = q.CreateNewPrivateMessage(ctx, arg)
+		if err != nil {
+			return err
+		}
+		tele.Debug(ctx, "create new pm @1", "response", msg)
+		q.UpdateLastReadPrivateMsg(ctx, md.UpdateLastReadMsgParams{
+			UserId:            arg.SenderId,
+			ConversationId:    msg.ConversationId,
+			LastReadMessageId: msg.Id,
+		})
+		tele.Debug(ctx, "create new pm @1", "response", msg)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 
 	if err != nil {
 		return msg, ce.Wrap(nil, err, input)
@@ -167,6 +183,7 @@ func (c *ChatService) GetNextPMs(ctx context.Context,
 
 func (c *ChatService) UpdateLastReadPrivateMsg(ctx context.Context, arg md.UpdateLastReadMsgParams) *ce.Error {
 	input := fmt.Sprintf("arg: %#v", arg)
+	tele.Debug(ctx, "update last read message called @1", "input:", input)
 
 	if err := ct.ValidateStruct(arg); err != nil {
 		return ce.New(ce.ErrInvalidArgument, err, input)

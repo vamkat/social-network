@@ -115,7 +115,7 @@ func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 			name = "struct"
 		}
 
-		b.WriteString("\n" + indent + name + " {\n")
+		b.WriteString(indent + name + " {\n")
 
 		for i := 0; i < val.NumField(); i++ {
 			fieldType := typ.Field(i)
