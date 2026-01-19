@@ -161,7 +161,7 @@ func (s *Handlers) followUser() http.HandlerFunc {
 			panic(1)
 		}
 
-		targetUserId, err := utils.PathValueGet(r, "group_id", ct.Id(0), true)
+		targetUserId, err := utils.PathValueGet(r, "user_id", ct.Id(0), true)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
