@@ -21,6 +21,7 @@ export default function MessagesContent({
 }) {
     const router = useRouter();
     const user = useStore((state) => state.user);
+    const decrementUnreadCount = useStore((state) => state.decrementUnreadCount);
     const [messages, setMessages] = useState(initialMessages);
     const [isLoadingConversations, setIsLoadingConversations] = useState(false);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -276,6 +277,10 @@ export default function MessagesContent({
 
     // Handle conversation selection - navigate to /messages/[id]
     const handleSelectConversation = (conv) => {
+        // Decrement unread count if this conversation has unread messages from someone else
+        if (conv.UnreadCount > 0 && conv.LastMessage?.sender?.id !== user?.id) {
+            decrementUnreadCount();
+        }
         const id = conv.Interlocutor?.id;
         router.push(`/messages/${id}`);
     };

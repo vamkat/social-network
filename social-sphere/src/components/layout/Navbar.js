@@ -18,7 +18,6 @@ import { getConvByID } from "@/actions/chat/get-conv-by-id";
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
-    const [unreadCount, setUnreadCount] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMessagesOpen, setIsMessagesOpen] = useState(false);
     const [conversations, setConversations] = useState([]);
@@ -28,6 +27,10 @@ export default function Navbar() {
     const searchRef = useRef(null);
     const user = useStore((state) => state.user);
     const setUser = useStore((state) => state.setUser);
+    const unreadCount = useStore((state) => state.unreadCount);
+    const setUnreadCount = useStore((state) => state.setUnreadCount);
+    const incrementUnreadCount = useStore((state) => state.incrementUnreadCount);
+    const decrementUnreadCount = useStore((state) => state.decrementUnreadCount);
 
     // Live WebSocket connection
     const {
@@ -39,10 +42,27 @@ export default function Navbar() {
     useEffect(() => {
         const getUnread = async () => {
             const result = await getUnreadCount();
-            setUnreadCount(result.data?.count);
+            console.log("[Navbar] Initial unread count:", result.data?.count);
+            setUnreadCount(result.data?.count ?? 0);
         }
         getUnread();
-    }, []);
+    }, [setUnreadCount]);
+
+    // Reset UnreadCount in local state when viewing a conversation via URL
+    useEffect(() => {
+        if (pathname.startsWith('/messages/')) {
+            const viewingId = pathname.split('/messages/')[1];
+            if (viewingId) {
+                setConversations((prev) =>
+                    prev.map((c) =>
+                        c.Interlocutor?.id === viewingId
+                            ? { ...c, UnreadCount: 0 }
+                            : c
+                    )
+                );
+            }
+        }
+    }, [pathname]);
 
     // Handle incoming private messages - update conversations in real-time
     const handleNewMessage = useCallback(async (msg) => {
@@ -55,7 +75,15 @@ export default function Navbar() {
             (conv) => conv.Interlocutor?.id === senderId
         );
 
+        console.log("[Navbar] conversations length:", conversations.length, "existingConv:", existingConv);
+
         if (existingConv) {
+            // Increment unread count if this conversation had no unread messages before
+            if (existingConv.UnreadCount === 0 || !existingConv.UnreadCount) {
+                console.log("[Navbar] Incrementing unread (existing conv with 0 unread)");
+                incrementUnreadCount();
+            }
+
             // Update existing conversation
             setConversations((prev) => {
                 const existingIndex = prev.findIndex(
@@ -64,11 +92,6 @@ export default function Navbar() {
                 if (existingIndex === -1) return prev;
 
                 const updated = [...prev];
-                if (updated[existingIndex].UnreadCount === 0 || !updated[existingIndex].unreadCount) {
-                    setUnreadCount((prevCount) => prevCount + 1);
-                    console.log("Counting once");
-                    return
-                }
                 updated[existingIndex] = {
                     ...updated[existingIndex],
                     LastMessage: {
@@ -82,13 +105,13 @@ export default function Navbar() {
                             ? updated[existingIndex].UnreadCount + 1
                             : updated[existingIndex].UnreadCount,
                 };
-                console.log("Counted twice");
                 // Sort by most recent
                 return updated.sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt));
             });
         } else {
-            // New conversation - fetch it first, then update state
-            setUnreadCount((prevCount) => prevCount + 1);
+            // New conversation - increment unread count
+            console.log("[Navbar] Incrementing unread (new conversation)");
+            incrementUnreadCount();
 
             const result = await getConvByID({
                 interlocutorId: msg.sender.id,
@@ -111,7 +134,7 @@ export default function Navbar() {
 
             setConversations((prev) => [newConv, ...prev]);
         }
-    }, [user?.id, conversations]);
+    }, [user?.id, conversations, incrementUnreadCount]);
 
     // Register message handler
     useEffect(() => {
@@ -193,8 +216,15 @@ export default function Navbar() {
 
     const clicked = (conv) => {
         if (hasUnreadMessages(conv)) {
-
-            setUnreadCount((prev) => prev - 1);
+            decrementUnreadCount();
+            // Reset UnreadCount in local state so future messages increment correctly
+            setConversations((prev) =>
+                prev.map((c) =>
+                    c.ConversationId === conv.ConversationId
+                        ? { ...c, UnreadCount: 0 }
+                        : c
+                )
+            );
         }
         setIsMessagesOpen(false);
         router.push(`/messages/${conv.Interlocutor.id}`);

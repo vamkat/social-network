@@ -19,13 +19,19 @@ export const useStore = create(
         set({ user: null })
       },
 
+      // Unread messages count
+      unreadCount: 0,
+      setUnreadCount: (count) => set({ unreadCount: count }),
+      incrementUnreadCount: () => set((state) => ({ unreadCount: state.unreadCount + 1 })),
+      decrementUnreadCount: () => set((state) => ({ unreadCount: Math.max(0, state.unreadCount - 1) })),
+
     }),
     {
       name: 'user',
       partialize: (state) => ({
         user: state.user
       }),
-      
+
     }
   )
 )
