@@ -40,7 +40,7 @@ export const useMsgReceiver = create(
       // set the user data of the user we want to send the msg
       setMsgReceiver: (receiverData) => {
         set({msgReceiver: receiverData})
-      }, 
+      },
 
       // clear receiver
       clearMsgReceiver: () => {

@@ -11,10 +11,14 @@ import { SearchUsers } from "@/actions/search/search-users";
 import { getImageUrl } from "@/actions/auth/get-image-url";
 import { getConv } from "@/actions/chat/get-conv";
 import { useLiveSocket } from "@/context/LiveSocketContext";
+import { getUnreadCount } from "@/actions/chat/get-unread-count";
+import { markAsRead } from "@/actions/chat/mark-read";
+import { getConvByID } from "@/actions/chat/get-conv-by-id";
 
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
+    const [unreadCount, setUnreadCount] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMessagesOpen, setIsMessagesOpen] = useState(false);
     const [conversations, setConversations] = useState([]);
@@ -27,31 +31,48 @@ export default function Navbar() {
 
     // Live WebSocket connection
     const {
-        unreadNotificationCount,
         addOnPrivateMessage,
         removeOnPrivateMessage,
         disconnect: disconnectSocket,
     } = useLiveSocket();
 
+    useEffect(() => {
+        const getUnread = async () => {
+            const result = await getUnreadCount();
+            setUnreadCount(result.data?.count);
+        }
+        getUnread();
+    }, []);
+
     // Handle incoming private messages - update conversations in real-time
-    const handleNewMessage = useCallback((msg) => {
+    const handleNewMessage = useCallback(async (msg) => {
         console.log("[Navbar] New message received:", msg);
 
-        // Update conversations list if we have it loaded
-        setConversations((prev) => {
-            const senderId = msg.sender?.id;
+        const senderId = msg.sender?.id;
 
-            // Find existing conversation with this sender
-            const existingIndex = prev.findIndex(
-                (conv) => conv.Interlocutor?.id === senderId
-            );
+        // Check if conversation exists in current state
+        const existingConv = conversations.find(
+            (conv) => conv.Interlocutor?.id === senderId
+        );
 
-            if (existingIndex !== -1) {
-                // Update existing conversation
+        if (existingConv) {
+            // Update existing conversation
+            setConversations((prev) => {
+                const existingIndex = prev.findIndex(
+                    (conv) => conv.Interlocutor?.id === senderId
+                );
+                if (existingIndex === -1) return prev;
+
                 const updated = [...prev];
+                if (updated[existingIndex].UnreadCount === 0 || !updated[existingIndex].unreadCount) {
+                    setUnreadCount((prevCount) => prevCount + 1);
+                    console.log("Counting once");
+                    return
+                }
                 updated[existingIndex] = {
                     ...updated[existingIndex],
                     LastMessage: {
+                        id: msg.id,
                         message_text: msg.message_text,
                         sender: msg.sender,
                     },
@@ -61,24 +82,36 @@ export default function Navbar() {
                             ? updated[existingIndex].UnreadCount + 1
                             : updated[existingIndex].UnreadCount,
                 };
+                console.log("Counted twice");
                 // Sort by most recent
                 return updated.sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt));
-            } else {
-                // New conversation - add it to the list
-                const newConv = {
-                    ConversationId: msg.conversation_id,
-                    Interlocutor: msg.sender,
-                    LastMessage: {
-                        message_text: msg.message_text,
-                        sender: msg.sender,
-                    },
-                    UpdatedAt: msg.created_at,
-                    UnreadCount: msg.sender?.id !== user?.id ? 1 : 0,
-                };
-                return [newConv, ...prev];
-            }
-        });
-    }, [user?.id]);
+            });
+        } else {
+            // New conversation - fetch it first, then update state
+            setUnreadCount((prevCount) => prevCount + 1);
+
+            const result = await getConvByID({
+                interlocutorId: msg.sender.id,
+                convId: msg.conversation_id,
+            });
+            console.log("CONVERSATION: ", result.data);
+            console.log("NEW MESSAGE: ", msg);
+
+            const newConv = {
+                ConversationId: msg.conversation_id,
+                Interlocutor: result.data?.Interlocutor,
+                LastMessage: {
+                    id: msg.id,
+                    message_text: msg.message_text,
+                    sender: msg.sender,
+                },
+                UpdatedAt: msg.created_at,
+                UnreadCount: 1,
+            };
+
+            setConversations((prev) => [newConv, ...prev]);
+        }
+    }, [user?.id, conversations]);
 
     // Register message handler
     useEffect(() => {
@@ -159,7 +192,12 @@ export default function Navbar() {
     };
 
     const clicked = (conv) => {
-        console.log("clicked on: ", conv);
+        if (hasUnreadMessages(conv)) {
+
+            setUnreadCount((prev) => prev - 1);
+        }
+        setIsMessagesOpen(false);
+        router.push(`/messages/${conv.Interlocutor.id}`);
     }
 
     // Format relative time
@@ -188,16 +226,6 @@ export default function Navbar() {
     // Only unread if last message sender is NOT me (someone else sent it)
     const hasUnreadMessages = (conv) => {
         return conv.UnreadCount > 0 && conv.LastMessage?.sender?.id !== user?.id;
-    };
-
-    // How many conversations have unread msgs
-    const getTotalUnreadCount = () => {
-        let conversationUnread = 0;
-        conversations.map((conv) => {
-            if (hasUnreadMessages(conv)) {
-                conversationUnread += 1;
-        }});
-        return conversationUnread;
     };
 
     // Debounced Search
@@ -411,9 +439,9 @@ export default function Navbar() {
                                         }`}
                                 >
                                     <Send className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isMessagesOpen ? 2.5 : 2} />
-                                    {getTotalUnreadCount() > 0 && (
+                                    {unreadCount > 0 && (
                                         <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
-                                            {getTotalUnreadCount()}
+                                            {unreadCount}
                                         </span>
                                     )}
                                     {/* Connection status dot */}
@@ -448,8 +476,6 @@ export default function Navbar() {
                                                         key={conv.ConversationId}
                                                         onClick={() => {
                                                             clicked(conv);
-                                                            setIsMessagesOpen(false);
-                                                            router.push(`/messages/${conv.Interlocutor?.id}`);
                                                         }}
                                                         className="w-full flex items-start gap-3 px-4 py-3 hover:bg-(--muted)/5 transition-colors cursor-pointer text-left"
                                                     >
@@ -522,9 +548,9 @@ export default function Navbar() {
                                     }`}
                             >
                                 <Bell className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isActive('/notifications') ? 2.5 : 2} />
-                                {unreadNotificationCount > 0 ? (
+                                {1 > 0 ? (
                                     <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
-                                        {unreadNotificationCount}
+                                        {0}
                                     </span>
                                 ) : (
                                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-background" />
@@ -652,7 +678,7 @@ export default function Navbar() {
                         )}
                     </div>
                 </div>
-                </div>
+            </div>
         </nav>
     );
 }

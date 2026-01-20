@@ -41,7 +41,7 @@ export default function MessagesContent({
                     avatar_url: receiver.avatar_url
                 }
             };
-            return [newConv]; // Don't spread initialConversations - it's empty anyway!
+            return [newConv];
         }
         return initialConversations;
     });
@@ -65,9 +65,13 @@ export default function MessagesContent({
     // Find selected conversation from ID
     const selectedConv = useMemo(() => {
         if (!initialSelectedId) return null;
-        return conversations.find(
-            (conv) => conv.ConversationId === initialSelectedId || conv.Interlocutor?.id === initialSelectedId
+        const selected = conversations.find(
+            (conv) => conv.Interlocutor?.id === initialSelectedId
         ) || null;
+        if (selected) {
+            selected.UnreadCount = 0;
+        }
+        return selected;
     }, [initialSelectedId, conversations]);
 
     // Keep selectedConv ref in sync for WebSocket callback
@@ -181,29 +185,29 @@ export default function MessagesContent({
     }, [messages]);
 
 
-    const handleClickMsg = async () => {
-        if (!messages.length || !selectedConv) return;
+    // const handleClickMsg = async () => {
+    //     if (!messages.length || !selectedConv) return;
 
-        // Only mark as read if there are unread messages
-        if (!selectedConv.UnreadCount || selectedConv.UnreadCount === 0) return;
+    //     // Only mark as read if there are unread messages
+    //     if (!selectedConv.UnreadCount || selectedConv.UnreadCount === 0) return;
 
-        const lastMsg = messages[messages.length - 1];
+    //     const lastMsg = messages[messages.length - 1];
 
-        const res = await markAsRead({ convID: lastMsg.conversation_id, lastMsgID: lastMsg.id });
-        if (!res.success) {
-            return;
-        }
+    //     const res = await markAsRead({ convID: lastMsg.conversation_id, lastMsgID: lastMsg.id });
+    //     if (!res.success) {
+    //         return;
+    //     }
 
-        // Update the unread count for this conversation
-        setConversations((prev) =>
-            prev.map((conv) =>
-                conv.ConversationId === lastMsg.conversation_id ||
-                    conv.Interlocutor?.id === selectedConv?.Interlocutor?.id
-                    ? { ...conv, UnreadCount: 0 }
-                    : conv
-            )
-        );
-    };
+    //     // Update the unread count for this conversation
+    //     setConversations((prev) =>
+    //         prev.map((conv) =>
+    //             conv.ConversationId === lastMsg.conversation_id ||
+    //                 conv.Interlocutor?.id === selectedConv?.Interlocutor?.id
+    //                 ? { ...conv, UnreadCount: 0 }
+    //                 : conv
+    //         )
+    //     );
+    // };
 
     // Format relative time (compact)
     const formatRelativeTime = (dateString) => {
@@ -316,7 +320,7 @@ export default function MessagesContent({
                     )
                 );
 
-                // Update conversation's last message
+                // Update conversation's last message and move to top
                 setConversations((prev) =>
                     prev.map((c) =>
                         c.ConversationId === selectedConv.ConversationId
@@ -330,7 +334,7 @@ export default function MessagesContent({
                                 UpdatedAt: new Date().toISOString(),
                             }
                             : c
-                    )
+                    ).sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt))
                 );
             } else {
                 // Remove optimistic message on failure
@@ -573,7 +577,6 @@ export default function MessagesContent({
                                     type="text"
                                     value={messageText}
                                     onChange={(e) => setMessageText(e.target.value)}
-                                    onClick={handleClickMsg}
                                     placeholder="Type a message..."
                                     className="flex-1 px-4 py-3 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
                                     disabled={isSending}

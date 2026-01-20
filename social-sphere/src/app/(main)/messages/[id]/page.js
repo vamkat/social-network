@@ -1,6 +1,7 @@
 import { getConv } from "@/actions/chat/get-conv";
 import { getMessages } from "@/actions/chat/get-messages";
 import MessagesContent from "@/components/messages/MessagesContent";
+import { markAsRead } from "@/actions/chat/mark-read";
 
 export default async function ConversationPage({ params }) {
     const { id } = await params;
@@ -17,7 +18,7 @@ export default async function ConversationPage({ params }) {
 
     // Fetch messages for the selected conversation if found
     let initialMessages = [];
-    
+
     if (selectedConversation) {
         const messagesResult = await getMessages({
             interlocutorId: selectedConversation.Interlocutor?.id,
@@ -27,16 +28,21 @@ export default async function ConversationPage({ params }) {
             // Messages come newest first, reverse for display
             initialMessages = messagesResult.data.Messages.reverse();
         }
+        // mark it as read
+        console.log("SELECTED: ", selectedConversation);
+        const res = await markAsRead({convID: selectedConversation.ConversationId, lastMsgID: selectedConversation.LastMessage.id});
+
+
     } else {
         firstMessage = true;
     }
 
     return (
         <MessagesContent
-            initialConversations = {conversations}
-            initialSelectedId = {id}
-            initialMessages = {initialMessages}
-            firstMessage = {firstMessage}
+            initialConversations={conversations}
+            initialSelectedId={id}
+            initialMessages={initialMessages}
+            firstMessage={firstMessage}
         />
     );
 }
