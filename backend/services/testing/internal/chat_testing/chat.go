@@ -29,6 +29,7 @@ var ChatService chat.ChatServiceClient
 var fail = "FAIL TEST: err ->"
 var usrA *users.RegisterUserResponse
 var usrB *users.RegisterUserResponse
+var usrC *users.RegisterUserResponse
 
 func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	var err error
@@ -61,16 +62,17 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	utils.HandleErr("follow each other", ctx, FollowUser)
 
 	// Group Convsersations
-	utils.HandleErr("test create group conv", ctx, TestGroupConversation)
-	utils.HandleErr("test get group conv", ctx, TestGetGroupConv)
+	// utils.HandleErr("test create group conv", ctx, TestGroupConversation)
+	// utils.HandleErr("test get group conv", ctx, TestGetGroupConv)
 
 	// Private Conversations
-	utils.HandleErr("test get convs count with unread msgs", ctx, TestGetConversationsCountWithUnreadMsgs)
-	utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
-	utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
-	utils.HandleErr("get conversations", ctx, TestGetConversations)
-	utils.HandleErr("get previous private messages", ctx, TestGetPMs)
-	utils.HandleErr("get next private messages", ctx, TestGetNextPms)
+	// utils.HandleErr("test get convs count with unread msgs", ctx, TestGetConversationsCountWithUnreadMsgs)
+	// utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
+	// utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
+	utils.HandleErr("get conversations before", ctx, TestGetConversationsBefore)
+	// utils.HandleErr("get conversations", ctx, TestGetConversations)
+	// utils.HandleErr("get previous private messages", ctx, TestGetPMs)
+	// utils.HandleErr("get next private messages", ctx, TestGetNextPms)
 
 	return nil
 }
@@ -94,9 +96,10 @@ func registerOrGetUsers(ctx context.Context) error {
 	decoded := ce.DecodeProto(err)
 	if decoded != nil && decoded.IsClass(ce.ErrAlreadyExists) {
 		users, _ := ReadUserFromJSON()
-		if len(users) > 1 {
+		if len(users) > 2 {
 			usrA = &users[0]
 			usrB = &users[1]
+			usrC = &users[2]
 		} else {
 			return err
 		}
@@ -124,11 +127,29 @@ func registerOrGetUsers(ctx context.Context) error {
 	}
 
 	AppendStructToUsersJSON(usrB)
-	fmt.Println("users-service random register test passed")
+	usrC, err = UsersService.RegisterUser(ctx, &users.RegisterUserRequest{
+		Username:    "testUserC",
+		FirstName:   "jack",
+		LastName:    "foe",
+		DateOfBirth: timestamppb.New(time.Unix(rand.Int64N(1000000), 0)),
+		Avatar:      0,
+		About:       utils.RandomString(300, true),
+		Public:      false,
+		Email:       "userc@hotmail.com",
+		Password:    "Hello12!",
+	},
+	)
+	if err != nil {
+		return errors.New(fail + err.Error())
+	}
+	AppendStructToUsersJSON(usrC)
+
 	return nil
 }
 
 func FollowUser(ctx context.Context) error {
+
+	// User A to B
 	_, err := UsersService.FollowUser(ctx, &users.FollowUserRequest{
 		FollowerId:   usrA.UserId,
 		TargetUserId: usrB.UserId,
@@ -136,7 +157,7 @@ func FollowUser(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
+	// B Accepts
 	_, err = UsersService.HandleFollowRequest(ctx, &users.HandleFollowRequestRequest{
 		UserId:      usrB.UserId,
 		RequesterId: usrA.UserId,
@@ -146,6 +167,7 @@ func FollowUser(ctx context.Context) error {
 		return err
 	}
 
+	// User B to A
 	_, err = UsersService.FollowUser(ctx, &users.FollowUserRequest{
 		FollowerId:   usrB.UserId,
 		TargetUserId: usrA.UserId,
@@ -153,10 +175,43 @@ func FollowUser(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
+	// A accepts
 	_, err = UsersService.HandleFollowRequest(ctx, &users.HandleFollowRequestRequest{
 		UserId:      usrA.UserId,
 		RequesterId: usrB.UserId,
+		Accept:      true,
+	})
+
+	// User A to C
+	_, err = UsersService.FollowUser(ctx, &users.FollowUserRequest{
+		FollowerId:   usrA.UserId,
+		TargetUserId: usrC.UserId,
+	})
+	if err != nil {
+		return err
+	}
+	// C Accepts
+	_, err = UsersService.HandleFollowRequest(ctx, &users.HandleFollowRequestRequest{
+		UserId:      usrC.UserId,
+		RequesterId: usrA.UserId,
+		Accept:      true,
+	})
+	if err != nil {
+		return err
+	}
+
+	// User C to A
+	_, err = UsersService.FollowUser(ctx, &users.FollowUserRequest{
+		FollowerId:   usrC.UserId,
+		TargetUserId: usrA.UserId,
+	})
+	if err != nil {
+		return err
+	}
+	// A accepts
+	_, err = UsersService.HandleFollowRequest(ctx, &users.HandleFollowRequestRequest{
+		UserId:      usrA.UserId,
+		RequesterId: usrC.UserId,
 		Accept:      true,
 	})
 	if err != nil {
@@ -316,6 +371,54 @@ func TestGetConversationsCountWithUnreadMsgs(ctx context.Context) error {
 		return err
 	}
 	fmt.Printf("Convs with Unread Count: %d\n", count.Count)
+	return nil
+}
+
+func TestGetConversationsBefore(ctx context.Context) error {
+	msg, err := ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
+		SenderId:       usrC.UserId,
+		InterlocutorId: usrA.UserId,
+		MessageText:    "C: test test",
+	})
+	if err != nil {
+		return err
+	}
+
+	conv, err := ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
+		UserId:     usrA.UserId,
+		BeforeDate: msg.CreatedAt,
+		Limit:      10,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println(mapping.MapConversationsFromProto(conv.Conversations))
+
+	// Fetch a conversation
+	now := msg.CreatedAt.AsTime().Add(1 * time.Second)
+	conv, err = ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
+		UserId:     usrA.UserId,
+		BeforeDate: timestamppb.New(now),
+		Limit:      10,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("Fetching conversation")
+	fmt.Println(ce.FormatValue(mapping.MapConversationsFromProto(conv.Conversations)))
+
+	// Fetch conversation BeforeDate of fetched.UpdatedAt
+	fetched := mapping.MapConversationFromProto(conv.Conversations[0])
+	conv, err = ChatService.GetPrivateConversations(ctx, &chat.GetPrivateConversationsRequest{
+		UserId:     usrA.UserId,
+		BeforeDate: fetched.UpdatedAt.ToProto(),
+		Limit:      10,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("Fetch conversation BeforeDate of fetched.UpdatedAt")
+	fmt.Println(ce.FormatValue(mapping.MapConversationsFromProto(conv.Conversations)))
 	return nil
 }
 
