@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus } from "lucide-react";
+import { Plus, Send, MessageCircle, Loader2, User, Wifi, WifiOff } from "lucide-react";
 import Container from "@/components/layout/Container";
 import CreatePostGroup from "@/components/groups/CreatePostGroup";
 import GroupPostCard from "@/components/groups/GroupPostCard";
@@ -12,15 +12,20 @@ import EditEventModal from "@/components/groups/EditEventModal";
 import EventCard from "@/components/groups/EventCard";
 import { getGroupPosts } from "@/actions/groups/get-group-posts";
 import { getGroupEvents } from "@/actions/events/get-group-events";
+import { getGroupMessages } from "@/actions/chat/get-group-messages";
+import { sendGroupMsg } from "@/actions/chat/send-group-msg";
+import { useLiveSocket, ConnectionState } from "@/context/LiveSocketContext";
+import { useStore } from "@/store/store";
 import Tooltip from "../ui/Tooltip";
 
 export default function GroupPageContent({ group, firstPosts }) {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const user = useStore((state) => state.user);
 
     // Get initial tab from URL or default to "posts"
     const tabFromUrl = searchParams.get("t");
-    const validTabs = ["posts", "events"];
+    const validTabs = ["posts", "events", "messages"];
     const initialTab = validTabs.includes(tabFromUrl) ? tabFromUrl : "posts";
 
     const [activeTab, setActiveTab] = useState(initialTab);
@@ -43,6 +48,26 @@ export default function GroupPageContent({ group, firstPosts }) {
     const [eventToEdit, setEventToEdit] = useState(null);
     const eventsObserverTarget = useRef(null);
 
+    // Group chat state
+    const [messages, setMessages] = useState([]);
+    const [messageText, setMessageText] = useState("");
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [messagesFetched, setMessagesFetched] = useState(false);
+    const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
+
+    // WebSocket connection
+    const {
+        connectionState,
+        isConnected,
+        subscribeToGroup,
+        unsubscribeFromGroup,
+        addOnGroupMessage,
+        removeOnGroupMessage
+    } = useLiveSocket();
+
     const handleNewEvent = (newEvent) => {
         setEvents(prev => [newEvent, ...prev]);
     };
@@ -61,6 +86,141 @@ export default function GroupPageContent({ group, firstPosts }) {
             e.event_id === updatedEvent.event_id ? updatedEvent : e
         ));
     };
+
+    // Group chat handlers
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, []);
+
+    const formatMessageTime = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "";
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    };
+
+    // Handle incoming group messages from WebSocket
+    const handleGroupMessage = useCallback((msg) => {
+        if (msg.GroupId !== group.group_id) return;
+
+        setMessages((prev) => {
+            if (prev.some((m) => m.Id === msg.Id)) return prev;
+            return [...prev, msg];
+        });
+    }, [group.group_id]);
+
+    // Fetch group messages
+    const fetchMessages = useCallback(async (isInitial = false) => {
+        if (isLoadingMessages || (!isInitial && !hasMoreMessages)) return;
+
+        setIsLoadingMessages(true);
+        try {
+            const boundary = isInitial ? null : messages[0]?.Id;
+            const response = await getGroupMessages({
+                groupId: group.group_id,
+                limit: 50,
+                boundary,
+                getPrevious: true
+            });
+
+            if (response.success && response.data) {
+                const newMessages = response.data.Messages || [];
+                if (isInitial) {
+                    setMessages(newMessages.reverse());
+                } else {
+                    setMessages(prev => [...newMessages.reverse(), ...prev]);
+                }
+                setHasMoreMessages(response.data.HaveMore ?? newMessages.length >= 50);
+            } else {
+                if (isInitial) setMessages([]);
+                setHasMoreMessages(false);
+            }
+            setMessagesFetched(true);
+        } catch (error) {
+            console.error("Failed to fetch messages:", error);
+        } finally {
+            setIsLoadingMessages(false);
+        }
+    }, [isLoadingMessages, hasMoreMessages, messages, group.group_id]);
+
+    // Send group message
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!messageText.trim() || isSending) return;
+
+        setIsSending(true);
+        const msgToSend = messageText.trim();
+        setMessageText("");
+
+        // Optimistically add message (using backend field format)
+        const optimisticMessage = {
+            Id: `temp-${Date.now()}`,
+            MessageText: msgToSend,
+            Sender: { id: user?.id, username: user?.username, avatar_url: user?.avatar_url },
+            GroupId: group.group_id,
+            CreatedAt: new Date().toISOString(),
+            _optimistic: true,
+        };
+        setMessages((prev) => [...prev, optimisticMessage]);
+
+        try {
+            const result = await sendGroupMsg({
+                groupId: group.group_id,
+                msg: msgToSend,
+            });
+
+            if (result.success) {
+                setMessages((prev) =>
+                    prev.map((m) =>
+                        m.Id === optimisticMessage.Id
+                            ? { ...m, Id: result.Id, _optimistic: false }
+                            : m
+                    )
+                );
+            } else {
+                setMessages((prev) => prev.filter((m) => m.Id !== optimisticMessage.Id));
+                setMessageText(msgToSend);
+            }
+        } catch (error) {
+            console.error("Error sending message:", error);
+            setMessages((prev) => prev.filter((m) => m.Id !== optimisticMessage.Id));
+            setMessageText(msgToSend);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    // Keep handleGroupMessage ref updated
+    const handleGroupMessageRef = useRef(handleGroupMessage);
+    useEffect(() => {
+        handleGroupMessageRef.current = handleGroupMessage;
+    }, [handleGroupMessage]);
+
+    // Subscribe to group WebSocket when entering the group page
+    useEffect(() => {
+        const groupId = group.group_id;
+        const messageHandler = (msg) => handleGroupMessageRef.current(msg);
+
+        subscribeToGroup(groupId);
+        addOnGroupMessage(messageHandler);
+
+        return () => {
+            removeOnGroupMessage(messageHandler);
+            unsubscribeFromGroup(groupId);
+        };
+    }, [group.group_id, subscribeToGroup, unsubscribeFromGroup, addOnGroupMessage, removeOnGroupMessage]);
+
+    // Fetch messages when switching to messages tab
+    useEffect(() => {
+        if (activeTab === "messages" && !messagesFetched) {
+            fetchMessages(true);
+        }
+    }, [activeTab, messagesFetched, fetchMessages]);
+
+    // Scroll to bottom when new messages arrive
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, scrollToBottom]);
 
     // Fetch events when switching to events tab
     const fetchEvents = useCallback(async (isInitial = false) => {
@@ -185,6 +345,7 @@ export default function GroupPageContent({ group, firstPosts }) {
     const tabs = [
         { id: "posts", label: "Posts" },
         { id: "events", label: "Events" },
+        { id: "messages", label: "Messages"},
     ];
 
     const handleTabChange = (tabId) => {
@@ -417,6 +578,158 @@ export default function GroupPageContent({ group, firstPosts }) {
                                     onSuccess={handleEventUpdated}
                                     event={eventToEdit}
                                 />
+                            </div>
+                        )}
+
+                        {activeTab === "messages" && (
+                            <div className="h-[calc(100vh-10rem)] flex flex-col">
+                                {/* Chat Header */}
+                                <Container className="py-4 border-b border-(--border)">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <MessageCircle className="w-5 h-5 text-(--accent)" />
+                                            <h2 className="font-semibold text-foreground">Group Chat</h2>
+                                        </div>
+                                        {/* Connection Status */}
+                                        <div
+                                            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+                                                isConnected
+                                                    ? "bg-green-500/10 text-green-600"
+                                                    : connectionState === ConnectionState.CONNECTING ||
+                                                      connectionState === ConnectionState.RECONNECTING
+                                                    ? "bg-yellow-500/10 text-yellow-600"
+                                                    : "bg-red-500/10 text-red-500"
+                                            }`}
+                                            title={
+                                                isConnected
+                                                    ? "Connected - Real-time updates active"
+                                                    : connectionState === ConnectionState.RECONNECTING
+                                                    ? "Reconnecting..."
+                                                    : "Disconnected - Messages may be delayed"
+                                            }
+                                        >
+                                            {isConnected ? (
+                                                <Wifi className="w-3.5 h-3.5" />
+                                            ) : connectionState === ConnectionState.CONNECTING ||
+                                              connectionState === ConnectionState.RECONNECTING ? (
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            ) : (
+                                                <WifiOff className="w-3.5 h-3.5" />
+                                            )}
+                                            <span>
+                                                {isConnected
+                                                    ? "Live"
+                                                    : connectionState === ConnectionState.RECONNECTING
+                                                    ? "Reconnecting"
+                                                    : "Offline"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Container>
+
+                                {/* Messages Area */}
+                                <div
+                                    ref={messagesContainerRef}
+                                    className="flex-1 overflow-y-auto"
+                                >
+                                    <Container className="py-4 space-y-3">
+                                        {isLoadingMessages && messages.length === 0 ? (
+                                            <div className="flex items-center justify-center py-12">
+                                                <Loader2 className="w-6 h-6 text-(--muted) animate-spin" />
+                                            </div>
+                                        ) : messages.length > 0 ? (
+                                            <>
+                                                {messages.map((msg, index) => {
+                                                    const isMe = msg.Sender?.id === user?.id;
+                                                    return (
+                                                        <motion.div
+                                                            key={msg.Id || index}
+                                                            initial={{ opacity: 0, y: 10 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                                                        >
+                                                            <div className={`flex gap-2 max-w-[75%] ${isMe ? "flex-row-reverse" : ""}`}>
+                                                                {/* Avatar */}
+                                                                {!isMe && (
+                                                                    <div className="w-8 h-8 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden border border-(--border) shrink-0">
+                                                                        {msg.Sender?.avatar_url ? (
+                                                                            <img
+                                                                                src={msg.Sender.avatar_url}
+                                                                                alt={msg.Sender.username || "User"}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <User className="w-4 h-4 text-(--muted)" />
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                                {/* Message Bubble */}
+                                                                <div
+                                                                    className={`px-4 py-2.5 rounded-2xl ${
+                                                                        isMe
+                                                                            ? "bg-(--accent) text-white rounded-br-md"
+                                                                            : "bg-(--muted)/10 text-foreground rounded-bl-md"
+                                                                    }`}
+                                                                >
+                                                                    {!isMe && (
+                                                                        <p className="text-xs font-medium text-(--accent) mb-1">
+                                                                            {msg.Sender?.username || "Unknown"}
+                                                                        </p>
+                                                                    )}
+                                                                    <p className="text-sm whitespace-pre-wrap wrap-break-word">
+                                                                        {msg.MessageText}
+                                                                    </p>
+                                                                    <p
+                                                                        className={`text-[10px] mt-1 ${
+                                                                            isMe ? "text-white/70" : "text-(--muted)"
+                                                                        }`}
+                                                                    >
+                                                                        {formatMessageTime(msg.CreatedAt)}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    );
+                                                })}
+                                                <div ref={messagesEndRef} />
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center py-12">
+                                                <MessageCircle className="w-12 h-12 text-(--muted) mb-3 opacity-30" />
+                                                <p className="text-(--muted)">No messages yet</p>
+                                                <p className="text-(--muted) text-sm">Start the conversation!</p>
+                                            </div>
+                                        )}
+                                    </Container>
+                                </div>
+
+                                {/* Message Input */}
+                                <div className="border-t border-(--border) bg-background">
+                                    <Container className="py-4">
+                                        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                                            <input
+                                                type="text"
+                                                value={messageText}
+                                                onChange={(e) => setMessageText(e.target.value)}
+                                                placeholder="Type a message..."
+                                                className="flex-1 px-4 py-3 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
+                                                disabled={isSending}
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={!messageText.trim() || isSending}
+                                                className="p-3 bg-(--accent) text-white rounded-full hover:bg-(--accent-hover) transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                            >
+                                                {isSending ? (
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                ) : (
+                                                    <Send className="w-5 h-5" />
+                                                )}
+                                            </button>
+                                        </form>
+                                    </Container>
+                                </div>
                             </div>
                         )}
                     </motion.div>

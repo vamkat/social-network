@@ -8,7 +8,7 @@ export async function getNotInvited({ groupId, limit = 20, offset = 0 } = {}) {
             console.error("Group ID is required to fetch followers");
             return [];
         }
-        const url = `groups/${groupId}/invitable-followers?limit=${limit}&offset=${offset}`;
+        const url = `/groups/${groupId}/invitable-followers?limit=${limit}&offset=${offset}`;
         const followers = await serverApiRequest(url, {
             method: "GET"
         });

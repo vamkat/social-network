@@ -2,13 +2,15 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function getConv({first=false, beforeDate=null, limit}) {
+export async function getGroupMessages({ groupId, boundary = null, limit = 50, getPrevious = true }) {
     try {
-        let url = null;
-        if (first === true) {
-            url = `/my/chat/previews?limit=${limit}`;
-        } else {
-            url = `/my/chat/previews?before_date=${beforeDate}&limit=${limit}`;
+        let url = `/groups/${groupId}/chat?group_id=${groupId}&limit=${limit}`;
+
+        if (boundary) {
+            url += `&boundary=${boundary}`;
+        }
+        if (!getPrevious) {
+            url += `&get_previous=${getPrevious}`;
         }
 
         const response = await serverApiRequest(url, {
@@ -19,11 +21,10 @@ export async function getConv({first=false, beforeDate=null, limit}) {
             }
         });
 
-        // Return success wrapper
         return { success: true, data: response };
 
     } catch (error) {
-        console.error("Error fetching groups:", error);
+        console.error("Error fetching group messages:", error);
         return { success: false, error: error.message };
     }
 }

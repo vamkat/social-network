@@ -8,7 +8,7 @@ export default async function ConversationPage({ params }) {
     let firstMessage = false;
 
     // Fetch conversations list
-    const convsResult = await getConv({ first: true, limit: 50 });
+    const convsResult = await getConv({ first: true, limit: 15 });
     let conversations = convsResult.success ? convsResult.data : [];
 
     // Find the selected conversation from the list
@@ -22,7 +22,7 @@ export default async function ConversationPage({ params }) {
     if (selectedConversation) {
         const messagesResult = await getMessages({
             interlocutorId: selectedConversation.Interlocutor?.id,
-            limit: 50,
+            limit: 20,
         });
         if (messagesResult.success && messagesResult.data?.Messages) {
             // Messages come newest first, reverse for display

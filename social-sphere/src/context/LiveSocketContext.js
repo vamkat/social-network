@@ -78,16 +78,17 @@ export function LiveSocketProvider({ children }) {
                     }
 
                     for (const msg of messages) {
-                        if (msg.group_id) {
-                            // Group message
+                        if (msg.group_id || msg.GroupId) {
+                            // Group message (handle both snake_case and PascalCase)
                             console.log("[LiveSocket] Group message received:", msg);
                             groupMessageListenersRef.current.forEach((listener) => listener(msg));
-                        } else if (msg.conversation_id) {
-                            // Private message
+                        } else if (msg.conversation_id || msg.ConversationId) {
+                            // Private message (handle both snake_case and PascalCase)
                             console.log("[LiveSocket] Private message received:", msg);
 
                             // Add to unread if not from current user
-                            if (msg.sender?.id !== user?.id) {
+                            const senderId = msg.sender?.id || msg.Sender?.id;
+                            if (senderId !== user?.id) {
                                 setUnreadMessages((prev) => {
                                     if (prev.some((m) => m.id === msg.id)) return prev;
                                     return [...prev, msg];
@@ -157,6 +158,11 @@ export function LiveSocketProvider({ children }) {
     }, []);
 
     const subscribeToGroup = useCallback((groupId) => {
+        // Don't re-subscribe if already subscribed
+        if (subscribedGroupsRef.current.has(groupId)) {
+            console.log("[LiveSocket] Already subscribed to group:", groupId);
+            return;
+        }
         subscribedGroupsRef.current.add(groupId);
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(`sub:${groupId}`);
@@ -165,6 +171,10 @@ export function LiveSocketProvider({ children }) {
     }, []);
 
     const unsubscribeFromGroup = useCallback((groupId) => {
+        // Don't unsubscribe if not subscribed
+        if (!subscribedGroupsRef.current.has(groupId)) {
+            return;
+        }
         subscribedGroupsRef.current.delete(groupId);
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(`unsub:${groupId}`);

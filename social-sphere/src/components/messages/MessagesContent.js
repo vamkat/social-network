@@ -24,13 +24,18 @@ export default function MessagesContent({
     const decrementUnreadCount = useStore((state) => state.decrementUnreadCount);
     const [messages, setMessages] = useState(initialMessages);
     const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMoreConvs, setHasMoreConvs] = useState(() => initialConversations.length >= 15);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
+    const [hasMoreMessages, setHasMoreMessages] = useState(() => initialMessages.length >= 20);
     const [isSending, setIsSending] = useState(false);
     const [messageText, setMessageText] = useState("");
     const [showMobileChat] = useState(!!initialSelectedId);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const selectedConvRef = useRef(null);
+    const isLoadingMoreRef = useRef(false);
     const receiver = useMsgReceiver((state) => state.msgReceiver);
     const clearMsgReceiver = useMsgReceiver((state) => state.clearMsgReceiver);
     const [conversations, setConversations] = useState(() => {
@@ -177,14 +182,20 @@ export default function MessagesContent({
     }, [addOnPrivateMessage, removeOnPrivateMessage, handlePrivateMessage]);
 
     // Scroll to bottom of messages
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (instant = false) => {
+        if (instant) {
+            messagesContainerRef.current?.scrollTo(0, messagesContainerRef.current.scrollHeight);
+        } else {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
     };
 
+    // Scroll to bottom only on first load of conversation
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
+        if (messages.length > 0) {
+            scrollToBottom(true);
+        }
+    }, [initialSelectedId]);
 
     // const handleClickMsg = async () => {
     //     if (!messages.length || !selectedConv) return;
@@ -247,9 +258,10 @@ export default function MessagesContent({
     const loadConversations = async () => {
         setIsLoadingConversations(true);
         try {
-            const result = await getConv({ first: true, limit: 50 });
+            const result = await getConv({ first: true, limit: 15 });
             if (result.success && result.data) {
                 setConversations(result.data);
+                setHasMoreConvs(result.data.length >= 15);
             }
         } catch (error) {
             console.error("Error loading conversations:", error);
@@ -258,20 +270,99 @@ export default function MessagesContent({
         }
     };
 
+    // Load more conversations (pagination)
+    const loadMoreConversations = async () => {
+        if (isLoadingMore || !hasMoreConvs || conversations.length === 0) return;
+
+        setIsLoadingMore(true);
+        try {
+            // Conversations are displayed newest-first, so the oldest is at the end
+            // We need to find the minimum UpdatedAt to get conversations before it
+            const oldestConv = conversations[conversations.length - 1];
+            console.log("OLDEST: ", oldestConv);
+            const beforeDate = oldestConv.UpdatedAt;
+            console.log("BeforeDate: ", beforeDate);
+            const result = await getConv({ first: false, beforeDate, limit: 5 });
+            if (result.success && result.data) {
+                setConversations((prev) => [...prev, ...result.data]);
+                setHasMoreConvs(result.data.length >= 5);
+            }
+        } catch (error) {
+            console.error("Error loading more conversations:", error);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
+
     // Load messages for selected conversation
     const loadMessages = async (interlocutorId) => {
         setIsLoadingMessages(true);
         try {
-            const result = await getMessages({ interlocutorId, limit: 50 });
+            const result = await getMessages({ interlocutorId, limit: 20 });
             console.log(result);
             if (result.success && result.data) {
                 // Messages come in reverse order (newest first), so reverse them
-                setMessages(result.data.Messages?.reverse() || []);
+                const msgs = result.data.Messages?.reverse() || [];
+                setMessages(msgs);
+                setHasMoreMessages(msgs.length >= 20);
             }
         } catch (error) {
             console.error("Error loading messages:", error);
         } finally {
             setIsLoadingMessages(false);
+        }
+    };
+
+    // Load more messages (pagination)
+    const loadMoreMessages = useCallback(async () => {
+        if (isLoadingMoreMessages || !hasMoreMessages || messages.length === 0 || !selectedConv) return;
+
+        isLoadingMoreRef.current = true;
+        setIsLoadingMoreMessages(true);
+
+        const container = messagesContainerRef.current;
+        const prevScrollHeight = container?.scrollHeight || 0;
+
+        try {
+            // Messages are displayed oldest-first, so messages[0] is the oldest
+            const oldestMsg = messages[0];
+            const boundary = oldestMsg.id;
+
+            const result = await getMessages({
+                interlocutorId: selectedConv.Interlocutor.id,
+                boundary,
+                limit: 10,
+            });
+
+            if (result.success && result.data) {
+                const olderMsgs = result.data.Messages?.reverse() || [];
+                setMessages((prev) => [...olderMsgs, ...prev]);
+                setHasMoreMessages(olderMsgs.length >= 10);
+
+                // Preserve scroll position after prepending
+                requestAnimationFrame(() => {
+                    if (container) {
+                        const newScrollHeight = container.scrollHeight;
+                        container.scrollTop = newScrollHeight - prevScrollHeight;
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error loading more messages:", error);
+        } finally {
+            setIsLoadingMoreMessages(false);
+            isLoadingMoreRef.current = false;
+        }
+    }, [isLoadingMoreMessages, hasMoreMessages, messages, selectedConv]);
+
+    // Handle scroll for infinite loading (called via onScroll prop)
+    const handleMessagesScroll = (e) => {
+        // Use ref (synchronous) to prevent multiple calls
+        if (isLoadingMoreRef.current || !hasMoreMessages) return;
+
+        const container = e.target;
+        if (container.scrollTop < 100) {
+            loadMoreMessages();
         }
     };
 
@@ -474,6 +565,20 @@ export default function MessagesContent({
                                     </div>
                                 </button>
                             ))}
+                            {/* Load More Button */}
+                            {hasMoreConvs && (
+                                <button
+                                    onClick={loadMoreConversations}
+                                    disabled={isLoadingMore}
+                                    className="w-full py-3 text-sm text-(--accent) hover:bg-(--muted)/5 transition-colors disabled:opacity-50"
+                                >
+                                    {isLoadingMore ? (
+                                        <Loader2 className="w-4 h-4 mx-auto animate-spin" />
+                                    ) : (
+                                        "Load more"
+                                    )}
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -524,6 +629,7 @@ export default function MessagesContent({
                         {/* Messages */}
                         <div
                             ref={messagesContainerRef}
+                            onScroll={handleMessagesScroll}
                             className="flex-1 overflow-y-auto p-4 space-y-3"
                         >
                             {isLoadingMessages ? (
@@ -532,6 +638,12 @@ export default function MessagesContent({
                                 </div>
                             ) : messages.length > 0 ? (
                                 <>
+                                    {/* Loading indicator for infinite scroll */}
+                                    {isLoadingMoreMessages && (
+                                        <div className="flex justify-center py-2 mb-3">
+                                            <Loader2 className="w-4 h-4 text-(--muted) animate-spin" />
+                                        </div>
+                                    )}
                                     {messages.map((msg, index) => {
                                         const isMe = msg.sender?.id === user?.id;
                                         return (
