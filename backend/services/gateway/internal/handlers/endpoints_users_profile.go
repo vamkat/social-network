@@ -300,20 +300,21 @@ func (h *Handlers) retrieveUser() http.HandlerFunc {
 			return
 		}
 
-		imageReq := &media.GetImageRequest{
-			ImageId: user.Avatar,
-			Variant: media.FileVariant_THUMBNAIL,
+		if user.Avatar > 0 {
+			imageReq := &media.GetImageRequest{
+				ImageId: user.Avatar,
+				Variant: media.FileVariant_THUMBNAIL,
+			}
+			imgRes, err := h.MediaService.GetImage(ctx, imageReq)
+			if err != nil {
+				httpCode, _ := gorpc.Classify(err)
+				err = ce.DecodeProto(err, imageReq)
+				tele.Error(ctx, "get image error @1", "request", imageReq)
+				utils.ErrorJSON(ctx, w, httpCode, err.Error())
+				return
+			}
+			user.AvatarUrl = imgRes.DownloadUrl
 		}
-
-		imgRes, err := h.MediaService.GetImage(ctx, imageReq)
-		if err != nil {
-			httpCode, _ := gorpc.Classify(err)
-			err = ce.DecodeProto(err, imageReq)
-			tele.Error(ctx, "get image error @1", "request", imageReq)
-			utils.ErrorJSON(ctx, w, httpCode, err.Error())
-			return
-		}
-		user.AvatarUrl = imgRes.DownloadUrl
 
 		if err := utils.WriteJSON(ctx, w, http.StatusOK, mapping.MapUserFromProto(user)); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())

@@ -11,12 +11,10 @@ import (
 	"social-network/services/chat/internal/handler"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/gen-go/media"
-	"social-network/shared/gen-go/notifications"
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
-	"social-network/shared/go/kafgo"
 	postgresql "social-network/shared/go/postgre"
 	rds "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
@@ -36,7 +34,6 @@ type configs struct {
 	RedisDB                   int      `env:"REDIS_DB"`
 	DatabaseConn              string   `env:"DATABASE_URL"`
 	GrpcServerPort            string   `env:"GRPC_SERVER_PORT"`
-	NotificationsAdress       string   `env:"NOTIFICATIONS_GRPC_ADDR"`
 	UsersAdress               string   `env:"USERS_GRPC_ADDR"`
 	MediaGRPCAddr             string   `env:"MEDIA_GRPC_ADDR"`
 	EnableDebugLogs           bool     `env:"ENABLE_DEBUG_LOGS"`
@@ -53,14 +50,13 @@ var cfgs configs
 // TODO add missing default values --V
 func init() {
 	cfgs = configs{
-		DatabaseConn:        "postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable",
-		GrpcServerPort:      ":50051",
-		NotificationsAdress: "notifications:50051",
-		UsersAdress:         "users:50051",
-		NatsHost:            "nats",
-		NatsCluster:         "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222",
-		KafkaBrokers:        []string{"kafka:9092"},
-		SentinelAddrs:       []string{"26379"},
+		DatabaseConn:   "postgres://postgres:secret@chat-db:5432/social_chat?sslmode=disable",
+		GrpcServerPort: ":50051",
+		UsersAdress:    "users:50051",
+		NatsHost:       "nats",
+		NatsCluster:    "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222",
+		KafkaBrokers:   []string{"kafka:9092"},
+		SentinelAddrs:  []string{"26379"},
 	}
 	configutil.LoadConfigs(&cfgs)
 }
@@ -117,17 +113,6 @@ func Run() error {
 	//
 	//
 	//
-	// KAFKA PRODUCER
-	eventProducer, close, err := kafgo.NewKafkaProducer(cfgs.KafkaBrokers)
-	if err != nil {
-		tele.Fatal("wtf")
-	}
-	defer close()
-	tele.Info(ctx, "initialized kafka producer")
-
-	//
-	//
-	//
 	// DATABASE
 	pool, err := postgresql.NewPool(ctx, cfgs.DatabaseConn)
 	if err != nil {
@@ -142,10 +127,9 @@ func Run() error {
 	// CORE SERVICE
 	app, err := application.NewChatService(
 		pool,
-		&clients,
+		clients,
 		dbservice.New(pool),
 		retriveUsers,
-		eventProducer,
 		natsConn,
 	)
 	if err != nil {
@@ -194,17 +178,11 @@ func Run() error {
 	return nil
 }
 
-func initClients() client.Clients {
+func initClients() *client.Clients {
 	//
 	//
 	//
 	// GRPC SERVICES
-	notifClient, err := gorpc.GetGRpcClient(
-		notifications.NewNotificationServiceClient, cfgs.NotificationsAdress, ct.CommonKeys())
-	if err != nil {
-		tele.Fatalf("failed to create notification client: %s", err.Error())
-	}
-
 	userClient, err := gorpc.GetGRpcClient(
 		users.NewUserServiceClient, cfgs.UsersAdress, ct.CommonKeys(),
 	)
@@ -231,7 +209,6 @@ func initClients() client.Clients {
 
 	return client.NewClients(
 		userClient,
-		notifClient,
 		mediaClient,
 		redisClient,
 	)

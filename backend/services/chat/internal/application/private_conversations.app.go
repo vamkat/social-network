@@ -53,7 +53,7 @@ func (c *ChatService) GetPrivateConversations(ctx context.Context,
 ) ([]md.PrivateConvsPreview, *ce.Error) {
 
 	input := fmt.Sprintf("arg: %#v", arg)
-	tele.Info(ctx, "get private conversations called: @1", "arg", arg)
+
 	err := ct.ValidateStruct(arg)
 	if err != nil {
 		return nil, ce.Wrap(ce.ErrInvalidArgument, err, input)
@@ -113,13 +113,12 @@ func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		tele.Debug(ctx, "create new pm @1", "response", msg)
+
 		q.UpdateLastReadPrivateMsg(ctx, md.UpdateLastReadMsgParams{
 			UserId:            arg.SenderId,
 			ConversationId:    msg.ConversationId,
 			LastReadMessageId: msg.Id,
 		})
-		tele.Debug(ctx, "create new pm @1", "response", msg)
 		if err != nil {
 			return err
 		}

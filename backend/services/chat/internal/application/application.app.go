@@ -7,7 +7,6 @@ import (
 	"social-network/services/chat/internal/db/dbservice"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
-	"social-network/shared/go/kafgo"
 	postgresql "social-network/shared/go/postgre"
 	"social-network/shared/go/retrieveusers"
 
@@ -26,12 +25,11 @@ type TxRunner interface {
 
 // Holds logic for requests and calls
 type ChatService struct {
-	Clients       Clients
-	RetriveUsers  *retrieveusers.UserRetriever
-	Queries       dbservice.Querier
-	txRunner      TxRunner
-	EventProducer *kafgo.KafkaProducer
-	NatsConn      *nats.Conn
+	Clients      Clients
+	RetriveUsers *retrieveusers.UserRetriever
+	Queries      dbservice.Querier
+	txRunner     TxRunner
+	NatsConn     *nats.Conn
 }
 
 type Clients interface {
@@ -48,7 +46,6 @@ func NewChatService(
 	clients *client.Clients,
 	queries dbservice.Querier,
 	userRetriever *retrieveusers.UserRetriever,
-	eventProducer *kafgo.KafkaProducer,
 	natsConn *nats.Conn,
 ) (*ChatService, error) {
 	var txRunner TxRunner
@@ -65,11 +62,10 @@ func NewChatService(
 	}
 
 	return &ChatService{
-		Clients:       clients,
-		Queries:       queries,
-		txRunner:      txRunner,
-		RetriveUsers:  userRetriever,
-		EventProducer: eventProducer,
-		NatsConn:      natsConn,
+		Clients:      clients,
+		Queries:      queries,
+		txRunner:     txRunner,
+		RetriveUsers: userRetriever,
+		NatsConn:     natsConn,
 	}, nil
 }
