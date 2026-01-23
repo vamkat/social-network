@@ -398,6 +398,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 
 		//TODO params, user_id url --DONE
 
+	SetEndpoint("/users/{user_id}/retrieve").
+		AllowedMethod("GET").
+		RateLimit(IP, 20, 5).
+		Auth().
+		EnrichContext().
+		RateLimit(USERID, 20, 5).
+		Finalize(h.retrieveUser())
+
 	SetEndpoint("/users/{user_id}/posts").
 		AllowedMethod("GET").
 		RateLimit(IP, 20, 5).

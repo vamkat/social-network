@@ -7,12 +7,17 @@ import (
 	"net/http"
 	"social-network/shared/gen-go/media"
 	"social-network/shared/gen-go/users"
+	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
+	"social-network/shared/go/gorpc"
 	utils "social-network/shared/go/http-utils"
 	"social-network/shared/go/jwt"
+	"social-network/shared/go/mapping"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
 	"time"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func (h *Handlers) getUserProfile() http.HandlerFunc {
@@ -267,5 +272,52 @@ func (s *Handlers) updateUserProfile() http.HandlerFunc {
 			UploadUrl: uploadURL}
 
 		utils.WriteJSON(ctx, w, http.StatusOK, httpResp)
+	}
+}
+
+// Get endpoint to fetch username, avatarid and avatar thumbnail variant download url by user name.
+// endpoint: /users/{user_id}/retrieve
+func (h *Handlers) retrieveUser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		tele.Info(ctx, "retriveUser handler called")
+
+		userId, err := utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		if err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
+			return
+		}
+
+		user, err := h.UsersService.GetBasicUserInfo(
+			ctx,
+			wrapperspb.Int64(userId.Int64()),
+		)
+		if err != nil {
+			httpCode, _ := gorpc.Classify(err)
+			err = ce.DecodeProto(err)
+			tele.Error(ctx, "get BasicUserInfo error @1", "request", userId)
+			utils.ErrorJSON(ctx, w, httpCode, err.Error())
+			return
+		}
+
+		imageReq := &media.GetImageRequest{
+			ImageId: user.Avatar,
+			Variant: media.FileVariant_THUMBNAIL,
+		}
+
+		imgRes, err := h.MediaService.GetImage(ctx, imageReq)
+		if err != nil {
+			httpCode, _ := gorpc.Classify(err)
+			err = ce.DecodeProto(err, imageReq)
+			tele.Error(ctx, "get image error @1", "request", imageReq)
+			utils.ErrorJSON(ctx, w, httpCode, err.Error())
+			return
+		}
+		user.AvatarUrl = imgRes.DownloadUrl
+
+		if err := utils.WriteJSON(ctx, w, http.StatusOK, mapping.MapUserFromProto(user)); err != nil {
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, err.Error())
+		}
+
 	}
 }
