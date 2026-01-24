@@ -101,7 +101,7 @@ func NewKafkaConsumer(seeds []string, group string, topics ...ct.KafkaTopic) (*k
 		topicBuffer:            100,
 		committedRecords:       make(map[uint64]*Record),
 		uncomittedRecordsLimit: 1000,
-		deadmanTimeout:         -1,
+		deadmanTimeout:         time.Minute * 2,
 	}
 
 	for _, topic := range topics {
@@ -255,7 +255,11 @@ func (kfc *kafkaConsumer) actuallyStartConsuming() {
 						continue
 					}
 
-					timer.Reset(kfc.deadmanTimeout)
+					if kfc.deadmanTimeout > 0 {
+						timer.Reset(kfc.deadmanTimeout)
+					} else {
+						timer.Reset(time.Hour * 8760)
+					}
 					select {
 					case <-timer.C:
 						tele.Error(context.Background(), "SLOW CHANNEL DETECTED")

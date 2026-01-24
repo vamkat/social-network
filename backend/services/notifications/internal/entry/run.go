@@ -199,12 +199,14 @@ func startKafkaConsumer(ctx context.Context, app *application.Application) error
 		for {
 			select {
 			case <-ctx.Done():
+				tele.Info(ctx, "kafka listener context done")
 				return
 			case record, ok := <-notificationChannel:
 				if !ok {
 					tele.Info(ctx, "Notification channel closed")
 					return
 				}
+				tele.Info(ctx, "Received message from kafka")
 
 				// Process the incoming protobuf notification event
 				if err := processNotificationEvent(ctx, record, eventHandler); err != nil {
