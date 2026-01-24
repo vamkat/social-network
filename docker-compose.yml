@@ -563,6 +563,9 @@ services:
       
     ports:
       - "8081:8081"
+    depends_on:
+      sentinel-1:
+        condition: service_started
 
   
 
