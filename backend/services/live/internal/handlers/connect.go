@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"social-network/shared/gen-go/chat"
 	"social-network/shared/go/batching"
 	ce "social-network/shared/go/commonerrors"
@@ -98,6 +99,7 @@ func (h *Handlers) Connect() http.HandlerFunc {
 
 // routine that reads data coming from this client connection, reads the message and decides what to do with it
 func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websocket.Conn, clientId int64, connectionId string, handler nats.MsgHandler) {
+	defer catchPanic(ctx, "listener")
 	subcriptions := make(map[string]*nats.Subscription)
 	tele.Info(ctx, "websocket listener started for connection @1", "connection", connectionId)
 	key := ct.PrivateMessageKey(clientId)
@@ -270,8 +272,16 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 	}
 }
 
+func catchPanic(ctx context.Context, testName string) {
+	if r := recover(); r != nil {
+		stack := string(debug.Stack())
+		tele.Error(ctx, "PANIC in @1: @2. Stack: @3", "test", testName, "panic", fmt.Sprint(r), "stack", stack)
+	}
+}
+
 // Goroutine that sends data to this connection, it can pool messages if they arrive fast enough
 func (h *Handlers) websocketSender(ctx context.Context, channel <-chan []byte, conn *websocket.Conn) {
+	defer catchPanic(ctx, "sender")
 	payloadBytes := []byte{}
 
 	//handler is given to batcher, so that the batcher calls it with many accumulated messages at once
