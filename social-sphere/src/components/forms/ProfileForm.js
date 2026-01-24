@@ -72,8 +72,6 @@ export default function ProfileForm({ user }) {
         } else {
             profileData.avatar_id = currentUser.fileId;
         }
-        console.log("currentUser: ", currentUser);
-        console.log("SENDING THIS: ", profileData);
 
         try {
             // Validate profile data and avatar
