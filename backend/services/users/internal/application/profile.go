@@ -24,6 +24,9 @@ func (s *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (resp 
 	input := fmt.Sprintf("%#v", userId)
 
 	if err := userId.Validate(); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.User{}, ce.New(ce.ErrInvalidArgument, err, input).WithPublic("user does not exist or is deleted")
+		}
 		return models.User{}, ce.Wrap(ce.ErrInvalidArgument, err, "request validation failed", input).WithPublic("invalid data received")
 	}
 
@@ -50,6 +53,9 @@ func (s *Application) GetBatchBasicUserInfo(ctx context.Context, userIds ct.Ids)
 
 	rows, err := s.db.GetBatchUsersBasic(ctx, userIds.Int64())
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ce.New(ce.ErrInvalidArgument, err, input).WithPublic("no users found")
+		}
 		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
@@ -249,20 +255,12 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 		return models.UserProfileResponse{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
-	//update redis basic user info
-	basicUserInfo := models.User{
-		UserId:   req.UserId,
-		Username: req.Username,
-		AvatarId: req.AvatarId,
-	}
+	//delete redis basic user info if exists
+
 	key, err := ct.BasicUserInfoKey{Id: req.UserId}.String()
-	_ = s.clients.SetObj(ctx,
-		key,
-		basicUserInfo,
-		3*time.Minute,
-	)
+	_ = s.clients.Del(ctx, key)
 	if err != nil {
-		tele.Warn(ctx, "could not set new basic user info for user @1 using key @2", "userId", req.UserId, "key", key)
+		tele.Warn(ctx, "could not delete basic user info for user @1 using key @2", "userId", req.UserId, "key", key)
 	}
 
 	newDob := time.Time{}

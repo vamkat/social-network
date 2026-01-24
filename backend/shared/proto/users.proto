@@ -159,10 +159,12 @@ service UserService {
 
   // Retrieves basic public info for a user (id, username, avatar id).
   // Does not call media service for avatar url
+  // Returns no rows for id not found.
   rpc GetBasicUserInfo (google.protobuf.Int64Value) returns (common.User);
 
   // Retrieves basic info for multiple users (id, username, avatar id).
   // Does not call media service for avatar url
+  // Returns any users found on db, or no rows if no ids are found. Missing users are silently skipped.
   rpc GetBatchBasicUserInfo (common.UserIds) returns (common.ListUsers);
 
   // Returns the full profile

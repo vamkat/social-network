@@ -49,6 +49,10 @@ func (c *Clients) SetObj(ctx context.Context, key string, value any, exp time.Du
 	return c.RedisClient.SetObj(ctx, key, value, exp)
 }
 
+func (c *Clients) Del(ctx context.Context, key string) error {
+	return c.RedisClient.Del(ctx, key)
+}
+
 func (c *Clients) CreateNotification(ctx context.Context, req models.CreateNotificationRequest) error {
 	grpcRec := &notifications.CreateNotificationRequest{
 		UserId:         req.UserId.Int64(),
