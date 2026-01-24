@@ -66,7 +66,7 @@ type Querier interface {
 	//1: follower_id
 	//2: following_id
 	// returns followed or requested depending on target's privacy settings
-	UnfollowUser(ctx context.Context, arg UnfollowUserParams) (int64, error)
+	UnfollowUser(ctx context.Context, arg UnfollowUserParams) (string, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (int64, error)
 	UpdateProfilePrivacy(ctx context.Context, arg UpdateProfilePrivacyParams) error
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error

@@ -276,7 +276,6 @@ func (s *Application) GetEventsByGroupId(ctx context.Context, req models.EntityI
 	}
 	if err != nil {
 		tele.Error(ctx, "media retriever failed for @1", "request", eventImageIds, "error", err.Error()) //log error instead of returning
-		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 		for i := range events {
 			uid := events[i].User.UserId

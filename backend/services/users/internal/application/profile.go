@@ -17,8 +17,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// TODO add checks for post events (registration, updates, group titles and descriptions) - date:(valid format, over 13, not over 110),text fields:(length, special characters)
-
 // not responsible for image url fetching
 func (s *Application) GetBasicUserInfo(ctx context.Context, userId ct.Id) (resp models.User, err error) {
 	input := fmt.Sprintf("%#v", userId)
@@ -159,7 +157,6 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, profile.AvatarId.Int64(), media.FileVariant(1))
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", profile.AvatarId, "error", err.Error()) //log error instead of returning
-			//return models.UserProfileResponse{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user image")
 			s.removeFailedImage(ctx, err, profile.AvatarId.Int64())
 		} else {
 
@@ -169,9 +166,6 @@ func (s *Application) GetUserProfile(ctx context.Context, req models.UserProfile
 
 	return profile, nil
 
-	// usergroups a different call
-	// from posts service get all posts paginated (and number of posts)
-	// and within all posts check each one if viewer has permission
 }
 
 func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq) ([]models.User, error) {
@@ -212,7 +206,7 @@ func (s *Application) SearchUsers(ctx context.Context, req models.UserSearchReq)
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user images")
+
 		} else {
 			for i := range users {
 				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
@@ -307,7 +301,7 @@ func (s *Application) RemoveImages(ctx context.Context, failedImages []int64) er
 	err := s.db.RemoveImages(ctx, failedImages)
 	if err != nil {
 		tele.Warn(ctx, "images @1 could not be deleted", "imageIds", failedImages)
-		//return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+
 	}
 
 	return nil

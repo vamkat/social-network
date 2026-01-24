@@ -64,7 +64,6 @@ func (s *Application) GetAllGroupsPaginated(ctx context.Context, req models.Pagi
 		imageMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 		} else {
 			for i := range groups {
 				groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
@@ -125,7 +124,6 @@ func (s *Application) GetUserGroupsPaginated(ctx context.Context, req models.Pag
 		imageMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		} else {
 			for i := range groups {
 				groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
@@ -171,7 +169,6 @@ func (s *Application) GetGroupInfo(ctx context.Context, req models.GeneralGroupR
 		imageUrl, err := s.mediaRetriever.GetImage(ctx, group.GroupImage.Int64(), media.FileVariant_SMALL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", group.GroupImage, "error", err.Error()) //log error instead of returning
-			//return models.Group{}, ce.Wrap(nil, err, input).WithPublic("error retrieving group image")
 			s.removeFailedImage(ctx, err, group.GroupImage.Int64())
 		} else {
 			group.GroupImageURL = imageUrl
@@ -234,7 +231,6 @@ func (s *Application) GetGroupMembers(ctx context.Context, req models.GroupMembe
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.GroupUser{}, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		} else {
 			for i := range members {
 				members[i].AvatarUrl = avatarMap[members[i].AvatarId.Int64()]
@@ -327,7 +323,6 @@ func (s *Application) SearchGroups(ctx context.Context, req models.GroupSearchRe
 		imageMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_SMALL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 		} else {
 			for i := range groups {
 				groups[i].GroupImageURL = imageMap[groups[i].GroupImage.Int64()]
@@ -372,11 +367,11 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 	// create notification (waiting for batch notification)
 	inviter, err := s.GetBasicUserInfo(ctx, req.InviterId)
 	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
+		tele.Error(ctx, "Could not get basic user info for user @1 for invite to group notif: @2", "groupId", req.GroupId, "error", err.Error())
 	}
 	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
 	if err != nil {
-		//WHAT DO DO WITH ERROR HERE?
+		tele.Error(ctx, "Could not get basic group info for group @1 for invite to group notif: @2", "groupId", req.GroupId, "error", err.Error())
 	}
 	event := &notifpb.NotificationEvent{
 		EventType: notifpb.EventType_GROUP_INVITE_CREATED,
@@ -392,9 +387,9 @@ func (s *Application) InviteToGroup(ctx context.Context, req models.InviteToGrou
 	}
 
 	if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
-		tele.Error(ctx, "failed to send new follower notification: @1", "error", err.Error())
+		tele.Error(ctx, "failed to send invite to group notification: @1", "error", err.Error())
 	}
-	tele.Info(ctx, "new follower notification event created")
+	tele.Info(ctx, "invite to group notification event created")
 
 	return nil
 }
@@ -475,7 +470,27 @@ func (s *Application) CancelJoinGroupRequest(ctx context.Context, req models.Gro
 	if err != nil {
 		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
-	//TODO REMOVE NOTIFICATION EVENT
+	//remove notification
+	group, err := s.db.GetGroupBasicInfo(ctx, req.GroupId.Int64())
+	if err != nil {
+		tele.Error(ctx, "Could not get basic group info for id @1 for cancel request join group notif: @2", "userId", req.GroupId, "error", err.Error())
+	}
+
+	event := &notifpb.NotificationEvent{
+		EventType: notifpb.EventType_GROUP_JOIN_REQUEST_CANCELLED,
+		Payload: &notifpb.NotificationEvent_GroupJoinRequestCancelled{
+			GroupJoinRequestCancelled: &notifpb.GroupJoinRequestCancelled{
+				GroupOwnerId:    group.GroupOwner,
+				RequesterUserId: req.RequesterId.Int64(),
+				GroupId:         req.GroupId.Int64(),
+			},
+		},
+	}
+
+	if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+		tele.Error(ctx, "failed to send cancel request to join group notification: @1", "error", err.Error())
+	}
+	tele.Info(ctx, "cancel request to join group notification event created")
 	return nil
 }
 
@@ -733,12 +748,6 @@ func (s *Application) CreateGroup(ctx context.Context, req *models.CreateGroupRe
 		return 0, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
-	//call to chat service to create group conversation with owner as member
-	// err = s.clients.CreateGroupConversation(ctx, groupId, req.OwnerId.Int64())
-	// if err != nil {
-	// 	tele.Info("group conversation couldn't be created", err)
-	// }
-
 	return models.GroupId(groupId), nil
 }
 
@@ -919,7 +928,6 @@ func (s *Application) GetFollowersNotInvitedToGroup(ctx context.Context, req mod
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {
 				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
@@ -976,7 +984,6 @@ func (s *Application) GetPendingGroupJoinRequests(ctx context.Context, req model
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {
 				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]

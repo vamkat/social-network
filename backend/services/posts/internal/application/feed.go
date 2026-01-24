@@ -81,7 +81,6 @@ func (s *Application) GetPersonalizedFeed(ctx context.Context, req models.GetPer
 	}
 	if err != nil {
 		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
-		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
 		for i := range posts {
@@ -157,7 +156,6 @@ func (s *Application) GetPublicFeed(ctx context.Context, req models.GenericPagin
 	}
 	if err != nil {
 		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
-		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
 		for i := range posts {
@@ -240,7 +238,6 @@ func (s *Application) GetUserPostsPaginated(ctx context.Context, req models.GetU
 	}
 	if err != nil {
 		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
-		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
 		for i := range posts {
@@ -333,7 +330,6 @@ func (s *Application) GetGroupPostsPaginated(ctx context.Context, req models.Get
 	}
 	if err != nil {
 		tele.Error(ctx, "media retriever failed for @1", "request", postImageIds, "error", err.Error()) //log error instead of returning
-		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
 		for i := range posts {

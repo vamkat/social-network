@@ -8,12 +8,10 @@ import (
 )
 
 func (s *Application) RemoveImages(ctx context.Context, failedImages []int64) error {
-	//input := fmt.Sprintf("%#v", failedImages)
 
 	err := s.db.RemoveImages(ctx, failedImages)
 	if err != nil {
 		tele.Warn(ctx, "images @1 could not be deleted", "imageIds", failedImages)
-		//return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
 
 	return nil

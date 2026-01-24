@@ -48,7 +48,6 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {
 				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
@@ -56,8 +55,6 @@ func (s *Application) GetFollowersPaginated(ctx context.Context, req models.Pagi
 			s.removeFailedImagesAsync(ctx, failedImageIds)
 		}
 	}
-
-	//tele.Debug(ctx, "get followers paginated: @1", "users", users)
 
 	return users, nil
 
@@ -97,7 +94,6 @@ func (s *Application) GetFollowingPaginated(ctx context.Context, req models.Pagi
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {
 				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
@@ -198,31 +194,42 @@ func (s *Application) UnFollowUser(ctx context.Context, req models.FollowUserReq
 	//if already following, unfollows
 	// if request pending, cancels request
 
-	rowsAffected, err := s.db.UnfollowUser(ctx, ds.UnfollowUserParams{
+	action, err := s.db.UnfollowUser(ctx, ds.UnfollowUserParams{
 		FollowerID:  req.FollowerId.Int64(),
 		FollowingID: req.TargetUserId.Int64(),
 	})
 	if err != nil {
 		return ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
-	switch rowsAffected {
-	case 0:
-		// either idempotent success OR error
-		tele.Warn(ctx, "no follow or follow request found with user @1 and target user @2", "userId", req.FollowerId, "targetUserId", req.TargetUserId)
+	switch action {
+	case "unfollow":
+		tele.Debug(ctx, "user @1 successfully unfollowed target user @2", "userId", req.FollowerId, "targetUserId", req.TargetUserId)
 
-	case 1:
-		// Expected success
+	case "cancel_request":
+		tele.Debug(ctx, "user @1 successfully canceled follow request to target user @2", "userId", req.FollowerId, "targetUserId", req.TargetUserId)
+		// cancel follow notification
+
+		event := &notifpb.NotificationEvent{
+			EventType: *notifpb.EventType_FOLLOW_REQUEST_CANCELLED.Enum(),
+			Payload: &notifpb.NotificationEvent_FollowRequestCancelled{
+				FollowRequestCancelled: &notifpb.FollowRequestCancelled{
+					RequesterUserId: req.FollowerId.Int64(),
+					TargetUserId:    req.TargetUserId.Int64(),
+				},
+			},
+		}
+
+		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+			tele.Error(ctx, "failed to cancel follow request notification: @1", "error", err.Error())
+		}
+		tele.Info(ctx, "cancel follow request accepted notification event created")
 
 	default:
-		// Inconsistent DB state
+		//neither unfollow nor cancel_request was returned - no rows were affected
 		// Log aggressively, but don't fail the user
-		tele.Warn(ctx, "unexpected rows affected: expected @1, got @2", "expectedRows", 1, "affectedRows", rowsAffected)
+		tele.Warn(ctx, "no rows affected")
 
 	}
-	// err = s.deletePrivateConversation(ctx, req)
-	// if err != nil {
-	// 	tele.Info("conversation couldn't be deleted", err)
-	// }
 
 	return nil
 }
@@ -314,7 +321,7 @@ func (s *Application) GetFollowingIds(ctx context.Context, userId ct.Id) ([]int6
 	return ids, nil
 }
 
-// returns ten random users that people you follow follow, or are in your groups
+// returns five random users that people you follow follow, or are in your groups
 func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([]models.User, error) {
 	input := fmt.Sprintf("%#v", userId)
 
@@ -344,7 +351,6 @@ func (s *Application) GetFollowSuggestions(ctx context.Context, userId ct.Id) ([
 		avatarMap, failedImageIds, err := s.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return []models.User{}, ce.Wrap(nil, err, input).WithPublic("error retrieving user avatars")
 		} else {
 			for i := range users {
 				users[i].AvatarURL = avatarMap[users[i].AvatarId.Int64()]
@@ -411,34 +417,6 @@ func (s *Application) AreFollowingEachOther(ctx context.Context, req models.Foll
 	tele.Info(ctx, "are following each other: @1", "response", followRelationship)
 	return followRelationship, nil //neither follows the other
 }
-
-// func (s *Application) createPrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-// 	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if atLeastOneIsFollowing != nil && !*atLeastOneIsFollowing { //I need exactly one follower, so false
-// 		err := s.clients.CreatePrivateConversation(ctx, req.FollowerId.Int64(), req.TargetUserId.Int64())
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
-
-// func (s *Application) deletePrivateConversation(ctx context.Context, req models.FollowUserReq) error {
-// 	atLeastOneIsFollowing, err := s.AreFollowingEachOther(ctx, req)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if atLeastOneIsFollowing == nil { //neither follows the other
-// 		err := s.clients.DeleteConversationByExactMembers(ctx, []int64{req.FollowerId.Int64(), req.TargetUserId.Int64()})
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
 
 // ---------------------------------------------------------------------
 // low priority

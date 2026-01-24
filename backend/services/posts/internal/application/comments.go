@@ -265,7 +265,6 @@ func (s *Application) GetCommentsByParentId(ctx context.Context, req models.Enti
 	}
 	if err != nil {
 		tele.Error(ctx, "media retriever failed for @1", "request", commentImageIds, "error", err.Error()) //log error instead of returning
-		//return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 	} else {
 
 		for i := range comments {

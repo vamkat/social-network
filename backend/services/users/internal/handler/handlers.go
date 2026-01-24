@@ -765,7 +765,7 @@ func (s *UsersHandler) RequestJoinGroup(ctx context.Context, req *pb.GroupJoinRe
 	return &emptypb.Empty{}, nil
 }
 
-func (s *UsersHandler) CancelGroupJoinRequest(ctx context.Context, req *pb.GroupJoinRequest) (*emptypb.Empty, error) {
+func (s *UsersHandler) CancelJoinGroupRequest(ctx context.Context, req *pb.GroupJoinRequest) (*emptypb.Empty, error) {
 	tele.Info(ctx, "CancelGroupJoinRequest called with @1", "request", req.String())
 
 	if req == nil {

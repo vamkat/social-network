@@ -112,7 +112,6 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 			imageUrl, err := s.mediaRetriever.GetImage(ctx, u.AvatarId.Int64(), media.FileVariant_THUMBNAIL)
 			if err != nil {
 				tele.Error(ctx, "media retriever failed for @1", "request", u.AvatarId, "error", err.Error()) //log error instead of returning it
-				//return ce.Wrap(nil, err, input).WithPublic("error retrieving images")
 				s.removeFailedImage(ctx, err, u.AvatarId.Int64())
 			} else {
 				u.AvatarURL = imageUrl
