@@ -79,6 +79,10 @@ func (l *logging) log(ctx context.Context, level slog.Level, msg string, args ..
 		return
 	}
 
+	if len(args)%2 != 0 {
+		Error(ctx, "TELE LOG WITH BAD ARGUMENTS FOUND!!: "+fmt.Sprint(args...))
+	}
+
 	argsAlreadyPrinted := make([]bool, (len(args)/2)*2)
 	var messageBuilder strings.Builder
 	callerInfo := functionCallers()
@@ -158,7 +162,11 @@ func kvPairsToAttrs(pairs []any) []slog.Attr {
 		if !ok {
 			key = "invalid_key"
 		}
-		attrs = append(attrs, slog.Any(key, pairs[i+1]))
+		if len(pairs) < i+1 {
+			attrs = append(attrs, slog.Any(key, pairs[i+1]))
+		} else {
+			attrs = append(attrs, slog.Any(key, "MISSING VALUE!"))
+		}
 	}
 	return attrs
 }
