@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar, Globe, UserPlus, UserCheck, UserMinus, Clock, Lock, Check, X, Send } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
 import { followUser } from "@/actions/requests/follow-user";
@@ -22,11 +23,24 @@ export function ProfileHeader({ user, onUnfollow=null }) {
 
     const [userAskedToFollow, setUserAskedToFollow] = useState(user.follow_request_from_profile_owner);
     const [requestLoading, setRequestLoading] = useState(false);
+    const [showMiniHeader, setShowMiniHeader] = useState(false);
+    const headerRef = useRef(null);
 
     const router = useRouter();
-    const setMsgReceiver = useMsgReceiver((state) => state.setMsgReceiver);
 
-    console.log("USER: ", user);
+    // Scroll-aware mini header
+    useEffect(() => {
+        const handleScroll = () => {
+            if (headerRef.current) {
+                const headerBottom = headerRef.current.getBoundingClientRect().bottom;
+                setShowMiniHeader(headerBottom < 0);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+    const setMsgReceiver = useMsgReceiver((state) => state.setMsgReceiver);
 
     const canSend = isFollowing;
 
@@ -150,7 +164,105 @@ export function ProfileHeader({ user, onUnfollow=null }) {
 
     return (
         <>
-            <div className="w-full border-b border-(--border)">
+            {/* Mini Header - appears on scroll */}
+            <AnimatePresence>
+                {showMiniHeader && (
+                    <motion.div
+                        initial={{ y: -100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -100, opacity: 0 }}
+                        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                        className="fixed top-16 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-(--border)/50"
+                    >
+                        <Container>
+                            <div className="flex items-center justify-between py-3">
+                                <div className="flex items-center gap-3">
+                                    {/* Small Avatar */}
+                                    <div className="w-9 h-9 rounded-full overflow-hidden bg-(--muted)/10 border border-(--border)">
+                                        {user.avatar_url ? (
+                                            <img
+                                                src={user.avatar_url}
+                                                alt={user.username}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 text-sm font-bold text-(--muted)">
+                                                {user.first_name?.[0]?.toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Name */}
+                                    <div>
+                                        <p className="font-semibold text-foreground text-sm">
+                                            {user.first_name} {user.last_name}
+                                        </p>
+                                        <p className="text-xs text-(--muted)">@{user.username}</p>
+                                    </div>
+                                </div>
+
+                                {/* Action Button */}
+                                <div className="flex items-center gap-2">
+                                    {user.own_profile ? (
+                                        <button
+                                            onClick={handlePrivacyToggle}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                                                isPublic
+                                                    ? "border-(--accent)/30 bg-(--accent)/5 text-(--accent)"
+                                                    : "border-(--border) text-(--muted)"
+                                            }`}
+                                        >
+                                            {isPublic ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                                            {isPublic ? "Public" : "Private"}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleFollow}
+                                            disabled={isLoading}
+                                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                                                isLoading
+                                                    ? "opacity-70 cursor-wait"
+                                                    : isFollowing
+                                                    ? "bg-(--muted)/10 text-foreground border border-(--border)"
+                                                    : isPending
+                                                    ? "bg-(--muted)/10 text-(--muted) border border-(--border)"
+                                                    : "bg-(--accent) text-white"
+                                            }`}
+                                        >
+                                            {isFollowing ? (
+                                                <>
+                                                    <UserCheck className="w-3.5 h-3.5" />
+                                                    Following
+                                                </>
+                                            ) : isPending ? (
+                                                <>
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    Pending
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <UserPlus className="w-3.5 h-3.5" />
+                                                    Follow
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                    {canSend && (
+                                        <button
+                                            onClick={handleSendMessage}
+                                            className="p-1.5 rounded-full border border-(--border) text-(--muted) hover:text-foreground transition-colors cursor-pointer"
+                                        >
+                                            <Send className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </Container>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Main Header */}
+            <div ref={headerRef} className="w-full border-b border-(--border)">
                 <Container>
                     <div className="py-8">
                         {/* Top Section: Avatar, Name, Actions */}
