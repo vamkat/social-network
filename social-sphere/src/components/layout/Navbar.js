@@ -109,6 +109,10 @@ export default function Navbar() {
                 return updated.sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt));
             });
         } else {
+            if (msg.sender.id === user.id) {
+                console.log("I sent");
+                return;
+            }
             // New conversation - increment unread count
             console.log("[Navbar] Incrementing unread (new conversation)");
             incrementUnreadCount();
@@ -122,7 +126,7 @@ export default function Navbar() {
 
             const newConv = {
                 ConversationId: msg.conversation_id,
-                Interlocutor: result.data?.Interlocutor,
+                Interlocutor: result?.data?.Interlocutor || null,
                 LastMessage: {
                     id: msg.id,
                     message_text: msg.message_text,

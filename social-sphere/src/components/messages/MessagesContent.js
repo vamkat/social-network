@@ -167,28 +167,28 @@ export default function MessagesContent({
         if (isNewConversation && !isOwnMessage) {
             console.log("Fetching new conversation with:", { senderId, convId: msg.conversation_id });
 
-            // const result = await getConvByID({
-            //     interlocutorId: senderId,
-            //     convId: msg.conversation_id,
-            // });
+            const result = await getConvByID({
+                interlocutorId: senderId,
+                convId: msg.conversation_id,
+            });
 
-            // if (result.success && result.data) {
-            //     setConversations((prev) => {
-            //         // Check if already added (race condition prevention)
-            //         const alreadyExists = prev.some((conv) => conv.Interlocutor?.id === senderId);
-            //         console.log("Already exists in conversations:", alreadyExists);
-            //         if (alreadyExists) {
-            //             return prev;
-            //         }
-            //         // Add the new conversation with full data and set UnreadCount
-            //         const newConv = {
-            //             ...result.data,
-            //             UnreadCount: 1,
-            //         };
-            //         console.log("Adding new conversation:", newConv);
-            //         return [newConv, ...prev];
-            //     });
-            // }
+            if (result.success && result.data) {
+                setConversations((prev) => {
+                    // Check if already added (race condition prevention)
+                    const alreadyExists = prev.some((conv) => conv.Interlocutor?.id === senderId);
+                    console.log("Already exists in conversations:", alreadyExists);
+                    if (alreadyExists) {
+                        return prev;
+                    }
+                    // Add the new conversation with full data and set UnreadCount
+                    const newConv = {
+                        ...result.data,
+                        UnreadCount: 1,
+                    };
+                    console.log("Adding new conversation:", newConv);
+                    return [newConv, ...prev];
+                });
+            }
         }
     }, [user?.id]);
 
