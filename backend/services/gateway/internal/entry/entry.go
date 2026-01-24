@@ -112,6 +112,7 @@ func Run() {
 		CacheService,
 		retrieveMedia,
 		3*time.Minute,
+		nil,
 	)
 
 	//

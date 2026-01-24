@@ -94,7 +94,7 @@ func Run() error {
 
 	localCache, err := ristretto.NewCache(&ristretto.Config[ct.Id, *models.User]{
 		NumCounters: 10 * 100_000, // number of keys to track frequency of (10M).
-		MaxCost:     100_000,      // maximum cost of cache (1GB).
+		MaxCost:     100_000,      // maximum cost of cache (100_000 users).
 		BufferItems: 64,           // number of keys per Get buffer.
 	})
 	if err != nil {
@@ -113,8 +113,8 @@ func Run() error {
 		clients.RedisClient,
 		retrieveMedia,
 		3*time.Minute,
+		localCache,
 	)
-	retriveUsers.LocalCache = localCache
 
 	//
 	//

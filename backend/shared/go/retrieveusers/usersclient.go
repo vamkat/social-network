@@ -27,7 +27,7 @@ type UserRetriever struct {
 	cache          RedisCache
 	mediaRetriever *retrievemedia.MediaRetriever
 	ttl            time.Duration
-	LocalCache     *ristretto.Cache[ct.Id, *models.User]
+	localCache     *ristretto.Cache[ct.Id, *models.User]
 }
 
 // UserRetriever provides a function that abstracts the process of populating a map[ct.Id]models.User
@@ -36,8 +36,8 @@ type UserRetriever struct {
 //  1. GetBatchBasicUserInfo, GetBasicUserInfo, RemoveImage functions provided by an initiator that holds a connection to social-network user service.
 //  2. A cache interface that implements GetObj() and SetObj() methods.
 //  3. The retrievemedia package.
-func NewUserRetriever(client UserInfoRetriever, cache *redis_connector.RedisClient, mediaRetriever *retrievemedia.MediaRetriever, ttl time.Duration) *UserRetriever {
-	return &UserRetriever{client: client, cache: cache, mediaRetriever: mediaRetriever, ttl: ttl}
+func NewUserRetriever(client UserInfoRetriever, cache *redis_connector.RedisClient, mediaRetriever *retrievemedia.MediaRetriever, ttl time.Duration, localCache *ristretto.Cache[ct.Id, *models.User]) *UserRetriever {
+	return &UserRetriever{client: client, cache: cache, mediaRetriever: mediaRetriever, ttl: ttl, localCache: localCache}
 }
 
 // RedisCache defines the minimal Redis operations used by the hydrator.

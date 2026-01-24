@@ -80,7 +80,7 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients,
 		txRunner:       txRunner,
 		clients:        clients,
 		mediaRetriever: retrieveMedia,
-		userRetriever:  ur.NewUserRetriever(clients.UserClient, redisConnector, retrieveMedia, 3*time.Minute),
+		userRetriever:  ur.NewUserRetriever(clients.UserClient, redisConnector, retrieveMedia, 3*time.Minute, nil),
 		eventProducer:  notifevents.NewEventProducer(eventProducer),
 	}, nil
 }
