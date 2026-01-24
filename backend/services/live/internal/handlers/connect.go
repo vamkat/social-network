@@ -231,7 +231,7 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			if err != nil {
 				tele.Error(ctx, msgType+", failed to write back to caller @1 @2", "payload", payload, "error", err.Error())
 			} else {
-				tele.Info(ctx, msgType+", deleting @1", "wrote payload back to caller")
+				tele.Info(ctx, msgType+"wrote payload back to caller")
 			}
 		case "group_chat":
 			tele.Info(ctx, msgType+", message received @1", "payload", payload)
