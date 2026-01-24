@@ -4,10 +4,13 @@ import (
 	"context"
 	cm "social-network/shared/gen-go/common"
 	userpb "social-network/shared/gen-go/users"
+	ct "social-network/shared/go/ct"
+	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
 	"time"
 
+	"github.com/dgraph-io/ristretto/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -24,6 +27,7 @@ type UserRetriever struct {
 	cache          RedisCache
 	mediaRetriever *retrievemedia.MediaRetriever
 	ttl            time.Duration
+	LocalCache     *ristretto.Cache[ct.Id, *models.User]
 }
 
 // UserRetriever provides a function that abstracts the process of populating a map[ct.Id]models.User

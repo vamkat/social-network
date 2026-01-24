@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
@@ -34,12 +35,23 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 	ids := userIDs.Unique()
 
 	users := make(map[ct.Id]models.User, len(ids))
-	var missing ct.Ids
 
+	if h.LocalCache != nil {
+		for _, id := range ids {
+			lcu, ok := h.LocalCache.Get(id)
+			if ok && lcu != nil {
+				users[id] = *lcu
+				continue
+			}
+		}
+	}
+
+	var missing ct.Ids
 	// Redis lookup
 	for _, id := range ids {
 		var u models.User
 
+		// Check redis
 		key, err := ct.BasicUserInfoKey{Id: id}.String()
 		if err != nil {
 			tele.Warn(ctx, "failed to construct redis key for id @1: @2", "userId", id, "error", err.Error())
@@ -83,6 +95,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 			}
 		}
 	}
+
 	//========================== STEP 2 : get avatars from media ===============================================
 	// Get image urls for users
 	var imageIds ct.Ids
@@ -122,25 +135,39 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIDs ct.Ids) (map[ct.Id
 		}
 	}
 
+	if h.LocalCache != nil {
+		for _, user := range users {
+			h.LocalCache.SetWithTTL(user.UserId, &user, 1, time.Duration(10*time.Second))
+		}
+	}
+
 	return users, nil
 }
 
-func (h *UserRetriever) GetUser(ctx context.Context, userID ct.Id) (models.User, error) {
-	input := fmt.Sprintf("user retriever: get user: id: %v", userID)
+func (h *UserRetriever) GetUser(ctx context.Context, userId ct.Id) (models.User, error) {
+	input := fmt.Sprintf("user retriever: get user: id: %v", userId)
 
 	//========================== STEP 1 : get user info from users ===============================================
 
-	if err := userID.Validate(); err != nil {
+	if err := userId.Validate(); err != nil {
 		return models.User{}, ce.New(ce.ErrInvalidArgument, err, input)
 	}
 
-	tele.Debug(ctx, "retrieve user called with user id @1", "userId", userID)
+	tele.Debug(ctx, "retrieve user called with user id @1", "userId", userId)
+
+	// Local cache lookup
+	if h.LocalCache != nil {
+		u, ok := h.LocalCache.Get(userId)
+		if ok && u != nil {
+			tele.Debug(ctx, "found user on local cache", "user", *u)
+			return *u, nil
+		}
+	}
 
 	// Redis lookup
-
-	key, err := ct.BasicUserInfoKey{Id: userID}.String()
+	key, err := ct.BasicUserInfoKey{Id: userId}.String()
 	if err != nil {
-		tele.Warn(ctx, "failed to construct redis key for id @1: @2", "userId", userID, "error", err.Error())
+		tele.Warn(ctx, "failed to construct redis key for id @1: @2", "userId", userId, "error", err.Error())
 	}
 	tele.Debug(ctx, "redis key constructed: @1", "redisKey", key)
 
@@ -149,7 +176,7 @@ func (h *UserRetriever) GetUser(ctx context.Context, userID ct.Id) (models.User,
 		tele.Info(ctx, "found user on redis: @1 using key @2", "user", user, "key", key)
 		return user, nil
 	}
-	resp, err := h.client.GetBasicUserInfo(ctx, wrapperspb.Int64(userID.Int64()))
+	resp, err := h.client.GetBasicUserInfo(ctx, wrapperspb.Int64(userId.Int64()))
 	if err != nil {
 		return models.User{}, ce.DecodeProto(err, input)
 	}
@@ -199,6 +226,10 @@ func (h *UserRetriever) GetUser(ctx context.Context, userID ct.Id) (models.User,
 		}
 
 		user.AvatarURL = imageUrl
+	}
+
+	if h.LocalCache != nil {
+		h.LocalCache.SetWithTTL(userId, &user, 1, time.Duration(10*time.Second))
 	}
 
 	return user, nil

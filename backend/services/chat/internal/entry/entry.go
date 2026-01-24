@@ -15,6 +15,7 @@ import (
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
+	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
 	rds "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
@@ -24,6 +25,7 @@ import (
 
 	"syscall"
 
+	"github.com/dgraph-io/ristretto/v2"
 	"github.com/nats-io/nats.go"
 )
 
@@ -90,7 +92,21 @@ func Run() error {
 	// GRPC SERVICES
 	clients := initClients()
 
-	retrieveMedia := retrievemedia.NewMediaRetriever(clients.MediaClient, clients.RedisClient, 3*time.Minute)
+	localCache, err := ristretto.NewCache(&ristretto.Config[ct.Id, *models.User]{
+		NumCounters: 10 * 100_000, // number of keys to track frequency of (10M).
+		MaxCost:     100_000,      // maximum cost of cache (1GB).
+		BufferItems: 64,           // number of keys per Get buffer.
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer localCache.Close()
+
+	retrieveMedia := retrievemedia.NewMediaRetriever(
+		clients.MediaClient,
+		clients.RedisClient,
+		3*time.Minute,
+	)
 
 	retriveUsers := retrieveusers.NewUserRetriever(
 		clients.UserClient,
@@ -98,6 +114,7 @@ func Run() error {
 		retrieveMedia,
 		3*time.Minute,
 	)
+	retriveUsers.LocalCache = localCache
 
 	//
 	//
