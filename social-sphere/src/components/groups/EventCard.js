@@ -21,9 +21,7 @@ export default function EventCard({ event, onDelete, onEdit }) {
     const [error, setError] = useState("");
 
     const isCreator = user && event.user && event.user.id === user.id;
-    console.log("isCreator: ",isCreator);
-    console.log("user: " ,user);
-    console.log("Event: ", event);
+
     // Format event date nicely
     const formatEventDate = (dateString) => {
         const date = new Date(dateString);
