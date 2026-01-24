@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.17.1",
     "lucide-react": "^0.556.0",
     "motion": "^12.23.26",
     "next": "^16.0.10",

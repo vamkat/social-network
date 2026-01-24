@@ -3,7 +3,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Send, MessageCircle, Loader2, User, Wifi, WifiOff } from "lucide-react";
+import { Plus, Send, MessageCircle, Loader2, User, Wifi, WifiOff, Smile } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 import Container from "@/components/layout/Container";
 import CreatePostGroup from "@/components/groups/CreatePostGroup";
 import GroupPostCard from "@/components/groups/GroupPostCard";
@@ -53,8 +54,10 @@ export default function GroupPageContent({ group, firstPosts }) {
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [messagesFetched, setMessagesFetched] = useState(false);
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
+    const emojiPickerRef = useRef(null);
 
     // WebSocket connection
     const {
@@ -196,6 +199,29 @@ export default function GroupPageContent({ group, firstPosts }) {
             setMessageText(msgToSend);
         }
     };
+
+    // Handle emoji selection
+    const onEmojiClick = (emojiData) => {
+        setMessageText((prev) => prev + emojiData.emoji);
+        setShowEmojiPicker(false);
+    };
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        if (showEmojiPicker) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     // Keep handleGroupMessage ref updated
     const handleGroupMessageRef = useRef(handleGroupMessage);
@@ -716,6 +742,26 @@ export default function GroupPageContent({ group, firstPosts }) {
                                 <div className="border-t border-(--border) bg-background">
                                     <Container className="py-4">
                                         <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                                            {/* Emoji Picker */}
+                                            <div className="relative" ref={emojiPickerRef}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                    className="p-3 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all"
+                                                >
+                                                    <Smile className="w-5 h-5" />
+                                                </button>
+                                                {showEmojiPicker && (
+                                                    <div className="absolute bottom-14 left-0 z-50">
+                                                        <EmojiPicker
+                                                            onEmojiClick={onEmojiClick}
+                                                            width={320}
+                                                            height={400}
+                                                            previewConfig={{ showPreview: false }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
                                             <input
                                                 type="text"
                                                 value={messageText}

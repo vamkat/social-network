@@ -6,9 +6,10 @@ import { getConv } from "@/actions/chat/get-conv";
 import { getMessages } from "@/actions/chat/get-messages";
 import { getConvByID } from "@/actions/chat/get-conv-by-id";
 import { useStore } from "@/store/store";
-import { User, Send, MessageCircle, Loader2, ChevronLeft, Wifi, WifiOff } from "lucide-react";
+import { User, Send, MessageCircle, Loader2, ChevronLeft, Wifi, WifiOff, Smile } from "lucide-react";
 import { motion } from "motion/react";
 import { useLiveSocket, ConnectionState } from "@/context/LiveSocketContext";
+import EmojiPicker from "emoji-picker-react";
 import { useMsgReceiver } from "@/store/store";
 
 export default function MessagesContent({
@@ -29,10 +30,12 @@ export default function MessagesContent({
     const [hasMoreMessages, setHasMoreMessages] = useState(() => initialMessages.length >= 20);
     const [messageText, setMessageText] = useState("");
     const [showMobileChat] = useState(!!initialSelectedId);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const selectedConvRef = useRef(null);
     const isLoadingMoreRef = useRef(false);
+    const emojiPickerRef = useRef(null);
     const receiver = useMsgReceiver((state) => state.msgReceiver);
     const clearMsgReceiver = useMsgReceiver((state) => state.clearMsgReceiver);
     const [conversations, setConversations] = useState(() => {
@@ -449,6 +452,29 @@ export default function MessagesContent({
         router.push("/messages");
     };
 
+    // Handle emoji selection
+    const onEmojiClick = (emojiData) => {
+        setMessageText((prev) => prev + emojiData.emoji);
+        setShowEmojiPicker(false);
+    };
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        if (showEmojiPicker) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showEmojiPicker]);
+
     // Load conversations on mount if not provided (skip for firstMessage mode)
     useEffect(() => {
         if (initialConversations.length === 0 && !firstMessage) {
@@ -688,6 +714,26 @@ export default function MessagesContent({
                             className="p-4 border-t border-(--border)"
                         >
                             <div className="flex items-center gap-3">
+                                {/* Emoji Picker */}
+                                <div className="relative" ref={emojiPickerRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                        className="p-3 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all"
+                                    >
+                                        <Smile className="w-5 h-5" />
+                                    </button>
+                                    {showEmojiPicker && (
+                                        <div className="absolute bottom-14 left-0 z-50">
+                                            <EmojiPicker
+                                                onEmojiClick={onEmojiClick}
+                                                width={320}
+                                                height={400}
+                                                previewConfig={{ showPreview: false }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                                 <input
                                     type="text"
                                     value={messageText}
