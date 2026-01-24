@@ -4,6 +4,7 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function getConvByID({interlocutorId , convId}) {
     try {
+        console.log("Calling get conv");
         const url = `/my/chat/${convId}/preview?interlocutor_id=${interlocutorId}`;
 
         console.log("sending to: ", url);

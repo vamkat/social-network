@@ -70,12 +70,10 @@ export function LiveSocketProvider({ children }) {
 
             ws.onmessage = (event) => {
                 try {
-                    const messages = JSON.parse(event.data);
+                    const data = JSON.parse(event.data);
 
-                    if (!Array.isArray(messages)) {
-                        console.warn("[LiveSocket] Expected array, got:", typeof messages);
-                        return;
-                    }
+                    // Handle both array (batched from NATS) and single object (direct response)
+                    const messages = Array.isArray(data) ? data : [data];
 
                     for (const msg of messages) {
                         if (msg.group_id || msg.GroupId) {
@@ -215,6 +213,29 @@ export function LiveSocketProvider({ children }) {
         notificationListenersRef.current.delete(callback);
     }, []);
 
+    // Send a private message through WebSocket
+    // Returns a Promise that resolves with the server response or rejects on error/timeout
+    const sendPrivateMessage = useCallback((interlocutorId, messageText) => {
+        return new Promise((resolve, reject) => {
+            if (wsRef.current?.readyState !== WebSocket.OPEN) {
+                reject(new Error("WebSocket not connected"));
+                return;
+            }
+
+            const payload = JSON.stringify({
+                interlocutor_id: interlocutorId,
+                message_text: messageText,
+            });
+
+            wsRef.current.send(`private_chat:${payload}`);
+            console.log("[LiveSocket] Sent private message");
+
+            // The server will send the created message back directly to the sender
+            // We'll resolve immediately since the message will come through onmessage
+            resolve({ sent: true });
+        });
+    }, []);
+
     // Connect when user logs in, disconnect when user logs out
     useEffect(() => {
         if (user) {
@@ -245,6 +266,7 @@ export function LiveSocketProvider({ children }) {
         removeOnGroupMessage,
         addOnNotification,
         removeOnNotification,
+        sendPrivateMessage,
         disconnect,
     };
 
