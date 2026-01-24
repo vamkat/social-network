@@ -1,11 +1,6 @@
 ======== This week TODOs ========
 
-group chat WS
-
-update navbar msg counts (backend new endpoint??) - still lags if i havent loaded convs.. neeed to check this out
-
-
-
+update navbar msg counts - still bugs if i havent loaded convs.. neeed to check this out
 
 ======== LATER TODOs ========
 
