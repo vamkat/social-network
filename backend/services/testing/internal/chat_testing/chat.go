@@ -66,15 +66,15 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	utils.HandleErr("follow each other", ctx, FollowUser)
 
 	// Group Convsersations
-	// utils.HandleErr("test create group conv", ctx, TestGroupConversation)
-	// utils.HandleErr("test get group messages", ctx, TestGetGroupMessages)
+	utils.HandleErr("test create group conv", ctx, TestGroupConversation)
+	utils.HandleErr("test get group messages", ctx, TestGetGroupMessages)
 
 	// Private Conversations
-	// utils.HandleErr("test get convs count with unread msgs", ctx, TestGetConversationsCountWithUnreadMsgs)
-	// utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
-	// utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
-	// utils.HandleErr("get conversations before", ctx, TestGetConversationsBefore)
-	// utils.HandleErr("get conversations", ctx, TestGetConversations)
+	utils.HandleErr("test get convs count with unread msgs", ctx, TestGetConversationsCountWithUnreadMsgs)
+	utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
+	utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
+	utils.HandleErr("get conversations before", ctx, TestGetConversationsBefore)
+	utils.HandleErr("get conversations", ctx, TestGetConversations)
 	utils.HandleErr("get previous private messages", ctx, TestGetPMs)
 	utils.HandleErr("get next private messages", ctx, TestGetNextPms)
 

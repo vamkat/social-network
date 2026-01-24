@@ -16,12 +16,15 @@ import (
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
+	"social-network/shared/go/models"
 	redis_connector "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
 	"social-network/shared/go/retrieveusers"
 	tele "social-network/shared/go/telemetry"
 	"syscall"
 	"time"
+
+	"github.com/dgraph-io/ristretto/v2"
 )
 
 func Run() {
@@ -105,6 +108,16 @@ func Run() {
 		tele.Fatalf("failed to connect to media service: %v", err)
 	}
 
+	localCache, err := ristretto.NewCache(&ristretto.Config[ct.Id, *models.User]{
+		NumCounters: 10 * 100_000, // number of keys to track frequency of (10M).
+		MaxCost:     100_000,      // maximum cost of cache (100_000 users).
+		BufferItems: 64,           // number of keys per Get buffer.
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer localCache.Close()
+
 	retrieveMedia := retrievemedia.NewMediaRetriever(MediaService, CacheService, 3*time.Minute)
 
 	retriveUsers := retrieveusers.NewUserRetriever(
@@ -112,7 +125,7 @@ func Run() {
 		CacheService,
 		retrieveMedia,
 		3*time.Minute,
-		nil,
+		localCache,
 	)
 
 	//

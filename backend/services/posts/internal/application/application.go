@@ -15,6 +15,7 @@ import (
 	ur "social-network/shared/go/retrieveusers"
 	"time"
 
+	"github.com/dgraph-io/ristretto/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -63,7 +64,7 @@ type ClientsInterface interface {
 }
 
 // NewApplication constructs a new Application with transaction support
-func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients, redisConnector *rds.RedisClient, eventProducer *kafgo.KafkaProducer) (*Application, error) {
+func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients, redisConnector *rds.RedisClient, eventProducer *kafgo.KafkaProducer, localCache *ristretto.Cache[ct.Id, *models.User]) (*Application, error) {
 	var txRunner TxRunner
 	var err error
 	if pool != nil {
@@ -80,7 +81,7 @@ func NewApplication(db *ds.Queries, pool *pgxpool.Pool, clients *client.Clients,
 		txRunner:       txRunner,
 		clients:        clients,
 		mediaRetriever: retrieveMedia,
-		userRetriever:  ur.NewUserRetriever(clients.UserClient, redisConnector, retrieveMedia, 3*time.Minute, nil),
+		userRetriever:  ur.NewUserRetriever(clients.UserClient, redisConnector, retrieveMedia, 3*time.Minute, localCache),
 		eventProducer:  notifevents.NewEventProducer(eventProducer),
 	}, nil
 }

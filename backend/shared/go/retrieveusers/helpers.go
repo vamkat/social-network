@@ -14,7 +14,7 @@ func (h *UserRetriever) GetFromLocal(ctx context.Context, userId ct.Id) (models.
 	if h.localCache != nil {
 		u, ok := h.localCache.Get(userId)
 		if u != nil {
-			tele.Debug(ctx, "found user on local cache", "user", *u)
+			tele.Debug(ctx, "found user on local cache", "username", u.Username)
 			return *u, true
 		} else {
 			return models.User{}, ok

@@ -16,12 +16,15 @@ import (
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/kafgo"
+	"social-network/shared/go/models"
 	rds "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
 	"syscall"
+
+	"github.com/dgraph-io/ristretto/v2"
 )
 
 func Run() error {
@@ -108,7 +111,21 @@ func Run() error {
 
 	clients := client.NewClients(UsersService, MediaService, NotifService)
 
-	app, err := application.NewApplication(ds.New(pool), pool, clients, redisConnector, eventProducer)
+	//
+	//
+	//
+	// Local Cache
+	localCache, err := ristretto.NewCache(&ristretto.Config[ct.Id, *models.User]{
+		NumCounters: 10 * 100_000, // number of keys to track frequency of (10M).
+		MaxCost:     100_000,      // maximum cost of cache (100_000 users).
+		BufferItems: 64,           // number of keys per Get buffer.
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer localCache.Close()
+
+	app, err := application.NewApplication(ds.New(pool), pool, clients, redisConnector, eventProducer, localCache)
 	if err != nil {
 		return fmt.Errorf("failed to create posts application: %v", err)
 	}
