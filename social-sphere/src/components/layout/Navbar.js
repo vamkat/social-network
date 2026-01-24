@@ -42,7 +42,6 @@ export default function Navbar() {
     useEffect(() => {
         const getUnread = async () => {
             const result = await getUnreadCount();
-            console.log("[Navbar] Initial unread count:", result.data?.count);
             setUnreadCount(result.data?.count ?? 0);
         }
         getUnread();
@@ -75,17 +74,12 @@ export default function Navbar() {
             (conv) => conv.Interlocutor?.id === senderId
         );
 
-        console.log("[Navbar] conversations length:", conversations.length, "existingConv:", existingConv);
-
         if (existingConv) {
-            console.log("LOC: ", window.location)
             // Increment unread count if this conversation had no unread messages before
             const isViewingConv = window.location.pathname === `/messages/${existingConv.Interlocutor?.id}`;
             if (existingConv.UnreadCount === 0 && !isViewingConv || !existingConv.UnreadCount && !isViewingConv) {
-                console.log("[Navbar] Incrementing unread (existing conv with 0 unread)");
                 incrementUnreadCount();
             }
-            console.log("Hey")
 
             // Update existing conversation
             setConversations((prev) => {
@@ -113,19 +107,15 @@ export default function Navbar() {
             });
         } else {
             if (msg.sender.id === user.id) {
-                console.log("I sent");
                 return;
             }
             // New conversation - increment unread count
-            console.log("[Navbar] Incrementing unread (new conversation)");
             incrementUnreadCount();
 
             const result = await getConvByID({
                 interlocutorId: msg.sender.id,
                 convId: msg.conversation_id,
             });
-            console.log("CONVERSATION: ", result.data);
-            console.log("NEW MESSAGE: ", msg);
 
             const newConv = {
                 ConversationId: msg.conversation_id,
