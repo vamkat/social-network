@@ -29,7 +29,7 @@ func (h *Handlers) CreatePrivateMsg() http.HandlerFunc {
 
 		userId := claims.UserId
 		type req struct {
-			InterlocutorId ct.Id
+			InterlocutorId ct.Id      `json:"interlocutor_id"`
 			Message        ct.MsgBody `json:"message_body"`
 		}
 		httpReq := req{}
@@ -322,8 +322,9 @@ func (h *Handlers) GetGroupMessagesPag() http.HandlerFunc {
 		boundary, err2 := utils.ParamGet(v, "boundary", ct.Id(0), false)
 		limit, err3 := utils.ParamGet(v, "limit", 100, true)
 		getPrevious, err4 := utils.ParamGet(v, "get_previous", true, false)
+		retrieveUsers, err5 := utils.ParamGet(v, "retrieve_users", true, false)
 
-		if err := errors.Join(err1, err2, err3, err4); err != nil {
+		if err := errors.Join(err1, err2, err3, err4, err5); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
@@ -343,6 +344,7 @@ func (h *Handlers) GetGroupMessagesPag() http.HandlerFunc {
 			MemberId:          userId,
 			BoundaryMessageId: boundary.Int64(),
 			Limit:             int32(limit),
+			RetrieveUsers:     retrieveUsers,
 		})
 
 		httpCode, _ := gorpc.Classify(err)

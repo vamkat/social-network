@@ -47,7 +47,7 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 		ct.CommonKeys(),
 	)
 	// Set Up Users.
-	// Start with a clean users db or make sure the users.json exists and has valid user A and B ids
+	// Start with a clean users db or make sure the users.json exists and has valid user A, B and C ids
 	// 	[
 	//   {
 	//     "user_id": 1,
@@ -56,23 +56,27 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 	//   {
 	//     "user_id": 2,
 	//     "username": "testUserB"
+	//   },
+	//   {
+	//     "user_id": 3,
+	//     "username": "testUserC"
 	//   }
 	// ]
 	utils.HandleErr("register users", ctx, registerOrGetUsers)
 	utils.HandleErr("follow each other", ctx, FollowUser)
 
 	// Group Convsersations
-	// utils.HandleErr("test create group conv", ctx, TestGroupConversation)
-	// utils.HandleErr("test get group conv", ctx, TestGetGroupConv)
+	utils.HandleErr("test create group conv", ctx, TestGroupConversation)
+	utils.HandleErr("test get group messages", ctx, TestGetGroupMessages)
 
 	// Private Conversations
-	// utils.HandleErr("test get convs count with unread msgs", ctx, TestGetConversationsCountWithUnreadMsgs)
-	// utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
-	// utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
+	utils.HandleErr("test get convs count with unread msgs", ctx, TestGetConversationsCountWithUnreadMsgs)
+	utils.HandleErr("test unread conversations", ctx, TestUnreadCount)
+	utils.HandleErr("send msg to each other", ctx, TestCreateMessage)
 	utils.HandleErr("get conversations before", ctx, TestGetConversationsBefore)
-	// utils.HandleErr("get conversations", ctx, TestGetConversations)
-	// utils.HandleErr("get previous private messages", ctx, TestGetPMs)
-	// utils.HandleErr("get next private messages", ctx, TestGetNextPms)
+	utils.HandleErr("get conversations", ctx, TestGetConversations)
+	utils.HandleErr("get previous private messages", ctx, TestGetPMs)
+	utils.HandleErr("get next private messages", ctx, TestGetNextPms)
 
 	return nil
 }
@@ -479,7 +483,7 @@ func TestGroupConversation(ctx context.Context) error {
 	return nil
 }
 
-func TestGetGroupConv(ctx context.Context) error {
+func TestGetGroupMessages(ctx context.Context) error {
 	msgs, err := ChatService.GetPreviousGroupMessages(ctx,
 		&chat.GetGroupMessagesRequest{
 			GroupId:           1,
@@ -491,6 +495,7 @@ func TestGetGroupConv(ctx context.Context) error {
 		return err
 	}
 	fmt.Printf("fetched group msg: %v", ce.FormatValue(mapping.MapGroupMessagesFromProto(msgs.Messages)))
+
 	msgs, err = ChatService.GetPreviousGroupMessages(ctx,
 		&chat.GetGroupMessagesRequest{
 			GroupId:           1,
