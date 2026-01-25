@@ -461,7 +461,7 @@ func (a *Application) publishNotificationToNATS(ctx context.Context, notificatio
 	}
 
 	// Publish to the user-specific NATS subject
-	subject := ct.NotificationKey(notification.UserID)
+	subject := ct.UserKey(notification.UserID)
 	err = a.NatsConn.Publish(subject, notificationJSON)
 	if err != nil {
 		// Log the error but don't fail the notification creation
@@ -613,7 +613,7 @@ func (a *Application) publishNotificationDeletionToNATS(ctx context.Context, not
 	}
 
 	// Publish to the user-specific NATS subject for notification deletions
-	subject := ct.NotificationDeletionKey(userID)
+	subject := ct.UserKey(userID)
 	err = a.NatsConn.Publish(subject, deletionJSON)
 	if err != nil {
 		// Log the error but don't fail the notification deletion

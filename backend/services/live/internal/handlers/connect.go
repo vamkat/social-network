@@ -102,7 +102,7 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 	defer catchPanic(ctx, "listener")
 	subcriptions := make(map[string]*nats.Subscription)
 	tele.Info(ctx, "websocket listener started for connection @1", "connection", connectionId)
-	key := ct.PrivateMessageKey(clientId)
+	key := ct.UserKey(clientId)
 	sub, err := h.Nats.Subscribe(key, handler)
 	if err != nil {
 		tele.Error(ctx, "websocket subscription @1", "error", err.Error())
@@ -180,7 +180,7 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 				tele.Error(ctx, msgType+", invalid @1 @2", "groupId", payload, "error", err.Error())
 				continue
 			}
-			sub, err := h.Nats.Subscribe(ct.GroupMessageKey(id.Int64()), handler)
+			sub, err := h.Nats.Subscribe(ct.GroupKey(id.Int64()), handler)
 			if err != nil {
 				tele.Error(ctx, msgType+", websocket subscription @1", "error", err.Error())
 				continue
@@ -311,6 +311,7 @@ func (h *Handlers) websocketSender(ctx context.Context, channel <-chan []byte, c
 	for {
 		select {
 		case message, ok := <-channel:
+			tele.Info(ctx, "received message from nats, to forward to user's websocket. @1", "message", string(message))
 			if !ok {
 				tele.Error(ctx, "websocket channel closed")
 				return //TODO check if ok

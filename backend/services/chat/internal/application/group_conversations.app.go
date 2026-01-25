@@ -46,7 +46,7 @@ func (c *ChatService) CreateMessageInGroup(ctx context.Context,
 		tele.Error(ctx, "failed to publish group message to nats: @1", "error", err.Error())
 	}
 
-	err = c.NatsConn.Publish(ct.GroupMessageKey(res.GroupId.Int64()), messageBytes)
+	err = c.NatsConn.Publish(ct.GroupKey(res.GroupId.Int64()), messageBytes)
 	if err != nil {
 		err = ce.New(ce.ErrInternal, err, input)
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())

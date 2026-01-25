@@ -135,7 +135,7 @@ func (c *ChatService) CreatePrivateMessage(ctx context.Context,
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())
 	}
 
-	err = c.NatsConn.Publish(ct.PrivateMessageKey(arg.InterlocutorId), messageBytes)
+	err = c.NatsConn.Publish(ct.UserKey(arg.InterlocutorId), messageBytes)
 	if err != nil {
 		err = ce.New(ce.ErrInternal, err, input)
 		tele.Error(ctx, "failed to publish private message to nats: @1", "error", err.Error())

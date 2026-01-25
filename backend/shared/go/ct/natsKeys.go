@@ -2,18 +2,10 @@ package ct
 
 import "fmt"
 
-func PrivateMessageKey(receiverId any) string {
-	return fmt.Sprintf("dm.%v", receiverId)
+func UserKey(receiverId any) string {
+	return fmt.Sprintf("user.%v", receiverId)
 }
 
-func GroupMessageKey(groupId any) string {
+func GroupKey(groupId any) string {
 	return fmt.Sprintf("grm.%v", groupId)
-}
-
-func NotificationKey(receiverId any) string {
-	return fmt.Sprintf("ntf.%v", receiverId)
-}
-
-func NotificationDeletionKey(receiverId any) string {
-	return fmt.Sprintf("ntfd.%v", receiverId)
 }
