@@ -251,7 +251,7 @@ func (s *Application) UpdateUserProfile(ctx context.Context, req models.UpdatePr
 
 	//delete redis basic user info if exists
 
-	key, err := ct.BasicUserInfoKey{Id: req.UserId}.String()
+	key, err := ct.BasicUserInfoKey{Id: req.UserId}.GenKey()
 	_ = s.clients.Del(ctx, key)
 	if err != nil {
 		tele.Warn(ctx, "could not delete basic user info for user @1 using key @2", "userId", req.UserId, "key", key)

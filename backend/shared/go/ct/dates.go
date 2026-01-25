@@ -111,6 +111,10 @@ func ParseDateOfBirth(s string) (DateOfBirth, error) {
 	return dob, nil
 }
 
+func (d DateOfBirth) String() string {
+	return fmt.Sprintf("%v", time.Time(d))
+}
+
 // ------------------------------------------------------------
 // EventDateTime
 // ------------------------------------------------------------
@@ -191,6 +195,10 @@ func (edt EventDateTime) ToProto() *timestamppb.Timestamp {
 	return timestamppb.New(time.Time(edt))
 }
 
+func (edt EventDateTime) String() string {
+	return fmt.Sprintf("%v", time.Time(edt))
+}
+
 // ------------------------------------------------------------
 // Generic Date Time
 // ------------------------------------------------------------
@@ -207,8 +215,8 @@ func (edt EventDateTime) ToProto() *timestamppb.Timestamp {
 type GenDateTime time.Time
 
 // Marshal to RFC3339
-func (g GenDateTime) MarshalJSON() ([]byte, error) {
-	t := time.Time(g)
+func (edt GenDateTime) MarshalJSON() ([]byte, error) {
+	t := time.Time(edt)
 	if t.IsZero() || t.Unix() == 0 {
 		return []byte("null"), nil
 	}
@@ -216,14 +224,14 @@ func (g GenDateTime) MarshalJSON() ([]byte, error) {
 }
 
 // Unmarshal from RFC3339 string
-func (g *GenDateTime) UnmarshalJSON(data []byte) error {
+func (edt *GenDateTime) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	if s == "" {
-		*g = GenDateTime(time.Time{})
+		*edt = GenDateTime(time.Time{})
 		return nil
 	}
 
@@ -232,12 +240,12 @@ func (g *GenDateTime) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*g = GenDateTime(t.UTC())
+	*edt = GenDateTime(t.UTC())
 	return nil
 }
 
-func (g GenDateTime) Validate() error {
-	t := time.Time(g)
+func (edt GenDateTime) Validate() error {
+	t := time.Time(edt)
 	if t.IsZero() || t.Unix() == 0 {
 		return fmt.Errorf("%w: zero date", ErrValidation)
 	}
@@ -245,29 +253,29 @@ func (g GenDateTime) Validate() error {
 }
 
 // Scan implements the sql.Scanner interface
-func (g *GenDateTime) Scan(src any) error {
+func (edt *GenDateTime) Scan(src any) error {
 	if src == nil {
-		*g = GenDateTime(time.Time{})
+		*edt = GenDateTime(time.Time{})
 		return nil
 	}
 
 	switch t := src.(type) {
 	case time.Time:
-		*g = GenDateTime(t) // store exactly as DB returns it
+		*edt = GenDateTime(t) // store exactly as DB returns it
 		return nil
 	case []byte:
 		parsed, err := time.Parse(time.RFC3339Nano, string(t))
 		if err != nil {
 			return err
 		}
-		*g = GenDateTime(parsed)
+		*edt = GenDateTime(parsed)
 		return nil
 	case string:
 		parsed, err := time.Parse(time.RFC3339Nano, t)
 		if err != nil {
 			return err
 		}
-		*g = GenDateTime(parsed)
+		*edt = GenDateTime(parsed)
 		return nil
 	default:
 		return fmt.Errorf("cannot scan %T into GenDateTime", src)
@@ -275,25 +283,25 @@ func (g *GenDateTime) Scan(src any) error {
 }
 
 // Value implements the driver.Valuer interface
-func (g GenDateTime) Value() (driver.Value, error) {
-	if err := g.Validate(); err != nil {
+func (edt GenDateTime) Value() (driver.Value, error) {
+	if err := edt.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid GenDateTime: %w", err) // SQL NULL for invalid timestamps
 	}
-	return time.Time(g), nil // store exactly as is
+	return time.Time(edt), nil // store exactly as is
 }
 
 // Helper to get time.Time if needed
-func (g GenDateTime) Time() time.Time {
-	return time.Time(g)
+func (edt GenDateTime) Time() time.Time {
+	return time.Time(edt)
 }
 
 // Helper to parse time.Time value to proto *timestamppb.Timestamp
-func (g GenDateTime) ToProto() *timestamppb.Timestamp {
-	if g.Time().IsZero() {
+func (edt GenDateTime) ToProto() *timestamppb.Timestamp {
+	if edt.Time().IsZero() {
 		return nil
 	}
 
-	return timestamppb.New(time.Time(g))
+	return timestamppb.New(time.Time(edt))
 }
 
 func (g GenDateTime) String() string {

@@ -8,11 +8,15 @@ type BasicUserInfoKey struct {
 	Id Id
 }
 
-func (k BasicUserInfoKey) String() (string, error) {
+func (k BasicUserInfoKey) GenKey() (string, error) {
 	if err := k.Id.Validate(); err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("basic_user_info:%d", k.Id), nil
+}
+
+func (k BasicUserInfoKey) String() string {
+	return fmt.Sprintf("basic_user_info:%d", k.Id)
 }
 
 type ImageKey struct {
@@ -20,11 +24,15 @@ type ImageKey struct {
 	Id      Id
 }
 
-func (k ImageKey) String() (string, error) {
+func (k ImageKey) GenKey() (string, error) {
 	if err := ValidateStruct(k); err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("img_%s:%d", k.Variant, k.Id), nil
+}
+
+func (k ImageKey) String() string {
+	return fmt.Sprintf("img_%s:%d", k.Variant, k.Id)
 }
 
 type IsGroupMemberKey struct {
@@ -32,9 +40,13 @@ type IsGroupMemberKey struct {
 	UserId  Id
 }
 
-func (im IsGroupMemberKey) String() (string, error) {
-	if err := ValidateStruct(im); err != nil {
+func (k IsGroupMemberKey) GenKey() (string, error) {
+	if err := ValidateStruct(k); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("is_group:%d.member:%d", im.GroupId.Int64(), im.UserId.Int64()), nil
+	return fmt.Sprintf("is_group:%d.member:%d", k.GroupId.Int64(), k.UserId.Int64()), nil
+}
+
+func (k IsGroupMemberKey) String() string {
+	return fmt.Sprintf("is_group:%d.member:%d", k.GroupId.Int64(), k.UserId.Int64())
 }

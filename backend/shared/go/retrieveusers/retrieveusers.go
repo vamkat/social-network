@@ -2,12 +2,10 @@ package retrieveusers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	cm "social-network/shared/gen-go/common"
 	"social-network/shared/gen-go/media"
-	userpb "social-network/shared/gen-go/users"
 	ce "social-network/shared/go/commonerrors"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
@@ -92,7 +90,6 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIds ct.Ids) (map[ct.Id
 		imageMap, imagesToDelete, err := h.mediaRetriever.GetImages(ctx, imageIds, media.FileVariant_THUMBNAIL)
 		if err != nil {
 			tele.Error(ctx, "media retriever failed for @1", "request", imageIds, "error", err.Error()) //log error instead of returning
-			//return nil, ce.Wrap(nil, err, input) // keep the code from retrieve media by wrapping the error and add errMsg for context
 		} else {
 			for _, id := range usersWithAvatarsToFetch {
 				u := users[id]
@@ -104,16 +101,7 @@ func (h *UserRetriever) GetUsers(ctx context.Context, userIds ct.Ids) (map[ct.Id
 		}
 
 		if len(imagesToDelete) > 0 {
-			msg := &userpb.FailedImageIds{
-				ImgIds: imagesToDelete,
-			}
-			go func(m *userpb.FailedImageIds) {
-				tele.Info(ctx, "removing avatar ids @1 from users", "failedImageIds", imagesToDelete)
-				_, err := h.client.RemoveImages(context.WithoutCancel(ctx), m)
-				if err != nil {
-					tele.Warn(ctx, "failed  to delete failed images @1 from users: @2", "failedImageIds", imagesToDelete, "error", err.Error())
-				}
-			}(msg)
+			go h.removeFailedImages(ctx, imagesToDelete)
 		}
 	}
 
@@ -172,25 +160,13 @@ func (h *UserRetriever) GetUser(ctx context.Context, userId ct.Id) (models.User,
 		// Use shared MediaRetriever for images (handles caching and fetching)
 		imageUrl, err := h.mediaRetriever.GetImage(ctx, user.AvatarId.Int64(), media.FileVariant_THUMBNAIL)
 		if err != nil {
-			var commonError *ce.Error
-			if errors.As(err, &commonError) {
-				if err.(*ce.Error).IsClass(ce.ErrNotFound) {
-					msg := &userpb.FailedImageIds{
-						ImgIds: []int64{user.AvatarId.Int64()},
-					}
-					go func(m *userpb.FailedImageIds) {
-						tele.Info(ctx, "removing avatar id @1 for user @2", "failedImageId", user.AvatarId, "userId", user.UserId)
-						_, err := h.client.RemoveImages(context.WithoutCancel(ctx), m)
-						if err != nil {
-							tele.Warn(ctx, "failed to delete failed image @1 from users: @2", "failedImageId", user.AvatarId, "error", err.Error())
-						}
-					}(msg)
-					return models.User{}, ce.Wrap(nil, err, input) // keep the code from retrieve media by wrapping the error and add errMsg for context
-				}
+			if err.IsClass(ce.ErrNotFound) {
+				go h.removeFailedImages(ctx, []int64{user.AvatarId.Int64()})
 			}
+		} else {
+			user.AvatarURL = imageUrl
 		}
 
-		user.AvatarURL = imageUrl
 	}
 
 	h.AddToRedis(ctx, user)

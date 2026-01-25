@@ -39,7 +39,7 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 
 	// Redis lookup for images
 	for _, imageId := range uniqueImageIds {
-		key, err := ct.ImageKey{Id: imageId, Variant: ctVariant}.String()
+		key, err := ct.ImageKey{Id: imageId, Variant: ctVariant}.GenKey()
 		if err != nil {
 			tele.Warn(ctx, "failed to construct redis key for image @1: @2", "imageId", imageId, "error", err.Error())
 			missingImages = append(missingImages, imageId)
@@ -73,7 +73,7 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 
 		// Cache the new results
 		for id, url := range resp.DownloadUrls {
-			key, err := ct.ImageKey{Id: ct.Id(id), Variant: ctVariant}.String()
+			key, err := ct.ImageKey{Id: ct.Id(id), Variant: ctVariant}.GenKey()
 			if err == nil {
 				_ = h.cache.SetStr(ctx, key, url, h.ttl)
 			} else {
@@ -127,7 +127,7 @@ func (h *MediaRetriever) GetImages(ctx context.Context, imageIds ct.Ids, variant
 // }
 
 // GetImage returns a single image url, using cache + batch RPC.
-func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant media.FileVariant) (string, error) {
+func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant media.FileVariant) (string, *ce.Error) {
 	input := fmt.Sprintf("id %v, variant: %v", imageId, variant)
 
 	if err := ct.Id(imageId).Validate(); err != nil {
@@ -140,7 +140,7 @@ func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant me
 	}
 
 	// Redis lookup for images
-	key, err := ct.ImageKey{Id: ct.Id(imageId), Variant: ctVariant}.String()
+	key, err := ct.ImageKey{Id: ct.Id(imageId), Variant: ctVariant}.GenKey()
 	if err != nil {
 		tele.Warn(ctx, "failed to construct redis key for image @1: @1", "imageId", imageId, "error", err.Error())
 	}
@@ -162,7 +162,7 @@ func (h *MediaRetriever) GetImage(ctx context.Context, imageId int64, variant me
 	//if err, check if need to delete image
 
 	// Cache the new result
-	key, err = ct.ImageKey{Id: ct.Id(imageId), Variant: ctVariant}.String()
+	key, err = ct.ImageKey{Id: ct.Id(imageId), Variant: ctVariant}.GenKey()
 	if err == nil {
 		_ = h.cache.SetStr(ctx, key, resp.DownloadUrl, h.ttl)
 	} else {

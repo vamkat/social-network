@@ -2,6 +2,7 @@ package retrieveusers
 
 import (
 	"context"
+	userpb "social-network/shared/gen-go/users"
 	ct "social-network/shared/go/ct"
 	"social-network/shared/go/models"
 	tele "social-network/shared/go/telemetry"
@@ -32,7 +33,7 @@ func (h *UserRetriever) SetToLocal(ctx context.Context, user models.User) {
 func (h *UserRetriever) GetFromRedis(ctx context.Context, id ct.Id) (models.User, error) {
 	var u models.User
 	// Check redis
-	key, err := ct.BasicUserInfoKey{Id: id}.String()
+	key, err := ct.BasicUserInfoKey{Id: id}.GenKey()
 	if err != nil {
 		tele.Warn(ctx, "failed to construct redis key for id @1: @2", "userId", id, "error", err.Error())
 		return u, err
@@ -47,7 +48,7 @@ func (h *UserRetriever) GetFromRedis(ctx context.Context, id ct.Id) (models.User
 }
 
 func (h *UserRetriever) AddToRedis(ctx context.Context, user models.User) error {
-	key, err := ct.BasicUserInfoKey{Id: user.UserId}.String()
+	key, err := ct.BasicUserInfoKey{Id: user.UserId}.GenKey()
 	if err == nil {
 		_ = h.cache.SetObj(ctx,
 			key,
@@ -60,4 +61,16 @@ func (h *UserRetriever) AddToRedis(ctx context.Context, user models.User) error 
 		return err
 	}
 	return nil
+}
+
+func (h *UserRetriever) removeFailedImages(ctx context.Context, imgIds []int64) {
+	req := &userpb.FailedImageIds{
+		ImgIds: imgIds,
+	}
+
+	tele.Info(ctx, "removing avatar ids @1 from users", "failedImageIds", imgIds)
+	_, err := h.client.RemoveImages(context.WithoutCancel(ctx), req)
+	if err != nil {
+		tele.Warn(ctx, "failed  to delete failed images @1 from users: @2", "failedImageIds", imgIds, "error", err.Error())
+	}
 }
