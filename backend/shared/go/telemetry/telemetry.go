@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
 	telemeter *telemetry
+	tracer    *tracing
 )
 
 func init() {
@@ -63,6 +67,13 @@ func Fatalf(format string, args ...any) {
 	os.Exit(1)
 }
 
+func TraceStart(ctx context.Context, message string, args any) (context.Context, trace.Span) {
+	return telemeter.tracer.tracer.Start(ctx, message,
+		trace.WithTimestamp(time.Now()),
+		trace.WithAttributes(),
+	)
+}
+
 //TODO handle cancillation from ctx?
 
 // actually activates the functionality of open telemetry
@@ -78,9 +89,11 @@ func InitTelemetry(ctx context.Context, serviceName string, servicePrefix string
 	slog.SetDefault(logger.slog)
 	// rollCnt metric.Int64Counter
 
+	tracer := NewTracer(serviceName)
+
 	telemeter = &telemetry{
 		logger:      logger,
-		tracer:      nil,
+		tracer:      tracer,
 		meterer:     nil,
 		serviceName: serviceName,
 		enableDebug: enableDebug,

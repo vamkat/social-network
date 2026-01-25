@@ -10,9 +10,9 @@ import (
 	"time"
 
 	db "social-network/services/notifications/internal/db/sqlc"
+	pb "social-network/shared/gen-go/notifications"
 	ct "social-network/shared/go/ct"
 	tele "social-network/shared/go/telemetry"
-	pb "social-network/shared/gen-go/notifications"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"

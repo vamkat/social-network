@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
@@ -29,6 +30,7 @@ func GetGRpcClient[T any](constructor func(grpc.ClientConnInterface) T, fullAddr
 		return *new(T), err
 	}
 	dialOpts := []grpc.DialOption{
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]	}`),
 		grpc.WithConnectParams(grpc.ConnectParams{

@@ -16,7 +16,6 @@ const (
 	ReqTimestamp     = "timestamp"
 	ReqID            = "request-id"
 	UserId           = "user-id"
-	TraceId          = "trace-id"
 	IP               = "ip"
 )
 
@@ -30,7 +29,7 @@ func (ctxk *ctxKeys) GetKeys() []CtxKey {
 
 // Common keys that will by default be propagated by all services
 var commonKeys = ctxKeys{
-	keys: []CtxKey{UserId, ReqID, TraceId, IP},
+	keys: []CtxKey{UserId, ReqID, IP},
 }
 
 // returns the common keys, you can add more if you want

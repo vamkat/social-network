@@ -374,9 +374,26 @@ services:
   #
   #
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  # VICTORIA LOGS SERVICE: for log aggregation and storage
+  # VICTORIA LOGS SERVICE: for log aggregation, storage and querying
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
+  victoria-traces:
+    networks:
+        - social-network
+    image: docker.io/victoriametrics/victoria-traces:latest
+    ports:
+      - "10428:10428"
+    volumes:
+      - victoria-traces-data:/victoria-traces-data
+    command:
+      - -storageDataPath=/victoria-logs-data
+    restart: unless-stopped
+
+  #
+  #
+  #
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # VICTORIA TRACES SERVICE: for trace aggregation, storage and querying
+  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   victoria-logs:
     networks:
         - social-network
@@ -580,6 +597,7 @@ volumes:
   media-db-data:
   minio_data:
   victoria-logs-data:
+  victoria-traces-data:
   alloy-data:
   grafana-storage: {}
 

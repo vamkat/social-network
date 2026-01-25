@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -35,6 +36,7 @@ func CreateGRpcServer[T any](register func(grpc.ServiceRegistrar, T), handler T,
 		return nil, nil, err
 	}
 	grpcServer := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()), //TODO check that this works? and opts
 		grpc.UnaryInterceptor(customUnaryInterceptor),
 		grpc.StreamInterceptor(customStreamInterceptor),
 	)

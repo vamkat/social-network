@@ -8,8 +8,8 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/log"
@@ -27,6 +27,7 @@ import (
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 // It also sets the global providers, that will at a later step be used to initialize the logger, tracer and meterer
 func SetupOTelSDK(ctx context.Context, collectorAddress string, serviceName string) (func(context.Context) error, error) {
+	// otlp.
 	var shutdownFuncs []func(context.Context) error
 	var err error
 
@@ -52,13 +53,13 @@ func SetupOTelSDK(ctx context.Context, collectorAddress string, serviceName stri
 	otel.SetTextMapPropagator(prop)
 
 	// // Set up trace provider.
-	// tracerProvider, err := NewTracerProvider()
-	// if err != nil {
-	// 	handleErr(err)
-	// 	return shutdown, err
-	// }
-	// shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
-	// otel.SetTracerProvider(tracerProvider)
+	tracerProvider, err := NewTracerProvider(ctx, collectorAddress, serviceName)
+	if err != nil {
+		handleErr(err)
+		return shutdown, err
+	}
+	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
+	otel.SetTracerProvider(tracerProvider)
 
 	// // Set up meter provider.
 	// meterProvider, err := NewMeterProvider()
@@ -87,21 +88,6 @@ func NewPropagator() propagation.TextMapPropagator {
 		propagation.TraceContext{},
 		propagation.Baggage{},
 	)
-}
-
-func NewTracerProvider() (*trace.TracerProvider, error) {
-	traceExporter, err := stdouttrace.New(
-		stdouttrace.WithPrettyPrint())
-	if err != nil {
-		return nil, err
-	}
-
-	tracerProvider := trace.NewTracerProvider(
-		trace.WithBatcher(traceExporter,
-			// Default is 5s. Set to 1s for demonstrative purposes.
-			trace.WithBatchTimeout(5*time.Second)),
-	)
-	return tracerProvider, nil
 }
 
 func NewMeterProvider() (*metric.MeterProvider, error) {
@@ -138,14 +124,6 @@ func NewMeterProvider() (*metric.MeterProvider, error) {
 
 func NewLoggerProvider(ctx context.Context, collectorAddress string, serviceName string) (*log.LoggerProvider, error) {
 
-	//TODO add service name and set up versioning?
-	resource := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceName(serviceName),
-		semconv.ServiceVersion("my_version_TBD"),
-		semconv.HostName("host_TBD"), // TODO kubernetes name or docker something
-	)
-
 	logExporter, err := otlploggrpc.New(
 		ctx,
 		otlploggrpc.WithEndpointURL("dns://"+collectorAddress),
@@ -156,6 +134,14 @@ func NewLoggerProvider(ctx context.Context, collectorAddress string, serviceName
 		return nil, fmt.Errorf("failed to create log exporter: %w", err)
 	}
 
+	//TODO add service name and set up versioning?
+	resource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion("my_version_TBD"),
+		semconv.HostName("host_TBD"), // TODO kubernetes name or docker something
+	)
+
 	processor := log.NewBatchProcessor(logExporter)
 
 	loggerProvider := log.NewLoggerProvider(
@@ -163,4 +149,32 @@ func NewLoggerProvider(ctx context.Context, collectorAddress string, serviceName
 		log.WithResource(resource),
 	)
 	return loggerProvider, nil
+}
+
+func NewTracerProvider(ctx context.Context, collectorAddress string, serviceName string) (*trace.TracerProvider, error) {
+	traceExporter, err := otlptracegrpc.New(
+		ctx,
+		otlptracegrpc.WithEndpointURL("dns://"+collectorAddress),
+		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithTimeout(5*time.Second),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exporter: %w", err)
+	}
+
+	//TODO add service name and set up versioning?
+	resource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion("my_version_TBD"),
+		semconv.HostName("host_TBD"), // TODO kubernetes name or docker something
+	)
+
+	tracerProvider := trace.NewTracerProvider(
+		trace.WithBatcher(traceExporter,
+			trace.WithBatchTimeout(1*time.Second)),
+		trace.WithResource(resource),
+	)
+
+	return tracerProvider, nil
 }

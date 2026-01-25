@@ -20,15 +20,10 @@ func (e *EventCreator) CreateAndSendNotificationEvent(ctx context.Context, event
 		tele.Error(ctx, "could not get request id")
 		requestId = "unknown"
 	}
-	traceId, ok := ctx.Value(ct.TraceId).(string)
-	if !ok {
-		tele.Error(ctx, "could not get trace id")
-		traceId = "unknown"
-	}
 
+	//TODO figure out otel traces
 	metadata := map[string]string{
 		"request_id": requestId,
-		"trace_id":   traceId,
 	}
 
 	// Populate common fields

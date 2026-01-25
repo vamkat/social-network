@@ -12,6 +12,8 @@ import (
 	tele "social-network/shared/go/telemetry"
 
 	"strings"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type ratelimiter interface {
@@ -93,11 +95,10 @@ func (m *MiddleSystem) AllowedMethod(methods ...string) *MiddleSystem {
 	return m
 }
 
-// EnrichContext adds request ID and trace ID to the request context
+// EnrichContext adds metadata to the request context
 func (m *MiddleSystem) EnrichContext() *MiddleSystem {
 	m.add(func(w http.ResponseWriter, r *http.Request) (bool, *http.Request) {
 		r = utils.RequestWithValue(r, ct.ReqID, utils.GenUUID())
-		r = utils.RequestWithValue(r, ct.TraceId, utils.GenUUID())
 		r = utils.RequestWithValue(r, ct.IP, r.RemoteAddr)
 		return true, r
 	})
@@ -212,7 +213,9 @@ func getRemoteIpKey(r *http.Request) (string, error) {
 // Finalize constructs the final http.HandlerFunc with all middleware applied and adds them to the mux
 func (m *MiddleSystem) Finalize(next http.HandlerFunc) {
 	for _, method := range m.methods {
-		m.mux.HandleFunc(method+" "+m.endpoint, func(w http.ResponseWriter, r *http.Request) {
+
+		//create a custom handler func that runs our custom middleware
+		handlerFunc := func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if rec := recover(); rec != nil {
 					tele.Error(r.Context(), "panic occured in @1", r.URL)
@@ -229,6 +232,26 @@ func (m *MiddleSystem) Finalize(next http.HandlerFunc) {
 
 			tele.Info(r.Context(), "middleware finished, calling @1", "endpoint", r.URL)
 			next.ServeHTTP(w, r)
-		})
+		}
+
+		//create this struct, that conforms to the handler interface, which will just trigger our custom handler
+		//this is used so that we can use our custom handler function with otel's handler that automated some stuff, like trace loading to context and something about metrics
+		applier := handlerApplier{
+			handle: handlerFunc,
+		}
+
+		//creating the otel handler based on our applier
+		otelledHandler := otelhttp.NewHandler(applier, m.endpoint)
+
+		//passing the handler function to the mux
+		m.mux.HandleFunc(method+" "+m.endpoint, otelledHandler.ServeHTTP)
 	}
+}
+
+type handlerApplier struct {
+	handle func(http.ResponseWriter, *http.Request)
+}
+
+func (a handlerApplier) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	a.handle(w, r)
 }

@@ -1,19 +1,24 @@
-
 logging {
   level  = "info"
   format = "logfmt"
 }
 
-otelcol.exporter.otlphttp "victoriaExporter" {
+otelcol.exporter.otlphttp "victoriaLogs" {
   client {
-    endpoint = coalesce(sys.env("VICTORIA_ADDRESS"), "http://victoria-logs:9428/insert/opentelemetry/")
+    endpoint = coalesce(sys.env("VICTORIA_LOGS_ADDRESS"), "http://victoria-logs:9428/insert/opentelemetry/")
+  }
+}
+
+otelcol.exporter.otlphttp "victoriaTraces" {
+  client {
+    endpoint = coalesce(sys.env("VICTORIA_TRACES_ADDRESS"), "http://victoria-traces:10428/insert/opentelemetry/")
   }
 }
 
 otelcol.processor.batch "default" {
   output {
-    logs    = [otelcol.exporter.otlphttp.victoriaExporter.input]
-    traces = []
+    logs    = [otelcol.exporter.otlphttp.victoriaLogs.input]
+    traces  = [otelcol.exporter.otlphttp.victoriaTraces.input]
     metrics = []
   }
 }
@@ -24,7 +29,7 @@ otelcol.processor.memory_limiter "default" {
 
   output {
     logs    = [otelcol.processor.batch.default.input]
-    traces = []
+    traces  = [otelcol.processor.batch.default.input]
     metrics = []
   }
 }
@@ -32,12 +37,11 @@ otelcol.processor.memory_limiter "default" {
 otelcol.receiver.otlp "default" {
   grpc {
     endpoint = "0.0.0.0:4317"
-  }
+   }
 
   output {
     logs    = [otelcol.processor.batch.default.input]
-    traces = []
+    traces  = [otelcol.processor.batch.default.input]
     metrics = []
   }
 }
-
