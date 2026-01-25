@@ -16,8 +16,6 @@ export async function sendGroupMsg({ groupId, msg }) {
             }
         });
 
-        console.log("what???", apiResp);
-
         return { success: true, ...apiResp };
 
     } catch (error) {

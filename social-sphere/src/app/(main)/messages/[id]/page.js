@@ -28,8 +28,7 @@ export default async function ConversationPage({ params }) {
             // Messages come newest first, reverse for display
             initialMessages = messagesResult.data.Messages.reverse();
         }
-        // mark it as read
-        console.log("SELECTED: ", selectedConversation);
+
         const res = await markAsRead({convID: selectedConversation.ConversationId, lastMsgID: selectedConversation.LastMessage.id});
 
 

@@ -4,7 +4,7 @@ import { serverApiRequest } from "@/lib/server-api";
 
 export async function getMostPopular(groupId) {
     try {
-        const url = `groups/${groupId}/popular-post`
+        const url = `/groups/${groupId}/popular-post`
         const response = await serverApiRequest(url, {
             method: "GET"
         });

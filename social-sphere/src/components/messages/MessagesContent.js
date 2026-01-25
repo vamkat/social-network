@@ -6,9 +6,9 @@ import { getConv } from "@/actions/chat/get-conv";
 import { getMessages } from "@/actions/chat/get-messages";
 import { getConvByID } from "@/actions/chat/get-conv-by-id";
 import { useStore } from "@/store/store";
-import { User, Send, MessageCircle, Loader2, ChevronLeft, Wifi, WifiOff, Smile } from "lucide-react";
+import { User, Send, MessageCircle, Loader2, ChevronLeft, Smile } from "lucide-react";
 import { motion } from "motion/react";
-import { useLiveSocket, ConnectionState } from "@/context/LiveSocketContext";
+import { useLiveSocket } from "@/context/LiveSocketContext";
 import EmojiPicker from "emoji-picker-react";
 import { useMsgReceiver } from "@/store/store";
 
@@ -52,6 +52,8 @@ export default function MessagesContent({
         return initialConversations;
     });
 
+    const hasMessageText = messageText.length > 0;
+
     // Only sync initialConversations if NOT in firstMessage mode
     useEffect(() => {
         if (!firstMessage && initialConversations.length > 0) {
@@ -88,14 +90,12 @@ export default function MessagesContent({
 
     // Handle incoming private messages from WebSocket
     const handlePrivateMessage = useCallback(async (msg) => {
-        console.log("[Chat] Received private message:", msg);
 
         const senderId = msg.sender?.id;
         const isOwnMessage = senderId === user?.id;
 
         // Add message to the current conversation if it matches
         const currentConv = selectedConvRef.current;
-        console.log("Current: ", currentConv)
         if (currentConv) {
             const interlocutorId = currentConv.Interlocutor?.id;
 
@@ -139,7 +139,6 @@ export default function MessagesContent({
                 const existingIndex = prev.findIndex((conv) => conv.Interlocutor?.id === senderId);
 
                 if (existingIndex !== -1) {
-                    console.log("conversation exists")
                     // Update existing conversation
                     const updated = prev.map((conv, idx) => {
                         if (idx === existingIndex) {
@@ -160,7 +159,6 @@ export default function MessagesContent({
                 } else {
                     // New conversation - mark for fetching full data
                     isNewConversation = true;
-                    console.log("New")
                     return prev;
                 }
             });
@@ -168,7 +166,6 @@ export default function MessagesContent({
 
         // If new conversation from someone else, fetch full data from server
         if (isNewConversation && !isOwnMessage) {
-            console.log("Fetching new conversation with:", { senderId, convId: msg.conversation_id });
 
             const result = await getConvByID({
                 interlocutorId: senderId,
@@ -179,7 +176,6 @@ export default function MessagesContent({
                 setConversations((prev) => {
                     // Check if already added (race condition prevention)
                     const alreadyExists = prev.some((conv) => conv.Interlocutor?.id === senderId);
-                    console.log("Already exists in conversations:", alreadyExists);
                     if (alreadyExists) {
                         return prev;
                     }
@@ -188,7 +184,6 @@ export default function MessagesContent({
                         ...result.data,
                         UnreadCount: 1,
                     };
-                    console.log("Adding new conversation:", newConv);
                     return [newConv, ...prev];
                 });
             }
@@ -299,9 +294,8 @@ export default function MessagesContent({
             // Conversations are displayed newest-first, so the oldest is at the end
             // We need to find the minimum UpdatedAt to get conversations before it
             const oldestConv = conversations[conversations.length - 1];
-            console.log("OLDEST: ", oldestConv);
             const beforeDate = oldestConv.UpdatedAt;
-            console.log("BeforeDate: ", beforeDate);
+
             const result = await getConv({ first: false, beforeDate, limit: 5 });
             if (result.success && result.data) {
                 setConversations((prev) => [...prev, ...result.data]);
@@ -319,7 +313,6 @@ export default function MessagesContent({
         setIsLoadingMessages(true);
         try {
             const result = await getMessages({ interlocutorId, limit: 20 });
-            console.log(result);
             if (result.success && result.data) {
                 // Messages come in reverse order (newest first), so reverse them
                 const msgs = result.data.Messages?.reverse() || [];
@@ -492,35 +485,6 @@ export default function MessagesContent({
                 {/* Header */}
                 <div className="p-4 border-b border-(--border) flex items-center justify-between">
                     <h1 className="text-xl font-bold text-foreground">Messages</h1>
-                    {/* Connection Status Indicator */}
-                    <div
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${isConnected
-                            ? "bg-green-500/10 text-green-600"
-                            : connectionState === ConnectionState.CONNECTING ||
-                                connectionState === ConnectionState.RECONNECTING
-                                ? "bg-yellow-500/10 text-yellow-600"
-                                : "bg-red-500/10 text-red-500"
-                            }`}
-                        title={
-                            isConnected
-                                ? "Connected - Real-time updates active"
-                                : connectionState === ConnectionState.RECONNECTING
-                                    ? "Reconnecting..."
-                                    : "Disconnected - Messages may be delayed"
-                        }
-                    >
-                        {isConnected ? (
-                            <Wifi className="w-3.5 h-3.5" />
-                        ) : connectionState === ConnectionState.CONNECTING ||
-                            connectionState === ConnectionState.RECONNECTING ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                            <WifiOff className="w-3.5 h-3.5" />
-                        )}
-                        <span className="hidden sm:inline">
-                            {isConnected ? "Live" : connectionState === ConnectionState.RECONNECTING ? "Reconnecting" : "Offline"}
-                        </span>
-                    </div>
                 </div>
 
                 {/* Conversations List */}
@@ -719,7 +683,7 @@ export default function MessagesContent({
                                     <button
                                         type="button"
                                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                        className="p-3 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all"
+                                        className="p-3 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all cursor-pointer"
                                     >
                                         <Smile className="w-5 h-5" />
                                     </button>
@@ -741,13 +705,16 @@ export default function MessagesContent({
                                     placeholder="Type a message..."
                                     className="flex-1 px-4 py-3 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
                                 />
-                                <button
-                                    type="submit"
-                                    disabled={!messageText.trim() || !isConnected}
-                                    className="p-3 bg-(--accent) text-white rounded-full hover:bg-(--accent-hover) transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Send className="w-5 h-5" />
-                                </button>
+                                {hasMessageText && (
+                                    <button
+                                        type="submit"
+                                        disabled={!messageText.trim() || !isConnected}
+                                        className="p-3 bg-(--accent) text-white rounded-full hover:bg-(--accent-hover) transition-all disabled:opacity-50"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                    </button>
+                                )}
+
                             </div>
                         </form>
                     </>

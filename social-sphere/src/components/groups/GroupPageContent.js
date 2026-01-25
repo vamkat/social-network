@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Send, MessageCircle, Loader2, User, Wifi, WifiOff, Smile } from "lucide-react";
+import { Plus, Send, MessageCircle, Loader2, User, Wifi, WifiOff, Smile, X, ChevronDown, Users } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import Container from "@/components/layout/Container";
 import CreatePostGroup from "@/components/groups/CreatePostGroup";
@@ -14,7 +14,7 @@ import EventCard from "@/components/groups/EventCard";
 import { getGroupPosts } from "@/actions/groups/get-group-posts";
 import { getGroupEvents } from "@/actions/events/get-group-events";
 import { getGroupMessages } from "@/actions/chat/get-group-messages";
-import { useLiveSocket, ConnectionState } from "@/context/LiveSocketContext";
+import { useLiveSocket } from "@/context/LiveSocketContext";
 import { useStore } from "@/store/store";
 import Tooltip from "../ui/Tooltip";
 
@@ -55,13 +55,13 @@ export default function GroupPageContent({ group, firstPosts }) {
     const [messagesFetched, setMessagesFetched] = useState(false);
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showChatPanel, setShowChatPanel] = useState(false);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const emojiPickerRef = useRef(null);
 
     // WebSocket connection
     const {
-        connectionState,
         isConnected,
         subscribeToGroup,
         unsubscribeFromGroup,
@@ -229,19 +229,26 @@ export default function GroupPageContent({ group, firstPosts }) {
         handleGroupMessageRef.current = handleGroupMessage;
     }, [handleGroupMessage]);
 
-    // Subscribe to group WebSocket when entering the group page
+    // Subscribe to group WebSocket when connected
     useEffect(() => {
         const groupId = group.group_id;
         const messageHandler = (msg) => handleGroupMessageRef.current(msg);
 
-        subscribeToGroup(groupId);
+        // Always add the message handler
         addOnGroupMessage(messageHandler);
+
+        // Only subscribe when connected
+        if (isConnected) {
+            subscribeToGroup(groupId);
+        }
 
         return () => {
             removeOnGroupMessage(messageHandler);
-            unsubscribeFromGroup(groupId);
+            if (isConnected) {
+                unsubscribeFromGroup(groupId);
+            }
         };
-    }, [group.group_id, subscribeToGroup, unsubscribeFromGroup, addOnGroupMessage, removeOnGroupMessage]);
+    }, [group.group_id, isConnected, subscribeToGroup, unsubscribeFromGroup, addOnGroupMessage, removeOnGroupMessage]);
 
     // Fetch messages when switching to messages tab
     useEffect(() => {
@@ -249,6 +256,25 @@ export default function GroupPageContent({ group, firstPosts }) {
             fetchMessages(true);
         }
     }, [activeTab, messagesFetched, fetchMessages]);
+
+    // Auto-open chat panel if navigating directly to messages tab
+    useEffect(() => {
+        if (activeTab === "messages" && !showChatPanel) {
+            setShowChatPanel(true);
+        }
+    }, []);
+
+    // Prevent body scroll when chat panel is open
+    useEffect(() => {
+        if (showChatPanel) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [showChatPanel]);
 
     // Scroll to bottom when new messages arrive
     useEffect(() => {
@@ -386,6 +412,11 @@ export default function GroupPageContent({ group, firstPosts }) {
         const newIndex = tabs.findIndex((t) => t.id === tabId);
         setDirection(newIndex > currentIndex ? 1 : -1);
         setActiveTab(tabId);
+
+        // Auto-open chat panel when messages tab is clicked
+        if (tabId === "messages") {
+            setShowChatPanel(true);
+        }
 
         // Update URL without full page reload
         const params = new URLSearchParams(searchParams.toString());
@@ -615,175 +646,189 @@ export default function GroupPageContent({ group, firstPosts }) {
                         )}
 
                         {activeTab === "messages" && (
-                            <div className="h-[calc(100vh-10rem)] flex flex-col">
-                                {/* Chat Header */}
-                                <Container className="py-4 border-b border-(--border)">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <MessageCircle className="w-5 h-5 text-(--accent)" />
-                                            <h2 className="font-semibold text-foreground">Group Chat</h2>
-                                        </div>
-                                        {/* Connection Status */}
-                                        <div
-                                            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
-                                                isConnected
-                                                    ? "bg-green-500/10 text-green-600"
-                                                    : connectionState === ConnectionState.CONNECTING ||
-                                                      connectionState === ConnectionState.RECONNECTING
-                                                    ? "bg-yellow-500/10 text-yellow-600"
-                                                    : "bg-red-500/10 text-red-500"
-                                            }`}
-                                            title={
-                                                isConnected
-                                                    ? "Connected - Real-time updates active"
-                                                    : connectionState === ConnectionState.RECONNECTING
-                                                    ? "Reconnecting..."
-                                                    : "Disconnected - Messages may be delayed"
-                                            }
-                                        >
-                                            {isConnected ? (
-                                                <Wifi className="w-3.5 h-3.5" />
-                                            ) : connectionState === ConnectionState.CONNECTING ||
-                                              connectionState === ConnectionState.RECONNECTING ? (
-                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            ) : (
-                                                <WifiOff className="w-3.5 h-3.5" />
-                                            )}
-                                            <span>
-                                                {isConnected
-                                                    ? "Live"
-                                                    : connectionState === ConnectionState.RECONNECTING
-                                                    ? "Reconnecting"
-                                                    : "Offline"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Container>
-
-                                {/* Messages Area */}
-                                <div
-                                    ref={messagesContainerRef}
-                                    className="flex-1 overflow-y-auto"
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <MessageCircle className="w-12 h-12 text-(--muted) mb-4 opacity-30" />
+                                <p className="text-(--muted) mb-4">Group chat is available</p>
+                                <button
+                                    onClick={() => setShowChatPanel(true)}
+                                    className="flex items-center gap-2 px-6 py-3 bg-(--accent) text-white rounded-full font-medium hover:bg-(--accent-hover) transition-all shadow-lg shadow-(--accent)/20 cursor-pointer"
                                 >
-                                    <Container className="py-4 space-y-3">
-                                        {isLoadingMessages && messages.length === 0 ? (
-                                            <div className="flex items-center justify-center py-12">
-                                                <Loader2 className="w-6 h-6 text-(--muted) animate-spin" />
-                                            </div>
-                                        ) : messages.length > 0 ? (
-                                            <>
-                                                {messages.map((msg, index) => {
-                                                    const isMe = msg.Sender?.id === user?.id;
-                                                    const isPending = msg._pending;
-                                                    return (
-                                                        <motion.div
-                                                            key={msg.Id || index}
-                                                            initial={{ opacity: 0, y: 10 }}
-                                                            animate={{ opacity: isPending ? 0.5 : 1, y: 0 }}
-                                                            transition={{ duration: 0.2 }}
-                                                            className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                                                        >
-                                                            <div className={`flex gap-2 max-w-[75%] ${isMe ? "flex-row-reverse" : ""}`}>
-                                                                {/* Avatar */}
-                                                                {!isMe && (
-                                                                    <div className="w-8 h-8 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden border border-(--border) shrink-0">
-                                                                        {msg.Sender?.avatar_url ? (
-                                                                            <img
-                                                                                src={msg.Sender.avatar_url}
-                                                                                alt={msg.Sender.username || "User"}
-                                                                                className="w-full h-full object-cover"
-                                                                            />
-                                                                        ) : (
-                                                                            <User className="w-4 h-4 text-(--muted)" />
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                                {/* Message Bubble */}
-                                                                <div
-                                                                    className={`px-4 py-2.5 rounded-2xl ${
-                                                                        isMe
-                                                                            ? "bg-(--accent) text-white rounded-br-md"
-                                                                            : "bg-(--muted)/10 text-foreground rounded-bl-md"
-                                                                    }`}
-                                                                >
-                                                                    {!isMe && (
-                                                                        <p className="text-xs font-medium text-(--accent) mb-1">
-                                                                            {msg.Sender?.username || "Unknown"}
-                                                                        </p>
-                                                                    )}
-                                                                    <p className="text-sm whitespace-pre-wrap wrap-break-word">
-                                                                        {msg.MessageText}
-                                                                    </p>
-                                                                    <p
-                                                                        className={`text-[10px] mt-1 ${
-                                                                            isMe ? "text-white/70" : "text-(--muted)"
-                                                                        }`}
-                                                                    >
-                                                                        {formatMessageTime(msg.CreatedAt)}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </motion.div>
-                                                    );
-                                                })}
-                                                <div ref={messagesEndRef} />
-                                            </>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center py-12">
-                                                <MessageCircle className="w-12 h-12 text-(--muted) mb-3 opacity-30" />
-                                                <p className="text-(--muted)">No messages yet</p>
-                                                <p className="text-(--muted) text-sm">Start the conversation!</p>
-                                            </div>
-                                        )}
-                                    </Container>
-                                </div>
-
-                                {/* Message Input */}
-                                <div className="border-t border-(--border) bg-background">
-                                    <Container className="py-4">
-                                        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
-                                            {/* Emoji Picker */}
-                                            <div className="relative" ref={emojiPickerRef}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                    className="p-3 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all"
-                                                >
-                                                    <Smile className="w-5 h-5" />
-                                                </button>
-                                                {showEmojiPicker && (
-                                                    <div className="absolute bottom-14 left-0 z-50">
-                                                        <EmojiPicker
-                                                            onEmojiClick={onEmojiClick}
-                                                            width={320}
-                                                            height={400}
-                                                            previewConfig={{ showPreview: false }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={messageText}
-                                                onChange={(e) => setMessageText(e.target.value)}
-                                                placeholder="Type a message..."
-                                                className="flex-1 px-4 py-3 border border-(--border) rounded-full text-sm bg-(--muted)/5 text-foreground placeholder-(--muted) hover:border-foreground focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all"
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={!messageText.trim() || !isConnected}
-                                                className="p-3 bg-(--accent) text-white rounded-full hover:bg-(--accent-hover) transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                            >
-                                                <Send className="w-5 h-5" />
-                                            </button>
-                                        </form>
-                                    </Container>
-                                </div>
+                                    <MessageCircle className="w-5 h-5" />
+                                    Open Chat
+                                </button>
                             </div>
                         )}
                     </motion.div>
                 </AnimatePresence>
             </div>
+
+            {/* Full-Screen Chat Panel */}
+            <AnimatePresence>
+                {showChatPanel && (
+                    <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                        className="fixed inset-0 z-50 bg-background flex flex-col"
+                    >
+                        {/* Chat Panel Header */}
+                        <div className="border-b border-(--border) bg-background/80 backdrop-blur-xl">
+                            <div className="max-w-3xl mx-auto px-4 py-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        {/* Group Avatar */}
+                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-(--muted)/10 border border-(--border) shrink-0">
+                                            {group.group_image_url ? (
+                                                <img
+                                                    src={group.group_image_url}
+                                                    alt={group.group_title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Users className="w-5 h-5 text-(--muted)" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h2 className="font-semibold text-foreground text-sm">
+                                                {group.group_title}
+                                            </h2>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowChatPanel(false)}
+                                        className="p-2 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all cursor-pointer"
+                                    >
+                                        <ChevronDown className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Messages Area */}
+                        <div
+                            ref={messagesContainerRef}
+                            className="flex-1 overflow-y-auto"
+                        >
+                            <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
+                                {isLoadingMessages && messages.length === 0 ? (
+                                    <div className="flex items-center justify-center py-20">
+                                        <Loader2 className="w-6 h-6 text-(--muted) animate-spin" />
+                                    </div>
+                                ) : messages.length > 0 ? (
+                                    <>
+                                        {messages.map((msg, index) => {
+                                            const isMe = msg.Sender?.id === user?.id;
+                                            const isPending = msg._pending;
+                                            return (
+                                                <motion.div
+                                                    key={msg.Id || index}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: isPending ? 0.5 : 1, y: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                                                >
+                                                    <div className={`flex gap-2 max-w-[75%] ${isMe ? "flex-row-reverse" : ""}`}>
+                                                        {/* Avatar */}
+                                                        {!isMe && (
+                                                            <div className="w-8 h-8 rounded-full bg-(--muted)/10 flex items-center justify-center overflow-hidden border border-(--border) shrink-0">
+                                                                {msg.Sender?.avatar_url ? (
+                                                                    <img
+                                                                        src={msg.Sender.avatar_url}
+                                                                        alt={msg.Sender.username || "User"}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <User className="w-4 h-4 text-(--muted)" />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {/* Message Bubble */}
+                                                        <div
+                                                            className={`px-4 py-2.5 rounded-2xl ${
+                                                                isMe
+                                                                    ? "bg-(--accent) text-white rounded-br-md"
+                                                                    : "bg-(--muted)/10 text-foreground rounded-bl-md"
+                                                            }`}
+                                                        >
+                                                            {!isMe && (
+                                                                <p className="text-xs font-medium text-(--accent) mb-1">
+                                                                    {msg.Sender?.username || "Unknown"}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-sm whitespace-pre-wrap wrap-break-word">
+                                                                {msg.MessageText}
+                                                            </p>
+                                                            <p
+                                                                className={`text-[10px] mt-1 ${
+                                                                    isMe ? "text-white/70" : "text-(--muted)"
+                                                                }`}
+                                                            >
+                                                                {formatMessageTime(msg.CreatedAt)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
+                                        <div ref={messagesEndRef} />
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <MessageCircle className="w-16 h-16 text-(--muted) mb-4 opacity-20" />
+                                        <p className="text-(--muted) font-medium">No messages yet</p>
+                                        <p className="text-(--muted) text-sm">Be the first to say something!</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Input Bar with Glassmorphism */}
+                        <div className="bg-background/70 backdrop-blur-xl border-t border-(--border)/50">
+                            <div className="max-w-3xl mx-auto px-4 py-4">
+                                <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                                    {/* Emoji Picker */}
+                                    <div className="relative" ref={emojiPickerRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                            className="p-3 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-all cursor-pointer"
+                                        >
+                                            <Smile className="w-5 h-5" />
+                                        </button>
+                                        {showEmojiPicker && (
+                                            <div className="absolute bottom-14 left-0 z-50">
+                                                <EmojiPicker
+                                                    onEmojiClick={onEmojiClick}
+                                                    width={320}
+                                                    height={400}
+                                                    previewConfig={{ showPreview: false }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={messageText}
+                                        onChange={(e) => setMessageText(e.target.value)}
+                                        placeholder="Type a message..."
+                                        className="flex-1 px-5 py-3 border border-(--border) rounded-full text-sm bg-background/50 text-foreground placeholder-(--muted) hover:border-foreground/30 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/20 transition-all"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!messageText.trim() || !isConnected}
+                                        className="p-3 bg-(--accent) text-white rounded-full hover:bg-(--accent-hover) transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-(--accent)/20"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

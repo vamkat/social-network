@@ -19,15 +19,11 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     const [isPublic, setIsPublic] = useState(result.user.public);
     const [isFollowing, setIsFollowing] = useState(result.user.viewer_is_following);
 
-    console.log(result.user)
-
     const handleNewPost = (newPost) => {
         setPosts(prev => [newPost, ...prev]);
     }
 
     const handleUnfollow = ({isPublic, isFollowing}) => {
-        console.log("setting is public: ", isPublic);
-        console.log("setting is following: ", isFollowing);
         setIsPublic(isPublic);
         setIsFollowing(isFollowing);
     }

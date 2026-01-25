@@ -20,6 +20,7 @@ export function LiveSocketProvider({ children }) {
     const reconnectTimeoutRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const subscribedGroupsRef = useRef(new Set());
+    const hadUserRef = useRef(false); // Track if we ever had a user (to detect logout vs initial state)
 
     const [connectionState, setConnectionState] = useState(ConnectionState.DISCONNECTED);
     const [unreadMessages, setUnreadMessages] = useState([]);
@@ -33,7 +34,6 @@ export function LiveSocketProvider({ children }) {
     const connect = useCallback(() => {
         // Don't connect if no user or already connected
         if (!user) {
-            console.log("[LiveSocket] No user, skipping connection");
             return;
         }
 
@@ -62,14 +62,22 @@ export function LiveSocketProvider({ children }) {
                 setConnectionState(ConnectionState.CONNECTED);
                 reconnectAttemptsRef.current = 0;
 
-                // Re-subscribe to any groups we were subscribed to
-                subscribedGroupsRef.current.forEach((groupId) => {
-                    ws.send(`sub:${groupId}`);
-                });
+                // Re-subscribe to any groups we were subscribed to (for reconnections)
+                if (subscribedGroupsRef.current.size > 0) {
+                    console.log("[LiveSocket] Re-subscribing to groups:", [...subscribedGroupsRef.current]);
+                    subscribedGroupsRef.current.forEach((groupId) => {
+                        ws.send(`sub:${groupId}`);
+                    });
+                }
             };
 
             ws.onmessage = (event) => {
                 try {
+                    // Skip empty messages
+                    if (!event.data || event.data.trim() === "") {
+                        return;
+                    }
+
                     const data = JSON.parse(event.data);
 
                     // Handle both array (batched from NATS) and single object (direct response)
@@ -134,7 +142,7 @@ export function LiveSocketProvider({ children }) {
         }
     }, [user]);
 
-    const disconnect = useCallback(() => {
+    const disconnect = useCallback((clearSubscriptions = true) => {
         console.log("[LiveSocket] Disconnecting...");
 
         if (reconnectTimeoutRef.current) {
@@ -143,7 +151,11 @@ export function LiveSocketProvider({ children }) {
         }
 
         reconnectAttemptsRef.current = 0;
-        subscribedGroupsRef.current.clear();
+
+        // Only clear subscriptions on actual logout, not on React Strict Mode remounts
+        if (clearSubscriptions) {
+            subscribedGroupsRef.current.clear();
+        }
 
         if (wsRef.current) {
             wsRef.current.close(1000, "User logout");
@@ -158,10 +170,11 @@ export function LiveSocketProvider({ children }) {
     const subscribeToGroup = useCallback((groupId) => {
         // Don't re-subscribe if already subscribed
         if (subscribedGroupsRef.current.has(groupId)) {
-            console.log("[LiveSocket] Already subscribed to group:", groupId);
             return;
         }
         subscribedGroupsRef.current.add(groupId);
+
+        // Send immediately (caller should ensure WS is connected)
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(`sub:${groupId}`);
             console.log("[LiveSocket] Subscribed to group:", groupId);
@@ -260,13 +273,18 @@ export function LiveSocketProvider({ children }) {
     // Connect when user logs in, disconnect when user logs out
     useEffect(() => {
         if (user) {
+            hadUserRef.current = true;
             connect();
-        } else {
-            disconnect();
+        } else if (hadUserRef.current) {
+            // Only clear subscriptions on actual logout (user was truthy before)
+            // Not on initial mount when user is still loading
+            disconnect(true);
         }
 
         return () => {
-            disconnect();
+            // Don't clear subscriptions on cleanup (React Strict Mode remounts)
+            // Just close the connection
+            disconnect(false);
         };
     }, [user, connect, disconnect]);
 

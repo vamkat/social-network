@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Users, UserPlus, Settings, LogOut, Clock, UserRoundPlus, User, Check, Loader2, X, UserCheck, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
 import { requestJoinGroup } from "@/actions/groups/request-join-group";
@@ -68,6 +69,22 @@ export function GroupHeader({ group }) {
     const [removingMember, setRemovingMember] = useState(null);
     const MEMBERS_LIMIT = 10;
     const membersScrollRef = useRef(null);
+
+    // Scroll-aware mini header
+    const [showMiniHeader, setShowMiniHeader] = useState(false);
+    const headerRef = useRef(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (headerRef.current) {
+                const headerBottom = headerRef.current.getBoundingClientRect().bottom;
+                setShowMiniHeader(headerBottom < 0);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     // Fetch count on mount (for owners only)
     useEffect(() => {
@@ -479,7 +496,124 @@ export function GroupHeader({ group }) {
 
     return (
         <>
-            <div className="w-full border-b border-(--border)">
+            {/* Mini Header - appears on scroll */}
+            <AnimatePresence>
+                {showMiniHeader && (
+                    <motion.div
+                        initial={{ y: -100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -100, opacity: 0 }}
+                        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                        className="fixed top-16 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-(--border)/50"
+                    >
+                        <Container>
+                            <div className="flex items-center justify-between py-3">
+                                <div className="flex items-center gap-3">
+                                    {/* Small Group Image */}
+                                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-(--muted)/10 border border-(--border)">
+                                        {group.group_image_url ? (
+                                            <img
+                                                src={group.group_image_url}
+                                                alt={group.group_title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <Users className="w-4 h-4 text-(--muted)" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Title & Member Count */}
+                                    <div>
+                                        <p className="font-semibold text-foreground text-sm">
+                                            {group.group_title}
+                                        </p>
+                                        <p className="text-xs text-(--muted)">
+                                            {membersCount} {membersCount === 1 ? "member" : "members"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2">
+                                    {isOwner ? (
+                                        <>
+                                            <button
+                                                onClick={handleInviteMembers}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-(--accent) text-white cursor-pointer"
+                                            >
+                                                <UserPlus className="w-3.5 h-3.5" />
+                                                Invite
+                                            </button>
+                                            <button
+                                                onClick={() => setShowUpdateModal(true)}
+                                                className="p-1.5 rounded-full border border-(--border) text-(--muted) hover:text-foreground transition-colors cursor-pointer"
+                                            >
+                                                <Settings className="w-3.5 h-3.5" />
+                                            </button>
+                                        </>
+                                    ) : isMember ? (
+                                        <>
+                                            <button
+                                                onClick={handleInviteMembers}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-(--accent) text-(--accent) cursor-pointer"
+                                            >
+                                                <UserPlus className="w-3.5 h-3.5" />
+                                                Invite
+                                            </button>
+                                            <button
+                                                onClick={() => setShowLeaveModal(true)}
+                                                className="p-1.5 rounded-full border border-(--border) text-(--muted) hover:text-red-500 transition-colors cursor-pointer"
+                                            >
+                                                <LogOut className="w-3.5 h-3.5" />
+                                            </button>
+                                        </>
+                                    ) : pendingInvite ? (
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleInviteResponse(false)}
+                                                disabled={isLoading}
+                                                className="p-1.5 rounded-full border border-(--border) text-(--muted) hover:text-red-500 transition-colors cursor-pointer"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleInviteResponse(true)}
+                                                disabled={isLoading}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-(--accent) text-white cursor-pointer"
+                                            >
+                                                <Check className="w-3.5 h-3.5" />
+                                                Accept
+                                            </button>
+                                        </div>
+                                    ) : pendingRequest ? (
+                                        <button
+                                            onClick={handleCancelRequest}
+                                            disabled={isLoading}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-(--muted)/10 text-(--muted) border border-(--border) cursor-pointer"
+                                        >
+                                            <Clock className="w-3.5 h-3.5" />
+                                            Pending
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleJoinRequest}
+                                            disabled={isLoading}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-(--accent) text-white cursor-pointer"
+                                        >
+                                            <UserRoundPlus className="w-3.5 h-3.5" />
+                                            Join
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </Container>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Main Header */}
+            <div ref={headerRef} className="w-full border-b border-(--border)">
                 <Container>
                     <div className="py-8">
                         {/* Top Section: Group Image, Title, Actions */}
