@@ -160,7 +160,7 @@ run-notifications:
 # Migrations
 ######################################
 
-run-migrations: migrate-media migrate-users migrate-posts migrate-chat
+run-migrations: migrate-media migrate-users migrate-posts migrate-chat migrate-notifications
 
 migrate-media:
 	DATABASE_URL=postgres://postgres:secret@localhost:5437/social_media?sslmode=disable \

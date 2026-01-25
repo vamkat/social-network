@@ -34,7 +34,7 @@ func Run() error {
 
 	cfgs := getConfigs()
 
-	pool, err := postgresql.NewPool(ctx, "postgres://postgres:secret@notifications-db:5432/social_notifications?sslmode=disable")
+	pool, err := postgresql.NewPool(ctx, cfgs.DatabaseConn)
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %v", err)
 	}
@@ -136,6 +136,8 @@ type configs struct {
 
 	KafkaBrokers []string `env:"KAFKA_BROKERS"` // Comma-separated list of Kafka brokers
 	NatsCluster  string   `env:"NATS_CLUSTER"`  // NATS cluster connection string
+
+	DatabaseConn string `env:"DATABASE_URL"`
 }
 
 func getConfigs() configs { // sensible defaults
@@ -210,7 +212,7 @@ func startKafkaConsumer(ctx context.Context, app *application.Application) error
 
 				// Process the incoming protobuf notification event
 				if err := processNotificationEvent(ctx, record, eventHandler); err != nil {
-					tele.Error(ctx, "Failed to process notification event", "error", err)
+					tele.Error(ctx, "Failed to process notification event", "error", err.Error())
 					// Don't commit the record if processing failed
 					continue
 				}
