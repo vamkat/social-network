@@ -119,14 +119,14 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.EntityIdPaginatedReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
-			return
-		}
+		// body, err := utils.JSON2Struct(&models.EntityIdPaginatedReq{}, r)
+		// if err != nil {
+		// 	utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		// 	return
+		// }
 
 		v := r.URL.Query()
-		commentId, err1 := utils.PathValueGet(r, "comment_id", ct.Id(0), true)
+		entityId, err1 := utils.ParamGet(v, "entity_id", ct.Id(0), true)
 		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
 		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
 		if err := errors.Join(err1, err2, err3); err != nil {
@@ -136,7 +136,7 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 		grpcReq := posts.EntityIdPaginatedReq{
 			RequesterId: claims.UserId,
-			EntityId:    commentId.Int64(),
+			EntityId:    entityId.Int64(),
 			Limit:       limit,
 			Offset:      offset,
 		}
@@ -174,10 +174,9 @@ func (h *Handlers) getCommentsByParentId() http.HandlerFunc {
 
 		err = utils.WriteJSON(ctx, w, http.StatusOK, commentsResponse)
 		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send comments for post %v : %v", body.EntityId, err.Error()))
+			utils.ErrorJSON(ctx, w, http.StatusInternalServerError, fmt.Sprintf("failed to send comments for post %v : %v", entityId, err.Error()))
 			return
 		}
-
 	}
 }
 

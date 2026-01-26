@@ -505,12 +505,14 @@ func (s *Handlers) leaveGroup() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GeneralGroupReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
-			return
-		}
+		// body, err := utils.JSON2Struct(&models.GroupJoinRequest{}, r)
+		// if err != nil {
+		// 	utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		// 	return
+		// }
+		body := models.GeneralGroupReq{}
 
+		var err error
 		body.GroupId, err = utils.PathValueGet(r, "group_id", ct.Id(0), true)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
