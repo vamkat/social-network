@@ -1,0 +1,5 @@
+command:
+
+Create base image for DB
+
+docker buildx bake -f bake.hcl postgres16-cloud-native

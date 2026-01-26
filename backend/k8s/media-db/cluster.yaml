@@ -1,0 +1,22 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: media-db
+  namespace: media
+  labels:
+    stage: db
+spec:
+  instances: 3
+
+  imageName: postgres:16-cloud-native
+
+  bootstrap:
+    initdb:
+      database: media
+      owner: postgres
+
+  superuserSecret:
+    name: media-db-superuser
+
+  storage:
+    size: 1Gi

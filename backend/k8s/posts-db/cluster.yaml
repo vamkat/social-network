@@ -1,0 +1,22 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: posts-db
+  namespace: posts
+  labels:
+    stage: db
+spec:
+  instances: 3
+
+  imageName: postgres:16-cloud-native
+
+  bootstrap:
+    initdb:
+      database: posts
+      owner: postgres
+
+  superuserSecret:
+    name: posts-db-superuser
+
+  storage:
+    size: 1Gi

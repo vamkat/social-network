@@ -1,8 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: users-migrate
-  namespace: users
+  name: chat-migrate
+  namespace: chat
   labels:
     stage: migration
 spec:
@@ -12,13 +12,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: social-network/users:dev
+          image: social-network/chat:dev
           imagePullPolicy: Never
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: users-app-secret
+                  name: chat-app-secret
                   key: DATABASE_URL
           command: ["sh", "-c"]
           args:

@@ -1,8 +1,8 @@
 FROM social-network/go-base AS build
 
-WORKDIR /app
+WORKDIR /app/backend
 
-COPY . .
+COPY backend/ .
 
 RUN go build -o chat_service ./services/chat/cmd/server
 
@@ -14,15 +14,14 @@ RUN apk add --no-cache postgresql-client
 
 WORKDIR /app
 
-COPY --from=build /app/chat_service .
-COPY --from=build /app/migrate .
-COPY --from=build /app/services/chat/internal/db/migrations ./migrations
-COPY --from=build /app/services/chat/internal/db/seeds ./seeds
+COPY --from=build /app/backend/chat_service .
+COPY --from=build /app/backend/migrate .
+COPY --from=build /app/backend/services/chat/internal/db/migrations ./migrations
+COPY --from=build /app/backend/services/chat/internal/db/seeds ./seeds
 
-COPY services/chat/entrypoint.sh /app/entrypoint.sh
+COPY /backendservices/chat/entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/seeds/seed.sh 
- RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["./chat_service"]

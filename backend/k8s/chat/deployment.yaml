@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: posts
-  namespace: posts
+  name: chat
+  namespace: chat
   labels:
     stage: app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: posts
+      app: chat
   template:
     metadata:
       labels:
-        app: posts
+        app: chat
     spec:
       initContainers:
         - name: wait-for-db
           image: busybox
-          command: ['sh', '-c', 'until nc -z posts-db-rw 5432; do echo waiting for db; sleep 2; done']
+          command: ['sh', '-c', 'until nc -z chat-db-rw 5432; do echo waiting for db; sleep 2; done']
       containers:
-        - name: posts
-          image: social-network/posts:dev
+        - name: chat
+          image: social-network/chat:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50051
@@ -29,11 +29,11 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: posts-app-secret
+                  name: chat-app-secret
                   key: DATABASE_URL
             - name: ENC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: posts-app-secret
+                  name: chat-app-secret
                   key: ENC_KEY
 

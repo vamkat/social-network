@@ -4,7 +4,7 @@ metadata:
   name: posts-migrate
   namespace: posts
   labels:
-    stage: migrationNA
+    stage: migration
 spec:
   backoffLimit: 0
   template:
@@ -18,7 +18,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: posts-secret
+                  name: posts-app-secret
                   key: DATABASE_URL
           command: ["sh", "-c"]
           args:

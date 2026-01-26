@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-gateway
-  namespace: api-gateway
+  name: live
+  namespace: live
   labels:
     stage: app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: api-gateway
+      app: live
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: live
     spec:
       containers:
-        - name: api-gateway
-          image: social-network/api-gateway:dev
+        - name: live
+          image: social-network/live:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -25,10 +25,10 @@ spec:
             - name: ENC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: gateway-secret
+                  name: live-secret
                   key: ENC_KEY
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
-                  name: gateway-secret
+                  name: live-secret
                   key: JWT_KEY

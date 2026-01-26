@@ -1,6 +1,6 @@
 NAMESPACE=social-network
 
-.PHONY: build-base delete-volumes apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db all reset
+.PHONY: build-base delete-volumes build-cnpg apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db all reset
 
 # ==== Docker ====
 
@@ -8,8 +8,13 @@ build-base:
 	docker build -t social-network/go-base -f backend/docker/go/base2.Dockerfile .
 
 build-services:
-	docker build -t social-network/users:dev -f backend/services/users/Dockerfile .
-# 	docker build -t social-network/api-gateway:dev -f gateway/Dockerfile .
+	docker build -f backend/docker/services/api-gateway.Dockerfile -t social-network/api-gateway:dev .
+	docker build -f backend/docker/services/chat.Dockerfile -t social-network/chat:dev .
+	docker build -f backend/docker/services/live.Dockerfile -t social-network/live:dev .
+	docker build -f backend/docker/services/media.Dockerfile -t social-network/media:dev .
+	docker build -f backend/docker/services/notifications.Dockerfile -t social-network/notifications:dev .
+	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
+	docker build -t social-network/users:dev -f backend/docker/services/users.Dockerfile .
 
 docker-up:
 	$(MAKE) create-network
@@ -38,40 +43,46 @@ create-network:
 
 # ==== K8s ====
 
+# Preliminary
+build-cnpg:
+	docker buildx bake -f backend/docker/cnpg/bake.hcl postgres16-cloud-native
+
 # 1.
 apply-namespace:
-	kubectl apply -f k8s/ --recursive --selector stage=namespace
+	kubectl apply -f backend/k8s/ --recursive --selector stage=namespace
 
 #  2.
+apply-configs:
+	kubectl apply -R -f backend/k8s/ --recursive --selector stage=config
+
+# 3.
 deploy-nginx:
 	helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 	helm repo update
 	helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
 		-n ingress-nginx --create-namespace
 
-# 3.
-apply-pvc:
-	kubectl apply -f k8s/ --recursive --selector stage=pvc
-
 # 4.
 apply-db:
-	kubectl apply -f k8s/ --recursive --selector stage=db
+	kubectl apply -f backend/k8s/ --recursive --selector stage=db
 
 # 5.
 run-migrations:
-	kubectl apply -f k8s/ --recursive --selector stage=migration
+	kubectl apply -f backend/k8s/ --recursive --selector stage=migration
+
 
 # 6.
-apply-configs:
-	kubectl apply -R -f k8s --selector stage=config
+apply-pvc:
+	kubectl apply -f k8s/ --recursive --selector stage=pvc
 
 # 7.
 apply-apps:
-	kubectl apply -f k8s/ --recursive --selector stage=app
+	kubectl apply -f backend/k8s/ --recursive --selector stage=app
 
 # 8.
 apply-ingress:
-	kubectl apply -f k8s/nginx/api-gateway-ingress.yaml
+	kubectl apply -f backend/k8s/nginx/api-gateway-ingress.yaml
+
 
 
 build-proto:
@@ -88,5 +99,16 @@ reset:
 	kubectl create namespace users
 
 
-all: build-base build-services apply-namespace deploy-nginx apply-pvc apply-db  deploy-users run-migrations apply-ingress
+all: 
+	build-base 
+	build-cnpg 
+	build-services 
+	apply-namespace
+	apply-configs
+	deploy-nginx 
+	apply-db  
+	run-migrations 
+	apply-pvc
+	apply-apps
+	apply-ingress
 

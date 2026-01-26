@@ -1,0 +1,22 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: users-db
+  namespace: users
+  labels:
+    stage: db
+spec:
+  instances: 3
+
+  imageName: postgres:16-cloud-native
+
+  bootstrap:
+    initdb:
+      database: users
+      owner: postgres
+
+  superuserSecret:
+    name: users-db-superuser
+
+  storage:
+    size: 1Gi
