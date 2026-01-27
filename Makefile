@@ -1,6 +1,6 @@
 NAMESPACE=social-network
 
-.PHONY: build-base delete-volumes build-cnpg apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db all reset
+.PHONY: build-base delete-volumes build-cnpg build-all apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db deploy-all reset
 
 # ==== Docker ====
 
@@ -15,6 +15,7 @@ build-services:
 	docker build -f backend/docker/services/notifications.Dockerfile -t social-network/notifications:dev .
 	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
 	docker build -t social-network/users:dev -f backend/docker/services/users.Dockerfile .
+	docker build -t social-network/front:dev -f backend/docker/front/front.Dockerfile .
 
 docker-up:
 	$(MAKE) create-network
@@ -44,8 +45,13 @@ create-network:
 # ==== K8s ====
 
 # Preliminary
+op-manifest:
+	kubectl apply --server-side -f \
+	https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml
+
 build-cnpg:
 	docker buildx bake -f backend/docker/cnpg/bake.hcl postgres16-cloud-native
+
 
 # 1.
 apply-namespace:
@@ -73,7 +79,7 @@ run-migrations:
 
 # 6.
 apply-pvc:
-	kubectl apply -f k8s/ --recursive --selector stage=pvc
+	kubectl apply -f backend/k8s/ --recursive --selector stage=pvc
 
 # 7.
 apply-apps:
@@ -82,8 +88,6 @@ apply-apps:
 # 8.
 apply-ingress:
 	kubectl apply -f backend/k8s/nginx/api-gateway-ingress.yaml
-
-
 
 build-proto:
 	$(MAKE) -f backend/shared/proto/protoMakefile generate
@@ -98,17 +102,18 @@ reset:
 	kubectl delete namespace users --ignore-not-found=true
 	kubectl create namespace users
 
+build-all:
+	$(MAKE) build-base 
+	$(MAKE) build-cnpg 
+	$(MAKE) build-services 
 
-all: 
-	build-base 
-	build-cnpg 
-	build-services 
-	apply-namespace
-	apply-configs
-	deploy-nginx 
-	apply-db  
-	run-migrations 
-	apply-pvc
-	apply-apps
-	apply-ingress
+deploy-all: 
+	$(MAKE) op-manifest
+	$(MAKE) apply-namespace
+	$(MAKE) apply-configs
+	$(MAKE) deploy-nginx 
+	$(MAKE) apply-db  
+	$(MAKE) run-migrations 
+	$(MAKE) apply-apps
+	$(MAKE) apply-ingress
 

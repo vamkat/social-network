@@ -1,74 +1,7 @@
-Here’s a **Colima + Kubernetes cheat sheet** tailored for your workflow (building Go services, applying YAML, restarting cluster components, checking status).
-
----
-
-# 🚀 **Colima + Kubernetes Cheat Sheet**
-
-Colima provides the Docker + Kubernetes runtime. You interact with Kubernetes using `kubectl`, but some cluster-level operations use `colima`.
-
----
-
-# 🟩 **Colima Commands (Cluster / Docker Runtime)**
-
-### **Start Colima with Kubernetes**
-
-```sh
-colima start --kubernetes
-```
-
-### **Stop Colima**
-
-```sh
-colima stop
-```
-
-### **Restart Colima**
-
-Use this when:
-
-* Kubernetes objects are stuck
-* Docker images aren't refreshing
-* Cluster networking issues
-
-```sh
-colima stop && colima start --kubernetes
-```
-
-### **Reset Colima (FULL CLUSTER RESET)**
-
-Destroys all containers, images, volumes, and the K8s cluster.
-
-```sh
-colima delete
-colima start --kubernetes
-```
-
-### **Check Colima VM Status**
-
-```sh
-colima status
-```
-
----
-
-# 🟦 **Docker (Inside Colima)**
-
-### List Docker images (useful to confirm your `docker build` targets)
-
-```sh
-docker images
-```
-
-### List running containers
-
-```sh
-docker ps
-```
-
----
-
 # 🟧 **Kubernetes Status (kubectl)**
-
+```bash
+colima start --kubernetes --cpu 6 --memory 8
+```
 Everything below uses `kubectl` since Colima runs a local K8s distribution.
 
 ---
@@ -118,14 +51,6 @@ kubectl get pvc -n <namespace>
 ---
 
 ## 🔁 **Restarting K8s Deployments After Code Changes**
-
-After you rebuild a Docker image:
-
-### **Rebuild your service**
-
-```sh
-docker build -t social-network/users:dev -f services/users/Dockerfile .
-```
 
 ### **Force Kubernetes to pull new image**
 

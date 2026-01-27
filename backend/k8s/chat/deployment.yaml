@@ -36,4 +36,35 @@ spec:
                 secretKeyRef:
                   name: chat-app-secret
                   key: ENC_KEY
+            - name: GRPC_SERVER_PORT
+              value: :50051
+            - name: SENTINEL_ADDRS
+              value: redis-sentinel.redis.svc.cluster.local:26379
+            - name: REDIS_MASTER_SET
+              value: "master"
+            - name: TELEMETRY_COLLECTOR_ADDR
+              value: "localhost:4317"
+
+            - name: USERS_GRPC_ADDR
+              value: "users.users.svc.cluster.local:50051"
+            - name: POSTS_GRPC_ADDR
+              value: "posts.posts.svc.cluster.local:50051"
+            - name: CHAT_GRPC_ADDR
+              value: "chat.chat.svc.cluster.local:50051"
+            - name: NOTIFICATIONS_GRPC_ADDR
+              value: "notifications.notifications.svc.cluster.local:50051"
+            - name: MEDIA_GRPC_ADDR
+              value: "media.media.svc.cluster.local:50051"
+
+            - name: SHUTDOWN_TIMEOUT_SECONDS
+              value: "5"
+            - name: ENABLE_DEBUG_LOGS
+              value: "true"
+            - name: ENABLE_SIMPLE_PRINT
+              value: "true"
+            - name: KAFKA_BROKERS
+              value: "kafka.kafka.svc.cluster.local:29092"
+            - name: NATS_CLUSTER
+              value: "nats://ruser:T0pS3cr3t@nats-client.messaging.svc.cluster.local:4222"
+
 

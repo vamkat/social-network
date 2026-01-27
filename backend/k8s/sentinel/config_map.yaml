@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-sentinel-config
+  namespace: redis
+  labels:
+    stage: config
+data:
+  sentinel.conf: |
+    port 26379
+    bind 0.0.0.0
+    sentinel resolve-hostnames yes
+    sentinel announce-ip ${POD_NAME}.${SENTINEL_SERVICE}.default.svc.cluster.local
+    sentinel announce-port 26379
+    sentinel monitor master redis-master 6379 2
+    sentinel down-after-milliseconds master 5000
+    sentinel failover-timeout master 10000
+    sentinel parallel-syncs master 1
+
+
+# Note: ${POD_NAME} and ${SENTINEL_SERVICE} will be passed as environment variables to each Sentinel pod so they announce their correct hostname.

@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+	"fmt"
 	ce "social-network/shared/go/commonerrors"
 	tele "social-network/shared/go/telemetry"
 
@@ -150,5 +151,10 @@ func NewPool(ctx context.Context, address string) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("db ping failed: %v", err)
+	}
+
 	return pool, nil
 }

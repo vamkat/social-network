@@ -223,6 +223,9 @@ func initClients() *client.Clients {
 	redisClient := rds.NewRedisClient(
 		cfgs.SentinelAddrs, cfgs.RedisPassword, cfgs.RedisDB,
 	)
+	if err := redisClient.TestRedisConnection(); err != nil {
+		tele.Fatalf("connection test failed, ERROR: %v", err)
+	}
 
 	return client.NewClients(
 		userClient,

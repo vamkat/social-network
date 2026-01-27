@@ -108,6 +108,9 @@ func Run() error {
 	//
 	// REDIS
 	redisConnector := rds.NewRedisClient(cfgs.SentinelAddrs, cfgs.RedisPassword, cfgs.RedisDB)
+	if err := redisConnector.TestRedisConnection(); err != nil {
+		tele.Fatalf("connection test failed, ERROR: %v", err)
+	}
 
 	clients := client.NewClients(UsersService, MediaService, NotifService)
 

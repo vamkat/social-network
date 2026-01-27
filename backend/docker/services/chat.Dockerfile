@@ -17,11 +17,6 @@ WORKDIR /app
 COPY --from=build /app/backend/chat_service .
 COPY --from=build /app/backend/migrate .
 COPY --from=build /app/backend/services/chat/internal/db/migrations ./migrations
-COPY --from=build /app/backend/services/chat/internal/db/seeds ./seeds
 
-COPY /backendservices/chat/entrypoint.sh /app/entrypoint.sh
-
-RUN chmod +x /app/seeds/seed.sh 
-RUN chmod +x /app/entrypoint.sh
 
 CMD ["./chat_service"]
