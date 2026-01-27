@@ -1,15 +1,10 @@
 ======== This week TODOs ========
 
-update navbar msg counts - still bugs if i havent loaded convs.. neeed to check this out
-discuss counts in general. Maybe we shouldnt use counts - hard to track if we dont call constantly the db
-
-DONT SUBSCRIBE TO A GROUP WS IF NOT MEMBER
-
 /profile/{random id} -> super duper error
 obviously /groups/{random id} 
 and /posts/{random id} 
 
-add sounds on pms, gms, notifs
+add sounds on gms, notifs
 
 username on navbar
 

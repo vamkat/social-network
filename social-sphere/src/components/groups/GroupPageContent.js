@@ -237,9 +237,9 @@ export default function GroupPageContent({ group, firstPosts }) {
         // Always add the message handler
         addOnGroupMessage(messageHandler);
 
-        // Only subscribe when connected
+        // Subscribe to group (subscribeToGroup checks membership internally)
         if (isConnected) {
-            subscribeToGroup(groupId);
+            subscribeToGroup(groupId, group.is_member);
         }
 
         return () => {

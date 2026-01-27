@@ -1,46 +1,35 @@
-import { getConv } from "@/actions/chat/get-conv";
 import { getMessages } from "@/actions/chat/get-messages";
-import MessagesContent from "@/components/messages/MessagesContent";
 import { markAsRead } from "@/actions/chat/mark-read";
+import MessagesContent from "@/components/messages/MessagesContent";
 
 export default async function ConversationPage({ params }) {
     const { id } = await params;
     let firstMessage = false;
-
-    // Fetch conversations list
-    const convsResult = await getConv({ first: true, limit: 15 });
-    let conversations = convsResult.success ? convsResult.data : [];
-
-    // Find the selected conversation from the list
-    const selectedConversation = conversations.find(
-        (conv) => conv.Interlocutor?.id === id
-    );
-
-    // Fetch messages for the selected conversation if found
     let initialMessages = [];
 
-    if (selectedConversation) {
-        const messagesResult = await getMessages({
-            interlocutorId: selectedConversation.Interlocutor?.id,
-            limit: 20,
-        });
-        console.log("Messages result: ", messagesResult);
-        if (messagesResult.success && messagesResult.data?.Messages) {
-            // Messages come newest first, reverse for display
-            initialMessages = messagesResult.data.Messages.reverse();
+    // Get messages by interlocutor ID
+    const messagesResult = await getMessages({
+        interlocutorId: id,
+        limit: 20,
+    });
+
+    if (messagesResult.success && messagesResult.data?.Messages?.length > 0) {
+        // Messages exist - reverse for display (newest first from API)
+        initialMessages = messagesResult.data.Messages.reverse();
+
+        // Get conversation_id from the last message and mark as read on server
+        const lastMessage = initialMessages[initialMessages.length - 1];
+        if (lastMessage?.conversation_id && lastMessage?.id) {
+            await markAsRead({ convID: lastMessage.conversation_id, lastMsgID: lastMessage.id });
         }
-        await markAsRead({convID: selectedConversation.ConversationId, lastMsgID: selectedConversation.LastMessage.id});
     } else {
+        // No messages found - this is a new conversation
         firstMessage = true;
     }
-    console.log("initial conversations:", conversations);
-    console.log("initial selected id: ", id);
-    console.log("initial messages: ", initialMessages);
-    console.log("first message: ", firstMessage)
+
     return (
         <MessagesContent
-            initialConversations={conversations}
-            initialSelectedId={id}
+            interlocutorId={id}
             initialMessages={initialMessages}
             firstMessage={firstMessage}
         />

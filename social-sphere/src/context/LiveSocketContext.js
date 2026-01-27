@@ -167,7 +167,12 @@ export function LiveSocketProvider({ children }) {
         setUnreadNotifications([]);
     }, []);
 
-    const subscribeToGroup = useCallback((groupId) => {
+    const subscribeToGroup = useCallback((groupId, isMember) => {
+        // Only subscribe if user is a group member
+        if (!isMember) {
+            return;
+        }
+
         // Don't re-subscribe if already subscribed
         if (subscribedGroupsRef.current.has(groupId)) {
             return;
