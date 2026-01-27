@@ -877,6 +877,7 @@ LEFT JOIN group_invites gi
    AND gi.receiver_id = u.id
    AND gi.deleted_at IS NULL
 WHERE f.following_id = $1          -- people who follow the given user
+  AND f.deleted_at IS NULL
   AND u.deleted_at IS NULL
   AND u.current_status = 'active'
   AND gi.receiver_id IS NULL      -- exclude anyone already invited

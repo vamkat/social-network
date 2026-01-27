@@ -112,10 +112,12 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 	if err := ct.ValidateStruct(req); err != nil {
 		return models.FollowUserResp{}, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
 	}
+	//status can be already_following, refollowed, followed, request_already_pending, request_resent,requested
 	status, err := s.db.FollowUser(ctx, ds.FollowUserParams{
 		PFollower: req.FollowerId.Int64(),
 		PTarget:   req.TargetUserId.Int64(),
 	})
+
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -128,58 +130,62 @@ func (s *Application) FollowUser(ctx context.Context, req models.FollowUserReq) 
 		}
 		return models.FollowUserResp{}, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}
-	if status == "requested" { //Profile was private, request sent
+	if status == "requested" || status == "request_resent" || status == "request_already_pending" { //Profile was private, request sent
 		resp.IsPending = true
 		resp.ViewerIsFollowing = false
 
-		// =======================  create notification ====================================
-		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
-		if err != nil {
-			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
-		}
+		if status != "request_already_pending" {
+			// =======================  create notification ====================================
+			follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
+			if err != nil {
+				tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
+			}
 
-		// build the notification event
-		event := &notifpb.NotificationEvent{
-			EventType: notifpb.EventType_FOLLOW_REQUEST_CREATED,
-			Payload: &notifpb.NotificationEvent_FollowRequestCreated{
-				FollowRequestCreated: &notifpb.FollowRequestCreated{
-					TargetUserId:      req.TargetUserId.Int64(),
-					RequesterUserId:   req.FollowerId.Int64(),
-					RequesterUsername: follower.Username.String(),
+			// build the notification event
+			event := &notifpb.NotificationEvent{
+				EventType: notifpb.EventType_FOLLOW_REQUEST_CREATED,
+				Payload: &notifpb.NotificationEvent_FollowRequestCreated{
+					FollowRequestCreated: &notifpb.FollowRequestCreated{
+						TargetUserId:      req.TargetUserId.Int64(),
+						RequesterUserId:   req.FollowerId.Int64(),
+						RequesterUsername: follower.Username.String(),
+					},
 				},
-			},
-		}
+			}
 
-		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
-			tele.Error(ctx, "failed to send new follow request notification: @1", "error", err.Error())
+			if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+				tele.Error(ctx, "failed to send new follow request notification: @1", "error", err.Error())
+			}
+			tele.Info(ctx, "Follow request notification event created")
 		}
-		tele.Info(ctx, "Follow request notification event created")
-
 	} else {
 		resp.IsPending = false
 		resp.ViewerIsFollowing = true
 
-		// =======================  create notification ====================================
-		follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
-		if err != nil {
-			tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
-		}
+		// =======================  create notification if not refollow ====================================
 
-		event := &notifpb.NotificationEvent{
-			EventType: notifpb.EventType_NEW_FOLLOWER_CREATED,
-			Payload: &notifpb.NotificationEvent_NewFollowerCreated{
-				NewFollowerCreated: &notifpb.NewFollowerCreated{
-					TargetUserId:     req.TargetUserId.Int64(),
-					FollowerUserId:   req.FollowerId.Int64(),
-					FollowerUsername: follower.Username.String(),
+		if status == "followed" { //only first follow creates notification
+			follower, err := s.GetBasicUserInfo(ctx, req.FollowerId)
+			if err != nil {
+				tele.Error(ctx, "Could not get basic user info for id @1 for follow request notif: @2", "userId", req.FollowerId, "error", err.Error())
+			}
+
+			event := &notifpb.NotificationEvent{
+				EventType: notifpb.EventType_NEW_FOLLOWER_CREATED,
+				Payload: &notifpb.NotificationEvent_NewFollowerCreated{
+					NewFollowerCreated: &notifpb.NewFollowerCreated{
+						TargetUserId:     req.TargetUserId.Int64(),
+						FollowerUserId:   req.FollowerId.Int64(),
+						FollowerUsername: follower.Username.String(),
+					},
 				},
-			},
-		}
+			}
 
-		if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
-			tele.Error(ctx, "failed to send new follower notification: @1", "error", err.Error())
+			if err := s.eventProducer.CreateAndSendNotificationEvent(ctx, event); err != nil {
+				tele.Error(ctx, "failed to send new follower notification: @1", "error", err.Error())
+			}
+			tele.Info(ctx, "new follower notification event created")
 		}
-		tele.Info(ctx, "new follower notification event created")
 	}
 
 	return resp, nil

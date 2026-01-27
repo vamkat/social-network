@@ -8,6 +8,7 @@ RETURNS TEXT AS $$
 DECLARE
     v_is_public BOOLEAN;
     v_already_following BOOLEAN;
+    v_was_soft_deleted BOOLEAN;
     v_existing_request_status follow_request_status;
 BEGIN
     -- Validate: cannot follow yourself
@@ -28,21 +29,46 @@ BEGIN
         USING ERRCODE = 'P0002';
     END IF;
 
-    -- Check if already following
+    -- Check if an active follow already exists
     SELECT EXISTS(
         SELECT 1 FROM follows 
-        WHERE follower_id = p_follower AND following_id = p_target
+        WHERE follower_id = p_follower 
+        AND following_id = p_target
+        AND deleted_at IS NULL
     ) INTO v_already_following;
 
     IF v_already_following THEN
         RETURN 'already_following';
     END IF;
 
+    -- Check if a soft-deleted follow exists (refollow case)
+    SELECT EXISTS(
+        SELECT 1 FROM follows
+        WHERE follower_id = p_follower
+          AND following_id = p_target
+          AND deleted_at IS NOT NULL
+    ) INTO v_was_soft_deleted;
+
+    IF v_was_soft_deleted THEN
+        UPDATE follows
+        SET deleted_at = NULL
+        WHERE follower_id = p_follower
+          AND following_id = p_target;
+
+        -- Clean up any existing request
+        DELETE FROM follow_requests
+        WHERE requester_id = p_follower AND target_id = p_target;
+
+        RETURN 'refollowed';
+    END IF;
+
+
     -- Public profile: add follow directly
     IF v_is_public THEN
-        INSERT INTO follows (follower_id, following_id)
-        VALUES (p_follower, p_target)
-        ON CONFLICT DO NOTHING;
+        INSERT INTO follows (follower_id, following_id, created_at, deleted_at)
+        VALUES (p_follower, p_target, NOW(), NULL)
+        ON CONFLICT (follower_id, following_id)
+        DO UPDATE SET deleted_at = NULL;
         
         -- Clean up any existing request
         DELETE FROM follow_requests
@@ -88,9 +114,10 @@ $$ LANGUAGE plpgsql;
    CREATE OR REPLACE FUNCTION add_follower_on_accept()
    RETURNS TRIGGER AS $$
    BEGIN
-       INSERT INTO follows (follower_id, following_id, created_at)
-       VALUES (NEW.requester_id, NEW.target_id, CURRENT_TIMESTAMP)
-       ON CONFLICT DO NOTHING;
+       INSERT INTO follows (follower_id, following_id, created_at, deleted_at)
+       VALUES (NEW.requester_id, NEW.target_id, CURRENT_TIMESTAMP, NULL)
+       ON CONFLICT (follower_id, following_id)
+       DO UPDATE SET deleted_at = NULL;
        
        RETURN NEW;
    END;
@@ -112,13 +139,14 @@ BEGIN
     IF OLD.profile_public = FALSE AND NEW.profile_public = TRUE THEN
         
         -- Insert all pending requests directly as follows
-        INSERT INTO follows (follower_id, following_id, created_at)
-        SELECT requester_id, target_id, CURRENT_TIMESTAMP
+        INSERT INTO follows (follower_id, following_id, created_at, deleted_at)
+        SELECT requester_id, target_id, CURRENT_TIMESTAMP, NULL
         FROM follow_requests
         WHERE target_id = NEW.id
           AND status = 'pending'
           AND deleted_at IS NULL
-        ON CONFLICT (follower_id, following_id) DO NOTHING;
+        ON CONFLICT (follower_id, following_id) 
+        DO UPDATE SET deleted_at = NULL;
 
         -- Mark all pending requests as accepted
         UPDATE follow_requests

@@ -15,10 +15,11 @@ WITH updated AS (
       AND deleted_at IS NULL
     RETURNING requester_id, target_id
 )
-INSERT INTO follows (follower_id, following_id)
-SELECT requester_id, target_id
+INSERT INTO follows (follower_id, following_id, created_at,deleted_at)
+SELECT requester_id, target_id, NOW(), NULL
 FROM updated
-ON CONFLICT DO NOTHING
+ON CONFLICT  (follower_id, following_id)
+DO UPDATE SET deleted_at=NULL;
 `
 
 type AcceptFollowRequestParams struct {
@@ -36,14 +37,18 @@ WITH u1 AS (
   SELECT EXISTS (
     SELECT 1
     FROM follows f
-    WHERE f.follower_id = $1 AND f.following_id = $2
+    WHERE f.follower_id = $1 
+	AND f.following_id = $2
+	AND f.deleted_at IS NULL
   ) AS user1_follows_user2
 ),
 u2 AS (
   SELECT EXISTS (
     SELECT 1
     FROM follows f
-    WHERE f.follower_id = $2 AND f.following_id = $1
+    WHERE f.follower_id = $2 
+	AND f.following_id = $1
+	AND f.deleted_at IS NULL
   ) AS user2_follows_user1
 )
 SELECT
@@ -94,10 +99,14 @@ s1 AS (
     FROM follows f1 
     JOIN follows f2 ON f1.following_id = f2.follower_id
     WHERE f1.follower_id = $1
+	  AND f1.deleted_at IS NULL
+	  AND f2.deleted_at IS NULL
       AND f2.following_id <> $1
       AND NOT EXISTS (
           SELECT 1 FROM follows x
-          WHERE x.follower_id = $1 AND x.following_id = f2.following_id
+          WHERE x.follower_id = $1 
+		  AND x.following_id = f2.following_id
+		  AND x.deleted_at IS NULL
       )
 ),
 
@@ -169,9 +178,10 @@ func (q *Queries) GetFollowSuggestions(ctx context.Context, followerID int64) ([
 }
 
 const getFollowerCount = `-- name: GetFollowerCount :one
-SELECT COUNT(*) AS follower_count
+SELECT COUNT(*) 
 FROM follows
 WHERE following_id = $1
+AND deleted_at IS NULL;
 `
 
 func (q *Queries) GetFollowerCount(ctx context.Context, followingID int64) (int64, error) {
@@ -186,6 +196,7 @@ SELECT u.id, u.username, u.avatar_id,u.profile_public, f.created_at AS followed_
 FROM follows f
 JOIN users u ON u.id = f.follower_id
 WHERE f.following_id = $1
+AND f.deleted_at IS NULL
 ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -235,6 +246,7 @@ SELECT u.id, u.username,u.avatar_id,u.profile_public, f.created_at AS followed_a
 FROM follows f
 JOIN users u ON u.id = f.following_id
 WHERE f.follower_id = $1
+AND f.deleted_at IS NULL
 ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -280,9 +292,10 @@ func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]G
 }
 
 const getFollowingCount = `-- name: GetFollowingCount :one
-SELECT COUNT(*) AS following_count
+SELECT COUNT(*) 
 FROM follows
 WHERE follower_id = $1
+AND deleted_at IS NULL;
 `
 
 func (q *Queries) GetFollowingCount(ctx context.Context, followerID int64) (int64, error) {
@@ -296,6 +309,7 @@ const getFollowingIds = `-- name: GetFollowingIds :many
 SELECT following_id
 FROM follows 
 WHERE follower_id = $1
+AND deleted_at IS NULL;
 `
 
 func (q *Queries) GetFollowingIds(ctx context.Context, followerID int64) ([]int64, error) {
@@ -325,6 +339,8 @@ JOIN follows f2 ON f1.follower_id = f2.follower_id
 JOIN users u ON u.id = f1.follower_id
 WHERE f1.following_id = $1
   AND f2.following_id = $2
+  AND f1.deleted_at IS NULL
+  AND f2.deleted_at IS NULL;
 `
 
 type GetMutualFollowersParams struct {
@@ -382,8 +398,10 @@ func (q *Queries) IsFollowRequestPending(ctx context.Context, arg IsFollowReques
 const isFollowing = `-- name: IsFollowing :one
 SELECT EXISTS (
     SELECT 1 FROM follows
-    WHERE follower_id =$1 AND following_id = $2
-)
+    WHERE follower_id =$1 
+	AND following_id = $2
+	AND deleted_at IS NULL
+);
 `
 
 type IsFollowingParams struct {
@@ -415,10 +433,12 @@ func (q *Queries) RejectFollowRequest(ctx context.Context, arg RejectFollowReque
 }
 
 const unfollowUser = `-- name: UnfollowUser :one
-WITH deleted_follow AS (
-  DELETE FROM follows
+WITH updated_follow AS (
+  UPDATE follows
+  SET deleted_at = NOW()
   WHERE follower_id = $1
     AND following_id = $2
+    AND deleted_at IS NULL
   RETURNING 1
 ),
 deleted_request AS (
@@ -429,7 +449,7 @@ deleted_request AS (
 )
 SELECT
   CASE
-    WHEN EXISTS (SELECT 1 FROM deleted_follow) THEN 'unfollow'
+    WHEN EXISTS (SELECT 1 FROM updated_follow) THEN 'unfollow'
     WHEN EXISTS (SELECT 1 FROM deleted_request) THEN 'cancel_request'
     ELSE 'none'
   END AS action;
