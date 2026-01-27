@@ -2,11 +2,14 @@
 
 import { motion } from "motion/react";
 import { X, Bell } from "lucide-react";
+import { constructLiveNotif } from "@/lib/notifications";
 
 export default function Toast({ notification, onDismiss, onMouseEnter, onMouseLeave, onClick }) {
 
-
     const action = notification?.needs_action || null;
+
+    const notif = constructLiveNotif(notification);
+    console.log("constructed: ", notif)
 
     return (
         <motion.div
