@@ -11,6 +11,8 @@ and /posts/{random id}
 
 add sounds on pms, gms, notifs
 
+username on navbar
+
 ======== LATER TODOs ========
 View permissions (mess with urls to test)
 PROPER RESPONSE HANDLING - ERROR HANDLING

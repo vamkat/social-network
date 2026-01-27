@@ -24,18 +24,19 @@ export default async function ConversationPage({ params }) {
             interlocutorId: selectedConversation.Interlocutor?.id,
             limit: 20,
         });
+        console.log("Messages result: ", messagesResult);
         if (messagesResult.success && messagesResult.data?.Messages) {
             // Messages come newest first, reverse for display
             initialMessages = messagesResult.data.Messages.reverse();
         }
-
-        const res = await markAsRead({convID: selectedConversation.ConversationId, lastMsgID: selectedConversation.LastMessage.id});
-
-
+        await markAsRead({convID: selectedConversation.ConversationId, lastMsgID: selectedConversation.LastMessage.id});
     } else {
         firstMessage = true;
     }
-
+    console.log("initial conversations:", conversations);
+    console.log("initial selected id: ", id);
+    console.log("initial messages: ", initialMessages);
+    console.log("first message: ", firstMessage)
     return (
         <MessagesContent
             initialConversations={conversations}

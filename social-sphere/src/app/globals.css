@@ -349,6 +349,21 @@ body {
   animation: fadeIn 0.8s ease-out forwards;
 }
 
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 12px var(--accent));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 4px var(--accent));
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 0.8s ease-in-out infinite;
+}
+
 .delay-100 {
   animation-delay: 100ms;
 }

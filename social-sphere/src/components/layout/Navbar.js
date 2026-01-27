@@ -12,7 +12,6 @@ import { getImageUrl } from "@/actions/auth/get-image-url";
 import { getConv } from "@/actions/chat/get-conv";
 import { useLiveSocket } from "@/context/LiveSocketContext";
 import { getUnreadCount } from "@/actions/chat/get-unread-count";
-import { markAsRead } from "@/actions/chat/mark-read";
 import { getConvByID } from "@/actions/chat/get-conv-by-id";
 
 export default function Navbar() {
@@ -22,9 +21,14 @@ export default function Navbar() {
     const [isMessagesOpen, setIsMessagesOpen] = useState(false);
     const [conversations, setConversations] = useState([]);
     const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+    const [isAlerting, setIsAlerting] = useState(false);
     const dropdownRef = useRef(null);
     const messagesRef = useRef(null);
     const searchRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const audioBufferRef = useRef(null);
+    const alertTimeoutRef = useRef(null);
+    const pendingSoundRef = useRef(false);
     const user = useStore((state) => state.user);
     const setUser = useStore((state) => state.setUser);
     const unreadCount = useStore((state) => state.unreadCount);
@@ -47,6 +51,57 @@ export default function Navbar() {
         getUnread();
     }, [setUnreadCount]);
 
+    // Initialize Web Audio API for message alerts
+    useEffect(() => {
+        const initAudio = async () => {
+            try {
+                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Try to resume immediately (works if user interacted with site recently)
+                if (audioContextRef.current.state === "suspended") {
+                    audioContextRef.current.resume().catch(() => {});
+                }
+
+                const response = await fetch("/alerts/privateMessage.mp3");
+                const arrayBuffer = await response.arrayBuffer();
+                audioBufferRef.current = await audioContextRef.current.decodeAudioData(arrayBuffer);
+            } catch (err) {
+                console.error("Failed to load audio:", err);
+            }
+        };
+
+        initAudio();
+
+        // Resume AudioContext on first user interaction and play pending sound
+        const unlockAudio = async () => {
+            if (audioContextRef.current?.state === "suspended") {
+                await audioContextRef.current.resume();
+                // Play pending sound if there was one
+                if (pendingSoundRef.current && audioBufferRef.current) {
+                    pendingSoundRef.current = false;
+                    const source = audioContextRef.current.createBufferSource();
+                    source.buffer = audioBufferRef.current;
+                    source.connect(audioContextRef.current.destination);
+                    source.start(0);
+                }
+            }
+        };
+
+        document.addEventListener("click", unlockAudio);
+        document.addEventListener("touchstart", unlockAudio);
+
+        return () => {
+            document.removeEventListener("click", unlockAudio);
+            document.removeEventListener("touchstart", unlockAudio);
+            if (alertTimeoutRef.current) {
+                clearTimeout(alertTimeoutRef.current);
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+            }
+        };
+    }, []);
+
     // Reset UnreadCount in local state when viewing a conversation via URL
     useEffect(() => {
         if (pathname.startsWith('/messages/')) {
@@ -66,6 +121,31 @@ export default function Navbar() {
     // Handle incoming private messages - update conversations in real-time
     const handleNewMessage = useCallback(async (msg) => {
         console.log("[Navbar] New message received:", msg);
+
+        // if the message is not mine, sound alert and glow
+        if (msg.sender.id !== user.id) {
+            // Play sound using Web Audio API
+            if (audioContextRef.current && audioBufferRef.current) {
+                if (audioContextRef.current.state === "suspended") {
+                    // Queue sound to play after user interaction
+                    pendingSoundRef.current = true;
+                } else {
+                    const source = audioContextRef.current.createBufferSource();
+                    source.buffer = audioBufferRef.current;
+                    source.connect(audioContextRef.current.destination);
+                    source.start(0);
+                }
+            }
+
+            // Trigger glow for 3 seconds
+            if (alertTimeoutRef.current) {
+                clearTimeout(alertTimeoutRef.current);
+            }
+            setIsAlerting(true);
+            alertTimeoutRef.current = setTimeout(() => {
+                setIsAlerting(false);
+            }, 4000);
+        }
 
         const senderId = msg.sender?.id;
 
@@ -465,22 +545,11 @@ export default function Navbar() {
                                         : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
                                         }`}
                                 >
-                                    <Send className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isMessagesOpen ? 2.5 : 2} />
+                                    <Send className={`w-4 h-4 sm:w-5 sm:h-5`} strokeWidth={isMessagesOpen ? 2.5 : 2} />
                                     {unreadCount > 0 && (
-                                        <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
-                                            {unreadCount}
+                                        <span className={`absolute top-0.5 right-0.5 min-w-1 h-1 sm:min-w-1 sm:h-2 px-0.5 bg-(--accent) rounded-full flex items-center justify-center border-2 border-(--accent) ${isAlerting ? "animate-pulse-glow" : ""}`}>
                                         </span>
                                     )}
-                                    {/* Connection status dot */}
-                                    {/* <span
-                                        className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full border border-background ${
-                                            isConnected
-                                                ? "bg-green-500"
-                                                : connectionState === ConnectionState.CONNECTING || connectionState === ConnectionState.RECONNECTING
-                                                ? "bg-yellow-500 animate-pulse"
-                                                : "bg-gray-400"
-                                        }`}
-                                    /> */}
                                 </button>
                             </Tooltip>
 
@@ -608,6 +677,7 @@ export default function Navbar() {
                                     >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
+                                    {user.username}
                                 </button>
 
                                 {/* Dropdown Menu */}

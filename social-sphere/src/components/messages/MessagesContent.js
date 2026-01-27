@@ -106,6 +106,8 @@ export default function MessagesContent({
                     const pendingIndex = prev.findIndex(
                         (m) => m._pending && m.message_text === msg.message_text
                     );
+                    console.log("Scroll")
+                    scrollToBottom(true);
 
                     if (pendingIndex !== -1) {
                         // Replace the pending message with the confirmed one
@@ -113,7 +115,7 @@ export default function MessagesContent({
                         updated[pendingIndex] = { ...msg, _pending: false };
                         return updated;
                     }
-
+                    
                     // If no pending message found (edge case), add if not duplicate
                     if (prev.some((m) => m.id === msg.id)) return prev;
                     return [...prev, msg];
@@ -196,7 +198,7 @@ export default function MessagesContent({
         return () => removeOnPrivateMessage(handlePrivateMessage);
     }, [addOnPrivateMessage, removeOnPrivateMessage, handlePrivateMessage]);
 
-    // Scroll to bottom of messages
+    // // Scroll to bottom of messages
     const scrollToBottom = (instant = false) => {
         if (instant) {
             messagesContainerRef.current?.scrollTo(0, messagesContainerRef.current.scrollHeight);
@@ -205,7 +207,7 @@ export default function MessagesContent({
         }
     };
 
-    // Scroll to bottom only on first load of conversation
+    // // Scroll to bottom only on first load of conversation
     useEffect(() => {
         if (messages.length > 0) {
             scrollToBottom(true);
