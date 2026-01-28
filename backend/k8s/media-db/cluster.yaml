@@ -7,16 +7,5 @@ metadata:
     stage: db
 spec:
   instances: 3
-
-  imageName: postgres:16-cloud-native
-
-  bootstrap:
-    initdb:
-      database: media
-      owner: postgres
-
-  superuserSecret:
-    name: media-db-superuser
-
   storage:
     size: 1Gi

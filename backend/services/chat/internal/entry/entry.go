@@ -89,6 +89,17 @@ func Run() error {
 	//
 	//
 	//
+	// DATABASE
+	pool, err := postgresql.NewPool(ctx, cfgs.DatabaseConn)
+	if err != nil {
+		return fmt.Errorf("failed to connect db: %v", err)
+	}
+	defer pool.Close()
+	tele.Info(ctx, "Connected to DB")
+
+	//
+	//
+	//
 	// GRPC SERVICES
 	clients := initClients()
 
@@ -126,17 +137,6 @@ func Run() error {
 	}
 	defer natsConn.Drain()
 	tele.Info(ctx, "NATS connected")
-
-	//
-	//
-	//
-	// DATABASE
-	pool, err := postgresql.NewPool(ctx, cfgs.DatabaseConn)
-	if err != nil {
-		return fmt.Errorf("failed to connect db: %v", err)
-	}
-	defer pool.Close()
-	tele.Info(ctx, "Connected to DB")
 
 	//
 	//

@@ -18,11 +18,11 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: media-app-secret
-                  key: DATABASE_URL
+                  name: media-db-app
+                  key: uri
+            - name: MIGRATE_PATH
+              value: /app/migrations
           command: ["sh", "-c"]
           args:
             - |
-              ./migrate && \
-              echo "Running seeds..." && \
-              ./seeds/seed.sh
+              ./migrate

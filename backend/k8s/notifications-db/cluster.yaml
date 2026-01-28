@@ -7,16 +7,5 @@ metadata:
     stage: db
 spec:
   instances: 3
-
-  imageName: postgres:16-cloud-native
-
-  bootstrap:
-    initdb:
-      database: notifications
-      owner: postgres
-
-  superuserSecret:
-    name: notifications-db-superuser
-
   storage:
     size: 1Gi

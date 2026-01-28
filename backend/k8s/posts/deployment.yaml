@@ -15,10 +15,10 @@ spec:
       labels:
         app: posts
     spec:
-      initContainers:
-        - name: wait-for-db
-          image: busybox
-          command: ['sh', '-c', 'until nc -z posts-db-rw 5432; do echo waiting for db; sleep 2; done']
+      # initContainers:
+      #   - name: wait-for-db
+      #     image: busybox
+      #     command: ['sh', '-c', 'until nc -z posts-db-rw 5432; do echo waiting for db; sleep 2; done']
       containers:
         - name: posts
           image: social-network/posts:dev
@@ -29,13 +29,10 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: posts-app-secret
-                  key: DATABASE_URL
+                  name: posts-db-app
+                  key: uri
             - name: ENC_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: posts-app-secret
-                  key: ENC_KEY
+              value: social-network-secret-key
             - name: GRPC_SERVER_PORT
               value: :50051
             - name: SENTINEL_ADDRS

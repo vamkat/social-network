@@ -7,16 +7,6 @@ metadata:
     stage: db
 spec:
   instances: 3
-
-  imageName: postgres:16-cloud-native
-
-  bootstrap:
-    initdb:
-      database: chat
-      owner: postgres
-
-  superuserSecret:
-    name: chat-db-superuser
-
   storage:
     size: 1Gi
+

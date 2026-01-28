@@ -59,4 +59,4 @@ spec:
             - name: KAFKA_BROKERS
               value: "kafka.kafka.svc.cluster.local:29092"
             - name: NATS_CLUSTER
-              value: "nats://nats-client.messaging.svc.cluster.local:4222"
+              value: "nats://ruser:T0pS3cr3t@nats-client.messaging.svc.cluster.local:4222"

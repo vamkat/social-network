@@ -1,9 +1,10 @@
 NAMESPACE=social-network
 
-.PHONY: build-base delete-volumes build-cnpg build-all apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db deploy-all reset
+.PHONY: build-base delete-volumes build-cnpg build-all init-passwords apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db deploy-all reset
 
 # ==== Docker ====
 
+# --- Images ---
 build-base:
 	docker build -t social-network/go-base -f backend/docker/go/base2.Dockerfile .
 
@@ -16,6 +17,12 @@ build-services:
 	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
 	docker build -t social-network/users:dev -f backend/docker/services/users.Dockerfile .
 	docker build -t social-network/front:dev -f backend/docker/front/front.Dockerfile .
+	$(MAKE) build-cnpg
+
+build-cnpg:
+	docker buildx bake -f backend/docker/cnpg/bake.hcl postgres16-cloud-native
+
+# --- deploy from docker
 
 docker-up:
 	$(MAKE) create-network
@@ -45,13 +52,10 @@ create-network:
 # ==== K8s ====
 
 # Preliminary
+# install cnpg operator
 op-manifest:
 	kubectl apply --server-side -f \
 	https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml
-
-build-cnpg:
-	docker buildx bake -f backend/docker/cnpg/bake.hcl postgres16-cloud-native
-
 
 # 1.
 apply-namespace:
@@ -76,7 +80,6 @@ apply-db:
 run-migrations:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=migration
 
-
 # 6.
 apply-pvc:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=pvc
@@ -89,31 +92,39 @@ apply-apps:
 apply-ingress:
 	kubectl apply -f backend/k8s/nginx/api-gateway-ingress.yaml
 
+# 9.
+port-forward:
+	kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 
+
 build-proto:
 	$(MAKE) -f backend/shared/proto/protoMakefile generate
 
-logs-users:
-	kubectl logs -l app=users -n users -f
-
-logs-db:
-	kubectl logs -l app=users-db -n users -f
 
 reset:
 	kubectl delete namespace users --ignore-not-found=true
 	kubectl create namespace users
 
+# Builds all nessary docker images
 build-all:
 	$(MAKE) build-base 
+	$(MAKE) op-manifest 
 	$(MAKE) build-cnpg 
 	$(MAKE) build-services 
 
+# 
 deploy-all: 
 	$(MAKE) op-manifest
 	$(MAKE) apply-namespace
 	$(MAKE) apply-configs
 	$(MAKE) deploy-nginx 
-	$(MAKE) apply-db  
+	$(MAKE) apply-db
+	$(MAKE) aplly-pvc  
 	$(MAKE) run-migrations 
 	$(MAKE) apply-apps
 	$(MAKE) apply-ingress
 
+# Runs the docker and k8s from top to bottom
+first-time:
+	$(MAKE) build-all
+	$(MAKE) deploy
+	

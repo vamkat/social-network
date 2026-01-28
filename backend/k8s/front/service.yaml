@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: nextjs-frontend
   namespace: frontend
-  label:
+  labels:
     stage: app
 spec:
   selector:

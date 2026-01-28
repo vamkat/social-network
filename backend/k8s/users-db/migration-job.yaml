@@ -18,8 +18,10 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: users-app-secret
-                  key: DATABASE_URL
+                  name: users-db-app
+                  key: uri
+            - name: MIGRATE_PATH
+              value: /app/migrations
           command: ["sh", "-c"]
           args:
             - |
