@@ -1,10 +1,17 @@
 NAMESPACE=social-network
 
-.PHONY: build-base delete-volumes build-cnpg build-all init-passwords apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db deploy-all reset
+.PHONY: build-base delete-volumes build-cnpg build-all apply-namespace apply-pvc apply-db build-services deploy-users run-migrations logs-users logs-db deploy-all reset
 
+# === Utils ===
+
+build-proto:
+	$(MAKE) -f backend/shared/proto/protoMakefile generate
+
+# ~~~~~~~~~~~~~~~~~~~~~~~
 # ==== Docker ====
 
-# --- Images ---
+
+# --- Image Creation ---
 build-base:
 	docker build -t social-network/go-base -f backend/docker/go/base2.Dockerfile .
 
@@ -22,7 +29,7 @@ build-services:
 build-cnpg:
 	docker buildx bake -f backend/docker/cnpg/bake.hcl postgres16-cloud-native
 
-# --- deploy from docker
+# --- deploy from docker ---
 
 docker-up:
 	$(MAKE) create-network
@@ -49,13 +56,19 @@ api:
 create-network:
 	@docker network inspect social-network >nul 2>&1 || docker network create social-network
 
+
+# ~~~~~~~~~~~~~~~~~~
 # ==== K8s ====
 
-# Preliminary
+
+# --- Preliminary ---
 # install cnpg operator
 op-manifest:
 	kubectl apply --server-side -f \
 	https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml
+
+
+# --- Deployment Order ---
 
 # 1.
 apply-namespace:
@@ -75,6 +88,8 @@ deploy-nginx:
 # 4.
 apply-db:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=db
+
+# !!! WAIT HERE !!!
 
 # 5.
 run-migrations:
@@ -96,14 +111,6 @@ apply-ingress:
 port-forward:
 	kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 
 
-build-proto:
-	$(MAKE) -f backend/shared/proto/protoMakefile generate
-
-
-reset:
-	kubectl delete namespace users --ignore-not-found=true
-	kubectl create namespace users
-
 # Builds all nessary docker images
 build-all:
 	$(MAKE) build-base 
@@ -111,17 +118,21 @@ build-all:
 	$(MAKE) build-cnpg 
 	$(MAKE) build-services 
 
-# 
+# Do not run this as it will probalby fail.
+# Run all these in order but check that all pods are complete and 
+# running before running migrations
 deploy-all: 
 	$(MAKE) op-manifest
 	$(MAKE) apply-namespace
 	$(MAKE) apply-configs
 	$(MAKE) deploy-nginx 
 	$(MAKE) apply-db
-	$(MAKE) aplly-pvc  
+	$(MAKE) aplly-pvc
+	sleep 60  
 	$(MAKE) run-migrations 
 	$(MAKE) apply-apps
 	$(MAKE) apply-ingress
+	$(MAKE) port-forward
 
 # Runs the docker and k8s from top to bottom
 first-time:
