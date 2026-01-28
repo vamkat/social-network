@@ -5,7 +5,6 @@ metadata:
   namespace: storage
   labels:
     stage: app
-
 spec:
   replicas: 1
   selector:
@@ -38,11 +37,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-    volumeMounts:
-      - name: data
-        mountPath: /data
-
-    volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: minio-pvc
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio-pvc

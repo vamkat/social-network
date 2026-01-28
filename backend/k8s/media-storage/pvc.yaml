@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: minio-pvc
   namespace: storage
+  labels:
+    stage: pvc
 spec:
   accessModes:
     - ReadWriteOnce
