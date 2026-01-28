@@ -5,15 +5,15 @@ import { serverApiRequest } from "@/lib/server-api";
 export async function getNotifs({ limit = 10, offset = 0 } = {}) {
     try {
         const url = `/notifications?limit=${limit}&offset=${offset}&read_only=false`;
-        const posts = await serverApiRequest(url, {
+        const notifs = await serverApiRequest(url, {
             method: "GET",
             forwardCookies: true
         });
 
-        return posts;
+        return notifs;
 
     } catch (error) {
-        console.error("Error fetching friends posts:", error);
+        console.error("Error fetching notifications:", error);
         return [];
     }
 }

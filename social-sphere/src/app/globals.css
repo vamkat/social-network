@@ -352,16 +352,31 @@ body {
 @keyframes pulseGlow {
   0%, 100% {
     filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 12px var(--accent));
-    transform: scale(1);
+    transform: scale(0.9);
   }
   50% {
     filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 4px var(--accent));
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
 }
 
 .animate-pulse-glow {
   animation: pulseGlow 0.8s ease-in-out infinite;
+}
+
+@keyframes pulseGlowForeground {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px var(--foreground)) drop-shadow(0 0 8px var(--foreground));
+    transform: scale(0.9);
+  }
+  50% {
+    filter: drop-shadow(0 0 1px var(--foreground)) drop-shadow(0 0 2px var(--foreground));
+    transform: scale(1.15);
+  }
+}
+
+.animate-pulse-glow-foreground {
+  animation: pulseGlowForeground 0.8s ease-in-out infinite;
 }
 
 .delay-100 {

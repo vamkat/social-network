@@ -13,6 +13,7 @@ import { getConv } from "@/actions/chat/get-conv";
 import { useLiveSocket } from "@/context/LiveSocketContext";
 import { getUnreadCount } from "@/actions/chat/get-unread-count";
 import { getConvByID } from "@/actions/chat/get-conv-by-id";
+import { getNotifCount } from "@/actions/notifs/get-notif-count";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -22,24 +23,33 @@ export default function Navbar() {
     const [conversations, setConversations] = useState([]);
     const [isLoadingConversations, setIsLoadingConversations] = useState(false);
     const [isAlerting, setIsAlerting] = useState(false);
+    const [isNotifAlerting, setIsNotifAlerting] = useState(false);
     const dropdownRef = useRef(null);
     const messagesRef = useRef(null);
     const searchRef = useRef(null);
     const audioContextRef = useRef(null);
     const audioBufferRef = useRef(null);
+    const notifAudioBufferRef = useRef(null);
     const alertTimeoutRef = useRef(null);
+    const notifAlertTimeoutRef = useRef(null);
     const pendingSoundRef = useRef(false);
+    const pendingNotifSoundRef = useRef(false);
     const user = useStore((state) => state.user);
     const setUser = useStore((state) => state.setUser);
     const unreadCount = useStore((state) => state.unreadCount);
     const setUnreadCount = useStore((state) => state.setUnreadCount);
     const incrementUnreadCount = useStore((state) => state.incrementUnreadCount);
     const decrementUnreadCount = useStore((state) => state.decrementUnreadCount);
+    const unreadNotifs = useStore((state) => state.unreadNotifs);
+    const setUnreadNotifs = useStore((state) => state.setUnreadNotifs);
+    const incrementNotifs = useStore((state) => state.incrementNotifs);
 
     // Live WebSocket connection
     const {
         addOnPrivateMessage,
         removeOnPrivateMessage,
+        addOnNotification,
+        removeOnNotification,
         disconnect: disconnectSocket,
     } = useLiveSocket();
 
@@ -47,11 +57,14 @@ export default function Navbar() {
         const getUnread = async () => {
             const result = await getUnreadCount();
             setUnreadCount(result.data?.count ?? 0);
+
+            const unreadNotifs = await getNotifCount();
+            setUnreadNotifs(unreadNotifs?.value ?? 0);
         }
         getUnread();
     }, [setUnreadCount]);
 
-    // Initialize Web Audio API for message alerts
+    // Initialize Web Audio API for message and notification alerts
     useEffect(() => {
         const initAudio = async () => {
             try {
@@ -62,9 +75,15 @@ export default function Navbar() {
                     audioContextRef.current.resume().catch(() => {});
                 }
 
-                const response = await fetch("/alerts/privateMessage.mp3");
-                const arrayBuffer = await response.arrayBuffer();
-                audioBufferRef.current = await audioContextRef.current.decodeAudioData(arrayBuffer);
+                // Load private message sound
+                const msgResponse = await fetch("/alerts/privateMessage.mp3");
+                const msgArrayBuffer = await msgResponse.arrayBuffer();
+                audioBufferRef.current = await audioContextRef.current.decodeAudioData(msgArrayBuffer);
+
+                // Load notification sound
+                const notifResponse = await fetch("/alerts/notification.mp3");
+                const notifArrayBuffer = await notifResponse.arrayBuffer();
+                notifAudioBufferRef.current = await audioContextRef.current.decodeAudioData(notifArrayBuffer);
             } catch (err) {
                 console.error("Failed to load audio:", err);
             }
@@ -72,15 +91,23 @@ export default function Navbar() {
 
         initAudio();
 
-        // Resume AudioContext on first user interaction and play pending sound
+        // Resume AudioContext on first user interaction and play pending sounds
         const unlockAudio = async () => {
             if (audioContextRef.current?.state === "suspended") {
                 await audioContextRef.current.resume();
-                // Play pending sound if there was one
+                // Play pending message sound if there was one
                 if (pendingSoundRef.current && audioBufferRef.current) {
                     pendingSoundRef.current = false;
                     const source = audioContextRef.current.createBufferSource();
                     source.buffer = audioBufferRef.current;
+                    source.connect(audioContextRef.current.destination);
+                    source.start(0);
+                }
+                // Play pending notification sound if there was one
+                if (pendingNotifSoundRef.current && notifAudioBufferRef.current) {
+                    pendingNotifSoundRef.current = false;
+                    const source = audioContextRef.current.createBufferSource();
+                    source.buffer = notifAudioBufferRef.current;
                     source.connect(audioContextRef.current.destination);
                     source.start(0);
                 }
@@ -95,6 +122,9 @@ export default function Navbar() {
             document.removeEventListener("touchstart", unlockAudio);
             if (alertTimeoutRef.current) {
                 clearTimeout(alertTimeoutRef.current);
+            }
+            if (notifAlertTimeoutRef.current) {
+                clearTimeout(notifAlertTimeoutRef.current);
             }
             if (audioContextRef.current) {
                 audioContextRef.current.close();
@@ -218,6 +248,40 @@ export default function Navbar() {
         addOnPrivateMessage(handleNewMessage);
         return () => removeOnPrivateMessage(handleNewMessage);
     }, [addOnPrivateMessage, removeOnPrivateMessage, handleNewMessage]);
+
+    // Handle incoming notifications - play sound and glow
+    const handleNewNotification = useCallback(() => {
+        // Increment notification count
+        incrementNotifs();
+
+        // Play notification sound using Web Audio API
+        if (audioContextRef.current && notifAudioBufferRef.current) {
+            if (audioContextRef.current.state === "suspended") {
+                // Queue sound to play after user interaction
+                pendingNotifSoundRef.current = true;
+            } else {
+                const source = audioContextRef.current.createBufferSource();
+                source.buffer = notifAudioBufferRef.current;
+                source.connect(audioContextRef.current.destination);
+                source.start(0);
+            }
+        }
+
+        // Trigger glow for 4 seconds
+        if (notifAlertTimeoutRef.current) {
+            clearTimeout(notifAlertTimeoutRef.current);
+        }
+        setIsNotifAlerting(true);
+        notifAlertTimeoutRef.current = setTimeout(() => {
+            setIsNotifAlerting(false);
+        }, 4000);
+    }, [incrementNotifs]);
+
+    // Register notification handler
+    useEffect(() => {
+        addOnNotification(handleNewNotification);
+        return () => removeOnNotification(handleNewNotification);
+    }, [addOnNotification, removeOnNotification, handleNewNotification]);
 
     // Avatar state - allows refreshing when original expires
     const [avatarSrc, setAvatarSrc] = useState(user?.avatar_url);
@@ -547,7 +611,7 @@ export default function Navbar() {
                                 >
                                     <Send className={`w-4 h-4 sm:w-5 sm:h-5`} strokeWidth={isMessagesOpen ? 2.5 : 2} />
                                     {unreadCount > 0 && (
-                                        <span className={`absolute top-0.5 right-0.5 min-w-1 h-1 sm:min-w-1 sm:h-2 px-0.5 bg-(--accent) rounded-full flex items-center justify-center border-2 border-(--accent) ${isAlerting ? "animate-pulse-glow" : ""}`}>
+                                        <span className={`absolute top-0.5 right-0.5 min-w-1 h-1 sm:min-w-1.5 sm:h-1.5  bg-(--accent) rounded-full flex items-center justify-center border-2 border-(--accent) ${isAlerting ? "animate-pulse-glow" : ""}`}>
                                         </span>
                                     )}
                                 </button>
@@ -644,12 +708,9 @@ export default function Navbar() {
                                     }`}
                             >
                                 <Bell className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={isActive('/notifications') ? 2.5 : 2} />
-                                {1 > 0 ? (
-                                    <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 sm:min-w-[18px] sm:h-[18px] px-1 text-[9px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
-                                        {0}
-                                    </span>
-                                ) : (
-                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-background" />
+                                {unreadNotifs > 0 && (
+                                        <span className={`absolute top-0.5 right-0.5 min-w-1 h-1 sm:min-w-1 sm:h-1 bg-foreground rounded-full flex items-center justify-center border-2 border-foreground ${isNotifAlerting ? "animate-pulse-glow-foreground" : ""}`}>
+                                        </span>
                                 )}
                             </Link>
                         </Tooltip>
@@ -668,6 +729,7 @@ export default function Navbar() {
                                             <User className="w-4 h-4 text-(--muted)" />
                                         )}
                                     </div>
+                                    {user.username}
                                     <svg
                                         className={`hidden sm:block w-3.5 h-3.5 text-(--muted) transition-transform ${isDropdownOpen ? "rotate-180" : ""
                                             }`}
@@ -676,8 +738,7 @@ export default function Navbar() {
                                         viewBox="0 0 24 24"
                                     >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                    {user.username}
+                                    </svg>    
                                 </button>
 
                                 {/* Dropdown Menu */}

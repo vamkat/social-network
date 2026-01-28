@@ -10,6 +10,7 @@ import { useLiveSocket } from "@/context/LiveSocketContext";
 import { useConversations } from "@/context/ConversationsContext";
 import EmojiPicker from "emoji-picker-react";
 import { useMsgReceiver } from "@/store/store";
+import Link from "next/link";
 
 export default function MessagesContent({
     interlocutorId,
@@ -271,9 +272,17 @@ export default function MessagesContent({
                             )}
                         </div>
                         <div>
-                            <p className="font-semibold text-foreground">
+                            <Link
+                                href={`/profile/${interlocutor.id}`}
+                                prefetch={false}
+                                onClick={(e) => e.stopPropagation()}
+                                className="font-semibold text-foreground hover:underline hover:text-(--accent)"
+                            >
+                                {interlocutor.username}
+                            </Link>
+                            {/* <p className="font-semibold text-foreground">
                                 {interlocutor.username || "Unknown User"}
-                            </p>
+                            </p> */}
                         </div>
                     </div>
 

@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { X, Bell } from "lucide-react";
 import { constructLiveNotif } from "@/lib/notifications";
+import Link from "next/link";
 
 export default function Toast({ notification, onDismiss, onMouseEnter, onMouseLeave, onClick }) {
 
@@ -27,10 +28,46 @@ export default function Toast({ notification, onDismiss, onMouseEnter, onMouseLe
                 <div className="shrink-0 w-8 h-8 bg-(--accent)/10 rounded-full flex items-center justify-center">
                     <Bell className="w-4 h-4 text-(--accent)" />
                 </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-xs text-foreground mt-0.5">
-                        {notification?.message}
-                    </p>
+                <div className="flex-1 text-xs text-foreground leading-snug">
+                    {notif?.who && (
+                        <Link
+                            href={`/profile/${notif.whoID}`}
+                            prefetch={false}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-foreground hover:text-(--accent) hover:underline"
+                        >
+                            {notif.who}
+                        </Link>
+                    )}
+                    <span className="text-xs text-foreground mt-0.5">
+                        {notif.message}
+                    </span>
+                    {notif?.wherePost && (
+                        <Link
+                            href={`/posts/${notif.whereID}`}
+                            prefetch={false}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-foreground hover:text-(--accent) hover:underline"
+                        >
+                            {notif.wherePost}
+                        </Link>
+                    )}
+                    {notif?.whereGroup && (
+                        <Link
+                            href={`/groups/${notif.whereID}`}
+                            prefetch={false}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-foreground hover:text-(--accent) hover:underline truncate"
+                        >
+                            {notif.whereGroup}
+                        </Link>
+                    )}
+                    {notif?.extra && (
+                        <p className="text-xs text-foreground mt-0.5">
+                            {notif.extra}
+                        </p>
+                    )}
+                    <br></br>
                     {action && (
                         <span>act</span>
                     )}
