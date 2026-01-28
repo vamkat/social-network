@@ -662,6 +662,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.MarkAllAsRead())
 
+	SetEndpoint("/notifications/mark").
+		AllowedMethod("POST").
+		RateLimit(IP, 20, 5).
+		Auth().
+		EnrichContext().
+		RateLimit(USERID, 20, 5).
+		Finalize(h.MarkNotificationAsRead())
+
 		//params
 
 	SetEndpoint("/notifications/{notification_id}").
