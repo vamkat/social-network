@@ -101,7 +101,12 @@ kubectl logs -n users -l app=users-db
 Manual logs:
 
 ```sh
-kubectl logs <podname> -n users -f
+kubectl logs <podname> -n <namespace> -f
+```
+
+Get secrets from pod:
+```sh
+kubectl get secret <secretname> -n <namespace> -o yaml
 ```
 
 ---

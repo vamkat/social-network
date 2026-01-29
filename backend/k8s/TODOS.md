@@ -5,4 +5,6 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 (Reason: CORS request did not succeed). Status code: (null).
 ```
 
-- Posts Db not migrating
+- Kafka Implement
+
+- Check Envs on front
