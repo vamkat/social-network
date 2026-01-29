@@ -88,8 +88,7 @@ export default function CreateGroup({ isOpen, onClose }) {
             let imageUploadFailed = false;
             if (imageFile && response.FileId && response.UploadUrl) {
                 try {
-                    const yo = "hi"
-                    const uploadRes = await fetch(`${response.UploadUrl}${yo}`, {
+                    const uploadRes = await fetch(response.UploadUrl, {
                         method: "PUT",
                         body: imageFile,
                     });
