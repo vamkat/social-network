@@ -125,9 +125,9 @@ deploy-all:
 	$(MAKE) op-manifest
 	$(MAKE) apply-namespace
 	$(MAKE) apply-configs
-	$(MAKE) deploy-nginx 
 	$(MAKE) apply-db
-	$(MAKE) aplly-pvc
+	$(MAKE) deploy-nginx 
+	$(MAKE) apply-pvc
 	sleep 60  
 	$(MAKE) run-migrations 
 	$(MAKE) apply-apps
@@ -137,5 +137,5 @@ deploy-all:
 # Runs the docker and k8s from top to bottom
 first-time:
 	$(MAKE) build-all
-	$(MAKE) deploy
+	$(MAKE) deploy-all
 	

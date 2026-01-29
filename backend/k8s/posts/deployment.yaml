@@ -15,10 +15,6 @@ spec:
       labels:
         app: posts
     spec:
-      # initContainers:
-      #   - name: wait-for-db
-      #     image: busybox
-      #     command: ['sh', '-c', 'until nc -z posts-db-rw 5432; do echo waiting for db; sleep 2; done']
       containers:
         - name: posts
           image: social-network/posts:dev

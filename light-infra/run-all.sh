@@ -37,6 +37,10 @@ export KAFKA_BROKERS=localhost:29092
 
 export NATS_CLUSTER=nats://localhost:4222
 
+export GATEWAY=http://localhost:8081
+export LIVE=ws://localhost:8082
+
+
 ######################################
 # Secrets
 ######################################

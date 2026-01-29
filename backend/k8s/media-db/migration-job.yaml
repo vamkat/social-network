@@ -22,7 +22,11 @@ spec:
                   key: uri
             - name: MIGRATE_PATH
               value: /app/migrations
-          command: ["sh", "-c"]
-          args:
+          command:
+            - sh
+            - -c
             - |
+              until psql "$DATABASE_URL" -c "select pg_is_in_recovery()" | grep f; do
+                sleep 2
+              done
               ./migrate

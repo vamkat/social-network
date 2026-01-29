@@ -9,10 +9,12 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
 // Run migrations from a given path
 func run(dbUrl string, migrationsPath string) error {
+	fmt.Printf("db url: %s migrations path %s", dbUrl, migrationsPath)
 	sqlDB, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		return fmt.Errorf("failed to open DB for migrations: %w", err)
@@ -31,6 +33,12 @@ func run(dbUrl string, migrationsPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize migrate: %w", err)
 	}
+
+	var dbName string
+	if err := sqlDB.QueryRow("select current_database()").Scan(&dbName); err != nil {
+		return err
+	}
+	fmt.Println("Running migrations on database:", dbName)
 
 	// Check if database is dirty
 	version, dirty, err := m.Version()

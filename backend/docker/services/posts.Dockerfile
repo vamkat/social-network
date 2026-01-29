@@ -16,8 +16,8 @@ WORKDIR /app
 
 COPY --from=build /app/backend/posts_service .
 COPY --from=build /app/backend/migrate .
-COPY --from=build /app/backend/services/users/internal/db/migrations ./migrations
-COPY --from=build /app/backend/services/users/internal/db/seeds ./seeds
+COPY --from=build /app/backend/services/posts/internal/db/migrations ./migrations
+COPY --from=build /app/backend/services/posts/internal/db/seeds ./seeds
 
 COPY backend/services/posts/entrypoint.sh /app/entrypoint.sh
 

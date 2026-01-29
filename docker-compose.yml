@@ -364,8 +364,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - SERVER_API_BASE=http://api-gateway:8081
-      - NEXT_PUBLIC_API_URL=http://localhost:8081
+      - GATEWAY=http://api-gateway:8081
+      - LIVE=http://localhost:8081
 
     restart: unless-stopped
 

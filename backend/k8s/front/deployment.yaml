@@ -28,10 +28,14 @@ spec:
               value: "0.0.0.0"
             - name: NODE_ENV
               value: production
-            - name: SERVER_API_BASE
+            - name: GATEWAY
               value: http://api-gateway.api-gateway.svc.cluster.local:8081
-            - name: NEXT_PUBLIC_API_URL
+            - name: LIVE
               value: http://live.live.svc.cluster.local:8082
+            - name: NEXT_PUBLIC_LOG_LEVEL
+              value: WARN
+            - name: LOG_LEVEL
+              value: ERROR
             - name: OTEL_EXPORTER_OTLP_INSECURE
               value: "true"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
