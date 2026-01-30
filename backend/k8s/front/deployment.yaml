@@ -19,6 +19,7 @@ spec:
       containers:
         - name: nextjs
           image: social-network/front:dev
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
           env:
@@ -31,7 +32,7 @@ spec:
             - name: GATEWAY
               value: http://api-gateway.api-gateway.svc.cluster.local:8081
             - name: LIVE
-              value: ws://live.live.svc.cluster.local:8082
+              value: http://localhost:8082
             - name: OTEL_EXPORTER_OTLP_INSECURE
               value: "true"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

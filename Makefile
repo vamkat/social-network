@@ -22,8 +22,8 @@ build-services:
 	docker build -f backend/docker/services/media.Dockerfile -t social-network/media:dev .
 	docker build -f backend/docker/services/notifications.Dockerfile -t social-network/notifications:dev .
 	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
-	docker build -t social-network/users:dev -f backend/docker/services/users.Dockerfile .
-	docker build -t social-network/front:dev -f backend/docker/front/front.Dockerfile .
+	docker build -f backend/docker/services/users.Dockerfile -t social-network/users:dev .
+	docker build -f backend/docker/front/front.Dockerfile -t social-network/front:dev .
 	$(MAKE) build-cnpg
 
 build-cnpg:
@@ -111,8 +111,14 @@ apply-cors:
 
 # 9.
 port-forward:
-	kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 
-	kubectl port-forward -n storage svc/minio 9000:9000
+	@echo "Starting port-forwards..."
+	@bash -c '\
+		trap "echo Cleaning up port-forwards; pkill -f \"kubectl port-forward\"" EXIT SIGINT; \
+		kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 & \
+		kubectl port-forward -n storage svc/minio 9000:9000 & \
+		kubectl port-forward -n live svc/live 8082:8082 & \
+		wait'
+
 
 # 10.
 apply-ingress:

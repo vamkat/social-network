@@ -20,7 +20,7 @@ spec:
           image: social-network/live:dev
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 8082
           env:
             - name: ENC_KEY
               valueFrom:
