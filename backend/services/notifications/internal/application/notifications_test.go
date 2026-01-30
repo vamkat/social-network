@@ -61,7 +61,12 @@ func TestCreateNotification(t *testing.T) {
 	assert.Equal(t, sourceService, notification.SourceService)
 	assert.Equal(t, ct.Id(sourceEntityID), notification.SourceEntityID)
 	assert.Equal(t, needsAction, notification.NeedsAction)
-	assert.Equal(t, payload, notification.Payload)
+	// The payload will have encoded IDs, so we need to check individual fields
+	assert.Contains(t, notification.Payload, "requester_name")
+	assert.Equal(t, "testuser", notification.Payload["requester_name"])
+	// The requester_id will be encoded, so we just check that it exists and is not the original
+	assert.Contains(t, notification.Payload, "requester_id")
+	assert.NotEqual(t, "2", notification.Payload["requester_id"]) // Should be encoded
 
 	mockDB.AssertExpectations(t)
 }
@@ -1013,6 +1018,24 @@ func TestCreateNewMessageForMultipleUsers(t *testing.T) {
 	}
 
 	err := app.CreateNewMessageForMultipleUsers(ctx, userIDs, senderUserID, chatID, senderUsername, messageContent, aggregate)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test MarkNotificationAsActed function
+func TestMarkNotificationAsActed(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplicationWithMocks(mockDB)
+
+	ctx := context.Background()
+	notificationID := int64(1)
+	userID := int64(10)
+
+	mockDB.On("MarkNotificationAsActed", ctx, mock.AnythingOfType("sqlc.MarkNotificationAsActedParams")).Return(nil)
+
+	err := app.MarkNotificationAsActed(ctx, notificationID, userID)
 
 	assert.NoError(t, err)
 

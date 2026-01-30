@@ -163,6 +163,20 @@ func (s *Server) MarkNotificationAsRead(ctx context.Context, req *pb.MarkNotific
 	return &emptypb.Empty{}, nil
 }
 
+// MarkNotificationAsActed marks a notification as acted -0
+func (s *Server) MarkNotificationAsActed(ctx context.Context, req *pb.MarkNotificationAsActedRequest) (*emptypb.Empty, error) {
+	if req.NotificationId == 0 || req.UserId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "notification_id and user_id are required")
+	}
+
+	err := s.Application.MarkNotificationAsActed(ctx, req.NotificationId, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to mark notification as acted: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
 // MarkAllAsRead marks all notifications for a user as read -0
 func (s *Server) MarkAllAsRead(ctx context.Context, req *wrapperspb.Int64Value) (*emptypb.Empty, error) {
 	if req.Value == 0 {
