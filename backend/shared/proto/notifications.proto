@@ -73,6 +73,10 @@ service NotificationService {
   // Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND and PERMISSION_DENIED as applicable.
   rpc MarkNotificationAsRead (MarkNotificationAsReadRequest) returns (google.protobuf.Empty);
 
+  // Marks a single notification as acted for the owner.
+  // Returns Error: INVALID_ARGUMENT when ids are zero; INTERNAL otherwise. Desired: NOT_FOUND and PERMISSION_DENIED as applicable.
+  rpc MarkNotificationAsActed (MarkNotificationAsActedRequest) returns (google.protobuf.Empty);
+
   // Marks all notifications as read for the user.
   // Returns Error: INVALID_ARGUMENT when user_id is zero; INTERNAL otherwise. Desired: NOT_FOUND/PERMISSION_DENIED as applicable.
   rpc MarkAllAsRead (google.protobuf.Int64Value) returns (google.protobuf.Empty);
@@ -193,6 +197,12 @@ message GetUserNotificationsResponse {
 
 // Request to mark notification as read
 message MarkNotificationAsReadRequest {
+  int64 notification_id = 1;
+  int64 user_id = 2;
+}
+
+// Request to mark notification as acted
+message MarkNotificationAsActedRequest {
   int64 notification_id = 1;
   int64 user_id = 2;
 }

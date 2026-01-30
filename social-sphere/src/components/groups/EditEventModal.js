@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { X, Image as ImageIcon, Calendar } from "lucide-react";
 import { editEvent } from "@/actions/events/edit-event";
 import { validateUpload } from "@/actions/auth/validate-upload";
@@ -16,6 +17,7 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
     const [existingImageUrl, setExistingImageUrl] = useState(null);
     const [deleteExistingImage, setDeleteExistingImage] = useState(false);
     const [error, setError] = useState("");
+    const [warning, setWarning] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
 
@@ -119,27 +121,33 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
                 return;
             }
 
-            // If there's a new image, upload it
+            // If there's a new image, upload it (non-blocking)
             let newImageUrl = existingImageUrl;
+            let imageUploadFailed = false;
             if (imageFile && response.FileId && response.UploadUrl) {
-                const uploadRes = await fetch(response.UploadUrl, {
-                    method: "PUT",
-                    body: imageFile,
-                });
+                try {
+                    const uploadRes = await fetch(response.UploadUrl, {
+                        method: "PUT",
+                        body: imageFile,
+                    });
 
-                if (!uploadRes.ok) {
-                    setError("Failed to upload event image");
-                    setIsSubmitting(false);
-                    return;
+                    if (uploadRes.ok) {
+                        const validateResp = await validateUpload(response.FileId);
+                        if (validateResp.success) {
+                            newImageUrl = validateResp.download_url;
+                        } else {
+                            imageUploadFailed = true;
+                            newImageUrl = existingImageUrl; // Keep existing if upload failed
+                        }
+                    } else {
+                        imageUploadFailed = true;
+                        newImageUrl = existingImageUrl;
+                    }
+                } catch (uploadErr) {
+                    console.error("Event image upload failed:", uploadErr);
+                    imageUploadFailed = true;
+                    newImageUrl = existingImageUrl;
                 }
-
-                const validateResp = await validateUpload(response.FileId);
-                if (!validateResp.success) {
-                    setError("Failed to validate image upload");
-                    setIsSubmitting(false);
-                    return;
-                }
-                newImageUrl = validateResp.download_url;
             } else if (deleteExistingImage) {
                 newImageUrl = null;
             }
@@ -151,12 +159,19 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
                 event_body: body.trim(),
                 event_date: eventDate,
                 image_url: newImageUrl,
-                image_id: imageFile ? response.FileId : (deleteExistingImage ? null : event.image_id),
+                image_id: imageUploadFailed ? event.image_id : (imageFile ? response.FileId : (deleteExistingImage ? null : event.image_id)),
             };
 
             // Success
             setIsSubmitting(false);
             onClose();
+
+            // Show warning if image upload failed
+            if (imageUploadFailed) {
+                setWarning("Event image failed to upload. You can try again later.");
+                setTimeout(() => setWarning(""), 3000);
+            }
+
             if (onSuccess) {
                 onSuccess(updatedEvent);
             }
@@ -188,14 +203,29 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
     const showUploadButton = !showNewImagePreview && !showExistingImage;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            title="Edit Event"
-            description="Update your event details"
-            showCloseButton={!isSubmitting}
-        >
-            <div className="space-y-4">
+        <>
+            {/* Warning Message - Fixed top banner (outside Modal so it persists) */}
+            <AnimatePresence>
+                {warning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-100 px-4 py-2 bg-amber-500/90 text-white text-sm rounded-lg shadow-lg"
+                    >
+                        {warning}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <Modal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title="Edit Event"
+                description="Update your event details"
+                showCloseButton={!isSubmitting}
+            >
+                <div className="space-y-4">
                 {/* Title Input */}
                 <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
@@ -375,5 +405,6 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
                 </div>
             </div>
         </Modal>
+        </>
     );
 }

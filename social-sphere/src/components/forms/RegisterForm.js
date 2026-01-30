@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { register } from "@/actions/auth/register";
@@ -13,6 +14,7 @@ export default function RegisterForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [imageError, setImageError] = useState(null);
+    const [warning, setWarning] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -77,7 +79,9 @@ export default function RegisterForm() {
                 avatar_url: ""
             };
 
-            // Step 2: Upload avatar if needed
+            let imageUploadFailed = false;
+
+            // Step 2: Upload avatar if needed (non-blocking)
             if (avatarFile && resp.UploadUrl) {
                 try {
                     const uploadRes = await fetch(resp.UploadUrl, {
@@ -85,33 +89,38 @@ export default function RegisterForm() {
                         body: avatarFile
                     });
 
-                    if (!uploadRes.ok) {
+                    if (uploadRes.ok) {
+                        // Step 3: Validate upload
+                        const validateResp = await validateUpload(resp.FileId);
+                        if (validateResp.success && validateResp.download_url) {
+                            userStoreData.avatar_url = validateResp.download_url;
+                        } else {
+                            imageUploadFailed = true;
+                        }
+                    } else {
                         const errorText = await uploadRes.text();
                         console.error(`Storage error (${uploadRes.status}): ${errorText}`);
-                        setError("Failed to upload avatar");
-                        setIsLoading(false);
-                        return;
+                        imageUploadFailed = true;
                     }
-
-                    // Step 3: Validate upload
-                    const validateResp = await validateUpload(resp.FileId);
-                    if (!validateResp.success) {
-                        setError(validateResp.error || "Failed to validate upload");
-                        setIsLoading(false);
-                        return;
-                    }
-                    userStoreData.avatar_url = validateResp.download_url;
                 } catch (uploadError) {
                     console.error("Avatar upload error:", uploadError);
-                    setError("Avatar upload failed");
-                    setIsLoading(false);
-                    return;
+                    imageUploadFailed = true;
                 }
             }
 
             // Step 4: Store user data and redirect
             setUser(userStoreData);
-            window.location.href = "/feed/public";
+
+            // Show warning if avatar upload failed (non-blocking)
+            if (imageUploadFailed) {
+                setWarning("Avatar failed to upload. You can update it later in your profile.");
+                // Redirect after a short delay so user can see the warning
+                setTimeout(() => {
+                    window.location.href = "/feed/public";
+                }, 2000);
+            } else {
+                window.location.href = "/feed/public";
+            }
 
         } catch (error) {
             console.error("Registration exception:", error);
@@ -228,7 +237,22 @@ export default function RegisterForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="w-full">
+        <>
+            {/* Warning Message - Fixed top banner */}
+            <AnimatePresence>
+                {warning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-amber-500/90 text-white text-sm rounded-lg shadow-lg"
+                    >
+                        {warning}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <form onSubmit={handleSubmit} className="w-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* LEFT COLUMN - Account Info */}
                 <div className="space-y-6">
@@ -465,5 +489,6 @@ export default function RegisterForm() {
             </button>
 
         </form>
+        </>
     );
 }

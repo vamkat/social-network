@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { X, Image as ImageIcon, Calendar } from "lucide-react";
 import { createEvent } from "@/actions/events/create-event";
 import { validateUpload } from "@/actions/auth/validate-upload";
@@ -16,6 +17,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [error, setError] = useState("");
+    const [warning, setWarning] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
 
@@ -99,27 +101,31 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                 return;
             }
 
-            // If there's an image, upload it
+            // If there's an image, upload it (non-blocking)
             let imageUrl = null;
+            let imageUploadFailed = false;
             if (imageFile && response.FileId && response.UploadUrl) {
-                const uploadRes = await fetch(response.UploadUrl, {
-                    method: "PUT",
-                    body: imageFile,
-                });
+                try {
 
-                if (!uploadRes.ok) {
-                    setError("Failed to upload event image");
-                    setIsSubmitting(false);
-                    return;
-                }
+                    const uploadRes = await fetch(response.UploadUrl, {
+                        method: "PUT",
+                        body: imageFile,
+                    });
 
-                const validateResp = await validateUpload(response.FileId);
-                if (!validateResp.success) {
-                    setError("Failed to validate image upload");
-                    setIsSubmitting(false);
-                    return;
+                    if (uploadRes.ok) {
+                        const validateResp = await validateUpload(response.FileId);
+                        if (validateResp.success) {
+                            imageUrl = validateResp.download_url;
+                        } else {
+                            imageUploadFailed = true;
+                        }
+                    } else {
+                        imageUploadFailed = true;
+                    }
+                } catch (uploadErr) {
+                    console.error("Event image upload failed:", uploadErr);
+                    imageUploadFailed = true;
                 }
-                imageUrl = validateResp.download_url;
             }
 
             // Create the new event object for the UI
@@ -129,13 +135,13 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                 event_body: body.trim(),
                 group_id: groupId,
                 event_date: eventDate,
-                image_id: response.FileId || null,
+                image_id: imageUploadFailed ? null : response.FileId,
                 image_url: imageUrl,
                 going_count: 0,
                 not_going_count: 0,
                 user_response: null,
                 user: {
-                    user_id: user.id,
+                    id: user.id,
                     username: user.username,
                     avatar_url: user.avatar_url,
                 },
@@ -146,6 +152,13 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
             setIsSubmitting(false);
             resetForm();
             onClose();
+
+            // Show warning if image upload failed
+            if (imageUploadFailed) {
+                setWarning("Event image failed to upload. You can try again later.");
+                setTimeout(() => setWarning(""), 3000);
+            }
+
             if (onSuccess) {
                 onSuccess(newEvent);
             }
@@ -184,14 +197,29 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
     const isValid = title.trim() && body.trim() && eventDate;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            title="Create Event"
-            description="Plan a group event for members to attend"
-            showCloseButton={!isSubmitting}
-        >
-            <div className="space-y-4">
+        <>
+            {/* Warning Message - Fixed top banner (outside Modal so it persists) */}
+            <AnimatePresence>
+                {warning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-100 px-4 py-2 bg-amber-500/90 text-white text-sm rounded-lg shadow-lg"
+                    >
+                        {warning}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <Modal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title="Create Event"
+                description="Plan a group event for members to attend"
+                showCloseButton={!isSubmitting}
+            >
+                <div className="space-y-4">
                 {/* Title Input */}
                 <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
@@ -326,5 +354,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                 </div>
             </div>
         </Modal>
+        </>
     );
 }

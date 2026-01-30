@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Heart, MessageCircle, Pencil, Trash2, User, ChevronDown } from "lucide-react";
 import PostImage from "@/components/ui/PostImage";
 import Modal from "@/components/ui/Modal";
@@ -36,6 +37,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingText, setEditingText] = useState("");
     const [error, setError] = useState("");
+    const [warning, setWarning] = useState("");
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -254,25 +256,33 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             }
 
             if (imageFile && resp.FileId && resp.UploadUrl) {
-                // User uploaded a new image
-                const uploadRes = await fetch(resp.UploadUrl, {
-                    method: "PUT",
-                    body: imageFile,
-                });
+                // User uploaded a new image (non-blocking)
+                let imageUploadFailed = false;
+                try {
+                    const uploadRes = await fetch(resp.UploadUrl, {
+                        method: "PUT",
+                        body: imageFile,
+                    });
 
-                if (!uploadRes.ok) {
-                    setError("Failed to upload image");
-                    return;
+                    if (uploadRes.ok) {
+                        const validateResp = await validateUpload(resp.FileId);
+                        if (validateResp.success) {
+                            setImage(validateResp?.download_url);
+                        } else {
+                            imageUploadFailed = true;
+                        }
+                    } else {
+                        imageUploadFailed = true;
+                    }
+                } catch (uploadErr) {
+                    console.error("Image upload failed:", uploadErr);
+                    imageUploadFailed = true;
                 }
 
-                const validateResp = await validateUpload(resp.FileId);
-                if (!validateResp.success) {
-                    setError("Failed to validate image upload");
-                    return;
+                if (imageUploadFailed) {
+                    setWarning("Image failed to upload. You can try again later.");
+                    setTimeout(() => setWarning(""), 3000);
                 }
-
-                // Optimistically set the new image URL
-                setImage(validateResp?.download_url);
             } else if (removeExistingImage) {
                 // User removed the existing image
                 setImage(null);
@@ -402,22 +412,26 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 return;
             }
 
-            // If there's an image, upload it
+            // If there's an image, upload it (non-blocking)
+            let commentImageUploadFailed = false;
             if (commentImageFile && resp.FileId && resp.UploadUrl) {
-                const uploadRes = await fetch(resp.UploadUrl, {
-                    method: "PUT",
-                    body: commentImageFile,
-                });
+                try {
+                    const uploadRes = await fetch(resp.UploadUrl, {
+                        method: "PUT",
+                        body: commentImageFile,
+                    });
 
-                if (!uploadRes.ok) {
-                    setError("Failed to upload comment image");
-                    return;
-                }
-
-                const validateResp = await validateUpload(resp.FileId);
-                if (!validateResp.success) {
-                    setError("Failed to validate comment image upload");
-                    return;
+                    if (uploadRes.ok) {
+                        const validateResp = await validateUpload(resp.FileId);
+                        if (!validateResp.success) {
+                            commentImageUploadFailed = true;
+                        }
+                    } else {
+                        commentImageUploadFailed = true;
+                    }
+                } catch (uploadErr) {
+                    console.error("Comment image upload failed:", uploadErr);
+                    commentImageUploadFailed = true;
                 }
             }
 
@@ -434,6 +448,12 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             setError("");
             setComments([]);
             fetchLastComment();
+
+            // Show warning if image upload failed
+            if (commentImageUploadFailed) {
+                setWarning("Comment image failed to upload. You can try again later.");
+                setTimeout(() => setWarning(""), 3000);
+            }
         } catch (err) {
             console.error("Failed to create comment:", err);
             setError("Failed to create comment. Please try again.");
@@ -573,22 +593,31 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 return;
             }
 
-            // If there's a new image, upload it
+            // If there's a new image, upload it (non-blocking)
+            let editCommentImageUploadFailed = false;
             if (editingCommentImageFile && resp.FileId && resp.UploadUrl) {
-                const uploadRes = await fetch(resp.UploadUrl, {
-                    method: "PUT",
-                    body: editingCommentImageFile,
-                });
+                try {
+                    const uploadRes = await fetch(resp.UploadUrl, {
+                        method: "PUT",
+                        body: editingCommentImageFile,
+                    });
 
-                if (!uploadRes.ok) {
-                    setError("Failed to upload comment image");
-                    return;
+                    if (uploadRes.ok) {
+                        const validateResp = await validateUpload(resp.FileId);
+                        if (!validateResp.success) {
+                            editCommentImageUploadFailed = true;
+                        }
+                    } else {
+                        editCommentImageUploadFailed = true;
+                    }
+                } catch (uploadErr) {
+                    console.error("Edit comment image upload failed:", uploadErr);
+                    editCommentImageUploadFailed = true;
                 }
 
-                const validateResp = await validateUpload(resp.FileId);
-                if (!validateResp.success) {
-                    setError("Failed to validate comment image upload");
-                    return;
+                if (editCommentImageUploadFailed) {
+                    setWarning("Comment image failed to upload. You can try again later.");
+                    setTimeout(() => setWarning(""), 3000);
                 }
             }
 
@@ -712,6 +741,20 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             ref={cardRef}
             className="group bg-background border border-(--border) rounded-2xl transition-all hover:border-(--muted)/40 hover:shadow-sm mb-6"
         >
+            {/* Warning Message - Fixed top banner */}
+            <AnimatePresence>
+                {warning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-amber-500/90 text-white text-sm rounded-lg shadow-lg"
+                    >
+                        {warning}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="p-5 flex items-start justify-between">
                 <div className="flex items-center gap-3">

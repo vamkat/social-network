@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Camera, Loader2, X } from "lucide-react";
 import { updateProfileInfo } from "@/actions/profile/update-profile";
 import { validateUpload } from "@/actions/auth/validate-upload";
@@ -11,6 +12,7 @@ export default function ProfileForm({ user }) {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ success: false, text: null });
     const [imageErr, setImageErr] = useState(null);
+    const [warning, setWarning] = useState("");
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar_url || null);
     const [wantsToDelete, setWantsToDelete] = useState(false);
@@ -93,8 +95,9 @@ export default function ProfileForm({ user }) {
 
             let newAvatarUrl = null;
             let newFileId = null;
+            let imageUploadFailed = false;
 
-            // Step 2: If avatar was provided, upload and validate
+            // Step 2: If avatar was provided, upload and validate (non-blocking)
             if (avatarFile && resp.FileId && resp.UploadUrl) {
                 try {
                     // Upload to MinIO
@@ -103,22 +106,23 @@ export default function ProfileForm({ user }) {
                         body: avatarFile
                     });
 
-                    if (!uploadRes.ok) {
-                        const errorText = await uploadRes.text();
-                        console.error(`Storage error (${uploadRes.status}): ${errorText}`);
-                        setMessage({ success: false, text: "Failed to upload avatar" });
-                    } else {
+                    if (uploadRes.ok) {
                         // Validate upload
                         const validateResp = await validateUpload(resp.FileId);
-                        if (!validateResp.success) {
-                            setMessage({ success: false, text: validateResp.error || "Failed to validate upload" });
-                        } else if (validateResp.download_url) {
+                        if (validateResp.success && validateResp.download_url) {
                             newAvatarUrl = validateResp.download_url;
                             newFileId = resp.FileId;
+                        } else {
+                            setAvatarPreview(null);
+                            imageUploadFailed = true;
                         }
+                    } else {
+                        setAvatarPreview(null);
+                        imageUploadFailed = true;
                     }
                 } catch (uploadError) {
-                    setMessage({ success: false, text: "Avatar upload failed, but profile updated" });
+                    console.error("Avatar upload failed:", uploadError);
+                    imageUploadFailed = true;
                 }
             }
 
@@ -134,6 +138,12 @@ export default function ProfileForm({ user }) {
             setMessage({ success: true, text: "Profile updated successfully!" });
             setAvatarFile(null);
 
+            // Show warning if avatar upload failed (non-blocking)
+            if (imageUploadFailed) {
+                setWarning("Avatar failed to upload. You can try again later.");
+                setTimeout(() => setWarning(""), 3000);
+            }
+
         } catch (error) {
             console.error("Profile update error:", error);
             setMessage({ success: false, text: error.message || "An unexpected error occurred" });
@@ -143,7 +153,22 @@ export default function ProfileForm({ user }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <>
+            {/* Warning Message - Fixed top banner */}
+            <AnimatePresence>
+                {warning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-amber-500/90 text-white text-sm rounded-lg shadow-lg"
+                    >
+                        {warning}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <form onSubmit={handleSubmit} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Avatar Section */}
             <div className="flex flex-col items-center gap-4">
                 <div className="relative group cursor-pointer">
@@ -191,7 +216,7 @@ export default function ProfileForm({ user }) {
 
             <div className="grid gap-6 md:grid-cols-2">
                 <div className="form-group">
-                    <label className="form-label">Username</label>
+                    <label className="form-label pl-4">Username</label>
                     <input
                         type="text"
                         name="username"
@@ -201,7 +226,7 @@ export default function ProfileForm({ user }) {
                     />
                 </div>
                 <div className="form-group">
-                    <label className="form-label">Date of Birth</label>
+                    <label className="form-label pl-4">Date of Birth</label>
                     <input
                         type="date"
                         name="dateOfBirth"
@@ -211,7 +236,7 @@ export default function ProfileForm({ user }) {
                     />
                 </div>
                 <div className="form-group">
-                    <label className="form-label">First Name</label>
+                    <label className="form-label pl-4">First Name</label>
                     <input
                         type="text"
                         name="firstName"
@@ -221,7 +246,7 @@ export default function ProfileForm({ user }) {
                     />
                 </div>
                 <div className="form-group">
-                    <label className="form-label">Last Name</label>
+                    <label className="form-label pl-4">Last Name</label>
                     <input
                         type="text"
                         name="lastName"
@@ -233,7 +258,7 @@ export default function ProfileForm({ user }) {
             </div>
 
             <div className="form-group">
-                <label className="form-label">About Me</label>
+                <label className="form-label pl-4">About Me</label>
                 <textarea
                     name="about"
                     defaultValue={user?.about}
@@ -244,7 +269,7 @@ export default function ProfileForm({ user }) {
             </div>
 
             {message.text && (
-                <div className={`p-4 rounded-xl text-sm ${message.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+                <div className={`p-4 rounded-xl text-sm ${message.success ? 'bg-background text-green-600' : 'bg-background text-red-600'}`}>
                     {message.text}
                 </div>
             )}
@@ -253,12 +278,13 @@ export default function ProfileForm({ user }) {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="btn btn-primary px-8 flex items-center gap-2"
+                    className="btn btn-primary flex items-center gap-2"
                 >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     {isLoading ? "Saving..." : "Save Changes"}
                 </button>
             </div>
         </form>
+        </>
     );
 }

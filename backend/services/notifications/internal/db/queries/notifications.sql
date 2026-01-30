@@ -40,6 +40,9 @@ WHERE user_id = $1 AND seen = false AND deleted_at IS NULL;
 -- name: MarkNotificationAsRead :exec
 UPDATE notifications SET seen = true WHERE id = $1 AND user_id = $2;
 
+-- name: MarkNotificationAsActed :exec
+UPDATE notifications SET acted = true WHERE id = $1 AND user_id = $2;
+
 -- name: MarkAllAsRead :exec
 UPDATE notifications SET seen = true WHERE user_id = $1 AND seen = false;
 

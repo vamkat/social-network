@@ -23,6 +23,7 @@ type DBInterface interface {
 	GetNotificationType(ctx context.Context, notifType string) (sqlc.NotificationType, error)
 	UpdateNotificationCount(ctx context.Context, arg sqlc.UpdateNotificationCountParams) error
 	GetUnreadNotificationByTypeAndEntity(ctx context.Context, arg sqlc.GetUnreadNotificationByTypeAndEntityParams) (sqlc.Notification, error)
+	MarkNotificationAsActed(ctx context.Context, arg sqlc.MarkNotificationAsActedParams) error
 }
 
 // Update the Application struct to use the interface

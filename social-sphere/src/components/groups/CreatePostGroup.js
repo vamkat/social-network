@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { X, Image as ImageIcon } from "lucide-react";
 import Tooltip from "@/components/ui/Tooltip";
 import { validateImage } from "@/lib/validation";
@@ -14,6 +15,7 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [error, setError] = useState("");
+    const [warning, setWarning] = useState("");
     const fileInputRef = useRef(null);
 
     const MAX_CHARS = 5000;
@@ -94,33 +96,38 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
                 return;
             }
 
-            // Step 2: Upload image if needed
+            // Step 2: Upload image if needed (non-blocking)
             let imageUrl = null;
+            let imageUploadFailed = false;
             if (imageFile && resp.FileId && resp.UploadUrl) {
-                const uploadRes = await fetch(resp.UploadUrl, {
-                    method: "PUT",
-                    body: imageFile,
-                });
+                try {
+                    const uploadRes = await fetch(resp.UploadUrl, {
+                        method: "PUT",
+                        body: imageFile,
+                    });
 
-                if (!uploadRes.ok) {
-                    setError("Failed to upload image");
-                    return;
+                    if (uploadRes.ok) {
+                        // Step 3: Validate the upload
+                        const validateResp = await validateUpload(resp.FileId);
+                        if (validateResp.success) {
+                            imageUrl = validateResp.download_url;
+                        } else {
+                            imageUploadFailed = true;
+                        }
+                    } else {
+                        imageUploadFailed = true;
+                    }
+                } catch (uploadErr) {
+                    console.error("Image upload failed:", uploadErr);
+                    imageUploadFailed = true;
                 }
-
-                // Step 3: Validate the upload
-                const validateResp = await validateUpload(resp.FileId);
-                if (!validateResp.success) {
-                    setError("Failed to validate image upload");
-                    return;
-                }
-                imageUrl = validateResp.download_url;
             }
 
             const now = new Date().toISOString();
 
             const newPost = {
                 comments_count: 0,
-                image: resp.FileId,
+                image: imageUploadFailed ? null : resp.FileId,
                 image_url: imageUrl,
                 liked_by_user: false,
                 post_body: content,
@@ -138,6 +145,12 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
             setContent("");
             handleRemoveImage();
 
+            // Show warning if image upload failed
+            if (imageUploadFailed) {
+                setWarning("Image failed to upload. You can try again later.");
+                setTimeout(() => setWarning(""), 3000);
+            }
+
             // Refresh the page to show the new post
             if (onPostCreated) {
                 onPostCreated(newPost);
@@ -153,6 +166,7 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
         setContent("");
         handleRemoveImage();
         setError("");
+        setWarning("");
     };
 
     const charCount = content.length;
@@ -210,6 +224,20 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
                         {error}
                     </div>
                 )}
+
+                {/* Warning Message - Fixed top banner */}
+                <AnimatePresence>
+                    {warning && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-amber-500/90 text-white text-sm rounded-lg shadow-lg"
+                        >
+                            {warning}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                
 

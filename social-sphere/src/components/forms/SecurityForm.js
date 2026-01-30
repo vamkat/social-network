@@ -28,7 +28,7 @@ export default function SecurityForm({ user }) {
 
                 <form action={emailAction} className="space-y-4 max-w-md">
                     <div className="form-group">
-                        <label className="form-label">Email</label>
+                        <label className="form-label pl-4">Email</label>
                         <input
                             type="email"
                             name="email"
@@ -45,14 +45,16 @@ export default function SecurityForm({ user }) {
                         </div>
                     )}
 
-                    <button
-                        type="submit"
-                        disabled={isEmailPending}
-                        className="btn btn-primary px-6 flex items-center gap-2"
-                    >
-                        {isEmailPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                        {isEmailPending ? "Updating..." : "Update Email"}
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            type="submit"
+                            disabled={isEmailPending}
+                            className="btn btn-primary px-6 flex items-center gap-2"
+                        >
+                            {isEmailPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {isEmailPending ? "Updating..." : "Update Email"}
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -67,7 +69,7 @@ export default function SecurityForm({ user }) {
 
                 <form action={passwordAction} className="space-y-4 max-w-md">
                     <div className="form-group">
-                        <label className="form-label">Current Password</label>
+                        <label className="form-label pl-4">Current Password</label>
                         <div className="relative">
                             <input
                                 type={showCurrentPassword ? "text" : "password"}
@@ -86,7 +88,7 @@ export default function SecurityForm({ user }) {
                         </div>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">New Password</label>
+                        <label className="form-label pl-4">New Password</label>
                         <div className="relative">
                             <input
                                 type={showNewPassword ? "text" : "password"}
@@ -105,7 +107,7 @@ export default function SecurityForm({ user }) {
                         </div>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Confirm New Password</label>
+                        <label className="form-label pl-4">Confirm New Password</label>
                         <div className="relative">
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
@@ -130,14 +132,16 @@ export default function SecurityForm({ user }) {
                         </div>
                     )}
 
-                    <button
-                        type="submit"
-                        disabled={isPasswordPending}
-                        className="btn btn-primary px-6 flex items-center gap-2"
-                    >
-                        {isPasswordPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                        {isPasswordPending ? "Updating..." : "Update Password"}
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            type="submit"
+                            disabled={isPasswordPending}
+                            className="btn btn-primary px-6 flex items-center gap-2"
+                        >
+                            {isPasswordPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {isPasswordPending ? "Updating..." : "Update Password"}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
