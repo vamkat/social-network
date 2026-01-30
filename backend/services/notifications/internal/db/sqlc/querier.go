@@ -19,6 +19,7 @@ type Querier interface {
 	GetUserNotificationsCount(ctx context.Context, userID int64) (int64, error)
 	GetUserUnreadNotificationsCount(ctx context.Context, userID int64) (int64, error)
 	MarkAllAsRead(ctx context.Context, userID int64) error
+	MarkNotificationAsActed(ctx context.Context, arg MarkNotificationAsActedParams) error
 	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error
 	UpdateNotificationCount(ctx context.Context, arg UpdateNotificationCountParams) error
 }

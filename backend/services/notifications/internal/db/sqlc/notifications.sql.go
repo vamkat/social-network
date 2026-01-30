@@ -260,6 +260,20 @@ func (q *Queries) MarkAllAsRead(ctx context.Context, userID int64) error {
 	return err
 }
 
+const markNotificationAsActed = `-- name: MarkNotificationAsActed :exec
+UPDATE notifications SET acted = true WHERE id = $1 AND user_id = $2
+`
+
+type MarkNotificationAsActedParams struct {
+	ID     int64
+	UserID int64
+}
+
+func (q *Queries) MarkNotificationAsActed(ctx context.Context, arg MarkNotificationAsActedParams) error {
+	_, err := q.db.Exec(ctx, markNotificationAsActed, arg.ID, arg.UserID)
+	return err
+}
+
 const markNotificationAsRead = `-- name: MarkNotificationAsRead :exec
 UPDATE notifications SET seen = true WHERE id = $1 AND user_id = $2
 `

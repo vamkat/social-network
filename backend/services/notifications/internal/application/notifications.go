@@ -413,6 +413,18 @@ func (a *Application) MarkNotificationAsRead(ctx context.Context, notificationID
 	return nil
 }
 
+// MarkNotificationAsActed marks a notification as acted
+func (a *Application) MarkNotificationAsActed(ctx context.Context, notificationID, userID int64) error {
+	err := a.DB.MarkNotificationAsActed(ctx, db.MarkNotificationAsActedParams{
+		ID:     notificationID,
+		UserID: userID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to mark notification as acted: %w", err)
+	}
+	return nil
+}
+
 // MarkAllAsRead marks all notifications for a user as read
 func (a *Application) MarkAllAsRead(ctx context.Context, userID int64) error {
 	err := a.DB.MarkAllAsRead(ctx, userID)
