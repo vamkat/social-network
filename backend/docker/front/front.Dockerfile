@@ -20,7 +20,7 @@ COPY social-sphere/ .
 COPY --from=deps /app/social-sphere/node_modules ./node_modules
 
 # Disable telemetry during build
-ENV NEXT_TELEMETRY_DISABLED=1
+#ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
