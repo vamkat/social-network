@@ -24,7 +24,9 @@ build-services:
 	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
 	docker build -f backend/docker/services/users.Dockerfile -t social-network/users:dev .
 	docker build -f backend/docker/front/front.Dockerfile -t social-network/front:dev .
-	$(MAKE) build-cnpg
+
+# apparently minikube neesd to load the images
+# minikube image load social-network/api-gateway:dev ; minikube image load social-network/chat:dev ; minikube image load social-network/live:dev ; minikube image load social-network/media:dev ; minikube image load social-network/notifications:dev ; minikube image load social-network/posts:dev ; minikube image load social-network/users:dev ; minikube image load social-network/front:dev ;
 
 build-cnpg:
 	docker buildx bake -f backend/docker/cnpg/bake.hcl postgres16-cloud-native
@@ -70,6 +72,15 @@ op-manifest:
 
 # --- Deployment Order ---
 
+#-1. CHANGE TO BASH TERMINAL!
+
+# 0. Builds all nessary docker images, Do only once or if chances happen
+build-all:
+	$(MAKE) build-base 
+	$(MAKE) op-manifest 
+	$(MAKE) build-cnpg 
+	$(MAKE) build-services 
+
 # 1.
 apply-namespace:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=namespace
@@ -103,8 +114,6 @@ apply-pvc:
 apply-apps:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=app
 
-
-
 # 8.
 apply-cors:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=cors
@@ -124,12 +133,7 @@ port-forward:
 apply-ingress:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=ingress
 
-# Builds all nessary docker images
-build-all:
-	$(MAKE) build-base 
-	$(MAKE) op-manifest 
-	$(MAKE) build-cnpg 
-	$(MAKE) build-services 
+
 
 # Do not run this as it will probalby fail.
 # Run all these in order but check that all pods are complete and 
@@ -141,7 +145,7 @@ deploy-all:
 	$(MAKE) apply-db
 
 #	Prod mode
-# 	$(MAKE) deploy-nginx 
+# $(MAKE) deploy-nginx 
 
 	$(MAKE) apply-pvc
 	sleep 60  

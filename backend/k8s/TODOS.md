@@ -10,3 +10,5 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 - Check Envs on front
 
 - Check static files upload
+
+- Make api-gateway to be also accessing externally/public
