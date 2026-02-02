@@ -110,7 +110,7 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
                         // Step 3: Validate the upload
                         const validateResp = await validateUpload(resp.FileId);
                         if (validateResp.success) {
-                            imageUrl = validateResp.download_url;
+                            imageUrl = validateResp.data?.download_url;
                         } else {
                             imageUploadFailed = true;
                         }
@@ -127,11 +127,11 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
 
             const newPost = {
                 comments_count: 0,
-                image: imageUploadFailed ? null : resp.FileId,
+                image: imageUploadFailed ? null : resp.data.FileId,
                 image_url: imageUrl,
                 liked_by_user: false,
                 post_body: content,
-                post_id: resp.PostId,
+                post_id: resp.data.PostId,
                 reactions_count: 0,
                 created_at: now,
                 post_user: {

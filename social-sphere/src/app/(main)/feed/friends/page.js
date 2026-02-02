@@ -7,7 +7,7 @@ export const metadata = {
 
 export default async function FriendsFeedPage() {
     // Fetch initial 10 posts
-    const posts = await getFriendsPosts({ limit: 10, offset: 0 });
+    const result = await getFriendsPosts({ limit: 10, offset: 0 });
 
-    return <FriendsFeedContent initialPosts={posts} />;
+    return <FriendsFeedContent initialPosts={result.success ? result.data : []} />;
 }

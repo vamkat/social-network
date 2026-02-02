@@ -59,8 +59,7 @@ export default function Navbar() {
             setUnreadCount(result.data?.count ?? 0);
 
             const unreadNotifs = await getNotifCount();
-            console.log("UREAD NOTIFS", unreadNotifs?.value);
-            setUnreadNotifs(unreadNotifs?.value ?? 0);
+            setUnreadNotifs(unreadNotifs?.data.value ?? 0);
         }
         getUnread();
     }, [setUnreadCount]);
@@ -151,7 +150,7 @@ export default function Navbar() {
 
     // Handle incoming private messages - update conversations in real-time
     const handleNewMessage = useCallback(async (msg) => {
-        console.log("[Navbar] New message received:", msg);
+        console.log("New message received:", msg);
 
         // if the message is not mine, sound alert and glow
         if (msg.sender.id !== user.id) {
@@ -304,15 +303,15 @@ export default function Navbar() {
 
         const result = await getImageUrl({ fileId: user.fileId, variant: "thumb" });
 
-        if (!result?.success || !result.url) return;
+        if (!result?.success || !result.data?.download_url) return;
 
         // Update local state for immediate UI update
-        setAvatarSrc(result.url);
+        setAvatarSrc(result.data.download_url);
 
         // Update store so it persists
         setUser({
             ...user,
-            avatar_url: result.url
+            avatar_url: result.data.download_url
         });
     };
 

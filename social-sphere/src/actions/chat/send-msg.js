@@ -15,7 +15,11 @@ export async function sendMsg({interlocutor , msg}) {
             }
         });
 
-        return { success: true, ...apiResp };
+        if (!apiResp.ok) {
+            return {success: false, status: apiResp.status, error: apiResp.message};
+        }
+
+        return { success: true, data: apiResp.data };
 
     } catch (error) {
         console.error("Create Event Action Error:", error);

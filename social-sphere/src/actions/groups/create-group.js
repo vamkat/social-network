@@ -31,11 +31,15 @@ export async function createGroup({
             }
         });
 
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
         return {
             success: true,
-            GroupId: response.group_id,
-            FileId: response.FileId,
-            UploadUrl: response.UploadUrl
+            GroupId: response.data.group_id,
+            FileId: response.data.FileId,
+            UploadUrl: response.data.UploadUrl
         };
 
     } catch (error) {

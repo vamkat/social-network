@@ -77,6 +77,8 @@ export default function CreateGroup({ isOpen, onClose }) {
 
             const response = await createGroup(groupData);
 
+            console.log("RESPONSE", response)
+
             if (!response.success) {
                 setError(response.error || "Failed to create group");
                 setIsSubmitting(false);
@@ -86,7 +88,7 @@ export default function CreateGroup({ isOpen, onClose }) {
 
             // If there's an image, try to upload it (non-blocking)
             let imageUploadFailed = false;
-            if (imageFile && response.FileId && response.UploadUrl) {
+            if (imageFile && response?.FileId && response?.UploadUrl) {
                 try {
                     const uploadRes = await fetch(response.UploadUrl, {
                         method: "PUT",
@@ -97,8 +99,11 @@ export default function CreateGroup({ isOpen, onClose }) {
                         const validateResp = await validateUpload(response.FileId);
                         if (!validateResp.success) {
                             imageUploadFailed = true;
+                            console.log("no success")
                         }
+                        console.log("IMAGE SUCCESS")
                     } else {
+                        console.log("not ok")
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
@@ -106,6 +111,8 @@ export default function CreateGroup({ isOpen, onClose }) {
                     imageUploadFailed = true;
                 }
             }
+
+            console.log("No image")
 
             // Navigate to group page (group was created successfully)
             setIsSubmitting(false);

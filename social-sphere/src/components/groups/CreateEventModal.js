@@ -115,7 +115,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                     if (uploadRes.ok) {
                         const validateResp = await validateUpload(response.FileId);
                         if (validateResp.success) {
-                            imageUrl = validateResp.download_url;
+                            imageUrl = validateResp.data?.download_url;
                         } else {
                             imageUploadFailed = true;
                         }
@@ -130,12 +130,12 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
 
             // Create the new event object for the UI
             const newEvent = {
-                event_id: response.EventId,
+                event_id: response.data.EventId,
                 event_title: title.trim(),
                 event_body: body.trim(),
                 group_id: groupId,
                 event_date: eventDate,
-                image_id: imageUploadFailed ? null : response.FileId,
+                image_id: imageUploadFailed ? null : response.data.FileId,
                 image_url: imageUrl,
                 going_count: 0,
                 not_going_count: 0,

@@ -36,13 +36,14 @@ export default function CreatePost({ onPostCreated=null }) {
         if (!user?.id || followersFetched) return;
 
         setIsLoadingFollowers(true);
-        const followersData = await getFollowers({
+        const followersResult = await getFollowers({
             userId: user.id,
             limit: FOLLOWERS_LIMIT,
             offset: 0
         });
+        const followersData = followersResult.success ? followersResult.data : [];
 
-        setFollowers(followersData || []);
+        setFollowers(followersData);
         setFollowersOffset(FOLLOWERS_LIMIT);
         setHasMoreFollowers(followersData && followersData.length === FOLLOWERS_LIMIT);
         setFollowersFetched(true);
@@ -54,11 +55,12 @@ export default function CreatePost({ onPostCreated=null }) {
         if (!user?.id || isLoadingFollowers || !hasMoreFollowers) return;
 
         setIsLoadingFollowers(true);
-        const moreFollowers = await getFollowers({
+        const followersResult = await getFollowers({
             userId: user.id,
             limit: FOLLOWERS_LIMIT,
             offset: followersOffset
         });
+        const moreFollowers = followersResult.success ? followersResult.data : [];
 
         if (moreFollowers && moreFollowers.length > 0) {
             setFollowers(prev => [...prev, ...moreFollowers]);
@@ -222,7 +224,7 @@ export default function CreatePost({ onPostCreated=null }) {
                         // Step 3: Validate the upload
                         const validateResp = await validateUpload(resp.FileId);
                         if (validateResp.success) {
-                            imageUrl = validateResp.download_url;
+                            imageUrl = validateResp.data?.download_url;
                         } else {
                             imageUploadFailed = true;
                         }
@@ -240,11 +242,11 @@ export default function CreatePost({ onPostCreated=null }) {
             const newPost = {
                 audience: privacy,
                 comments_count: 0,
-                image: imageUploadFailed ? null : resp.FileId,
+                image: imageUploadFailed ? null : resp.data.FileId,
                 image_url: imageUrl,
                 liked_by_user: false,
                 post_body: content,
-                post_id: resp.PostId,
+                post_id: resp.data.PostId,
                 reactions_count: 0,
                 created_at: now,
                 post_user: {

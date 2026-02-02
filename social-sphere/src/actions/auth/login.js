@@ -13,7 +13,11 @@ export async function login(credentials) {
             }
         });
 
-        if (!apiResp.id) {
+        if(!apiResp.ok) {
+            return { success: false, status: apiResp.status, error: apiResp.message };
+        }
+
+        if (!apiResp.data.id) {
             return {
                 success: false,
                 error: "Login failed - no user ID returned"
@@ -22,9 +26,9 @@ export async function login(credentials) {
 
         return {
             success: true,
-            user_id: apiResp.id,
-            username: apiResp.username,
-            avatar_url: apiResp.avatar_url || ""
+            user_id: apiResp.data.id,
+            username: apiResp.data.username,
+            avatar_url: apiResp.data.avatar_url || ""
         };
 
     } catch (error) {

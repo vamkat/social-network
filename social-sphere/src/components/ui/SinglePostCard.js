@@ -121,13 +121,13 @@ export default function SinglePostCard({ post }) {
                 offset: 0
             });
 
-            if (result.success && result.comments) {
+            if (result.success && result.data) {
                 // Backend returns newest first, reverse to show oldest->newest (top to bottom)
-                const reversedComments = [...result.comments].reverse();
+                const reversedComments = [...result.data].reverse();
                 setComments(reversedComments);
                 // Initialize comment reactions state
                 const reactionsState = {};
-                result.comments.forEach(comment => {
+                result.data.forEach(comment => {
                     reactionsState[comment.comment_id] = {
                         liked: comment.liked_by_user,
                         count: comment.reactions_count,
@@ -158,14 +158,14 @@ export default function SinglePostCard({ post }) {
                 offset: comments.length
             });
 
-            if (result.success && result.comments) {
+            if (result.success && result.data) {
                 // Backend returns newest first, so reverse to get oldest first
                 // Then prepend them above the existing comments (which has newest at bottom)
-                const reversedComments = [...result.comments].reverse();
+                const reversedComments = [...result.data].reverse();
                 setComments((prev) => [...reversedComments, ...prev]);
                 // Initialize comment reactions state for new comments
                 const reactionsState = {};
-                result.comments.forEach(comment => {
+                result.data.forEach(comment => {
                     reactionsState[comment.comment_id] = {
                         liked: comment.liked_by_user,
                         count: comment.reactions_count,
@@ -174,7 +174,7 @@ export default function SinglePostCard({ post }) {
                 });
                 setCommentReactions(prev => ({ ...prev, ...reactionsState }));
                 // Check if there are still more to load
-                setHasMore(comments.length + result.comments.length < commentsCount);
+                setHasMore(comments.length + result.data.length < commentsCount);
             }
         } catch (error) {
             console.error("Failed to load more comments:", error);
@@ -187,12 +187,12 @@ export default function SinglePostCard({ post }) {
         if (!user?.id || isLoadingFollowers) return;
 
         setIsLoadingFollowers(true);
-        const followersData = await getFollowers({
+        const followersResult = await getFollowers({
             userId: user.id,
             limit: 100,
             offset: 0
         });
-        setFollowers(followersData || []);
+        setFollowers(followersResult.success ? followersResult.data : []);
         setIsLoadingFollowers(false);
     };
 
@@ -325,18 +325,18 @@ export default function SinglePostCard({ post }) {
                 return;
             }
 
-            if (imageFile && resp.FileId && resp.UploadUrl) {
+            if (imageFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 let imageUploadFailed = false;
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: imageFile,
                     });
 
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (validateResp.success) {
-                            setImage(validateResp.download_url);
+                            setImage(validateResp.data?.download_url);
                         } else {
                             imageUploadFailed = true;
                         }
@@ -456,15 +456,15 @@ export default function SinglePostCard({ post }) {
 
             // If there's an image, upload it (non-blocking)
             let commentImageUploadFailed = false;
-            if (commentImageFile && resp.FileId && resp.UploadUrl) {
+            if (commentImageFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: commentImageFile,
                     });
 
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (!validateResp.success) {
                             commentImageUploadFailed = true;
                         }
@@ -637,15 +637,15 @@ export default function SinglePostCard({ post }) {
 
             // If there's a new image, upload it (non-blocking)
             let editCommentImageUploadFailed = false;
-            if (editingCommentImageFile && resp.FileId && resp.UploadUrl) {
+            if (editingCommentImageFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: editingCommentImageFile,
                     });
 
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (!validateResp.success) {
                             editCommentImageUploadFailed = true;
                         }
@@ -699,6 +699,7 @@ export default function SinglePostCard({ post }) {
 
         try {
             const resp = await deleteComment(commentToDelete.comment_id);
+            console.log("Comment to delete: ", commentToDelete.comment_id)
 
             if (!resp.success) {
                 setError(resp.error || "Failed to delete comment");

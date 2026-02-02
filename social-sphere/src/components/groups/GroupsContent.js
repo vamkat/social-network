@@ -121,8 +121,8 @@ export default function GroupsContent() {
                 setIsSearching(true);
                 try {
                     const response = await searchGroups({ query: searchQuery, limit: 10 });
-                    if (response && response.groups) {
-                        setSearchResults(response.groups);
+                    if (response.success && response.data?.groups) {
+                        setSearchResults(response.data.groups);
                         setShowSearchResults(true);
                     } else {
                         setSearchResults([]);

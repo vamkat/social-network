@@ -27,7 +27,8 @@ export default function PublicFeedContent({ initialPosts }) {
 
         setLoading(true);
         try {
-            const newPosts = await getPublicPosts({ limit: 5, offset });
+            const result = await getPublicPosts({ limit: 5, offset });
+            const newPosts = result.success ? result.data : [];
 
             if (newPosts && newPosts.length > 0) {
                 setPosts((prevPosts) => [...prevPosts, ...newPosts]);

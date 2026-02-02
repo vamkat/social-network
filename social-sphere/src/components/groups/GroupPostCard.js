@@ -267,7 +267,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                     if (uploadRes.ok) {
                         const validateResp = await validateUpload(resp.FileId);
                         if (validateResp.success) {
-                            setImage(validateResp?.download_url);
+                            setImage(validateResp.data?.download_url);
                         } else {
                             imageUploadFailed = true;
                         }
@@ -318,8 +318,9 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         setError("");
 
         try {
+            console.log("deleting: ", post.post_id)
             const resp = await deletePost(post.post_id);
-
+            console.log("delete resp: ", resp)
             if (!resp.success) {
                 setError(resp.error || "Failed to delete post");
                 setIsDeleting(false);
@@ -368,13 +369,11 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 // Revert on error
                 setLikedByUser(previousLiked);
                 setReactionsCount(previousCount);
-                console.error("Failed to toggle reaction:", resp.error);
             }
         } catch (err) {
             // Revert on error
             setLikedByUser(previousLiked);
             setReactionsCount(previousCount);
-            console.error("Failed to toggle reaction:", err);
         } finally {
             setIsReactionPending(false);
         }

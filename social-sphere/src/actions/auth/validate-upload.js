@@ -15,8 +15,11 @@ export async function validateUpload(fileId) {
             }
         });
 
-        return { success: true, download_url: res.download_url };
+        if (!res.ok) {
+            return {success: false, status: res.status, error: res.message};
+        }
 
+        return { success: true, data: res.data };
     } catch (error) {
         console.error("Validate Upload Action Error:", error);
         return { success: false, error: error.message };

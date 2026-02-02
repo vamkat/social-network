@@ -52,13 +52,12 @@ export async function updateProfileAction(prevState, formData) {
     try {
         const result = await updateProfileInfo(payload);
 
-        // Backend returns UserProfileResponse which has user_id
-        if (result && result.user_id) {
-            revalidatePath("/profile/[id]", "layout");
-            return { success: true, message: "Profile updated successfully." };
-        } else {
-            return { success: false, message: "Failed to update profile." };
+        if (!result.success) {
+            return { success: false, message: result.error || "Failed to update profile." };
         }
+
+        revalidatePath("/profile/[id]", "layout");
+        return { success: true, message: "Profile updated successfully." };
     } catch (error) {
         return { success: false, message: error.message || "An unexpected error occurred." };
     }
@@ -73,7 +72,12 @@ export async function updateEmailAction(prevState, formData) {
     }
 
     try {
-        await updateProfileEmail({ email });
+        const result = await updateProfileEmail({ email });
+
+        if (!result.success) {
+            return { success: false, message: result.error || "Failed to update email." };
+        }
+
         revalidatePath("/profile/[id]", "layout");
         return { success: true, message: "Email updated successfully. Please verify your new email." };
     } catch (error) {
@@ -100,13 +104,15 @@ export async function updatePasswordAction(prevState, formData) {
     }
 
     try {
-        // Service now takes { oldPassword, newPassword } matching backend requirement
         const result = await updateProfilePassword({
             oldPassword: currentPassword,
             newPassword: newPassword
         });
 
-        // Backend returns nil body on success (status 200)
+        if (!result.success) {
+            return { success: false, message: result.error || "Failed to update password." };
+        }
+
         return { success: true, message: "Password updated successfully." };
     } catch (error) {
         return { success: false, message: error.message || "An unexpected error occurred." };
@@ -117,6 +123,11 @@ export async function updatePasswordAction(prevState, formData) {
 export async function updatePrivacyAction(bool) {
     try {
         const result = await updateProfilePrivacy({ bool });
+
+        if (!result.success) {
+            return { success: false, message: result.error || "Failed to update privacy settings." };
+        }
+
         revalidatePath("/profile/[id]", "layout");
         return { success: true, message: "Privacy settings updated." };
     } catch (error) {

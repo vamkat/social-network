@@ -15,11 +15,15 @@ export async function updateGroup({groupId ,data}) {
             forwardCookies: true
         });
 
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
         return {
             success: true,
-            GroupId: response.GroupId,
-            FileId: response.FileId,
-            UploadUrl: response.UploadUrl
+            GroupId: response.data.GroupId,
+            FileId: response.data.FileId,
+            UploadUrl: response.data.UploadUrl
         };
     } catch (error) {
         console.error("Error updating group:", error);

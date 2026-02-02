@@ -5,15 +5,19 @@ import { serverApiRequest } from "@/lib/server-api";
 export async function getPost(postId) {
     try {
         const url = `/posts/${postId}`;
-        const post = await serverApiRequest(url, {
+        const response = await serverApiRequest(url, {
             method: "GET",
             forwardCookies: true
         });
 
-        return {success: true, error: null, post: post};
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
 
     } catch (error) {
         console.error("Error fetching post:", error);
-        return {success:false, error: error.message, post: null};
+        return { success: false, error: error.message };
     }
 }

@@ -279,12 +279,13 @@ func (h *Handlers) deleteComment() http.HandlerFunc {
 			panic(1)
 		}
 
-		body, err := utils.JSON2Struct(&models.GenericReq{}, r)
-		if err != nil {
-			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
-			return
-		}
-
+		// body, err := utils.JSON2Struct(&models.GenericReq{}, r)
+		// if err != nil {
+		// 	utils.ErrorJSON(ctx, w, http.StatusBadRequest, "Bad JSON data received")
+		// 	return
+		// }
+		body := &models.GenericReq{}
+		var err error
 		body.EntityId, err = utils.PathValueGet(r, "comment_id", ct.Id(0), true)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())

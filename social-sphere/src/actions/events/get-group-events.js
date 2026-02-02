@@ -9,7 +9,11 @@ export async function getGroupEvents({ groupId, limit = 10, offset = 0 }) {
             method: "GET"
         });
 
-        return { success: true, data: apiResp };
+        if (!apiResp.ok) {
+            return {success: false, status: apiResp.status, error: apiResp.message};
+        }
+
+        return { success: true, data: apiResp.data };
 
     } catch (error) {
         console.error("Get Group Events Action Error:", error);

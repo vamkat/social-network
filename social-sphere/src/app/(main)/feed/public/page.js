@@ -1,5 +1,4 @@
 import { getPublicPosts } from "@/actions/posts/get-public-posts";
-import { getNotifs } from "@/actions/notifs/get-user-notifs"
 import PublicFeedContent from "@/components/feed/PublicFeedContent";
 
 export const metadata = {
@@ -10,10 +9,7 @@ export default async function PublicFeedPage() {
     // call backend for public posts - initial 10 posts
     const limit = 10;
     const offset = 0;
-    const posts = await getPublicPosts({ limit, offset });
+    const result = await getPublicPosts({ limit, offset });
 
-    const result = await getNotifs();
-    console.log("notifs: ", result);
-
-    return <PublicFeedContent initialPosts={posts} />;
+    return <PublicFeedContent initialPosts={result.success ? result.data : []} />;
 }

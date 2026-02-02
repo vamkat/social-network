@@ -5,16 +5,9 @@ import { Lock } from "lucide-react";
 
 export default async function PostPage({ params }) {
     const { id } = await params;
-    const post = await getPost(id);
+    const result = await getPost(id);
 
-    let allowed = true;
-    if (post.post.ok && post.post.permission === false) {
-        allowed = false;
-    }
-
-    if (!post.post) {
-        notFound();
-    }
+    const allowed = result.success && result.data;
 
     return (
         <>
@@ -33,7 +26,7 @@ export default async function PostPage({ params }) {
             ) : (
                 <div className="min-h-screen">
                     <div className="max-w-full mx-auto px-60 py-8">
-                        <SinglePostCard post={post.post} />
+                        <SinglePostCard post={result.data} />
                     </div>
                 </div>
             )}

@@ -23,7 +23,11 @@ export async function createComment({ postId, commentBody, imageName, imageSize,
             forwardCookies: true
         });
 
-        return { success: true, ...response };
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("Error creating comment:", error);
         return { success: false, error: error.message };

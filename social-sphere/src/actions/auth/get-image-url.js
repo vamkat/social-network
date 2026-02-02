@@ -10,10 +10,13 @@ export async function getImageUrl({fileId, variant}) {
             forwardCookies: true,
         });
 
-        return {success: true, url: res.download_url};
+        if (!res.ok) {
+            return {success: false, status: res.status, error: res.message};
+        }
+        return { success: true, data: res.data };
 
     } catch (error) {
         console.error("Error fetching post:", error);
-        return null;
+        return {success: false, error: error.message};
     }
 }

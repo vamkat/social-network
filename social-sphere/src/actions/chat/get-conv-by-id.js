@@ -14,8 +14,11 @@ export async function getConvByID({interlocutorId , convId}) {
             }
         });
 
-        // Return success wrapper
-        return { success: true, data: response };
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("Error fetching groups:", error);
         return { success: false, error: error.message };

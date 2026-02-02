@@ -326,8 +326,9 @@ func (a *Application) CreateFollowRequestAcceptedNotification(ctx context.Contex
 	message := fmt.Sprintf("%s accepted your follow request", targetUsername)
 
 	payload := map[string]string{
-		"target_id":   fmt.Sprintf("%d", targetUserID),
-		"target_name": targetUsername,
+		"target_id":    fmt.Sprintf("%d", targetUserID),
+		"target_name":  targetUsername,
+		"requester_id": fmt.Sprintf("%d", requesterUserID),
 	}
 
 	_, err := a.CreateNotification(
@@ -354,8 +355,9 @@ func (a *Application) CreateFollowRequestRejectedNotification(ctx context.Contex
 	message := fmt.Sprintf("%s rejected your follow request", targetUsername)
 
 	payload := map[string]string{
-		"target_id":   fmt.Sprintf("%d", targetUserID),
-		"target_name": targetUsername,
+		"target_id":    fmt.Sprintf("%d", targetUserID),
+		"target_name":  targetUsername,
+		"requester_id": fmt.Sprintf("%d", requesterUserID),
 	}
 
 	_, err := a.CreateNotification(
@@ -386,6 +388,7 @@ func (a *Application) CreateGroupInviteAcceptedNotification(ctx context.Context,
 		"invited_name": invitedUsername,
 		"group_id":     fmt.Sprintf("%d", groupID),
 		"group_name":   groupName,
+		"inviter_id":   fmt.Sprintf("%d", inviterUserID),
 	}
 
 	_, err := a.CreateNotification(
@@ -416,6 +419,7 @@ func (a *Application) CreateGroupInviteRejectedNotification(ctx context.Context,
 		"invited_name": invitedUsername,
 		"group_id":     fmt.Sprintf("%d", groupID),
 		"group_name":   groupName,
+		"inviter_id":   fmt.Sprintf("%d", inviterUserID),
 	}
 
 	_, err := a.CreateNotification(
@@ -442,9 +446,11 @@ func (a *Application) CreateGroupJoinRequestAcceptedNotification(ctx context.Con
 	message := fmt.Sprintf("Your request to join group '%s' was approved", groupName)
 
 	payload := map[string]string{
-		"group_owner_id": fmt.Sprintf("%d", groupOwnerID),
-		"group_id":       fmt.Sprintf("%d", groupID),
-		"group_name":     groupName,
+		"group_owner_id":                   fmt.Sprintf("%d", groupOwnerID),
+		"group_id":                         fmt.Sprintf("%d", groupID),
+		"group_name":                       groupName,
+		"requester_id":                     fmt.Sprintf("%d", requesterUserID),
+		"group_owner_notification_user_id": fmt.Sprintf("%d", groupOwnerID),
 	}
 
 	_, err := a.CreateNotification(
@@ -471,9 +477,11 @@ func (a *Application) CreateGroupJoinRequestRejectedNotification(ctx context.Con
 	message := fmt.Sprintf("Your request to join group '%s' was declined", groupName)
 
 	payload := map[string]string{
-		"group_owner_id": fmt.Sprintf("%d", groupOwnerID),
-		"group_id":       fmt.Sprintf("%d", groupID),
-		"group_name":     groupName,
+		"group_owner_id":                   fmt.Sprintf("%d", groupOwnerID),
+		"group_id":                         fmt.Sprintf("%d", groupID),
+		"group_name":                       groupName,
+		"requester_id":                     fmt.Sprintf("%d", requesterUserID),
+		"group_owner_notification_user_id": fmt.Sprintf("%d", groupOwnerID),
 	}
 
 	_, err := a.CreateNotification(

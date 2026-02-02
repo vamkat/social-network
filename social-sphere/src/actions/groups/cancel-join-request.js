@@ -11,6 +11,11 @@ export async function cancelJoinRequest({ groupId }) {
                 "Content-Type": "application/json"
             }
         });
+
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
         return { success: true, data: response };
     } catch (error) {
         console.error("Error canceling join request:", error);

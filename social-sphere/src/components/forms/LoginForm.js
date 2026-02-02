@@ -35,7 +35,6 @@ export default function LoginForm() {
         try {
             // call API to login
             const resp = await login({ identifier, password });
-
             // check err
             if (!resp.success || resp.error) {
                 setError(resp.error || "Invalid credentials");
@@ -54,7 +53,7 @@ export default function LoginForm() {
             window.location.href = "/feed/public";
 
         } catch (error) {
-            console.error("Login exception:", err);
+            console.error("Login exception:", error);
             setError("An unexpected error occurred");
             setIsLoading(false);
         }

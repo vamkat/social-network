@@ -16,8 +16,8 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     const [hasMore, setHasMore] = useState((initialPosts || []).length >= 10);
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
-    const [isPublic, setIsPublic] = useState(result.user.public);
-    const [isFollowing, setIsFollowing] = useState(result.user.viewer_is_following);
+    const [isPublic, setIsPublic] = useState(result.data?.public);
+    const [isFollowing, setIsFollowing] = useState(result.data?.viewer_is_following);
 
     const handleNewPost = (newPost) => {
         setPosts(prev => [newPost, ...prev]);
@@ -27,6 +27,8 @@ export default function ProfileContent({ result, posts: initialPosts }) {
         setIsPublic(isPublic);
         setIsFollowing(isFollowing);
     }
+
+    const user = result.data;
 
     // Handle error state
     if (!result.success) {
@@ -46,7 +48,7 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     }
 
     // Handle no user
-    if (!result.user) {
+    if (!user) {
         return (
             <div className="flex items-center justify-center min-h-screen px-4">
                 <div className="text-(--muted) text-lg">User not found</div>
@@ -55,14 +57,15 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     }
 
     // Check if viewer can see the profile content
-    const canViewProfile = result.user.own_profile || isPublic || isFollowing;
+    const canViewProfile = user.own_profile || isPublic || isFollowing;
 
     const loadMorePosts = useCallback(async () => {
         if (loading || !hasMore || !canViewProfile) return;
 
         setLoading(true);
         try {
-            const newPosts = await getUserPosts({ creatorId: result.user.user_id, limit: 5, offset });
+            const result = await getUserPosts({ creatorId: user.user_id, limit: 5, offset });
+            const newPosts = result.success ? result.data : [];
 
             if (newPosts && newPosts.length > 0) {
                 setPosts((prevPosts) => [...prevPosts, ...newPosts]);
@@ -80,7 +83,7 @@ export default function ProfileContent({ result, posts: initialPosts }) {
         } finally {
             setLoading(false);
         }
-    }, [offset, loading, hasMore, canViewProfile, result.user.user_id]);
+    }, [offset, loading, hasMore, canViewProfile, user.user_id]);
 
     useEffect(() => {
         if (!canViewProfile) return;
@@ -108,9 +111,9 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     // Render profile
     return (
         <div className="w-full">
-            <ProfileHeader user={result.user} onUnfollow={handleUnfollow}/>
+            <ProfileHeader user={user} onUnfollow={handleUnfollow}/>
 
-            {result.user.own_profile ? (
+            {user.own_profile ? (
                 <div>
                     <Container className="pt-6 md:pt-10">
                         <CreatePost onPostCreated={handleNewPost} />
@@ -124,8 +127,8 @@ export default function ProfileContent({ result, posts: initialPosts }) {
             ) : canViewProfile ? (
                 <div>
                     <div className="mt-8 mb-6">
-                        <h1 className="text-center feed-title px-4">{result.user.username}'s Feed</h1>
-                        <p className="text-center feed-subtitle px-4">What's happening in {result.user.username}'s sphere?</p>
+                        <h1 className="text-center feed-title px-4">{user.username}'s Feed</h1>
+                        <p className="text-center feed-subtitle px-4">What's happening in {user.username}'s sphere?</p>
                     </div>
                     <div className="section-divider mb-6" />
                 </div>
@@ -189,7 +192,7 @@ export default function ProfileContent({ result, posts: initialPosts }) {
                             This profile is private
                         </h3>
                         <p className="text-(--muted) text-center max-w-md px-4">
-                            Follow @{result.user.username} to see their posts and profile details.
+                            Follow @{user.username} to see their posts and profile details.
                         </p>
                     </div>
                 )}

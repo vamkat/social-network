@@ -50,9 +50,9 @@ export default function NotificationsContent({ initialNotifications }) {
                 limit: 20,
                 offset: notifications.length
             });
-            if (moreNotifications && moreNotifications.length > 0) {
-                setNotifications((prev) => [...prev, ...moreNotifications]);
-                setHasMore(moreNotifications.length >= 20);
+            if (moreNotifications.success && moreNotifications.data?.length > 0) {
+                setNotifications((prev) => [...prev, ...moreNotifications.data]);
+                setHasMore(moreNotifications.data.length >= 20);
             } else {
                 setHasMore(false);
             }

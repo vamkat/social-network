@@ -123,11 +123,11 @@ export default function PostCard({ post, onDelete }) {
                 offset: 0
             });
 
-            if (result.success && result.comments) {
-                setComments(result.comments);
+            if (result.success && result.data) {
+                setComments(result.data);
                 // Initialize comment reactions state
                 const reactionsState = {};
-                result.comments.forEach(comment => {
+                result.data.forEach(comment => {
                     reactionsState[comment.comment_id] = {
                         liked: comment.liked_by_user,
                         count: comment.reactions_count,
@@ -158,14 +158,14 @@ export default function PostCard({ post, onDelete }) {
                 offset: comments.length
             });
 
-            if (result.success && result.comments) {
+            if (result.success && result.data) {
                 // Backend returns newest first, so reverse to get oldest first
                 // Then prepend them above the existing comments (which has newest at bottom)
-                const reversedComments = [...result.comments].reverse();
+                const reversedComments = [...result.data].reverse();
                 setComments((prev) => [...reversedComments, ...prev]);
                 // Initialize comment reactions state for new comments
                 const reactionsState = {};
-                result.comments.forEach(comment => {
+                result.data.forEach(comment => {
                     reactionsState[comment.comment_id] = {
                         liked: comment.liked_by_user,
                         count: comment.reactions_count,
@@ -174,7 +174,7 @@ export default function PostCard({ post, onDelete }) {
                 });
                 setCommentReactions(prev => ({ ...prev, ...reactionsState }));
                 // Check if there are still more to load
-                setHasMore(comments.length + result.comments.length < commentsCount);
+                setHasMore(comments.length + result.data.length < commentsCount);
             }
         } catch (error) {
             console.error("Failed to load more comments:", error);
@@ -187,12 +187,12 @@ export default function PostCard({ post, onDelete }) {
         if (!user?.id || isLoadingFollowers) return;
 
         setIsLoadingFollowers(true);
-        const followersData = await getFollowers({
+        const followersResult = await getFollowers({
             userId: user.id,
             limit: 100,
             offset: 0
         });
-        setFollowers(followersData || []);
+        setFollowers(followersResult.success ? followersResult.data : []);
         setIsLoadingFollowers(false);
     };
 
@@ -222,22 +222,22 @@ export default function PostCard({ post, onDelete }) {
 
         // Fetch full post data to get selected_audience_users
         const fetchedPost = await getPost(post.post_id);
-        if (!fetchedPost.post) {
+        if (!fetchedPost.success || !fetchedPost.data) {
             setError("Failed to load post data");
             return;
         }
 
         setPostDraft(postContent);
-        const postPrivacy = fetchedPost.post.audience || "everyone";
+        const postPrivacy = fetchedPost.data.audience || "everyone";
         setPrivacy(postPrivacy);
 
         // If privacy is "selected", load the followers and set the selected ones
         if (postPrivacy === "selected") {
             await fetchFollowers();
             // Set selected followers from fetched post's selected_audience_users
-            if (fetchedPost.post.selected_audience_users && Array.isArray(fetchedPost.post.selected_audience_users)) {
+            if (fetchedPost.data.selected_audience_users && Array.isArray(fetchedPost.data.selected_audience_users)) {
                 // Ensure IDs are strings for consistent comparison
-                setSelectedFollowers(fetchedPost.post.selected_audience_users.map(user => String(user.id)));
+                setSelectedFollowers(fetchedPost.data.selected_audience_users.map(user => String(user.id)));
             }
         }
 
@@ -334,18 +334,18 @@ export default function PostCard({ post, onDelete }) {
                 return;
             }
 
-            if (imageFile && resp.FileId && resp.UploadUrl) {
+            if (imageFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 let imageUploadFailed = false;
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: imageFile,
                     });
 
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (validateResp.success) {
-                            setImage(validateResp.download_url);
+                            setImage(validateResp.data?.download_url);
                         } else {
                             imageUploadFailed = true;
                         }
@@ -484,15 +484,15 @@ export default function PostCard({ post, onDelete }) {
 
             // If there's an image, upload it (non-blocking)
             let commentImageUploadFailed = false;
-            if (commentImageFile && resp.FileId && resp.UploadUrl) {
+            if (commentImageFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: commentImageFile,
                     });
-                    
+
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (!validateResp.success) {
                             commentImageUploadFailed = true;
                         }
@@ -636,7 +636,7 @@ export default function PostCard({ post, onDelete }) {
             handleCancelEditComment();
             return;
         }
-        console.log("comment id: ", comment.comment_id)
+
         try {
             setError("");
 
@@ -657,7 +657,7 @@ export default function PostCard({ post, onDelete }) {
             }
 
             const resp = await editComment(editData);
-            console.log("response: ", resp);
+
             if (!resp.success) {
                 setError("Failed to edit comment");
                 return;
@@ -665,15 +665,15 @@ export default function PostCard({ post, onDelete }) {
 
             // If there's a new image, upload it (non-blocking)
             let editCommentImageUploadFailed = false;
-            if (editingCommentImageFile && resp.FileId && resp.UploadUrl) {
+            if (editingCommentImageFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: editingCommentImageFile,
                     });
 
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (!validateResp.success) {
                             editCommentImageUploadFailed = true;
                         }

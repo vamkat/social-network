@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 export default async function NotificationsPage() {
-    const initialNotifications = await getNotifs({ limit: 20, offset: 0 });
+    const result = await getNotifs({ limit: 20, offset: 0 });
 
-    return <NotificationsContent initialNotifications={initialNotifications} />;
+    return <NotificationsContent initialNotifications={result.success ? result.data : []} />;
 }

@@ -104,15 +104,15 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
 
             // If there's a new image, upload it (non-blocking)
             let imageUploadFailed = false;
-            if (imageFile && response.FileId && response.UploadUrl) {
+            if (imageFile && response.data?.FileId && response.data?.UploadUrl) {
                 try {
-                    const uploadRes = await fetch(response.UploadUrl, {
+                    const uploadRes = await fetch(response.data.UploadUrl, {
                         method: "PUT",
                         body: imageFile,
                     });
 
                     if (uploadRes.ok) {
-                        const validateResp = await validateUpload(response.FileId);
+                        const validateResp = await validateUpload(response.data.FileId);
                         if (!validateResp.success) {
                             imageUploadFailed = true;
                         }

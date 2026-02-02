@@ -16,7 +16,11 @@ export async function sendGroupMsg({ groupId, msg }) {
             }
         });
 
-        return { success: true, ...apiResp };
+        if (!apiResp.ok) {
+            return {success: false, status: apiResp.status, error: apiResp.message};
+        }
+
+        return { success: true, data: apiResp.data };
 
     } catch (error) {
         console.error("Send Group Message Error:", error);

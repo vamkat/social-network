@@ -20,7 +20,8 @@ export default function FriendsFeedContent({ initialPosts }) {
 
         setLoading(true);
         try {
-            const newPosts = await getFriendsPosts({ limit: 5, offset });
+            const result = await getFriendsPosts({ limit: 5, offset });
+            const newPosts = result.success ? result.data : [];
 
             if (newPosts && newPosts.length > 0) {
                 setPosts((prevPosts) => [...prevPosts, ...newPosts]);

@@ -10,8 +10,11 @@ export async function getAllGroups({ limit, offset }) {
             forwardCookies: true
         });
 
-        // Return success wrapper
-        return { success: true, data: response };
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
 
     } catch (error) {
         console.error("Error fetching groups:", error);

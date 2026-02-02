@@ -13,7 +13,11 @@ export async function editEvent({id , data}) {
             }
         });
 
-        return { success: true, ...apiResp };
+        if (!apiResp.ok) {
+            return {success: false, status: apiResp.status, error: apiResp.message};
+        }
+
+        return { success: true, data: apiResp.data };
 
     } catch (error) {
         console.error("Edit Event Action Error:", error);

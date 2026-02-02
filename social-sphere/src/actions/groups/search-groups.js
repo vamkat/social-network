@@ -10,10 +10,14 @@ export async function searchGroups({ query, limit = 10, offset = 0 }) {
             forwardCookies: true
         });
 
-        return { success: true, groups: response.groups || [] };
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
 
     } catch (error) {
         console.error("Error searching groups:", error);
-        return { success: false, error: error.message, groups: [] };
+        return { success: false, error: error.message };
     }
 }

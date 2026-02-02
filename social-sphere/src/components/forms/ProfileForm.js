@@ -98,20 +98,20 @@ export default function ProfileForm({ user }) {
             let imageUploadFailed = false;
 
             // Step 2: If avatar was provided, upload and validate (non-blocking)
-            if (avatarFile && resp.FileId && resp.UploadUrl) {
+            if (avatarFile && resp.data?.FileId && resp.data?.UploadUrl) {
                 try {
                     // Upload to MinIO
-                    const uploadRes = await fetch(resp.UploadUrl, {
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: avatarFile
                     });
 
                     if (uploadRes.ok) {
                         // Validate upload
-                        const validateResp = await validateUpload(resp.FileId);
-                        if (validateResp.success && validateResp.download_url) {
-                            newAvatarUrl = validateResp.download_url;
-                            newFileId = resp.FileId;
+                        const validateResp = await validateUpload(resp.data.FileId);
+                        if (validateResp.success && validateResp.data?.download_url) {
+                            newAvatarUrl = validateResp.data.download_url;
+                            newFileId = resp.data.FileId;
                         } else {
                             setAvatarPreview(null);
                             imageUploadFailed = true;

@@ -14,12 +14,11 @@ export async function updateProfileInfo(data) {
             forwardCookies: true
         });
 
-        return {
-            success: true,
-            UserId: response.UserId,
-            FileId: response.FileId,
-            UploadUrl: response.UploadUrl
-        };
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("Error updating profile info:", error);
         return { success: false, error: error.message };
@@ -39,7 +38,12 @@ export async function updateProfilePrivacy({ bool }) {
             }),
             forwardCookies: true
         });
-        return response;
+
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("Error updating profile privacy:", error);
         return { success: false, error: error.message };
@@ -59,7 +63,12 @@ export async function updateProfileEmail({ email }) {
             }),
             forwardCookies: true
         });
-        return response;
+
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("Error updating profile email:", error);
         return { success: false, error: error.message };
@@ -80,7 +89,12 @@ export async function updateProfilePassword({ oldPassword, newPassword }) {
             }),
             forwardCookies: true
         });
-        return response;
+
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("Error updating profile password:", error);
         return { success: false, error: error.message };

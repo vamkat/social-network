@@ -207,9 +207,9 @@ export function GroupHeader({ group }) {
                     limit: FOLLOWERS_LIMIT,
                     offset: 0
                 });
-                if (Array.isArray(result.users)) {
-                    setFollowers(result.users);
-                    setHasMore(result.users.length === FOLLOWERS_LIMIT);
+                if (Array.isArray(result.data?.users)) {
+                    setFollowers(result.data.users);
+                    setHasMore(result.data.users.length === FOLLOWERS_LIMIT);
                     setOffset(FOLLOWERS_LIMIT);
                 } else {
                     setFollowers([]);
@@ -244,9 +244,9 @@ export function GroupHeader({ group }) {
                 limit: FOLLOWERS_LIMIT,
                 offset: offset
             });
-            if (Array.isArray(result.users) && result.users.length > 0) {
-                setFollowers((prev) => [...prev, ...result.users]);
-                setHasMore(result.users.length === FOLLOWERS_LIMIT);
+            if (Array.isArray(result.data?.users) && result.data.users.length > 0) {
+                setFollowers((prev) => [...prev, ...result.data.users]);
+                setHasMore(result.data.users.length === FOLLOWERS_LIMIT);
                 setOffset((prev) => prev + FOLLOWERS_LIMIT);
             } else {
                 setHasMore(false);
@@ -316,9 +316,9 @@ export function GroupHeader({ group }) {
                 limit: PENDING_LIMIT,
                 offset: 0
             });
-            if (Array.isArray(result.users)) {
-                setPendingUsers(result.users);
-                setHasMorePending(result.users.length === PENDING_LIMIT);
+            if (Array.isArray(result.data?.users)) {
+                setPendingUsers(result.data.users);
+                setHasMorePending(result.data.users.length === PENDING_LIMIT);
                 setPendingOffset(PENDING_LIMIT);
             } else {
                 setPendingUsers([]);
@@ -351,9 +351,9 @@ export function GroupHeader({ group }) {
                 limit: PENDING_LIMIT,
                 offset: pendingOffset
             });
-            if (Array.isArray(result.users) && result.users.length > 0) {
-                setPendingUsers((prev) => [...prev, ...result.users]);
-                setHasMorePending(result.users.length === PENDING_LIMIT);
+            if (Array.isArray(result.data?.users) && result.data.users.length > 0) {
+                setPendingUsers((prev) => [...prev, ...result.data.users]);
+                setHasMorePending(result.data.users.length === PENDING_LIMIT);
                 setPendingOffset((prev) => prev + PENDING_LIMIT);
             } else {
                 setHasMorePending(false);

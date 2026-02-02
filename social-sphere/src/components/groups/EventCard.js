@@ -72,7 +72,7 @@ export default function EventCard({ event, onDelete, onEdit }) {
         try {
             const resp = await respondToEvent({
                 id: event.event_id,
-                data: going
+                going: going
             });
 
             if (!resp.success) {

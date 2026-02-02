@@ -106,6 +106,16 @@ func (a *Application) CreateNotificationWithAggregation(ctx context.Context, use
 		return nil, nil
 	}
 
+	// For response notifications, mark the related original notification as acted
+	switch notification.Type {
+	case FollowRequestAccepted, FollowRequestRejected, GroupInviteAccepted, GroupInviteRejected, GroupJoinRequestAccepted, GroupJoinRequestRejected:
+		err = a.MarkRelatedNotificationAsActed(ctx, notification.Type, userID, sourceEntityID, payload)
+		if err != nil {
+			// Log the error but don't fail the notification creation
+			tele.Error(ctx, "failed to mark related notification as acted: @1", "error", err.Error())
+		}
+	}
+
 	// Publish the notification to NATS for real-time delivery to the live service
 	// We do this asynchronously to not block the notification creation
 	go func() {
@@ -188,6 +198,16 @@ func (a *Application) createNotification(ctx context.Context, userID int64, noti
 	if err != nil {
 		tele.Error(ctx, "Error in encoding payload ids", "payload", notification.Payload)
 		return nil, nil
+	}
+
+	// For response notifications, mark the related original notification as acted
+	switch notification.Type {
+	case FollowRequestAccepted, FollowRequestRejected, GroupInviteAccepted, GroupInviteRejected, GroupJoinRequestAccepted, GroupJoinRequestRejected:
+		err = a.MarkRelatedNotificationAsActed(ctx, notification.Type, userID, sourceEntityID, payload)
+		if err != nil {
+			// Log the error but don't fail the notification creation
+			tele.Error(ctx, "failed to mark related notification as acted: @1", "error", err.Error())
+		}
 	}
 
 	// Publish the notification to NATS for real-time delivery to the live service
@@ -626,6 +646,107 @@ func (a *Application) DeleteGroupJoinRequestNotification(ctx context.Context, gr
 	}()
 
 	tele.Info(ctx, "Deleted group join request notification for owner @1 from requester @2 for group @3", "groupOwnerID", groupOwnerID, "requesterUserID", requesterUserID, "groupID", groupID)
+	return nil
+}
+
+// MarkRelatedNotificationAsActed marks the original request notification as acted when a response is created
+func (a *Application) MarkRelatedNotificationAsActed(ctx context.Context, responseNotifType NotificationType, userID int64, sourceEntityID int64, payload map[string]string) error {
+	// Determine the original notification type based on the response type
+	var originalNotifType NotificationType
+	var originalUserID int64
+	var originalSourceEntityID int64
+
+	switch responseNotifType {
+	case FollowRequestAccepted, FollowRequestRejected:
+		originalNotifType = FollowRequest
+		// For follow requests, the original notification was sent to the target user (recipient of the follow request)
+		// The source entity ID in the original notification is the requester's ID
+		if requesterIDStr, exists := payload["requester_id"]; exists {
+			requesterID, err := strconv.ParseInt(requesterIDStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("failed to parse requester_id from payload: %w", err)
+			}
+
+			// The original notification was sent to the target user (from payload), with source entity as requester
+			// The target user ID is the one who received the original follow request
+			if targetIDStr, exists := payload["target_id"]; exists {
+				targetID, err := strconv.ParseInt(targetIDStr, 10, 64)
+				if err != nil {
+					return fmt.Errorf("failed to parse target_id from payload: %w", err)
+				}
+
+				originalUserID = targetID
+				originalSourceEntityID = requesterID
+			} else {
+				return fmt.Errorf("target_id not found in payload for follow request response")
+			}
+		} else {
+			return fmt.Errorf("requester_id not found in payload for follow request response")
+		}
+	case GroupInviteAccepted, GroupInviteRejected:
+		originalNotifType = GroupInvite
+		// For group invites, the original notification was sent to the invited user (recipient of the invite)
+		// The source entity ID in the original notification is the group ID
+		// The invited user ID is stored in the payload
+		if invitedIDStr, exists := payload["invited_id"]; exists {
+			invitedID, err := strconv.ParseInt(invitedIDStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("failed to parse invited_id from payload: %w", err)
+			}
+
+			originalUserID = invitedID
+			originalSourceEntityID = sourceEntityID
+		} else {
+			return fmt.Errorf("invited_id not found in payload for group invite response")
+		}
+	case GroupJoinRequestAccepted, GroupJoinRequestRejected:
+		originalNotifType = GroupJoinRequest
+		// For group join requests, the original notification was sent to the group owner (not the requester)
+		// The source entity ID in the original notification is the group ID
+		// The payload contains the group_owner_notification_user_id, which tells us who received the original notification
+		if groupOwnerIDStr, exists := payload["group_owner_notification_user_id"]; exists {
+			groupOwnerID, err := strconv.ParseInt(groupOwnerIDStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("failed to parse group_owner_notification_user_id from payload: %w", err)
+			}
+
+			// The original notification was sent to the group owner (groupOwnerID)
+			originalUserID = groupOwnerID
+			originalSourceEntityID = sourceEntityID // group ID
+		} else {
+			return fmt.Errorf("group_owner_notification_user_id not found in payload for group join request response")
+		}
+	default:
+		// This is not a response notification type that requires marking related notifications as acted
+		return nil
+	}
+
+	// Find the original notification that should be marked as acted
+	dbNotification, err := a.DB.GetUnreadNotificationByTypeAndEntity(ctx, db.GetUnreadNotificationByTypeAndEntityParams{
+		UserID:         originalUserID,
+		NotifType:      string(originalNotifType),
+		SourceEntityID: pgtype.Int8{Int64: originalSourceEntityID, Valid: true},
+	})
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// If no notification exists, that's fine - nothing to mark as acted
+			tele.Info(ctx, "No related notification found to mark as acted for user @1, type @2, source entity @3", "userID", originalUserID, "originalNotifType", originalNotifType, "originalSourceEntityID", originalSourceEntityID)
+			return nil
+		}
+		return fmt.Errorf("failed to find related notification to mark as acted: %w", err)
+	}
+
+	// Mark the original notification as acted
+	err = a.DB.MarkNotificationAsActed(ctx, db.MarkNotificationAsActedParams{
+		ID:     dbNotification.ID,
+		UserID: originalUserID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to mark related notification as acted: %w", err)
+	}
+
+	tele.Info(ctx, "Marked related notification as acted for user @1, type @2, source entity @3", "userID", originalUserID, "originalNotifType", originalNotifType, "originalSourceEntityID", originalSourceEntityID)
 	return nil
 }
 

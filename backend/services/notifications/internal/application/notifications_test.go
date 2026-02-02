@@ -625,10 +625,13 @@ func TestCreateFollowRequestAcceptedNotification(t *testing.T) {
 	targetUserID := int64(2)
 	targetUsername := "targetuser"
 
-	payloadBytes, _ := json.Marshal(map[string]string{
+	// Payload for the response notification
+	responsePayload := map[string]string{
 		"target_id":   "2",
 		"target_name": "targetuser",
-	})
+		"requester_id": "1", // Include requester_id for marking related notification as acted
+	}
+	payloadBytes, _ := json.Marshal(responsePayload)
 
 	expectedNotification := sqlc.Notification{
 		ID:             1,
@@ -646,6 +649,35 @@ func TestCreateFollowRequestAcceptedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
+	// Mock the call to find the original follow request notification
+	originalNotification := sqlc.Notification{
+		ID:             100,
+		UserID:         targetUserID, // The original notification was sent to the target user
+		NotifType:      string(FollowRequest),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: requesterUserID, Valid: true}, // Source entity is the requester user
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: true, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        []byte(`{"requester_id": "1", "requester_name": "requester"}`),
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == targetUserID &&
+		       params.NotifType == string(FollowRequest) &&
+		       params.SourceEntityID.Int64 == requesterUserID
+	})).Return(originalNotification, nil)
+
+	// Mock the call to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == targetUserID
+	})).Return(nil)
+
+	// Mock the call to create the response notification
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
 	err := app.CreateFollowRequestAcceptedNotification(ctx, requesterUserID, targetUserID, targetUsername)
@@ -665,10 +697,13 @@ func TestCreateFollowRequestRejectedNotification(t *testing.T) {
 	targetUserID := int64(2)
 	targetUsername := "targetuser"
 
-	payloadBytes, _ := json.Marshal(map[string]string{
+	// Payload for the response notification
+	responsePayload := map[string]string{
 		"target_id":   "2",
 		"target_name": "targetuser",
-	})
+		"requester_id": "1", // Include requester_id for marking related notification as acted
+	}
+	payloadBytes, _ := json.Marshal(responsePayload)
 
 	expectedNotification := sqlc.Notification{
 		ID:             1,
@@ -686,6 +721,35 @@ func TestCreateFollowRequestRejectedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
+	// Mock the call to find the original follow request notification
+	originalNotification := sqlc.Notification{
+		ID:             100,
+		UserID:         targetUserID, // The original notification was sent to the target user
+		NotifType:      string(FollowRequest),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: requesterUserID, Valid: true}, // Source entity is the requester user
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: true, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        []byte(`{"requester_id": "1", "requester_name": "requester"}`),
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == targetUserID &&
+		       params.NotifType == string(FollowRequest) &&
+		       params.SourceEntityID.Int64 == requesterUserID
+	})).Return(originalNotification, nil)
+
+	// Mock the call to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == targetUserID
+	})).Return(nil)
+
+	// Mock the call to create the response notification
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
 	err := app.CreateFollowRequestRejectedNotification(ctx, requesterUserID, targetUserID, targetUsername)
@@ -707,12 +771,15 @@ func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
 	invitedUsername := "inviteduser"
 	groupName := "Test Group"
 
-	payloadBytes, _ := json.Marshal(map[string]string{
+	// Payload for the response notification
+	responsePayload := map[string]string{
 		"invited_id":   "2",
 		"invited_name": "inviteduser",
 		"group_id":     "100",
 		"group_name":   "Test Group",
-	})
+		"requester_id": "2", // Include requester_id for marking related notification as acted
+	}
+	payloadBytes, _ := json.Marshal(responsePayload)
 
 	expectedNotification := sqlc.Notification{
 		ID:             1,
@@ -730,6 +797,35 @@ func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
+	// Mock the call to find the original group invite notification
+	originalNotification := sqlc.Notification{
+		ID:             100,
+		UserID:         invitedUserID, // The original notification was sent to the invited user
+		NotifType:      string(GroupInvite),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true}, // Source entity is the group ID
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: true, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        []byte(`{"inviter_id": "1", "inviter_name": "inviter", "group_id": "100", "group_name": "Test Group", "action": "accept_or_decline"}`),
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == invitedUserID &&
+		       params.NotifType == string(GroupInvite) &&
+		       params.SourceEntityID.Int64 == groupID
+	})).Return(originalNotification, nil)
+
+	// Mock the call to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == invitedUserID
+	})).Return(nil)
+
+	// Mock the call to create the response notification
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
 	err := app.CreateGroupInviteAcceptedNotification(ctx, inviterUserID, invitedUserID, groupID, invitedUsername, groupName)
@@ -751,12 +847,15 @@ func TestCreateGroupInviteRejectedNotification(t *testing.T) {
 	invitedUsername := "inviteduser"
 	groupName := "Test Group"
 
-	payloadBytes, _ := json.Marshal(map[string]string{
+	// Payload for the response notification
+	responsePayload := map[string]string{
 		"invited_id":   "2",
 		"invited_name": "inviteduser",
 		"group_id":     "100",
 		"group_name":   "Test Group",
-	})
+		"requester_id": "2", // Include requester_id for marking related notification as acted
+	}
+	payloadBytes, _ := json.Marshal(responsePayload)
 
 	expectedNotification := sqlc.Notification{
 		ID:             1,
@@ -774,6 +873,35 @@ func TestCreateGroupInviteRejectedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
+	// Mock the call to find the original group invite notification
+	originalNotification := sqlc.Notification{
+		ID:             100,
+		UserID:         invitedUserID, // The original notification was sent to the invited user
+		NotifType:      string(GroupInvite),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true}, // Source entity is the group ID
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: true, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        []byte(`{"inviter_id": "1", "inviter_name": "inviter", "group_id": "100", "group_name": "Test Group", "action": "accept_or_decline"}`),
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == invitedUserID &&
+		       params.NotifType == string(GroupInvite) &&
+		       params.SourceEntityID.Int64 == groupID
+	})).Return(originalNotification, nil)
+
+	// Mock the call to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == invitedUserID
+	})).Return(nil)
+
+	// Mock the call to create the response notification
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
 	err := app.CreateGroupInviteRejectedNotification(ctx, inviterUserID, invitedUserID, groupID, invitedUsername, groupName)
@@ -794,11 +922,15 @@ func TestCreateGroupJoinRequestAcceptedNotification(t *testing.T) {
 	groupID := int64(100)
 	groupName := "Test Group"
 
-	payloadBytes, _ := json.Marshal(map[string]string{
+	// Payload for the response notification
+	responsePayload := map[string]string{
 		"group_owner_id": "2",
 		"group_id":       "100",
 		"group_name":     "Test Group",
-	})
+		"requester_id": "1", // Include requester_id for marking related notification as acted
+		"group_owner_notification_user_id": "2", // Include group owner ID to find original notification
+	}
+	payloadBytes, _ := json.Marshal(responsePayload)
 
 	expectedNotification := sqlc.Notification{
 		ID:             1,
@@ -816,6 +948,35 @@ func TestCreateGroupJoinRequestAcceptedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
+	// Mock the call to find the original group join request notification
+	originalNotification := sqlc.Notification{
+		ID:             100,
+		UserID:         groupOwnerID, // The original notification was sent to the group owner
+		NotifType:      string(GroupJoinRequest),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true}, // Source entity is the group ID
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: true, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        []byte(`{"requester_id": "1", "requester_name": "requester", "group_id": "100", "group_name": "Test Group", "action": "accept_or_decline"}`),
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == groupOwnerID &&
+		       params.NotifType == string(GroupJoinRequest) &&
+		       params.SourceEntityID.Int64 == groupID
+	})).Return(originalNotification, nil)
+
+	// Mock the call to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == groupOwnerID
+	})).Return(nil)
+
+	// Mock the call to create the response notification
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
 	err := app.CreateGroupJoinRequestAcceptedNotification(ctx, requesterUserID, groupOwnerID, groupID, groupName)
@@ -836,11 +997,15 @@ func TestCreateGroupJoinRequestRejectedNotification(t *testing.T) {
 	groupID := int64(100)
 	groupName := "Test Group"
 
-	payloadBytes, _ := json.Marshal(map[string]string{
+	// Payload for the response notification
+	responsePayload := map[string]string{
 		"group_owner_id": "2",
 		"group_id":       "100",
 		"group_name":     "Test Group",
-	})
+		"requester_id": "1", // Include requester_id for marking related notification as acted
+		"group_owner_notification_user_id": "2", // Include group owner ID to find original notification
+	}
+	payloadBytes, _ := json.Marshal(responsePayload)
 
 	expectedNotification := sqlc.Notification{
 		ID:             1,
@@ -858,6 +1023,35 @@ func TestCreateGroupJoinRequestRejectedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
+	// Mock the call to find the original group join request notification
+	originalNotification := sqlc.Notification{
+		ID:             100,
+		UserID:         groupOwnerID, // The original notification was sent to the group owner
+		NotifType:      string(GroupJoinRequest),
+		SourceService:  "users",
+		SourceEntityID: pgtype.Int8{Int64: groupID, Valid: true}, // Source entity is the group ID
+		Seen:           pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction:    pgtype.Bool{Bool: true, Valid: true},
+		Acted:          pgtype.Bool{Bool: false, Valid: true},
+		CreatedAt:      pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt:      pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt:      pgtype.Timestamptz{Valid: false},
+		Payload:        []byte(`{"requester_id": "1", "requester_name": "requester", "group_id": "100", "group_name": "Test Group", "action": "accept_or_decline"}`),
+		Count:          pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == groupOwnerID &&
+		       params.NotifType == string(GroupJoinRequest) &&
+		       params.SourceEntityID.Int64 == groupID
+	})).Return(originalNotification, nil)
+
+	// Mock the call to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == groupOwnerID
+	})).Return(nil)
+
+	// Mock the call to create the response notification
 	mockDB.On("CreateNotification", ctx, mock.AnythingOfType("sqlc.CreateNotificationParams")).Return(expectedNotification, nil)
 
 	err := app.CreateGroupJoinRequestRejectedNotification(ctx, requesterUserID, groupOwnerID, groupID, groupName)
@@ -1036,6 +1230,129 @@ func TestMarkNotificationAsActed(t *testing.T) {
 	mockDB.On("MarkNotificationAsActed", ctx, mock.AnythingOfType("sqlc.MarkNotificationAsActedParams")).Return(nil)
 
 	err := app.MarkNotificationAsActed(ctx, notificationID, userID)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test MarkRelatedNotificationAsActed function for follow request accepted
+func TestMarkRelatedNotificationAsActed_FollowRequestAccepted(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplicationWithMocks(mockDB)
+
+	ctx := context.Background()
+	userID := int64(10) // The user who receives the follow request response (the requester)
+	sourceEntityID := int64(5) // The group ID or other entity ID
+	payload := map[string]string{
+		"requester_id": "10", // The user who sent the follow request (same as userID)
+		"requester_name": "requester",
+		"target_id": "2", // The target user who received the original follow request
+		"target_name": "target",
+	}
+
+	// Expect GetUnreadNotificationByTypeAndEntity to find the original follow request notification
+	originalNotification := sqlc.Notification{
+		ID: 100,
+		UserID: int64(2), // The original notification was sent to the target user
+		NotifType: string(FollowRequest),
+		SourceService: "users",
+		SourceEntityID: pgtype.Int8{Int64: 10, Valid: true}, // Source entity is the requester ID
+		Seen: pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction: pgtype.Bool{Bool: true, Valid: true},
+		Acted: pgtype.Bool{Bool: false, Valid: true}, // Not yet acted upon
+		CreatedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt: pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt: pgtype.Timestamptz{Valid: false},
+		Payload: []byte(`{"requester_id": "10", "requester_name": "requester"}`),
+		Count: pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == int64(2) &&
+		       params.NotifType == string(FollowRequest) &&
+		       params.SourceEntityID.Int64 == int64(10)
+	})).Return(originalNotification, nil)
+
+	// Expect MarkNotificationAsActed to be called to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.MatchedBy(func(params sqlc.MarkNotificationAsActedParams) bool {
+		return params.ID == originalNotification.ID && params.UserID == int64(2)
+	})).Return(nil)
+
+	err := app.MarkRelatedNotificationAsActed(ctx, FollowRequestAccepted, userID, sourceEntityID, payload)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test MarkRelatedNotificationAsActed function when no related notification exists
+func TestMarkRelatedNotificationAsActed_NoRelatedNotification(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplicationWithMocks(mockDB)
+
+	ctx := context.Background()
+	userID := int64(10) // The user who receives the follow request response (the requester)
+	sourceEntityID := int64(5) // The group ID or other entity ID
+	payload := map[string]string{
+		"requester_id": "10", // The user who sent the follow request (same as userID)
+		"requester_name": "requester",
+		"target_id": "2", // The target user who received the original follow request
+		"target_name": "target",
+	}
+
+	// Expect GetUnreadNotificationByTypeAndEntity to return pgx.ErrNoRows (no related notification)
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+		return params.UserID == int64(2) &&
+		       params.NotifType == string(FollowRequest) &&
+		       params.SourceEntityID.Int64 == int64(10)
+	})).Return(sqlc.Notification{}, pgx.ErrNoRows)
+
+	err := app.MarkRelatedNotificationAsActed(ctx, FollowRequestAccepted, userID, sourceEntityID, payload)
+
+	assert.NoError(t, err)
+
+	mockDB.AssertExpectations(t)
+}
+
+// Test MarkRelatedNotificationAsActed function for group invite accepted
+func TestMarkRelatedNotificationAsActed_GroupInviteAccepted(t *testing.T) {
+	mockDB := new(MockDB)
+	app := NewApplicationWithMocks(mockDB)
+
+	ctx := context.Background()
+	userID := int64(10) // The user who receives the group invite
+	sourceEntityID := int64(100) // The group ID
+	payload := map[string]string{
+		"invited_id": "10",
+		"invited_name": "invitee",
+		"group_id": "100",
+		"group_name": "Test Group",
+	}
+
+	// Expect GetUnreadNotificationByTypeAndEntity to find the original group invite notification
+	originalNotification := sqlc.Notification{
+		ID: 100,
+		UserID: userID,
+		NotifType: string(GroupInvite),
+		SourceService: "users",
+		SourceEntityID: pgtype.Int8{Int64: 100, Valid: true}, // Source entity is the group ID
+		Seen: pgtype.Bool{Bool: false, Valid: true},
+		NeedsAction: pgtype.Bool{Bool: true, Valid: true},
+		Acted: pgtype.Bool{Bool: false, Valid: true}, // Not yet acted upon
+		CreatedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		ExpiresAt: pgtype.Timestamptz{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
+		DeletedAt: pgtype.Timestamptz{Valid: false},
+		Payload: []byte(`{"inviter_id": "2", "inviter_name": "inviter", "group_id": "100", "group_name": "Test Group", "action": "accept_or_decline"}`),
+		Count: pgtype.Int4{Int32: 1, Valid: true},
+	}
+
+	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(originalNotification, nil)
+
+	// Expect MarkNotificationAsActed to be called to mark the original notification as acted
+	mockDB.On("MarkNotificationAsActed", ctx, mock.AnythingOfType("sqlc.MarkNotificationAsActedParams")).Return(nil)
+
+	err := app.MarkRelatedNotificationAsActed(ctx, GroupInviteAccepted, userID, sourceEntityID, payload)
 
 	assert.NoError(t, err)
 

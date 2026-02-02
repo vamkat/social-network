@@ -9,7 +9,11 @@ export async function getMostPopular(groupId) {
             method: "GET"
         });
 
-        return { success: true, data: response };
+        if (!response.ok) {
+            return {success: false, status: response.status, error: response.message};
+        }
+
+        return { success: true, data: response.data };
 
     } catch (error) {
         console.error("Error getting group:", error);

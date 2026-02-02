@@ -12,7 +12,11 @@ export async function removeEventResponse({id}) {
             }
         });
 
-        return { success: true, ...apiResp };
+        if (!apiResp.ok) {
+            return {success: false, status: apiResp.status, error: apiResp.message};
+        }
+
+        return { success: true, data: apiResp.data };
 
     } catch (error) {
         console.error("Remove Event Response Action Error:", error);

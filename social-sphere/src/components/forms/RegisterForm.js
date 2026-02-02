@@ -66,34 +66,35 @@ export default function RegisterForm() {
             const resp = await register(userData);
 
             if (!resp.success || resp.error) {
-                setError(resp.error || "Registration failed")
+                setError(resp?.error || "Registration failed")
                 setIsLoading(false);
                 return;
             }
 
             // Prepare store data
             const userStoreData = {
-                id: resp.UserId,
-                fileId: resp.FileId,
-                username: resp.Username,
+                id: resp.data.UserId,
+                fileId: resp.data.FileId,
+                username: resp.data.Username,
                 avatar_url: ""
             };
 
             let imageUploadFailed = false;
 
             // Step 2: Upload avatar if needed (non-blocking)
-            if (avatarFile && resp.UploadUrl) {
+            if (avatarFile && resp.data.UploadUrl) {
                 try {
-                    const uploadRes = await fetch(resp.UploadUrl, {
+
+                    const uploadRes = await fetch(resp.data.UploadUrl, {
                         method: "PUT",
                         body: avatarFile
                     });
 
                     if (uploadRes.ok) {
                         // Step 3: Validate upload
-                        const validateResp = await validateUpload(resp.FileId);
-                        if (validateResp.success && validateResp.download_url) {
-                            userStoreData.avatar_url = validateResp.download_url;
+                        const validateResp = await validateUpload(resp.data.FileId);
+                        if (validateResp.success && validateResp.data?.download_url) {
+                            userStoreData.avatar_url = validateResp.data.download_url;
                         } else {
                             imageUploadFailed = true;
                         }
