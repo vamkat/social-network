@@ -1,8 +1,6 @@
 ```bash
 Hard
 
-- Grafana datasources (@Alex)
-
 - Db Logs
 
 Soft

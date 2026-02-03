@@ -19,3 +19,16 @@ data:
         <MaxAgeSeconds>3000</MaxAgeSeconds>
       </CORSRule>
     </CORSConfiguration>
+
+
+  #   data:
+  # cors.json: |
+  #   [
+  #     {
+  #       "AllowedOrigins": ["http://localhost:3000"],
+  #       "AllowedMethods": ["GET", "PUT", "POST"],
+  #       "AllowedHeaders": ["*"],
+  #       "ExposeHeaders": ["ETag"],
+  #       "MaxAgeSeconds": 3600
+  #     }
+  #   ]
