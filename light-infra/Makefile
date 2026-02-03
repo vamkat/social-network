@@ -18,7 +18,12 @@
 
 export REDIS_ADDR=localhost:6379
 export REDIS_PASSWORD=admin
+export REDIS_MASTER=mymaster
 export REDIS_DB=0
+export SENTINEL_ADDRS=localhost:26379
+
+export NATS_CLUSTER=nats://ruser:T0pS3cr3t@localhost:4222,nats://ruser:T0pS3cr3t@localhost:4222
+
 export TELEMETRY_COLLECTOR_ADDR=localhost:4317
 
 export USERS_GRPC_ADDR=localhost:50051
@@ -57,8 +62,6 @@ build-all:
 	go build -o "$$OUTDIR/users.social" ./services/users/cmd/server/main.go; \
  	go build -o "$$OUTDIR/notifs.social" ./services/notifications/cmd/server/main.go; \
  	go build -o "$$OUTDIR/live.social" ./services/live/cmd/main.go; \
-	@echo "Finished building!"
-
 
 
 run-built:

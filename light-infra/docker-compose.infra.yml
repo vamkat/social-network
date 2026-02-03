@@ -114,14 +114,17 @@ services:
       echo 'sentinel resolve-hostnames yes' >> /tmp/sentinel.conf &&
       echo 'sentinel announce-ip 127.0.0.1' >> /tmp/sentinel.conf &&
       echo 'sentinel announce-port 26379' >> /tmp/sentinel.conf &&
-      echo 'sentinel monitor master 127.0.0.1 6379 1' >> /tmp/sentinel.conf &&
-      echo 'sentinel down-after-milliseconds master 5000' >> /tmp/sentinel.conf &&
-      echo 'sentinel failover-timeout master 10000' >> /tmp/sentinel.conf &&
-      echo 'sentinel parallel-syncs master 1' >> /tmp/sentinel.conf &&
+      echo 'sentinel monitor mymaster 127.0.0.1 6379 1' >> /tmp/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds mymaster 5000' >> /tmp/sentinel.conf &&
+      echo 'sentinel failover-timeout mymaster 10000' >> /tmp/sentinel.conf &&
+      echo 'sentinel parallel-syncs mymaster 1' >> /tmp/sentinel.conf &&
       redis-sentinel /tmp/sentinel.conf
       "
     ports:
       - "26379:26379"
+    networks:
+      - social-network
+      - redis
 
 
   minio:
@@ -146,7 +149,7 @@ services:
   #
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   # SOCIAL-SPHERE FRONTEND BACKEND: Next.js frontend service, it serves the web application and communicates with the API Gateway
-  # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   # social-sphere:
   #   networks:
   #     - social-network
@@ -158,8 +161,8 @@ services:
   #     - "3000:3000"
   #   environment:
   #     - NODE_ENV=production
-  #     - SERVER_API_BASE=http://host.docker.internal:8081
-  #     - NEXT_PUBLIC_API_URL=http://host.docker.internal:8081
+  #     - GATEWAY=http://api-gateway:8081
+  #     - LIVE=ws://localhost:8082
   #   restart: unless-stopped
 
   
@@ -291,9 +294,15 @@ services:
     command: "--cluster_name NATS --cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222"
     networks: ["social-network"]
     depends_on: ["nats"]
+    ports:
+      - "8223:8222" #monitoring
+      - "4223:4222" #for clients
   nats-2:
     image: nats
     command: "--cluster_name NATS --cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222"
     networks: ["social-network"]
     depends_on: ["nats"]
+    ports:
+      - "8224:8222" #monitoring
+      - "4224:4222" #for clients
 

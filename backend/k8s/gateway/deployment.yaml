@@ -21,6 +21,13 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           env:
             - name: ENC_KEY
               valueFrom:
@@ -33,7 +40,7 @@ spec:
                   name: gateway-secret
                   key: JWT_KEY
             - name: SENTINEL_ADDRS
-              value: sentinel-0.redis-sentinel.redis.svc.cluster.local:26379
+              value: sentinel-0.redis-sentinel.redis.svc.cluster.local:26379,sentinel-1.redis-sentinel.redis.svc.cluster.local:26379,sentinel-2.redis-sentinel.redis.svc.cluster.local:26379
             - name: REDIS_PASSOWRD
               value: admin
             - name: REDIS_MASTER_SET

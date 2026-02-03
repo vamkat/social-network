@@ -12,8 +12,8 @@ x-env: &common-env
   OTEL_EXPORTER_OTLP_INSECURE: true
   OTEL_EXPORTER_OTLP_ENDPOINT: alloy:4317
   SENTINEL_ADDRS: "sentinel-1:26379"
-  REDIS_MASTER_SET: master
-  NATS_CLUSTER: "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222"
+  REDIS_MASTER_SET: mymaster
+  NATS_CLUSTER: "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4223"
 
 services:
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -328,10 +328,10 @@ services:
     command: >
       sh -c "
       echo 'port 26379' > /tmp/sentinel.conf &&
-      echo 'sentinel monitor master redis-master 6379 1' >> /tmp/sentinel.conf &&
-      echo 'sentinel down-after-milliseconds master 5000' >> /tmp/sentinel.conf &&
-      echo 'sentinel failover-timeout master 10000' >> /tmp/sentinel.conf &&
-      echo 'sentinel parallel-syncs master 1' >> /tmp/sentinel.conf &&
+      echo 'sentinel monitor mymaster redis-master 6379 1' >> /tmp/sentinel.conf &&
+      echo 'sentinel down-after-milliseconds mymaster 5000' >> /tmp/sentinel.conf &&
+      echo 'sentinel failover-timeout mymaster 10000' >> /tmp/sentinel.conf &&
+      echo 'sentinel parallel-syncs mymaster 1' >> /tmp/sentinel.conf &&
       echo 'bind 0.0.0.0' >> /tmp/sentinel.conf &&
       redis-sentinel /tmp/sentinel.conf
       sentinel resolve-hostnames yes
@@ -398,7 +398,7 @@ services:
   victoria-logs:
     networks:
         - social-network
-    image: victoriametrics/victoria-logs:v1.43.0
+    image: victoriametrics/victoria-logs:v1.44.0
     ports:
       - "9428:9428"
     volumes:
@@ -548,6 +548,9 @@ services:
       - ./backend/services/nats/nats.conf:/etc/nats/nats.conf:ro
     depends_on: ["nats-1"]
     networks: ["social-network"]
+    ports:
+      - "4223:4222"
+      - "8223:8222"
 
   nats-3:
     image: nats
@@ -556,6 +559,9 @@ services:
       - ./backend/services/nats/nats.conf:/etc/nats/nats.conf:ro
     depends_on: ["nats-1"]
     networks: ["social-network"]
+    ports:
+      - "4224:4222"
+      - "8224:8222"
 
 
 

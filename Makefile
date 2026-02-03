@@ -79,8 +79,6 @@ op-manifest:
 
 # --- Deployment Order ---
 
-#-2. A
-
 #-1. CHANGE TO BASH TERMINAL!
 
 # 0. Builds all nessary docker images, Do only once or if chances happen
@@ -91,6 +89,10 @@ build-all:
 	$(MAKE) build-services 
 	$(MAKE) load-images 
 
+# 0.5
+apply-kafka:
+	kubectl apply -f "https://strimzi.io/install/latest?namespace=kafka" -n kafka
+
 # 1.
 apply-namespace:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=namespace
@@ -98,11 +100,6 @@ apply-namespace:
 # 2.
 apply-configs:
 	kubectl apply -R -f backend/k8s/ --recursive --selector stage=config
-
-# 2.5
-apply-kafka:
-	kubectl create namespace kafka
-	kubectl apply -f "https://strimzi.io/install/latest?namespace=kafka" -n kafka
 
 # 3. (only in production)
 deploy-nginx:

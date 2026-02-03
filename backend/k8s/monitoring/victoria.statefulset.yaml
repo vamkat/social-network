@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: victoria-logs
-          image: victoriametrics/victoria-logs:v1.43.0
+          image: victoriametrics/victoria-logs:v1.44.0
           args:
             - -storageDataPath=/victoria-logs-data
           ports:

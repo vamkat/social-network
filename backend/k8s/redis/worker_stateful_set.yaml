@@ -66,6 +66,8 @@ kind: Service
 metadata:
   namespace: redis
   name: redis
+  labels:
+    stage: db
 spec:
   clusterIP: None
   ports:

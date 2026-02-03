@@ -38,15 +38,15 @@ spec:
                     break
                 fi
             done
-            echo "sentinel monitor master $MASTER 6379 2" >> /tmp/master
+            echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
             echo "port 26379
             sentinel resolve-hostnames yes
             sentinel announce-hostnames yes
             $(cat /tmp/master)
-            sentinel down-after-milliseconds master 26379
-            sentinel failover-timeout master 60000
-            sentinel parallel-syncs master 1
-            sentinel auth-pass master $REDIS_PASSWORD
+            sentinel down-after-milliseconds mymaster 26379
+            sentinel failover-timeout mymaster 60000
+            sentinel parallel-syncs mymaster 1
+            sentinel auth-pass mymaster $REDIS_PASSWORD
             " > /etc/redis/sentinel.conf
         volumeMounts:
         - name: redis-config
@@ -76,6 +76,8 @@ kind: Service
 metadata:
   namespace: redis
   name: redis-sentinel
+  labels:
+    stage: db
 spec:
   clusterIP: None
   ports:
