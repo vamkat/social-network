@@ -595,6 +595,31 @@ func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.Gener
 	return &emptypb.Empty{}, nil
 }
 
+func (s *PostsHandler) GetWhoLikedEntityId(ctx context.Context, req *pb.GenericReq) (*cm.ListUsers, error) {
+	tele.Info(ctx, "GetWhoLikedEntityId gRPC method called. @1", "request", req.String())
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is nil")
+	}
+	users, err := s.Application.GetWhoLikedEntityId(ctx, models.GenericReq{
+		RequesterId: ct.Id(req.RequesterId),
+		EntityId:    ct.Id(req.EntityId),
+	})
+	if err != nil {
+		tele.Error(ctx, "Error in GetWhoLikedEntityId @1 @2", "request", req.String(), "error", err.Error())
+		return nil, ce.EncodeProto(err)
+	}
+	pbUsers := make([]*cm.User, 0, len(users))
+	for _, u := range users {
+		pbUsers = append(pbUsers, &cm.User{
+			UserId:    u.UserId.Int64(),
+			Username:  u.Username.String(),
+			Avatar:    u.AvatarId.Int64(),
+			AvatarUrl: u.AvatarURL,
+		})
+	}
+	return &cm.ListUsers{Users: pbUsers}, nil
+}
+
 func (s *PostsHandler) GetPostAudienceForComment(ctx context.Context, req *pb.SimpleIdReq) (*pb.AudienceResp, error) {
 	tele.Info(ctx, "GetPostAudienceForComment gRPC method called. @1", "request", req.String())
 	if req == nil {

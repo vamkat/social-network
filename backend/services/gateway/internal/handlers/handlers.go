@@ -627,6 +627,14 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.toggleOrInsertReaction())
 
+	SetEndpoint("/reactions/{entity_id}").
+		AllowedMethod("GET").
+		RateLimit(IP, 20, 5).
+		Auth().
+		EnrichContext().
+		RateLimit(USERID, 20, 5).
+		Finalize(h.getWhoLikedEntityId())
+
 		// NOTIFICATIONS =====================
 		// NOTIFICATIONS =====================
 		// NOTIFICATIONS =====================
