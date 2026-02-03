@@ -7,7 +7,7 @@ import ToastContainer from "@/components/ui/ToastContainer";
 const ToastContext = createContext(null);
 
 const MAX_VISIBLE_TOASTS = 3;
-const AUTO_DISMISS_MS = 500000;
+const AUTO_DISMISS_MS = 4000;
 
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);

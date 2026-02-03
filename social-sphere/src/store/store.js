@@ -29,7 +29,7 @@ export const useStore = create(
       unreadNotifs: 0,
       setUnreadNotifs: (count) => set({unreadNotifs: count}),
       incrementNotifs: () => set((state) => ({unreadNotifs: state.unreadNotifs + 1})),
-      decrementNotifs: () => set((state) => ({unreadCount: Math.max(0, state.unreadNotifs - 1 ) })),
+      decrementNotifs: () => set((state) => ({unreadNotifs: Math.max(0, state.unreadNotifs - 1 ) })),
 
       // groupMsg
       hasMsg: false,
