@@ -385,7 +385,8 @@ services:
     volumes:
       - victoria-traces-data:/victoria-traces-data
     command:
-      - -storageDataPath=/victoria-logs-data
+      - -storageDataPath=/victoria-logs-data 
+      # Typo here ?       ^^^^^^^^^^^^^^^^^^
     restart: unless-stopped
 
   #

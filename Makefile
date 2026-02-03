@@ -144,7 +144,7 @@ port-forward:
 		kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 & \
 		kubectl port-forward -n storage svc/minio 9000:9000 & \
 		kubectl port-forward -n live svc/live 8082:8082 & \
-		kubectl port-forward -n grafana svc/grafana 3001:3001 & \
+		kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
 		wait'
 
 
