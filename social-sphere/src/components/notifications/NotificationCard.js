@@ -5,15 +5,15 @@ import Link from "next/link";
 import { Bell, Trash2, Check, X, User, Users, Calendar, Heart, MessageCircle } from "lucide-react";
 import { markNotificationAsRead } from "@/actions/notifs/mark-as-read";
 import { deleteNotification } from "@/actions/notifs/delete-notification";
-import { handleFollowRequest } from "@/actions/requests/handle-request";
-import { respondToGroupInvite } from "@/actions/groups/respond-to-invite";
-import { handleJoinRequest } from "@/actions/groups/handle-join-request";
 import { getRelativeTime } from "@/lib/time";
+import { constructNotif } from "@/lib/notifications";
+import { useStore } from '@/store/store';
 
 export default function NotificationCard({ notification, onDelete, onUpdate }) {
     const [isActing, setIsActing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [acted, setActed] = useState(notification.acted);
+    const decrementNotifs = useStore((state) => state.decrementNotifs);
 
     const needsAction = notification.needs_action && !acted;
 
@@ -39,122 +39,20 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
         }
     };
 
-    // Construct notification message - placeholder, will be refined later
-    const constructMessage = () => {
-        const { type, payload, count } = notification;
-
-        switch (type) {
-            case "new_follower":
-                return {
-                    who: payload?.follower_name,
-                    whoId: payload?.follower_id,
-                    message: " started following you"
-                };
-            case "follow_request":
-                return {
-                    who: payload?.requester_name,
-                    whoId: payload?.requester_id,
-                    message: " wants to follow you"
-                };
-            case "follow_request_accepted":
-                return {
-                    who: payload?.target_name,
-                    whoId: payload?.target_id,
-                    message: " accepted your follow request"
-                };
-            case "post_reply":
-                return {
-                    who: payload?.commenter_name,
-                    whoId: payload?.commenter_id,
-                    message: " commented on your post",
-                    link: `/posts/${payload?.post_id}`
-                };
-            case "like":
-                return {
-                    who: payload?.liker_name,
-                    whoId: payload?.liker_id,
-                    message: " liked your post",
-                    link: `/posts/${payload?.post_id}`
-                };
-            case "group_invite":
-                return {
-                    who: payload?.inviter_name,
-                    whoId: payload?.inviter_id,
-                    message: " invited you to join ",
-                    groupName: payload?.group_name,
-                    groupId: payload?.group_id
-                };
-            case "group_join_request":
-                return {
-                    who: payload?.requester_name,
-                    whoId: payload?.requester_id,
-                    message: " wants to join ",
-                    groupName: payload?.group_name,
-                    groupId: payload?.group_id
-                };
-            case "group_join_request_accepted":
-                return {
-                    message: "You were accepted to ",
-                    groupName: payload?.group_name,
-                    groupId: payload?.group_id
-                };
-            case "group_invite_accepted":
-                return {
-                    who: payload?.invited_name,
-                    whoId: payload?.invited_id,
-                    message: " accepted your invitation to ",
-                    groupName: payload?.group_name,
-                    groupId: payload?.group_id
-                };
-            case "new_event":
-                return {
-                    message: "New event ",
-                    eventTitle: payload?.event_title,
-                    groupName: payload?.group_name,
-                    groupId: payload?.group_id
-                };
-            default:
-                return { message: "You have a new notification" };
-        }
-    };
-
-    const handleAction = async (accept) => {
+    const handleAction = async (content, accept) => {
         setIsActing(true);
-
         try {
-            let result;
-            const { type, payload } = notification;
-
-            switch (type) {
-                case "follow_request":
-                    result = await handleFollowRequest({
-                        requesterId: payload.requester_id,
-                        accept
-                    });
-                    break;
-                case "group_invite":
-                    result = await respondToGroupInvite({
-                        groupId: payload.group_id,
-                        accept
-                    });
-                    break;
-                case "group_join_request":
-                    result = await handleJoinRequest({
-                        groupId: payload.group_id,
-                        requesterId: payload.requester_id,
-                        accepted: accept
-                    });
-                    break;
-                default:
-                    return;
-            }
-
+            const result = await content.callback(accept);
+            console.log("result from acting", result)
             if (result?.success) {
-                // Optimistically update acted state
+
+                console.log("Updating optimistically")
+                // optimistically update acted state
                 setActed(true);
-                // Mark as read
+                
+                // mark as read
                 await markNotificationAsRead(notification.id);
-                onUpdate?.(notification.id, { acted: true });
+                onUpdate?.(notification.id, { acted: true, seen: true });
             }
         } catch (error) {
             console.error("Error handling notification action:", error);
@@ -168,6 +66,7 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
         try {
             const result = await deleteNotification(notification.id);
             if (result.success) {
+                decrementNotifs();
                 onDelete?.(notification.id);
             }
         } catch (error) {
@@ -177,20 +76,10 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
         }
     };
 
-    const handleMarkAsRead = async () => {
-        try {
-            await markNotificationAsRead(notification.id);
-        } catch (error) {
-            console.error("Error marking as read:", error);
-        }
-    };
-
-    const content = constructMessage();
-
-    const isSeen = notification.seen;
+    const content = constructNotif(notification, true);
 
     return (
-        <div className={`group bg-background border border-(--border) rounded-xl p-4 transition-all hover:border-(--muted)/40 hover:shadow-sm ${isSeen ? "opacity-40" : ""}`}>
+        <div className={`group bg-background border border-(--border) rounded-xl p-4 transition-all hover:border-(--muted)/40 hover:shadow-sm ${notification.seen ? "opacity-40" : ""}`}>
             <div className="flex items-start gap-3">
                 {/* Icon */}
                 <div className="shrink-0 w-10 h-10 bg-(--accent)/10 rounded-full flex items-center justify-center text-(--accent)">
@@ -200,41 +89,45 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <div className="text-sm text-foreground leading-snug">
-                        {content.who && (
+                        {content?.who && (
                             <Link
-                                href={`/profile/${content.whoId}`}
+                                href={`/profile/${content.whoID}`}
                                 className="font-semibold text-(--accent) hover:underline"
                             >
                                 {content.who}
                             </Link>
                         )}
-                        <span>{content.message}</span>
-                        {content.groupName && (
+                        <span>{content?.message}</span>
+                        {content?.wherePost && (
                             <Link
-                                href={`/groups/${content.groupId}`}
+                                href={`/posts/${content.whereID}`}
                                 className="font-semibold text-(--accent) hover:underline"
                             >
-                                {content.groupName}
+                                {content.wherePost}
                             </Link>
                         )}
-                        {content.eventTitle && (
-                            <>
-                                <span className="font-semibold">{content.eventTitle}</span>
-                                <span> in </span>
-                                <Link
-                                    href={`/groups/${content.groupId}?t=events`}
-                                    className="font-semibold text-(--accent) hover:underline"
-                                >
-                                    {content.groupName}
-                                </Link>
-                            </>
-                        )}
-                        {content.link && (
+                        {content?.whereGroup && (
                             <Link
-                                href={content.link}
-                                className="text-(--accent) hover:underline ml-1"
+                                href={`/groups/${content.whereID}`}
+                                className="font-semibold text-(--accent) hover:underline"
                             >
-                                View
+                                {content.whereGroup}
+                            </Link>
+                        )}
+                        {content?.whereEvent && (
+                            <Link
+                                href={`/groups/${content.whereID}?t=events`}
+                                className="font-semibold text-(--accent) hover:underline"
+                            >
+                                {content.whereEvent}
+                            </Link>
+                        )}
+                        {content?.whereUser && (
+                            <Link
+                                href={`/profile/${content.whereID}`}
+                                className="font-semibold text-(--accent) hover:underline"
+                            >
+                                {content.whereUser}
                             </Link>
                         )}
                     </div>
@@ -247,7 +140,7 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                     {needsAction && (
                         <div className="flex items-center gap-2 mt-3">
                             <button
-                                onClick={() => handleAction(true)}
+                                onClick={() => handleAction(content, true)}
                                 disabled={isActing}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                             >
@@ -255,7 +148,7 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                                 Accept
                             </button>
                             <button
-                                onClick={() => handleAction(false)}
+                                onClick={() => handleAction(content, false)}
                                 disabled={isActing}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-(--border) text-foreground hover:bg-(--muted)/10 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                             >
@@ -263,11 +156,6 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                                 Decline
                             </button>
                         </div>
-                    )}
-
-                    {/* Acted indicator */}
-                    {acted && notification.needs_action && (
-                        <p className="text-xs text-(--muted) mt-2 italic">Responded</p>
                     )}
                 </div>
 

@@ -43,12 +43,13 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 		//create notification
 		liker, err := s.userRetriever.GetUser(ctx, ct.Id(req.RequesterId))
 		if err != nil {
-			//log error
+
 		}
 
 		row, err := s.db.GetEntityCreatorAndGroup(ctx, req.EntityId.Int64())
 		if err != nil {
-			//log and don't proceed to notif
+			tele.Error(ctx, "Could not get entity creator and group for toggle or insert reaction for entity @1", "entityId", req.EntityId)
+			return nil
 		}
 
 		//if liker is same as entity creator, return without creating a notification
@@ -79,7 +80,33 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 	return nil
 }
 
-// SKIP FOR NOW
-func (s *Application) GetWhoLikedEntityId(ctx context.Context, req models.GenericReq) ([]int64, error) {
-	return nil, nil
+func (s *Application) GetWhoLikedEntityId(ctx context.Context, req models.GenericReq) ([]models.User, error) {
+	input := fmt.Sprintf("%#v", req)
+
+	if err := ct.ValidateStruct(req); err != nil {
+		return nil, ce.Wrap(ce.ErrInvalidArgument, err, input).WithPublic("invalid data received")
+
+	}
+
+	userIDs, err := s.db.GetWhoLikedEntityId(ctx, req.EntityId.Int64())
+	if err != nil {
+		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
+	}
+	if len(userIDs) < 1 {
+		return []models.User{}, nil
+	}
+
+	userMap, err := s.userRetriever.GetUsers(ctx, ct.FromInt64s(userIDs))
+	if err != nil {
+		return nil, ce.Wrap(nil, err, input).WithPublic("error retrieving user's info")
+	}
+
+	users := make([]models.User, 0, len(userIDs))
+	for _, id := range ct.FromInt64s(userIDs) {
+		if u, ok := userMap[id]; ok {
+			users = append(users, u)
+		}
+	}
+
+	return users, nil
 }

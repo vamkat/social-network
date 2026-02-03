@@ -406,8 +406,8 @@ export default function Navbar() {
                 setIsSearching(true);
                 try {
                     const response = await SearchUsers({ query: searchQuery, limit: 5 });
-                    if (response && response.users) {
-                        setSearchResults(response.users);
+                    if (response && response.data) {
+                        setSearchResults(response.data.users);
                         setShowSearchResults(true);
                     } else {
                         setSearchResults([]);

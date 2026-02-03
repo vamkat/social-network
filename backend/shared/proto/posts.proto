@@ -126,6 +126,10 @@ service PostsService {
     // Toggles or inserts a reaction for the requester on a post/comment.
     // Returns permission denied if requester is not allowed to view parent entity.
   rpc ToggleOrInsertReaction (GenericReq) returns (google.protobuf.Empty);
+
+  // Returns a list of users who liked given entity id.
+  // A call to users and media service is made for user information and images.
+  rpc GetWhoLikedEntityId (GenericReq) returns (common.ListUsers);
 }
 
 // COMMON & GENERIC
