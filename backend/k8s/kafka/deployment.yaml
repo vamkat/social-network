@@ -4,6 +4,7 @@ metadata:
   name: kafka
   namespace: kafka
   labels:
+    # Check if this can happen on node creation or should be run after on app
     stage: app
 spec:
   kafka:

@@ -173,12 +173,13 @@ apply-ingress:
 
 
 # Do not run this as it will probalby fail.
-# Run all these in order but check that all pods are complete and 
+# Run all these in order but check that all db pods are complete and 
 # running before running migrations
 deploy-all: 
-	$(MAKE) apply-kafka
 	$(MAKE) op-manifest
+	$(MAKE) apply-kafka
 	$(MAKE) apply-namespace
+	$(MAKE) apply-pvc
 	$(MAKE) apply-configs
 	$(MAKE) apply-monitoring
 	$(MAKE) apply-db1
@@ -187,13 +188,17 @@ deploy-all:
 #	Prod mode
 # $(MAKE) deploy-nginx 
 
-	$(MAKE) apply-pvc
+# 	wait for dbs
 	sleep 60  
 	$(MAKE) run-migrations 
 	$(MAKE) apply-apps
+	
+# 	wait for storage
+	sleep 10
 	$(MAKE) apply-cors
 
 # 	Dev mode
+# 	wait for services
 	sleep 30  
 	$(MAKE) port-forward 
 

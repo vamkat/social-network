@@ -10,25 +10,16 @@ data:
     <CORSConfiguration>
       <CORSRule>
         <AllowedOrigin>*</AllowedOrigin>
+
         <AllowedMethod>GET</AllowedMethod>
         <AllowedMethod>PUT</AllowedMethod>
-        <AllowedMethod>POST</AllowedMethod>
-        <AllowedMethod>DELETE</AllowedMethod>
-        <AllowedHeader>*</AllowedHeader>
+
+        <AllowedHeader>Content-Type</AllowedHeader>
+        <AllowedHeader>Authorization</AllowedHeader>
+        <AllowedHeader>x-amz-date</AllowedHeader>
+        <AllowedHeader>x-amz-content-sha256</AllowedHeader>
+
         <ExposeHeader>ETag</ExposeHeader>
         <MaxAgeSeconds>3000</MaxAgeSeconds>
       </CORSRule>
     </CORSConfiguration>
-
-
-  #   data:
-  # cors.json: |
-  #   [
-  #     {
-  #       "AllowedOrigins": ["http://localhost:3000"],
-  #       "AllowedMethods": ["GET", "PUT", "POST"],
-  #       "AllowedHeaders": ["*"],
-  #       "ExposeHeaders": ["ETag"],
-  #       "MaxAgeSeconds": 3600
-  #     }
-  #   ]
