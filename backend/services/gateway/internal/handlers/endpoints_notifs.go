@@ -158,8 +158,7 @@ func (s *Handlers) DeleteNotification() http.HandlerFunc {
 			return
 		}
 
-		v := r.URL.Query()
-		notifId, err := utils.ParamGet(v, "notification_id", ct.Id(0), true)
+		notifId, err := utils.PathValueGet(r, "notification_id", ct.Id(0), true)
 		if err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad notification id")
 			return

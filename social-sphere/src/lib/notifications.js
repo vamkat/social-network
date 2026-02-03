@@ -1,9 +1,9 @@
 import { handleFollowRequest } from '@/actions/requests/handle-request';
 import { respondToGroupInvite } from '@/actions/groups/respond-to-invite';
-import {handleJoinRequest} from '@/actions/groups/handle-join-request';
+import { handleJoinRequest } from '@/actions/groups/handle-join-request';
 
-export function constructLiveNotif(notif) {
-    
+export function constructNotif(notif, aggregate = false) {
+
     // FOLLOWERS 
     if (notif.type === "new_follower") {
         return {
@@ -12,26 +12,36 @@ export function constructLiveNotif(notif) {
             message: " is now following you"
         };
     }
-    if (notif.type === "follow_request") {
-        return {
-            who: notif.payload.requester_name,
-            whoID: notif.payload.requester_id,
-            message: " wants to follow you",
-            action: notif.needs_action,
-            callback: async (response) => {
-                await handleFollowRequest({requesterId:notif.payload.requester_id, accept: response})
-            }
-        };
 
+    if (notif.type === "follow_request") {
+        if (aggregate) {
+            if (notif.acted) {
+                return {
+                    message: "You are now friends with ",
+                    whereUser: notif.payload.requester_name,
+                    whereID: notif.payload.requester_id
+                };
+            }
+        }
+        return {
+                who: notif.payload.requester_name,
+                whoID: notif.payload.requester_id,
+                message: " wants to follow you",
+                action: notif.needs_action,
+                callback: async (response) => {
+                    return await handleFollowRequest({ requesterId: notif.payload.requester_id, accept: response })
+                }
+            };
     }
+
     if (notif.type === "follow_request_accepted") {
         return {
             who: notif.payload.target_name,
             whoID: notif.payload.target_id,
             message: " accepted your follow request"
-         };
+        };
     }
-    
+
     // POSTS 
     if (notif.type === "post_reply") {
         return {
@@ -42,44 +52,68 @@ export function constructLiveNotif(notif) {
             whereID: notif.payload.post_id,
         };
     }
-    
+
     if (notif.type === "like") {
         return {
-            who: notif.payload.liker_name, 
-            whoID: notif.payload.liker_id, 
-            message: " liked your ", 
-            wherePost: "post", 
+            who: notif.payload.liker_name,
+            whoID: notif.payload.liker_id,
+            message: " liked your ",
+            wherePost: "post",
             whereID: notif.payload.post_id
         };
     }
 
     // GROUPS
     if (notif.type === "group_invite") {
-        return {
-            who: notif.payload.inviter_name,
-            whoID: notif.payload.inviter_id,
-            message: " invited you to join group: ",
-            whereGroup: notif.payload.group_name,
-            whereID: notif.payload.group_id,
-            action: notif.needs_action,
-            callback: async (response) => {
-                await respondToGroupInvite({groupId: notif.payload.group_id, accept: response})
+
+        if (aggregate) {
+            if (notif.acted) {
+                return {
+                    message: "You accepted to join group: ",
+                    where: notif.payload.requester_name,
+                    whereID: notif.payload.requester_id,
+                    whereGroup: notif.payload.group_name,
+                    whereID: notif.payload.group_id,
+                };
             }
-         };
+        }
+        return {
+                who: notif.payload.inviter_name,
+                whoID: notif.payload.inviter_id,
+                message: " invited you to join group: ",
+                whereGroup: notif.payload.group_name,
+                whereID: notif.payload.group_id,
+                action: notif.needs_action,
+                callback: async (response) => {
+                    return await respondToGroupInvite({ groupId: notif.payload.group_id, accept: response })
+                }
+            };
     }
 
     if (notif.type === "group_join_request") {
-        return {
-            who: notif.payload.requester_name,
-            whoID: notif.payload.requester_id,
-            message: " wants to join your group: ",
-            whereGroup: notif.payload.group_name,
-            whereID: notif.payload.group_id,
-            action: notif.needs_action,
-            callback: async (response) => {
-                await handleJoinRequest({groupId: notif.payload.group_id, requesterId: notif.payload.requester_id, accept: response})
+        if (aggregate) {
+            if (notif.acted) {
+                return {
+                    who: notif.payload.requester_name,
+                    whoID: notif.payload.requester_id,
+                    message: " is now a member of your group: ",
+                    whereGroup: notif.payload.group_name,
+                    whereID: notif.payload.group_id,
+                };
             }
-         };
+        } 
+
+        return {
+                who: notif.payload.requester_name,
+                whoID: notif.payload.requester_id,
+                message: " wants to join your group: ",
+                whereGroup: notif.payload.group_name,
+                whereID: notif.payload.group_id,
+                action: notif.needs_action,
+                callback: async (response) => {
+                    return await handleJoinRequest({ groupId: notif.payload.group_id, requesterId: notif.payload.requester_id, accept: response })
+                }
+            };
     }
 
     if (notif.type === "group_join_request_accepted") {
@@ -87,7 +121,7 @@ export function constructLiveNotif(notif) {
             message: "You were accepted to join group: ",
             whereGroup: notif.payload.group_name,
             whereID: notif.payload.group_id
-         };
+        };
     }
 
     if (notif.type === "group_invite_accepted") {
@@ -97,7 +131,7 @@ export function constructLiveNotif(notif) {
             message: " accepted your invitation to join group: ",
             whereGroup: notif.payload.group_name,
             whereID: notif.payload.group_id
-         };
+        };
     }
 
     if (notif.type === "new_event") {
