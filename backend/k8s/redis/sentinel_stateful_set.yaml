@@ -25,19 +25,27 @@ spec:
             REDIS_PASSWORD=admin
             nodes=redis-0.redis,redis-1.redis,redis-2.redis
             loop=$(echo $nodes | sed -e "s/,/\n/g")
-
-            for i in $loop
-            do
-                echo "finding master at $i"
-                echo "pass: $REDIS_PASSWORD"
-                MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
-                if [ "$MASTER" = "" ]; then
-                    echo "no master found"
-                else
-                    echo "found $MASTER"
-                    break
-                fi
+            
+            for attempt in $(seq 1 1000); do
+                echo "outer loop start"
+                for i in $loop; do
+                    echo "inner loop start"
+                    echo "finding master at $i"
+                    echo "pass: $REDIS_PASSWORD"
+                    MASTER=$(redis-cli --no-auth-warning --raw -h $i -a $REDIS_PASSWORD info replication | awk '{print $1}' | grep master_host: | cut -d ":" -f2)
+                    if [ "$MASTER" = "" ]; then
+                        echo "no master found"
+                    else
+                        echo "found $MASTER"
+                        break 2
+                    fi
+                    echo "finished inner loop"
+                done
+                echo "sleeping for 10"
+                sleep 10
             done
+            echo "outer loop finished"
+
             echo "sentinel monitor mymaster $MASTER 6379 2" >> /tmp/master
             echo "port 26379
             sentinel resolve-hostnames yes
@@ -48,6 +56,7 @@ spec:
             sentinel parallel-syncs mymaster 1
             sentinel auth-pass mymaster $REDIS_PASSWORD
             " > /etc/redis/sentinel.conf
+            echo "script finished"
         volumeMounts:
         - name: redis-config
           mountPath: /etc/redis/
