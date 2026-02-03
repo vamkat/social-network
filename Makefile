@@ -105,6 +105,7 @@ build-all:
 
 # 1.
 apply-kafka:
+	kubectl create namespace kafka
 	kubectl apply -f "https://strimzi.io/install/latest?namespace=kafka" -n kafka
 
 # 1.1
@@ -210,3 +211,152 @@ first-time:
 	$(MAKE) build-all
 	$(MAKE) deploy-all
 	
+
+.PHONY: smart-full-start smart-apply-kafka smart-op-manifest smart-apply-namespace smart-apply-configs smart-apply-pvc smart-apply-monitoring smart-apply-db1 smart-apply-db2 smart-run-migrations smart-apply-apps smart-apply-cors smart-port-forward
+
+big-mk:
+	minikube start --cpus=10 --memory=12192m
+
+define retry
+	@for i in {1..100}; do \
+		$(1) && break || (echo "Attempt $$i failed, retrying in 10s..."; sleep 5; echo -e "\n\n"); \
+	done || (echo "All retries failed"; exit 1)
+endef
+
+smart-build-and-deploy:
+	build-all
+	$(MAKE) smart-full-deploy
+
+smart-full-deploy:
+	$(MAKE) load-images
+	@sleep 2
+
+	$(MAKE) smart-apply-kafka; 
+	@sleep 2
+
+	$(MAKE) smart-op-manifest; 
+	@sleep 2
+
+	$(MAKE) smart-apply-namespace; 
+	@sleep 2
+
+	$(MAKE) smart-apply-configs; 
+	@sleep 2
+
+	$(MAKE) smart-apply-pvc; 
+	@sleep 2
+
+	$(MAKE) smart-apply-monitoring; 
+	@sleep 2
+
+	$(call retry, $(MAKE) smart-apply-db1); 
+	@sleep 2
+
+	$(call retry, $(MAKE) smart-apply-db2); 
+	@sleep 2
+	@SLEEP=60; echo "Sleeping for $${SLEEP}s to wait for db's to start before migrations..."; echo -e "\n\n\n"; sleep $$SLEEP
+
+	$(call retry, $(MAKE) smart-run-migrations); 
+	@sleep 2
+	@SLEEP=60; echo "Sleeping for $${SLEEP}s so that db's are ready before starting core services..."; echo -e "\n\n\n"; sleep $$SLEEP
+
+	$(call retry, $(MAKE) smart-apply-apps); 
+	@sleep 2
+
+	$(call retry, $(MAKE) smart-apply-cors); 
+	@sleep 2
+	@SLEEP=100; echo "Sleeping for $${SLEEP}s to wait for pods to be ready before port forwarding them"; echo -e "\n\n\n"; sleep $$SLEEP
+
+	$(MAKE) smart-port-forward
+
+smart-apply-kafka:
+	@echo " "
+	@echo " "
+	@echo " --- APPLYING KAFKA ---"
+	@echo " "
+	kubectl create namespace kafka || true
+	$(call retry,kubectl apply -f "https://strimzi.io/install/latest?namespace=kafka" -n kafka)
+
+smart-op-manifest:
+	@echo " "
+	@echo " "
+	@echo " --- APPLYING CLOUDNATIVE-PG OPERATOR ---"
+	@echo " "
+	$(call retry,kubectl apply --server-side -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml)
+
+smart-apply-namespace:
+	@echo " "
+	@echo " "
+	@echo " --- APPLYING NAMESPACES ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=namespace
+
+smart-apply-configs:
+	@echo " "
+	@echo " "
+	@echo " --- APPLYING CONFIGS ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=config
+
+smart-apply-pvc:
+	@echo " "
+	@echo " "
+	@echo " --- APPLYING PERSISTENT VOLUME CLAIMS ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=pvc
+
+smart-apply-monitoring:
+	@echo " "
+	@echo " "
+	@echo " --- APPLYING MONITORING ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=monitoring
+
+smart-apply-db1:
+	@echo " "
+	@echo " "
+	@echo " --- TRYING DATABASE PHASE ONE ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=db1
+
+smart-apply-db2:
+	@echo " "
+	@echo " "
+	@echo " --- TRYING DATABASE PHASE TWO ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=db2
+
+smart-run-migrations:
+	@echo " "
+	@echo " "
+	@echo " --- TRYING MIGRATIONS ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=migration
+
+smart-apply-apps:
+	@echo " "
+	@echo " "
+	@echo " --- TRYING TO START BUSINESS SERVICES ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=app
+
+smart-apply-cors:
+	@echo " "
+	@echo " "
+	@echo " --- TRYING TO APPLY CORS ---"
+	@echo " "
+	kubectl apply -R -f backend/k8s/ --selector stage=cors
+
+smart-port-forward:
+	@echo " "
+	@echo " "
+	@echo " --- STARTING PORT FORWARDS ---"
+	@echo " "
+	@bash -c ' \
+	trap "pkill -f kubectl\ port-forward" EXIT SIGINT; \
+	kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 & \
+	kubectl port-forward -n storage svc/minio 9000:9000 & \
+	kubectl port-forward -n live svc/live 8082:8082 & \
+	kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
+	kubectl port-forward -n monitoring svc/victoria-logs 9428:9428 & \
+	wait'
