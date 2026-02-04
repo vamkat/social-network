@@ -33,17 +33,14 @@ export default function ProfileContent({ result, posts: initialPosts }) {
     // Handle error state
     if (!result.success) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-4">
-                <div className="text-red-500 text-lg font-medium text-center">
-                    {result.error || "Failed to load profile"}
-                </div>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-(--accent) text-white rounded-lg hover:opacity-90 transition-opacity"
-                >
-                    Try Again
-                </button>
-            </div>
+            <div className="flex flex-col items-center justify-center py-50 animate-fade-in">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            User not found
+          </h3>
+          <p className="text-(--muted) text-center max-w-md px-4">
+            User not found or does not exist.
+          </p>
+        </div>
         );
     }
 

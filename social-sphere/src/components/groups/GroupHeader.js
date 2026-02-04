@@ -25,15 +25,15 @@ import { useStore } from "@/store/store";
 export function GroupHeader({ group }) {
     const router = useRouter();
     const user = useStore((state) => state.user);
-    const [isMember, setIsMember] = useState(group.is_member);
-    const [isOwner] = useState(group.is_owner);
-    const [pendingRequest, setPendingRequest] = useState(group.pending_request);
-    const [pendingInvite, setPendingInvite] = useState(group.pending_invite);
+    const [isMember, setIsMember] = useState(group?.is_member);
+    const [isOwner] = useState(group?.is_owner);
+    const [pendingRequest, setPendingRequest] = useState(group?.pending_request);
+    const [pendingInvite, setPendingInvite] = useState(group?.pending_invite);
     const [isLoading, setIsLoading] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
-    const [membersCount, setMembersCount] = useState(group.members_count);
+    const [membersCount, setMembersCount] = useState(group?.members_count);
 
     // Invite modal state
     const [followers, setFollowers] = useState([]);

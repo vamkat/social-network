@@ -6,7 +6,6 @@ export const useStore = create(
     (set) => ({
       // State
       user: null,
-      msgReceiver: null,
       loading: false,
 
       // Manually set user data

@@ -8,12 +8,14 @@ import { deleteNotification } from "@/actions/notifs/delete-notification";
 import { getRelativeTime } from "@/lib/time";
 import { constructNotif } from "@/lib/notifications";
 import { useStore } from '@/store/store';
+import { useRouter } from "next/navigation";
 
 export default function NotificationCard({ notification, onDelete, onUpdate }) {
     const [isActing, setIsActing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [acted, setActed] = useState(notification.acted);
     const decrementNotifs = useStore((state) => state.decrementNotifs);
+    const router = useRouter();
 
     const needsAction = notification.needs_action && !acted;
 
@@ -42,6 +44,7 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
     const handleAction = async (content, accept) => {
         setIsActing(true);
         try {
+            console.log(`calling ${content.callback} with value ${accept}`)
             const result = await content.callback(accept);
             console.log("result from acting", result)
             if (result?.success) {
@@ -49,9 +52,10 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                 console.log("Updating optimistically")
                 // optimistically update acted state
                 setActed(true);
-                
+
                 // mark as read
                 await markNotificationAsRead(notification.id);
+                decrementNotifs();
                 onUpdate?.(notification.id, { acted: true, seen: true });
             }
         } catch (error) {
@@ -90,37 +94,69 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                 <div className="flex-1 min-w-0">
                     <div className="text-sm text-foreground leading-snug">
                         {content?.who && (
-                            <Link
-                                href={`/profile/${content.whoID}`}
-                                className="font-semibold text-(--accent) hover:underline"
+                            <button
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (!notification.seen) {
+                                        await markNotificationAsRead(notification.id);
+                                        decrementNotifs();
+                                    }
+                                    router.push(`/profile/${content.whoID}`);
+                                }}
+                                className="text-sm text-(--accent) hover:text-(--accent-hover) hover:underline cursor-pointer"
                             >
                                 {content.who}
-                            </Link>
+                            </button>
                         )}
                         <span>{content?.message}</span>
                         {content?.wherePost && (
-                            <Link
-                                href={`/posts/${content.whereID}`}
-                                className="font-semibold text-(--accent) hover:underline"
+                            <button
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (!notification.seen) {
+                                        await markNotificationAsRead(notification.id);
+                                        decrementNotifs();
+                                    }
+                                    router.push(`/posts/${content.whereID}`);
+                                }}
+                                className="text-sm text-(--accent) hover:text-(--accent-hover) hover:underline cursor-pointer"
                             >
                                 {content.wherePost}
-                            </Link>
+                            </button>
                         )}
                         {content?.whereGroup && (
-                            <Link
-                                href={`/groups/${content.whereID}`}
-                                className="font-semibold text-(--accent) hover:underline"
+                            <button
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (!notification.seen) {
+                                        await markNotificationAsRead(notification.id);
+                                        decrementNotifs();
+                                    }
+                                    router.push(`/groups/${content.whereID}`);
+                                }}
+                                className="text-sm text-(--accent) hover:text-(--accent-hover) hover:underline cursor-pointer"
                             >
                                 {content.whereGroup}
-                            </Link>
+                            </button>
                         )}
                         {content?.whereEvent && (
-                            <Link
-                                href={`/groups/${content.whereID}?t=events`}
-                                className="font-semibold text-(--accent) hover:underline"
+                            <button
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (!notification.seen) {
+                                        await markNotificationAsRead(notification.id);
+                                        decrementNotifs();
+                                    }
+                                    router.push(`/groups/${content.whereID}?t=events`);
+                                }}
+                                className="text-sm text-(--accent) hover:text-(--accent-hover) hover:underline cursor-pointer"
                             >
                                 {content.whereEvent}
-                            </Link>
+                            </button>
                         )}
                         {content?.whereUser && (
                             <Link

@@ -54,7 +54,7 @@ export default function Toast({ notification, onDismiss, onMouseEnter, onMouseLe
                         </button>
                     )}
                     <span className="text-sm text-foreground mt-0.5">
-                        {notif.message}
+                        {notif?.message}
                     </span>
                     {notif?.wherePost && (
                         <button
