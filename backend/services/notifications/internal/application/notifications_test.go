@@ -666,7 +666,7 @@ func TestCreateFollowRequestAcceptedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == targetUserID &&
 		       params.NotifType == string(FollowRequest) &&
 		       params.SourceEntityID.Int64 == requesterUserID
@@ -738,7 +738,7 @@ func TestCreateFollowRequestRejectedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == targetUserID &&
 		       params.NotifType == string(FollowRequest) &&
 		       params.SourceEntityID.Int64 == requesterUserID
@@ -814,7 +814,7 @@ func TestCreateGroupInviteAcceptedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == invitedUserID &&
 		       params.NotifType == string(GroupInvite) &&
 		       params.SourceEntityID.Int64 == groupID
@@ -890,7 +890,7 @@ func TestCreateGroupInviteRejectedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == invitedUserID &&
 		       params.NotifType == string(GroupInvite) &&
 		       params.SourceEntityID.Int64 == groupID
@@ -965,7 +965,7 @@ func TestCreateGroupJoinRequestAcceptedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == groupOwnerID &&
 		       params.NotifType == string(GroupJoinRequest) &&
 		       params.SourceEntityID.Int64 == groupID
@@ -1040,7 +1040,7 @@ func TestCreateGroupJoinRequestRejectedNotification(t *testing.T) {
 		Count:          pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == groupOwnerID &&
 		       params.NotifType == string(GroupJoinRequest) &&
 		       params.SourceEntityID.Int64 == groupID
@@ -1268,7 +1268,7 @@ func TestMarkRelatedNotificationAsActed_FollowRequestAccepted(t *testing.T) {
 		Count: pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == int64(2) &&
 		       params.NotifType == string(FollowRequest) &&
 		       params.SourceEntityID.Int64 == int64(10)
@@ -1301,8 +1301,8 @@ func TestMarkRelatedNotificationAsActed_NoRelatedNotification(t *testing.T) {
 		"target_name": "target",
 	}
 
-	// Expect GetUnreadNotificationByTypeAndEntity to return pgx.ErrNoRows (no related notification)
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetUnreadNotificationByTypeAndEntityParams) bool {
+	// Expect GetNotificationByTypeAndEntity to return pgx.ErrNoRows (no related notification)
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.MatchedBy(func(params sqlc.GetNotificationByTypeAndEntityParams) bool {
 		return params.UserID == int64(2) &&
 		       params.NotifType == string(FollowRequest) &&
 		       params.SourceEntityID.Int64 == int64(10)
@@ -1347,7 +1347,7 @@ func TestMarkRelatedNotificationAsActed_GroupInviteAccepted(t *testing.T) {
 		Count: pgtype.Int4{Int32: 1, Valid: true},
 	}
 
-	mockDB.On("GetUnreadNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetUnreadNotificationByTypeAndEntityParams")).Return(originalNotification, nil)
+	mockDB.On("GetNotificationByTypeAndEntity", ctx, mock.AnythingOfType("sqlc.GetNotificationByTypeAndEntityParams")).Return(originalNotification, nil)
 
 	// Expect MarkNotificationAsActed to be called to mark the original notification as acted
 	mockDB.On("MarkNotificationAsActed", ctx, mock.AnythingOfType("sqlc.MarkNotificationAsActedParams")).Return(nil)

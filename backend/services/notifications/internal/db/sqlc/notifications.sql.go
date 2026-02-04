@@ -129,6 +129,40 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id int64) (Notificati
 	return i, err
 }
 
+const getNotificationByTypeAndEntity = `-- name: GetNotificationByTypeAndEntity :one
+SELECT id, user_id, notif_type, source_service, source_entity_id, seen, needs_action, acted, payload, created_at, expires_at, deleted_at, count
+FROM notifications
+WHERE user_id = $1 AND notif_type = $2 AND source_entity_id = $3 AND deleted_at IS NULL
+LIMIT 1
+`
+
+type GetNotificationByTypeAndEntityParams struct {
+	UserID         int64
+	NotifType      string
+	SourceEntityID pgtype.Int8
+}
+
+func (q *Queries) GetNotificationByTypeAndEntity(ctx context.Context, arg GetNotificationByTypeAndEntityParams) (Notification, error) {
+	row := q.db.QueryRow(ctx, getNotificationByTypeAndEntity, arg.UserID, arg.NotifType, arg.SourceEntityID)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.NotifType,
+		&i.SourceService,
+		&i.SourceEntityID,
+		&i.Seen,
+		&i.NeedsAction,
+		&i.Acted,
+		&i.Payload,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.DeletedAt,
+		&i.Count,
+	)
+	return i, err
+}
+
 const getNotificationType = `-- name: GetNotificationType :one
 SELECT notif_type, category, default_enabled
 FROM notification_types

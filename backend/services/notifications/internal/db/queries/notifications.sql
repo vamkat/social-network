@@ -58,6 +58,12 @@ FROM notifications
 WHERE user_id = $1 AND notif_type = $2 AND source_entity_id = $3 AND seen = false AND deleted_at IS NULL
 LIMIT 1;
 
+-- name: GetNotificationByTypeAndEntity :one
+SELECT id, user_id, notif_type, source_service, source_entity_id, seen, needs_action, acted, payload, created_at, expires_at, deleted_at, count
+FROM notifications
+WHERE user_id = $1 AND notif_type = $2 AND source_entity_id = $3 AND deleted_at IS NULL
+LIMIT 1;
+
 -- name: CreateNotificationType :exec
 INSERT INTO notification_types (notif_type, category, default_enabled)
 VALUES ($1, $2, $3)

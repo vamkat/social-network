@@ -722,7 +722,7 @@ func (a *Application) MarkRelatedNotificationAsActed(ctx context.Context, respon
 	}
 
 	// Find the original notification that should be marked as acted
-	dbNotification, err := a.DB.GetUnreadNotificationByTypeAndEntity(ctx, db.GetUnreadNotificationByTypeAndEntityParams{
+	dbNotification, err := a.DB.GetNotificationByTypeAndEntity(ctx, db.GetNotificationByTypeAndEntityParams{
 		UserID:         originalUserID,
 		NotifType:      string(originalNotifType),
 		SourceEntityID: pgtype.Int8{Int64: originalSourceEntityID, Valid: true},
