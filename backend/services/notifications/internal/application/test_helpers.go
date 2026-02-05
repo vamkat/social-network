@@ -73,6 +73,11 @@ func (m *MockDB) GetUnreadNotificationByTypeAndEntity(ctx context.Context, arg s
 	return args.Get(0).(sqlc.Notification), args.Error(1)
 }
 
+func (m *MockDB) GetNotificationByTypeAndEntity(ctx context.Context, arg sqlc.GetNotificationByTypeAndEntityParams) (sqlc.Notification, error) {
+	args := m.Called(ctx, arg)
+	return args.Get(0).(sqlc.Notification), args.Error(1)
+}
+
 func (m *MockDB) MarkNotificationAsActed(ctx context.Context, arg sqlc.MarkNotificationAsActedParams) error {
 	args := m.Called(ctx, arg)
 	return args.Error(0)

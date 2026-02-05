@@ -13,6 +13,7 @@ type Querier interface {
 	CreateNotificationType(ctx context.Context, arg CreateNotificationTypeParams) error
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) error
 	GetNotificationByID(ctx context.Context, id int64) (Notification, error)
+	GetNotificationByTypeAndEntity(ctx context.Context, arg GetNotificationByTypeAndEntityParams) (Notification, error)
 	GetNotificationType(ctx context.Context, notifType string) (NotificationType, error)
 	GetUnreadNotificationByTypeAndEntity(ctx context.Context, arg GetUnreadNotificationByTypeAndEntityParams) (Notification, error)
 	GetUserNotifications(ctx context.Context, arg GetUserNotificationsParams) ([]Notification, error)
