@@ -41,7 +41,7 @@ spec:
           mountPath: /tmp/redis/
       containers:
       - name: redis
-        image: redis:7.0.10-alpine
+        image: redis:latest
         command: ["redis-server"]
         args: ["/etc/redis/redis.conf"]
         ports:

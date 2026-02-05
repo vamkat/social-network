@@ -224,10 +224,30 @@ define retry
 endef
 
 smart-build-and-deploy:
-	build-all
+	$(MAKE) build-all
 	$(MAKE) smart-full-deploy
 
 smart-full-deploy:
+	@ifeq ($(OS),Windows_NT)
+	$(info    ======                                    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
+	$(info     ======                                     ======    )
+	exit
+	endif
+
 	$(MAKE) load-images
 	@sleep 2
 
@@ -310,6 +330,13 @@ smart-apply-monitoring:
 	@echo " "
 	@echo " --- APPLYING MONITORING ---"
 	@echo " "
+	kubectl create namespace monitoring
+	@kubectl get secret posts-db-app -n posts -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+	@kubectl get secret chat-db-app -n chat -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+	@kubectl get secret users-db-app -n users -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+	@kubectl get secret notifications-db-app -n notifications -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+	@kubectl get secret media-db-app -n media -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+
 	kubectl apply -R -f backend/k8s/ --selector stage=monitoring
 
 smart-apply-db1:

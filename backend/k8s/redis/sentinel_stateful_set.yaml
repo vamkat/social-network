@@ -62,7 +62,7 @@ spec:
           mountPath: /etc/redis/
       containers:
       - name: sentinel
-        image: redis:7.0.10-alpine
+        image: redis:latest
         command: ["redis-sentinel"]
         args: ["/etc/redis/sentinel.conf"]
         ports:
