@@ -10,6 +10,21 @@ data:
     apiVersion: 1
 
     datasources:
+      - name: Redis
+        type: redis-datasource
+        access: proxy
+        orgId: 1
+        version: 1
+        url: redis-sentinel.redis.svc.cluster.local:26379
+        jsonData:
+          client: sentinel
+          sentinelName: Test@internal
+          poolSize: 5
+          timeout: 10
+          pingInterval: 0
+          pipelineWindow: 0
+        editable: true
+
       - name: VictoriaLogs
         type: victoriametrics-logs-datasource
         access: proxy
@@ -20,19 +35,6 @@ data:
           #   AccountID: 0
           #   ProjectID: 0
 
-      - name: Redis Sentinel
-        type: redis-datasource
-        access: proxy
-        url: redis-sentinel.redis.svc.cluster.local:26379
-        jsonData:
-          # Using Redis Sentinel cluster address
-          poolSize: 5
-          timeout: 10
-          pingInterval: 0
-          pipelineWindow: 0
-        version: 1
-        editable: true
-
       - name: VictoriaTraces
         type: jaeger
         access: proxy
@@ -42,3 +44,80 @@ data:
           # multitenancyHeaders:
           #   AccountID: 0
           #   ProjectID: 0
+          
+      - name: Posts Database
+        type: postgres
+        url: posts-db:5432
+        user: postgres
+        secureJsonData:
+          password: secret
+        jsonData:
+          database: social_posts
+          sslmode: 'disable'
+          maxOpenConns: 100
+          maxIdleConns: 100
+          maxIdleConnsAuto: true
+          connMaxLifetime: 14400
+          timescaledb: false
+  
+      - name: Users Database
+        type: postgres
+        url: users-db:5432
+        user: postgres
+        secureJsonData:
+          password: secret
+        jsonData:
+          database: social_users
+          sslmode: 'disable'
+          maxOpenConns: 100
+          maxIdleConns: 100
+          maxIdleConnsAuto: true
+          connMaxLifetime: 14400
+          timescaledb: false
+
+      - name: Chat Database
+        type: postgres
+        url: chat-db:5432
+        user: postgres
+        secureJsonData:
+          password: secret
+        jsonData:
+          database: social_chat
+          sslmode: 'disable'
+          maxOpenConns: 100
+          maxIdleConns: 100
+          maxIdleConnsAuto: true
+          connMaxLifetime: 14400
+          timescaledb: false
+
+      - name: Notifications Database
+        type: postgres
+        url: notifications-db:5432
+        user: postgres
+        secureJsonData:
+          password: secret
+        jsonData:
+          database: social_notifications
+          sslmode: 'disable'
+          maxOpenConns: 100
+          maxIdleConns: 100
+          maxIdleConnsAuto: true
+          connMaxLifetime: 14400
+          timescaledb: false
+
+      - name: Media Database
+        type: postgres
+        url: media-db:5432
+        user: postgres
+        secureJsonData:
+          password: secret
+        jsonData:
+          database: social_media
+          sslmode: 'disable'
+          maxOpenConns: 100
+          maxIdleConns: 100
+          maxIdleConnsAuto: true
+          connMaxLifetime: 14400
+          timescaledb: false
+
+      
