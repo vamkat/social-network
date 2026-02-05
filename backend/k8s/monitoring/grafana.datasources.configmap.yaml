@@ -44,31 +44,31 @@ data:
           # multitenancyHeaders:
           #   AccountID: 0
           #   ProjectID: 0
-          
+
       - name: Posts Database
         type: postgres
-        url: posts-db:5432
-        user: postgres
+        url: posts-db-rw.posts.svc.cluster.local
+        user: app
         secureJsonData:
-          password: secret
+          password: $POSTS_DB_PASSWORD
         jsonData:
-          database: social_posts
-          sslmode: 'disable'
+          database: app
+          sslmode: 'require'
           maxOpenConns: 100
           maxIdleConns: 100
           maxIdleConnsAuto: true
           connMaxLifetime: 14400
           timescaledb: false
-  
+
       - name: Users Database
         type: postgres
-        url: users-db:5432
-        user: postgres
+        url: users-db-rw.users.svc.cluster.local
+        user: app
         secureJsonData:
-          password: secret
+          password: $USERS_DB_PASSWORD
         jsonData:
-          database: social_users
-          sslmode: 'disable'
+          database: app
+          sslmode: 'require'
           maxOpenConns: 100
           maxIdleConns: 100
           maxIdleConnsAuto: true
@@ -77,13 +77,13 @@ data:
 
       - name: Chat Database
         type: postgres
-        url: chat-db:5432
-        user: postgres
+        url: chat-db-rw.chat.svc.cluster.local
+        user: app
         secureJsonData:
-          password: secret
+          password: $CHAT_DB_PASSWORD
         jsonData:
-          database: social_chat
-          sslmode: 'disable'
+          database: app
+          sslmode: 'require'
           maxOpenConns: 100
           maxIdleConns: 100
           maxIdleConnsAuto: true
@@ -92,13 +92,13 @@ data:
 
       - name: Notifications Database
         type: postgres
-        url: notifications-db:5432
-        user: postgres
+        url: notifications-db-rw.notifications.svc.cluster.local
+        user: app
         secureJsonData:
-          password: secret
+          password: $NOTIFICATIONS_DB_PASSWORD
         jsonData:
-          database: social_notifications
-          sslmode: 'disable'
+          database: app
+          sslmode: 'require'
           maxOpenConns: 100
           maxIdleConns: 100
           maxIdleConnsAuto: true
@@ -107,13 +107,13 @@ data:
 
       - name: Media Database
         type: postgres
-        url: media-db:5432
-        user: postgres
+        url: media-db-rw.media.svc.cluster.local
+        user: app
         secureJsonData:
-          password: secret
+          password: $MEDIA_DB_PASSWORD
         jsonData:
-          database: social_media
-          sslmode: 'disable'
+          database: app
+          sslmode: 'require'
           maxOpenConns: 100
           maxIdleConns: 100
           maxIdleConnsAuto: true
