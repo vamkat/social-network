@@ -2,14 +2,12 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function getFollowers({ userId, limit = 100, offset = 0 } = {}) {
+export async function getWhoLikedEntity(entityID) {
     try {
-        if (!userId) {
-            return { success: false, error: "User ID is required" };
-        }
-        const url = `/users/${userId}/followers?limit=${limit}&offset=${offset}`;
+        const url = `/reactions/${entityID}`;
         const response = await serverApiRequest(url, {
-            method: "GET"
+            method: "GET",
+            forwardCookies: true
         });
 
         if (!response.ok) {
@@ -19,7 +17,7 @@ export async function getFollowers({ userId, limit = 100, offset = 0 } = {}) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching followers:", error);
+        console.error("Error fetching user posts:", error);
         return { success: false, error: error.message };
     }
 }

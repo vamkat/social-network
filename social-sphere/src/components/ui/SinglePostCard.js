@@ -17,6 +17,7 @@ import { validateImage } from "@/lib/validation";
 import { getFollowers } from "@/actions/users/get-followers";
 import { getRelativeTime } from "@/lib/time";
 import { toggleReaction } from "@/actions/posts/toggle-reaction";
+import { getWhoLikedEntity } from "@/actions/posts/who-liked-entity";
 import { getComments } from "@/actions/posts/get-comments";
 import { createComment } from "@/actions/posts/create-comment";
 import Tooltip from "./Tooltip";
@@ -62,6 +63,9 @@ export default function SinglePostCard({ post }) {
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [isDeletingComment, setIsDeletingComment] = useState(false);
     const [commentReactions, setCommentReactions] = useState({});
+    const [showLikesModal, setShowLikesModal] = useState(false);
+    const [likesModalUsers, setLikesModalUsers] = useState([]);
+    const [likesModalLoading, setLikesModalLoading] = useState(false);
     const composerRef = useRef(null);
     const cardRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -802,6 +806,51 @@ export default function SinglePostCard({ post }) {
         }
     };
 
+    const handleLikesCountClick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (reactionsCount === 0) return;
+
+        setShowLikesModal(true);
+        setLikesModalLoading(true);
+        try {
+            const resp = await getWhoLikedEntity(post.post_id);
+            if (resp.success && resp.data) {
+                setLikesModalUsers(resp.data);
+            } else {
+                setLikesModalUsers([]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch likes:", err);
+            setLikesModalUsers([]);
+        } finally {
+            setLikesModalLoading(false);
+        }
+    };
+
+    const handleCommentLikesCountClick = async (commentId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const reaction = commentReactions[commentId];
+        if (!reaction || reaction.count === 0) return;
+
+        setShowLikesModal(true);
+        setLikesModalLoading(true);
+        try {
+            const resp = await getWhoLikedEntity(commentId);
+            if (resp.success && resp.data) {
+                setLikesModalUsers(resp.data);
+            } else {
+                setLikesModalUsers([]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch comment likes:", err);
+            setLikesModalUsers([]);
+        } finally {
+            setLikesModalLoading(false);
+        }
+    };
+
     return (
         <div
             ref={cardRef}
@@ -1073,14 +1122,21 @@ export default function SinglePostCard({ post }) {
                 <div className="px-5 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-6">
-                            <button
-                                onClick={handleHeartClick}
-                                disabled={isReactionPending}
-                                className="flex items-center gap-2 text-(--muted) hover:text-red-500 transition-colors group/heart disabled:opacity-50"
-                            >
-                                <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110 cursor-pointer ${likedByUser ? "fill-red-500 text-red-500" : ""}`} />
-                                <span className="text-sm font-medium">{reactionsCount}</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleHeartClick}
+                                    disabled={isReactionPending}
+                                    className="text-(--muted) hover:text-red-500 cursor-pointer transition-colors group/heart disabled:opacity-50"
+                                >
+                                    <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110 ${likedByUser ? "fill-red-500 text-red-500" : ""}`} />
+                                </button>
+                                <button
+                                    onClick={handleLikesCountClick}
+                                    className={`text-sm font-medium transition-colors ${reactionsCount > 0 ? "text-(--muted) hover:text-(--accent) cursor-pointer" : "text-(--muted) cursor-default"}`}
+                                >
+                                    {reactionsCount}
+                                </button>
+                            </div>
 
                             <div className="flex items-center gap-2 text-(--accent) cursor-pointer">
                                 <MessageCircle className="w-5 h-5 fill-(--accent)/10" />
@@ -1270,14 +1326,19 @@ export default function SinglePostCard({ post }) {
                                                     )}
                                                     {/* Comment Reactions */}
                                                     {commentReactions[comment.comment_id] && (
-                                                        <div className="mt-2">
+                                                        <div className="mt-2 flex items-center gap-1">
                                                             <button
                                                                 onClick={(e) => handleCommentReactionClick(comment.comment_id, e)}
                                                                 disabled={commentReactions[comment.comment_id].pending}
-                                                                className="flex items-center gap-1 text-(--muted) hover:text-red-500 transition-colors group/comment-heart disabled:opacity-50"
+                                                                className="text-(--muted) hover:text-red-500 transition-colors group/comment-heart disabled:opacity-50"
                                                             >
                                                                 <Heart className={`w-4 h-4 transition-transform group-hover/comment-heart:scale-110 cursor-pointer ${commentReactions[comment.comment_id].liked ? "fill-red-500 text-red-500" : ""}`} />
-                                                                <span className="text-xs font-medium">{commentReactions[comment.comment_id].count}</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => handleCommentLikesCountClick(comment.comment_id, e)}
+                                                                className={`text-xs font-medium transition-colors ${commentReactions[comment.comment_id].count > 0 ? "text-(--muted) hover:text-(--accent) cursor-pointer" : "text-(--muted) cursor-default"}`}
+                                                            >
+                                                                {commentReactions[comment.comment_id].count}
                                                             </button>
                                                         </div>
                                                     )}
@@ -1418,6 +1479,43 @@ export default function SinglePostCard({ post }) {
                 isLoading={isDeletingComment}
                 loadingText="Deleting..."
             />
+
+            {/* Likes Modal */}
+            <Modal
+                isOpen={showLikesModal}
+                onClose={() => setShowLikesModal(false)}
+                title="Likes"
+            >
+                {likesModalLoading ? (
+                    <div className="py-8 text-center">
+                        <div className="w-6 h-6 border-2 border-(--accent) border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                        <p className="text-sm text-(--muted)">Loading...</p>
+                    </div>
+                ) : likesModalUsers.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                        {likesModalUsers.map((u) => (
+                            <Link
+                                key={u.id}
+                                href={`/profile/${u.id}`}
+                                prefetch={false}
+                                onClick={() => setShowLikesModal(false)}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-(--muted)/10 transition-colors"
+                            >
+                                <div className="w-9 h-9 rounded-full overflow-hidden border border-(--border) bg-(--muted)/10 flex items-center justify-center shrink-0">
+                                    {u.avatar_url ? (
+                                        <img src={u.avatar_url} alt={u.username} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-4 h-4 text-(--muted)" />
+                                    )}
+                                </div>
+                                <span className="text-sm font-medium text-foreground hover:text-(--accent)">@{u.username}</span>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-(--muted) text-center py-4">No likes yet.</p>
+                )}
+            </Modal>
         </div>
     );
 }

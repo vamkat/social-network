@@ -7,7 +7,7 @@ export async function getFollowers({ userId, limit = 100, offset = 0 } = {}) {
         if (!userId) {
             return { success: false, error: "User ID is required" };
         }
-        const url = `/users/${userId}/followers?limit=${limit}&offset=${offset}`;
+        const url = `/users/${userId}/following?limit=${limit}&offset=${offset}`;
         const response = await serverApiRequest(url, {
             method: "GET"
         });

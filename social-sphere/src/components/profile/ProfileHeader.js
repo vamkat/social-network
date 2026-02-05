@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Calendar, Globe, UserPlus, UserCheck, UserMinus, Clock, Lock, Check, X, Send } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Globe, UserPlus, UserCheck, UserMinus, Clock, Lock, Check, X, Send, User, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Modal from "@/components/ui/Modal";
 import Container from "@/components/layout/Container";
@@ -9,6 +10,9 @@ import { followUser } from "@/actions/requests/follow-user";
 import { unfollowUser } from "@/actions/requests/unfollow-user";
 import { handleFollowRequest } from "@/actions/requests/handle-request";
 import { updatePrivacyAction } from "@/actions/profile/settings";
+import { getFollowers } from "@/actions/users/get-followers";
+import { getFollowers as getFollowing } from "@/actions/users/get-following";
+import { getUserGroups } from "@/actions/groups/get-user-groups";
 import Tooltip from "../ui/Tooltip";
 import { useRouter } from "next/navigation";
 import { useMsgReceiver } from "@/store/store";
@@ -24,6 +28,13 @@ export function ProfileHeader({ user, onUnfollow=null }) {
     const [userAskedToFollow, setUserAskedToFollow] = useState(user.follow_request_from_profile_owner);
     const [requestLoading, setRequestLoading] = useState(false);
     const [showMiniHeader, setShowMiniHeader] = useState(false);
+    const [showStatsModal, setShowStatsModal] = useState(false);
+    const [statsModalTitle, setStatsModalTitle] = useState("");
+    const [statsModalType, setStatsModalType] = useState(""); // "followers" | "following" | "groups"
+    const [statsModalItems, setStatsModalItems] = useState([]);
+    const [statsModalLoading, setStatsModalLoading] = useState(false);
+    const [statsModalLoadingMore, setStatsModalLoadingMore] = useState(false);
+    const [statsModalHasMore, setStatsModalHasMore] = useState(false);
     const headerRef = useRef(null);
 
     const router = useRouter();
@@ -157,6 +168,74 @@ export function ProfileHeader({ user, onUnfollow=null }) {
             console.error("Error updating privacy:", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const PAGE_SIZE = 10;
+
+    const handleStatClick = async (type) => {
+        const canClick = isPublic || user.own_profile || isFollowing;
+        if (!canClick) return;
+
+        const titles = { followers: "Followers", following: "Following", groups: "Groups" };
+        setStatsModalTitle(titles[type]);
+        setStatsModalType(type);
+        setStatsModalItems([]);
+        setShowStatsModal(true);
+        setStatsModalLoading(true);
+        setStatsModalHasMore(false);
+
+        try {
+            let resp;
+            if (type === "followers") {
+                resp = await getFollowers({ userId: user.user_id, limit: PAGE_SIZE, offset: 0 });
+            } else if (type === "following") {
+                resp = await getFollowing({ userId: user.user_id, limit: PAGE_SIZE, offset: 0 });
+            } else {
+                resp = await getUserGroups({ limit: PAGE_SIZE, offset: 0 });
+            }
+
+            if (resp.success && resp.data) {
+                setStatsModalItems(resp.data);
+                const totalCount = type === "followers" ? (user.followers_count || 0)
+                    : type === "following" ? (user.following_count || 0)
+                    : (user.groups_count || 0);
+                setStatsModalHasMore(resp.data.length < totalCount);
+            }
+        } catch (err) {
+            console.error(`Failed to fetch ${type}:`, err);
+        } finally {
+            setStatsModalLoading(false);
+        }
+    };
+
+    const handleStatsLoadMore = async () => {
+        if (statsModalLoadingMore) return;
+        setStatsModalLoadingMore(true);
+
+        try {
+            let resp;
+            const offset = statsModalItems.length;
+            if (statsModalType === "followers") {
+                resp = await getFollowers({ userId: user.user_id, limit: PAGE_SIZE, offset });
+            } else if (statsModalType === "following") {
+                resp = await getFollowing({ userId: user.user_id, limit: PAGE_SIZE, offset });
+            } else {
+                resp = await getUserGroups({ limit: PAGE_SIZE, offset });
+            }
+
+            if (resp.success && resp.data) {
+                const newItems = [...statsModalItems, ...resp.data];
+                setStatsModalItems(newItems);
+                const totalCount = statsModalType === "followers" ? (user.followers_count || 0)
+                    : statsModalType === "following" ? (user.following_count || 0)
+                    : (user.groups_count || 0);
+                setStatsModalHasMore(newItems.length < totalCount);
+            }
+        } catch (err) {
+            console.error(`Failed to load more ${statsModalType}:`, err);
+        } finally {
+            setStatsModalLoadingMore(false);
         }
     };
 
@@ -393,18 +472,27 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
                                 {/* Stats - Inline */}
                                 <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-semibold text-foreground">{user.followers_count || 0}</span>
-                                        <span className="text-(--muted)">Followers</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-semibold text-foreground">{user.following_count || 0}</span>
-                                        <span className="text-(--muted)">Following</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-semibold text-foreground">{user.groups_count || 0}</span>
-                                        <span className="text-(--muted)">Groups</span>
-                                    </div>
+                                    <button
+                                        onClick={() => handleStatClick("followers")}
+                                        className={`group/stat flex items-center gap-1.5 transition-colors ${isPublic || user.own_profile || isFollowing ? "cursor-pointer" : "cursor-default"}`}
+                                    >
+                                        <span className={`font-semibold text-foreground ${isPublic || user.own_profile || isFollowing ? "group-hover/stat:text-(--accent)" : ""} transition-colors`}>{user.followers_count || 0}</span>
+                                        <span className={`text-(--muted) ${isPublic || user.own_profile || isFollowing ? "group-hover/stat:text-(--accent)" : ""} transition-colors`}>Followers</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatClick("following")}
+                                        className={`group/stat flex items-center gap-1.5 transition-colors ${isPublic || user.own_profile || isFollowing ? "cursor-pointer" : "cursor-default"}`}
+                                    >
+                                        <span className={`font-semibold text-foreground ${isPublic || user.own_profile || isFollowing ? "group-hover/stat:text-(--accent)" : ""} transition-colors`}>{user.following_count || 0}</span>
+                                        <span className={`text-(--muted) ${isPublic || user.own_profile || isFollowing ? "group-hover/stat:text-(--accent)" : ""} transition-colors`}>Following</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatClick("groups")}
+                                        className={`group/stat flex items-center gap-1.5 transition-colors ${isPublic || user.own_profile || isFollowing ? "cursor-pointer" : "cursor-default"}`}
+                                    >
+                                        <span className={`font-semibold text-foreground ${isPublic || user.own_profile || isFollowing ? "group-hover/stat:text-(--accent)" : ""} transition-colors`}>{user.groups_count || 0}</span>
+                                        <span className={`text-(--muted) ${isPublic || user.own_profile || isFollowing ? "group-hover/stat:text-(--accent)" : ""} transition-colors`}>Groups</span>
+                                    </button>
                                 </div>
 
                                 {/* Separator */}
@@ -488,6 +576,77 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                 isLoading={isLoading}
                 loadingText="Updating..."
             />
+
+            {/* Stats Modal (Followers / Following / Groups) */}
+            <Modal
+                isOpen={showStatsModal}
+                onClose={() => setShowStatsModal(false)}
+                title={statsModalTitle}
+            >
+                {statsModalLoading ? (
+                    <div className="py-8 text-center">
+                        <div className="w-6 h-6 border-2 border-(--accent) border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                        <p className="text-sm text-(--muted)">Loading...</p>
+                    </div>
+                ) : statsModalItems.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                        {statsModalType === "groups" ? (
+                            statsModalItems.map((g) => (
+                                <Link
+                                    key={g.group_id}
+                                    href={`/groups/${g.group_id}`}
+                                    prefetch={false}
+                                    onClick={() => setShowStatsModal(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-(--muted)/10 transition-colors"
+                                >
+                                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-(--border) bg-(--muted)/10 flex items-center justify-center shrink-0">
+                                        {g.group_image_url ? (
+                                            <img src={g.group_image_url} alt={g.group_title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Users className="w-4 h-4 text-(--muted)" />
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground hover:text-(--accent)">{g.group_title}</span>
+                                </Link>
+                            ))
+                        ) : (
+                            statsModalItems.map((u) => (
+                                <Link
+                                    key={u.id}
+                                    href={`/profile/${u.id}`}
+                                    prefetch={false}
+                                    onClick={() => setShowStatsModal(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-(--muted)/10 transition-colors"
+                                >
+                                    <div className="w-9 h-9 rounded-full overflow-hidden border border-(--border) bg-(--muted)/10 flex items-center justify-center shrink-0">
+                                        {u.avatar_url ? (
+                                            <img src={u.avatar_url} alt={u.username} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-4 h-4 text-(--muted)" />
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground hover:text-(--accent)">@{u.username}</span>
+                                </Link>
+                            ))
+                        )}
+
+                        {/* Load More */}
+                        {statsModalHasMore && (
+                            <button
+                                onClick={handleStatsLoadMore}
+                                disabled={statsModalLoadingMore}
+                                className="mt-2 w-full py-2 text-sm font-medium text-(--muted) hover:text-(--accent) transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                                {statsModalLoadingMore ? "Loading..." : "Load more"}
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <p className="text-sm text-(--muted) text-center py-4">
+                        {statsModalType === "groups" ? "No groups yet." : statsModalType === "followers" ? "No followers yet." : "Not following anyone yet."}
+                    </p>
+                )}
+            </Modal>
         </>
     );
 }

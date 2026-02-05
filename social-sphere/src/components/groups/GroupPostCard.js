@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Heart, MessageCircle, Pencil, Trash2, User, ChevronDown } from "lucide-react";
+import { Heart, MessageCircle, Pencil, Trash2, User } from "lucide-react";
 import PostImage from "@/components/ui/PostImage";
 import Modal from "@/components/ui/Modal";
 import { useStore } from "@/store/store";
@@ -15,6 +15,7 @@ import { validateUpload } from "@/actions/auth/validate-upload";
 import { validateImage } from "@/lib/validation";
 import { getRelativeTime } from "@/lib/time";
 import { toggleReaction } from "@/actions/posts/toggle-reaction";
+import { getWhoLikedEntity } from "@/actions/posts/who-liked-entity";
 import { getComments } from "@/actions/posts/get-comments";
 import { createComment } from "@/actions/posts/create-comment";
 import Tooltip from "@/components/ui/Tooltip";
@@ -59,6 +60,9 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [isDeletingComment, setIsDeletingComment] = useState(false);
     const [commentReactions, setCommentReactions] = useState({});
+    const [showLikesModal, setShowLikesModal] = useState(false);
+    const [likesModalUsers, setLikesModalUsers] = useState([]);
+    const [likesModalLoading, setLikesModalLoading] = useState(false);
     const composerRef = useRef(null);
     const cardRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -71,6 +75,29 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         post?.post_user?.id &&
         String(post.post_user.id) === String(user.id)
     );
+
+    const POST_MIN = 3;
+    const POST_MAX = 5000;
+    const COMMENT_MIN = 3;
+    const COMMENT_MAX = 3000;
+
+    const postDraftError = postDraft.length > 0 && postDraft.trim().length < POST_MIN
+        ? `Post must be at least ${POST_MIN} characters.`
+        : postDraft.length > POST_MAX
+            ? `Post must be at most ${POST_MAX} characters.`
+            : null;
+
+    const commentError = draftComment.length > 0 && draftComment.trim().length < COMMENT_MIN
+        ? `Comment must be at least ${COMMENT_MIN} characters.`
+        : draftComment.length > COMMENT_MAX
+            ? `Comment must be at most ${COMMENT_MAX} characters.`
+            : null;
+
+    const editCommentError = editingText.length > 0 && editingText.trim().length < COMMENT_MIN
+        ? `Comment must be at least ${COMMENT_MIN} characters.`
+        : editingText.length > COMMENT_MAX
+            ? `Comment must be at most ${COMMENT_MAX} characters.`
+            : null;
 
     // Update relative time on client side to avoid hydration mismatch
     useEffect(() => {
@@ -106,11 +133,11 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 offset: 0
             });
 
-            if (result.success && result.comments) {
-                setComments(result.comments);
+            if (result.success && result.data) {
+                setComments(result.data);
                 // Initialize comment reactions state
                 const reactionsState = {};
-                result.comments.forEach(comment => {
+                result.data.forEach(comment => {
                     reactionsState[comment.comment_id] = {
                         liked: comment.liked_by_user,
                         count: comment.reactions_count,
@@ -735,6 +762,51 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         }
     };
 
+    const handleLikesCountClick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (reactionsCount === 0) return;
+
+        setShowLikesModal(true);
+        setLikesModalLoading(true);
+        try {
+            const resp = await getWhoLikedEntity(post.post_id);
+            if (resp.success && resp.data) {
+                setLikesModalUsers(resp.data);
+            } else {
+                setLikesModalUsers([]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch likes:", err);
+            setLikesModalUsers([]);
+        } finally {
+            setLikesModalLoading(false);
+        }
+    };
+
+    const handleCommentLikesCountClick = async (commentId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const reaction = commentReactions[commentId];
+        if (!reaction || reaction.count === 0) return;
+
+        setShowLikesModal(true);
+        setLikesModalLoading(true);
+        try {
+            const resp = await getWhoLikedEntity(commentId);
+            if (resp.success && resp.data) {
+                setLikesModalUsers(resp.data);
+            } else {
+                setLikesModalUsers([]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch comment likes:", err);
+            setLikesModalUsers([]);
+        } finally {
+            setLikesModalLoading(false);
+        }
+    };
+
     return (
         <div
             ref={cardRef}
@@ -806,12 +878,25 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             <div className="px-5 pb-3">
                 {isEditingPost ? (
                     <div className="space-y-3 mb-4">
-                        <textarea
-                            className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
-                            rows={4}
-                            value={postDraft}
-                            onChange={(e) => setPostDraft(e.target.value)}
-                        />
+                        <div className="relative">
+                            <textarea
+                                className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 pr-20 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
+                                rows={4}
+                                maxLength={POST_MAX}
+                                value={postDraft}
+                                onChange={(e) => setPostDraft(e.target.value)}
+                            />
+                            <div className="absolute bottom-3 right-3 text-xs">
+                                <span className={`font-medium ${postDraft.length > POST_MAX ? "text-red-500" : postDraft.length > POST_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                                    {postDraft.length > 0 && `${postDraft.length}/${POST_MAX}`}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Content Validation Error */}
+                        {postDraftError && (
+                            <div className="content-error">{postDraftError}</div>
+                        )}
 
                         {/* Image Preview for Edit - New Image */}
                         {imagePreview && (
@@ -880,14 +965,16 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    type="button"
-                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
-                                    disabled={!postDraft.trim()}
-                                    onClick={handleSaveEditPost}
-                                >
-                                    Save Changes
-                                </button>
+                                {!postDraftError && (
+                                    <button
+                                        type="button"
+                                        className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
+                                        disabled={!postDraft.trim()}
+                                        onClick={handleSaveEditPost}
+                                    >
+                                        Save Changes
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -930,14 +1017,21 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                             </div>
                         ) : (
                             <div className="flex items-center gap-6">
-                                <button
-                                    onClick={handleHeartClick}
-                                    disabled={isReactionPending}
-                                    className="flex items-center gap-2 text-(--muted) hover:text-red-500 cursor-pointer transition-colors group/heart disabled:opacity-50"
-                                >
-                                    <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110  ${likedByUser ? "fill-red-500 text-red-500" : ""}`} />
-                                    <span className="text-sm font-medium">{reactionsCount}</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleHeartClick}
+                                        disabled={isReactionPending}
+                                        className="text-(--muted) hover:text-red-500 cursor-pointer transition-colors group/heart disabled:opacity-50"
+                                    >
+                                        <Heart className={`w-5 h-5 transition-transform group-hover/heart:scale-110 ${likedByUser ? "fill-red-500 text-red-500" : ""}`} />
+                                    </button>
+                                    <button
+                                        onClick={handleLikesCountClick}
+                                        className={`text-sm font-medium transition-colors ${reactionsCount > 0 ? "text-(--muted) hover:text-(--accent) cursor-pointer" : "text-(--muted) cursor-default"}`}
+                                    >
+                                        {reactionsCount}
+                                    </button>
+                                </div>
 
                                 <button
                                     onClick={handleToggleComments}
@@ -994,12 +1088,25 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                             <div className="flex-1 min-w-0">
                                                 {isEditing ? (
                                                     <div className="space-y-2">
-                                                        <textarea
-                                                            className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
-                                                            rows={3}
-                                                            value={editingText}
-                                                            onChange={(e) => setEditingText(e.target.value)}
-                                                        />
+                                                        <div className="relative">
+                                                            <textarea
+                                                                className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 pr-20 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
+                                                                rows={3}
+                                                                maxLength={COMMENT_MAX}
+                                                                value={editingText}
+                                                                onChange={(e) => setEditingText(e.target.value)}
+                                                            />
+                                                            <div className="absolute bottom-3 right-3 text-xs">
+                                                                <span className={`font-medium ${editingText.length > COMMENT_MAX ? "text-red-500" : editingText.length > COMMENT_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                                                                    {editingText.length > 0 && `${editingText.length}/${COMMENT_MAX}`}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Edit Comment Validation Error */}
+                                                        {editCommentError && (
+                                                            <div className="content-error">{editCommentError}</div>
+                                                        )}
 
                                                         {/* Image Preview for Edit - New Image */}
                                                         {editingCommentImagePreview && (
@@ -1065,14 +1172,16 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                                                 >
                                                                     Cancel
                                                                 </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
-                                                                    disabled={!editingText.trim()}
-                                                                    onClick={() => handleSaveEditComment(comment)}
-                                                                >
-                                                                    Save
-                                                                </button>
+                                                                {!editCommentError && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
+                                                                        disabled={!editingText.trim()}
+                                                                        onClick={() => handleSaveEditComment(comment)}
+                                                                    >
+                                                                        Save
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1121,14 +1230,19 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                                         )}
                                                         {/* Comment Reactions */}
                                                         {commentReactions[comment.comment_id] && (
-                                                            <div className="mt-2">
+                                                            <div className="mt-2 flex items-center gap-1">
                                                                 <button
                                                                     onClick={(e) => handleCommentReactionClick(comment.comment_id, e)}
                                                                     disabled={commentReactions[comment.comment_id].pending}
-                                                                    className="flex items-center gap-1 text-(--muted) hover:text-red-500 transition-colors group/comment-heart disabled:opacity-50"
+                                                                    className="text-(--muted) hover:text-red-500 transition-colors group/comment-heart disabled:opacity-50"
                                                                 >
                                                                     <Heart className={`w-4 h-4 transition-transform group-hover/comment-heart:scale-110 cursor-pointer ${commentReactions[comment.comment_id].liked ? "fill-red-500 text-red-500" : ""}`} />
-                                                                    <span className="text-xs font-medium">{commentReactions[comment.comment_id].count}</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => handleCommentLikesCountClick(comment.comment_id, e)}
+                                                                    className={`text-xs font-medium transition-colors ${commentReactions[comment.comment_id].count > 0 ? "text-(--muted) hover:text-(--accent) cursor-pointer" : "text-(--muted) cursor-default"}`}
+                                                                >
+                                                                    {commentReactions[comment.comment_id].count}
                                                                 </button>
                                                             </div>
                                                         )}
@@ -1157,14 +1271,27 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                 )}
                             </div>
                             <div className="flex-1 space-y-2">
-                                <textarea
-                                    ref={composerRef}
-                                    value={draftComment}
-                                    onChange={(e) => setDraftComment(e.target.value)}
-                                    rows={1}
-                                    className="w-full rounded-2xl border border-(--muted)/30 px-4 py-2.5 text-sm bg-transparent focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none min-h-[42px]"
-                                    placeholder="Write a comment..."
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        ref={composerRef}
+                                        value={draftComment}
+                                        onChange={(e) => setDraftComment(e.target.value)}
+                                        rows={1}
+                                        maxLength={COMMENT_MAX}
+                                        className="w-full rounded-2xl border border-(--muted)/30 px-4 py-2.5 pr-20 text-sm bg-transparent focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none min-h-[42px]"
+                                        placeholder="Write a comment..."
+                                    />
+                                    <div className="absolute bottom-2 right-3 text-xs">
+                                        <span className={`font-medium ${draftComment.length > COMMENT_MAX ? "text-red-500" : draftComment.length > COMMENT_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                                            {draftComment.length > 0 && `${draftComment.length}/${COMMENT_MAX}`}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Comment Validation Error */}
+                                {commentError && (
+                                    <div className="content-error">{commentError}</div>
+                                )}
 
                                 {/* Image Preview */}
                                 {commentImagePreview && (
@@ -1212,14 +1339,16 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                         >
                                             Cancel
                                         </button>
-                                        <button
-                                            type="button"
-                                            disabled={!draftComment.trim()}
-                                            onClick={handleSubmitComment}
-                                            className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
-                                        >
-                                            Reply
-                                        </button>
+                                        {!commentError && (
+                                            <button
+                                                type="button"
+                                                disabled={!draftComment.trim()}
+                                                onClick={handleSubmitComment}
+                                                className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
+                                            >
+                                                Reply
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1256,6 +1385,43 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 isLoading={isDeletingComment}
                 loadingText="Deleting..."
             />
+
+            {/* Likes Modal */}
+            <Modal
+                isOpen={showLikesModal}
+                onClose={() => setShowLikesModal(false)}
+                title="Likes"
+            >
+                {likesModalLoading ? (
+                    <div className="py-8 text-center">
+                        <div className="w-6 h-6 border-2 border-(--accent) border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                        <p className="text-sm text-(--muted)">Loading...</p>
+                    </div>
+                ) : likesModalUsers.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                        {likesModalUsers.map((u) => (
+                            <Link
+                                key={u.id}
+                                href={`/profile/${u.id}`}
+                                prefetch={false}
+                                onClick={() => setShowLikesModal(false)}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-(--muted)/10 transition-colors"
+                            >
+                                <div className="w-9 h-9 rounded-full overflow-hidden border border-(--border) bg-(--muted)/10 flex items-center justify-center shrink-0">
+                                    {u.avatar_url ? (
+                                        <img src={u.avatar_url} alt={u.username} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-4 h-4 text-(--muted)" />
+                                    )}
+                                </div>
+                                <span className="text-sm font-medium text-foreground hover:text-(--accent)">@{u.username}</span>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-(--muted) text-center py-4">No likes yet.</p>
+                )}
+            </Modal>
         </div>
     );
 }
