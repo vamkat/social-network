@@ -132,6 +132,10 @@ body {
   @apply text-red-600 text-sm mt-2;
 }
 
+.content-error {
+  @apply text-(--accent) text-sm mt-2;
+}
+
 .form-error-box {
   @apply text-red-600 text-sm;
 }
@@ -177,7 +181,7 @@ body {
    ====================== */
 
 .btn {
-  @apply px-3 py-2 text-base font-medium transition-colors cursor-pointer border-0;
+  @apply px-3 py-3.5 text-base font-medium transition-colors cursor-pointer border-0;
 }
 
 .btn-primary {

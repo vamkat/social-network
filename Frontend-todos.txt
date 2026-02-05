@@ -1,13 +1,5 @@
 ======== This week TODOs ========
 
-/profile/{random id} -> super duper error
-obviously /groups/{random id} 
-and /posts/{random id} 
-
-test all endpoints
-
-======== LATER TODOs ========
-View permissions (mess with urls to test)
 PROPER RESPONSE HANDLING - ERROR HANDLING
-ENSURE VALIDATION EVERYWHERE
+
 GLOBAL LOGGER - search for open telemetry exporter

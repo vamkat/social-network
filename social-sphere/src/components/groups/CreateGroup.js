@@ -18,6 +18,23 @@ export default function CreateGroup({ isOpen, onClose }) {
     const fileInputRef = useRef(null);
     const router = useRouter();
 
+    const GROUP_NAME_MIN = 1;
+    const GROUP_NAME_MAX = 150;
+    const GROUP_DESCRIPTION_MIN = 3;
+    const GROUP_DESCRIPTION_MAX = 5000;
+
+    const titleError = title.length > 0 && title.trim().length < GROUP_NAME_MIN
+        ? `Group title must be at least ${GROUP_NAME_MIN} character.`
+        : title.length > GROUP_NAME_MAX
+            ? `Group title must be at most ${GROUP_NAME_MAX} characters.`
+            : null;
+
+    const descriptionError = description.length > 0 && description.trim().length < GROUP_DESCRIPTION_MIN
+        ? `Description must be at least ${GROUP_DESCRIPTION_MIN} characters.`
+        : description.length > GROUP_DESCRIPTION_MAX
+            ? `Description must be at most ${GROUP_DESCRIPTION_MAX} characters.`
+            : null;
+
     const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -149,9 +166,14 @@ export default function CreateGroup({ isOpen, onClose }) {
             <div className="space-y-4">
                 {/* Title Input */}
                 <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                        Group Title <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-foreground">
+                            Group Title <span className="text-red-500">*</span>
+                        </label>
+                        <span className={`text-xs font-medium ${title.length > GROUP_NAME_MAX ? "text-red-500" : title.length > GROUP_NAME_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                            {title.length > 0 && `${title.length}/${GROUP_NAME_MAX}`}
+                        </span>
+                    </div>
                     <input
                         type="text"
                         value={title}
@@ -159,15 +181,23 @@ export default function CreateGroup({ isOpen, onClose }) {
                         placeholder="Enter group title"
                         disabled={isSubmitting}
                         className="w-full rounded-xl border border-(--muted)/30 px-4 py-2.5 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all disabled:opacity-50"
-                        maxLength={100}
+                        maxLength={GROUP_NAME_MAX}
                     />
+                    {titleError && (
+                        <div className="content-error">{titleError}</div>
+                    )}
                 </div>
 
                 {/* Description Input */}
                 <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                        Description <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-foreground">
+                            Description <span className="text-red-500">*</span>
+                        </label>
+                        <span className={`text-xs font-medium ${description.length > GROUP_DESCRIPTION_MAX ? "text-red-500" : description.length > GROUP_DESCRIPTION_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                            {description.length > 0 && `${description.length}/${GROUP_DESCRIPTION_MAX}`}
+                        </span>
+                    </div>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -175,8 +205,11 @@ export default function CreateGroup({ isOpen, onClose }) {
                         disabled={isSubmitting}
                         rows={4}
                         className="w-full rounded-xl border border-(--muted)/30 px-4 py-2.5 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none disabled:opacity-50"
-                        maxLength={500}
+                        maxLength={GROUP_DESCRIPTION_MAX}
                     />
+                    {descriptionError && (
+                        <div className="content-error">{descriptionError}</div>
+                    )}
                 </div>
 
                 {/* Image Upload */}
@@ -240,20 +273,22 @@ export default function CreateGroup({ isOpen, onClose }) {
                     >
                         Cancel
                     </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || !title.trim() || !description.trim()}
-                        className="px-5 py-2 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Creating...
-                            </>
-                        ) : (
-                            "Create Group"
-                        )}
-                    </button>
+                    {!titleError && !descriptionError && title.trim() && description.trim() && (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className="px-5 py-2 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                "Create Group"
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
         </Modal>

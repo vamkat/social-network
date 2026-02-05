@@ -76,7 +76,7 @@ export default function Modal({
     ) : footer;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-200">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -84,15 +84,15 @@ export default function Modal({
             />
 
             {/* Modal */}
-            <div className="relative bg-background border border-(--border) rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+            <div className="relative bg-background border border-(--border) rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full sm:mx-4 max-h-[90dvh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-2 pl-7 border-b border-(--border)">
-                    <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+                <div className="flex items-center justify-between p-2 pl-5 sm:pl-7 border-b border-(--border) shrink-0">
+                    <h3 className="text-base sm:text-lg font-semibold text-foreground">{title}</h3>
                     {showCloseButton && (
                         <button
                             onClick={onClose}
                             disabled={isLoading}
-                            className="p-1 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
+                            className="p-1.5 text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -100,7 +100,7 @@ export default function Modal({
                 </div>
 
                 {/* Content */}
-                <div className="p-5">
+                <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
                     {description && (
                         <p className="text-sm text-(--foreground)/80 mb-4">
                             {description}
@@ -111,7 +111,7 @@ export default function Modal({
 
                 {/* Footer */}
                 {defaultFooter && (
-                    <div className="flex items-center justify-end gap-3 p-2 border-t border-(--border)">
+                    <div className="flex items-center justify-end gap-3 p-2 border-t border-(--border) shrink-0">
                         {defaultFooter}
                     </div>
                 )}

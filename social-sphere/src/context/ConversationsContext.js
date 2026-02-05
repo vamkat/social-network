@@ -66,7 +66,12 @@ export function ConversationsProvider({ initialConversations = [], children }) {
 
             const result = await getConv({ first: false, beforeDate, limit: 15 });
             if (result.success && result.data) {
-                setConversations((prev) => [...prev, ...result.data]);
+                setConversations((prev) => {
+                    const newConvs = result.data.filter(
+                        (c) => !prev.some((p) => p.Interlocutor?.id === c.Interlocutor?.id)
+                    );
+                    return [...prev, ...newConvs];
+                });
                 setHasMore(result.data.length >= 15);
             }
         } catch (error) {

@@ -17,7 +17,7 @@ export function constructNotif(notif, aggregate = false) {
         if (aggregate) {
             if (notif.acted) {
                 return {
-                    message: "You are now friends with ",
+                    message: "You had a friend request from ",
                     whereUser: notif.payload.requester_name,
                     whereID: notif.payload.requester_id
                 };
@@ -89,7 +89,7 @@ export function constructNotif(notif, aggregate = false) {
         if (aggregate) {
             if (notif.acted) {
                 return {
-                    message: "You accepted to join group: ",
+                    message: "You were invited to group: ",
                     where: notif.payload.requester_name,
                     whereID: notif.payload.requester_id,
                     whereGroup: notif.payload.group_name,
@@ -116,7 +116,7 @@ export function constructNotif(notif, aggregate = false) {
                 return {
                     who: notif.payload.requester_name,
                     whoID: notif.payload.requester_id,
-                    message: " is now a member of your group: ",
+                    message: " asked to join your group: ",
                     whereGroup: notif.payload.group_name,
                     whereID: notif.payload.group_id,
                 };
@@ -160,6 +160,33 @@ export function constructNotif(notif, aggregate = false) {
             whoID: notif.payload.group_id,
             message: " event was created in group: ",
             whereEvent: notif.payload.group_name,
+            whereID: notif.payload.group_id
+        }
+    }
+
+
+    if (notif.type === "group_invite_rejected") {
+        return {
+            who: notif.payload.invited_name,
+            whoID: notif.payload.invited_id,
+            message: " did not accept your invitation to join group: ",
+            whereGroup: notif.payload.group_name,
+            whereID: notif.payload.group_id
+        }
+    }
+
+    if (notif.type === "follow_request_rejected") {
+        return {
+            who: notif.payload.target_name,
+            whoID: notif.payload.target_id,
+            message: " did not accept your friend request"
+        }
+    }
+
+    if (notif.type === "group_join_request_rejected") {
+        return {
+            message: "You were not accepted to join group: ",
+            whereGroup: notif.payload.group_name,
             whereID: notif.payload.group_id
         }
     }

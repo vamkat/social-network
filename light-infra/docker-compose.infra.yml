@@ -150,22 +150,22 @@ services:
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   # SOCIAL-SPHERE FRONTEND BACKEND: Next.js frontend service, it serves the web application and communicates with the API Gateway
   # # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  social-sphere:
-    networks:
-      - social-network
-    build:
-      context: ../social-sphere/.
-      dockerfile: Dockerfile
-    container_name: social-sphere
-    ports:
-      - "3000:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      - NODE_ENV=production
-      - GATEWAY=http://host.docker.internal:8081
-      - LIVE=ws://localhost:8082
-    restart: unless-stopped
+  # social-sphere:
+  #   networks:
+  #     - social-network
+  #   build:
+  #     context: ../social-sphere/.
+  #     dockerfile: Dockerfile
+  #   container_name: social-sphere
+  #   ports:
+  #     - "3000:3000"
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - GATEWAY=http://host.docker.internal:8081
+  #     - LIVE=ws://localhost:8082
+  #   restart: unless-stopped
 
   
   #

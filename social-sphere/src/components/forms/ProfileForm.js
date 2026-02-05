@@ -6,6 +6,7 @@ import { Camera, Loader2, X } from "lucide-react";
 import { updateProfileInfo } from "@/actions/profile/update-profile";
 import { validateUpload } from "@/actions/auth/validate-upload";
 import { validateProfileForm, validateImage } from "@/lib/validation";
+import { useFormValidation } from "@/hooks/useFormValidation";
 import { useStore } from "@/store/store";
 
 export default function ProfileForm({ user }) {
@@ -18,6 +19,72 @@ export default function ProfileForm({ user }) {
     const [wantsToDelete, setWantsToDelete] = useState(false);
     const setUser = useStore((state) => state.setUser);
     const currentUser = useStore((state) => state.user);
+
+    const BIO_MIN = 3;
+    const BIO_MAX = 5000;
+
+    const { errors: fieldErrors, validateField } = useFormValidation();
+    const [aboutCount, setAboutCount] = useState(user?.about?.length || 0);
+
+    function handleFieldValidation(name, value) {
+        switch (name) {
+            case "firstName":
+                validateField("firstName", value, (val) => {
+                    if (!val.trim()) return "First name is required.";
+                    if (val.trim().length < 2) return "First name must be at least 2 characters.";
+                    return null;
+                });
+                break;
+
+            case "lastName":
+                validateField("lastName", value, (val) => {
+                    if (!val.trim()) return "Last name is required.";
+                    if (val.trim().length < 2) return "Last name must be at least 2 characters.";
+                    return null;
+                });
+                break;
+
+            case "dateOfBirth":
+                validateField("dateOfBirth", value, (val) => {
+                    if (!val) return "Date of birth is required.";
+                    const today = new Date();
+                    const birthDate = new Date(val);
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    if (age < 13 || age > 111) return "You must be between 13 and 111 years old.";
+                    return null;
+                });
+                break;
+
+            case "username":
+                validateField("username", value, (val) => {
+                    if (val.trim()) {
+                        const usernamePattern = /^[A-Za-z0-9_.-]+$/;
+                        if (val.trim().length < 4) return "Username must be at least 4 characters.";
+                        if (!usernamePattern.test(val.trim())) return "Username can only use letters, numbers, dots, underscores, or dashes.";
+                    }
+                    return null;
+                });
+                break;
+
+            case "about":
+                setAboutCount(value.length);
+                validateField("about", value, (val) => {
+                    if (val.length > BIO_MAX) return `About me must be at most ${BIO_MAX} characters.`;
+                    return null;
+                });
+                if (value.length > 0) {
+                    validateField("about", value, (val) => {
+                        if (val.length < BIO_MIN) return `About me must be at least ${BIO_MIN} characters.`;
+                        return null;
+                    });
+                }
+                break;
+        }
+    }
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
@@ -223,7 +290,11 @@ export default function ProfileForm({ user }) {
                         defaultValue={user?.username}
                         className="form-input"
                         placeholder="@username"
+                        onChange={(e) => handleFieldValidation("username", e.target.value)}
                     />
+                    {fieldErrors.username && (
+                        <div className="form-error">{fieldErrors.username}</div>
+                    )}
                 </div>
                 <div className="form-group">
                     <label className="form-label pl-4">Date of Birth</label>
@@ -233,7 +304,11 @@ export default function ProfileForm({ user }) {
                         defaultValue={user?.date_of_birth ? user.date_of_birth.split('T')[0] : ''}
                         className="form-input"
                         placeholder="YYYY-MM-DD"
+                        onChange={(e) => handleFieldValidation("dateOfBirth", e.target.value)}
                     />
+                    {fieldErrors.dateOfBirth && (
+                        <div className="form-error">{fieldErrors.dateOfBirth}</div>
+                    )}
                 </div>
                 <div className="form-group">
                     <label className="form-label pl-4">First Name</label>
@@ -243,7 +318,11 @@ export default function ProfileForm({ user }) {
                         defaultValue={user?.first_name}
                         className="form-input"
                         placeholder="First Name"
+                        onChange={(e) => handleFieldValidation("firstName", e.target.value)}
                     />
+                    {fieldErrors.firstName && (
+                        <div className="form-error">{fieldErrors.firstName}</div>
+                    )}
                 </div>
                 <div className="form-group">
                     <label className="form-label pl-4">Last Name</label>
@@ -253,19 +332,33 @@ export default function ProfileForm({ user }) {
                         defaultValue={user?.last_name}
                         className="form-input"
                         placeholder="Last Name"
+                        onChange={(e) => handleFieldValidation("lastName", e.target.value)}
                     />
+                    {fieldErrors.lastName && (
+                        <div className="form-error">{fieldErrors.lastName}</div>
+                    )}
                 </div>
             </div>
 
             <div className="form-group">
-                <label className="form-label pl-4">About Me</label>
+                <div className="flex items-center justify-between mb-2">
+                    <label className="form-label pl-4 mb-0">About Me</label>
+                    <span className="text-xs text-muted">
+                        {aboutCount}/{BIO_MAX}
+                    </span>
+                </div>
                 <textarea
                     name="about"
                     defaultValue={user?.about}
                     rows={4}
+                    maxLength={BIO_MAX}
                     className="form-input resize-none"
                     placeholder="Tell us about yourself..."
+                    onChange={(e) => handleFieldValidation("about", e.target.value)}
                 />
+                {fieldErrors.about && (
+                    <div className="form-error">{fieldErrors.about}</div>
+                )}
             </div>
 
             {message.text && (
@@ -277,7 +370,7 @@ export default function ProfileForm({ user }) {
             <div className="flex justify-end">
                 <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || Object.keys(fieldErrors).length > 0}
                     className="btn btn-primary flex items-center gap-2"
                 >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useFormValidation } from "@/hooks/useFormValidation";
 import { login } from "@/actions/auth/login";
 import { useStore } from "@/store/store";
 import LoadingThreeDotsJumping from '@/components/ui/LoadingDots';
@@ -19,9 +18,6 @@ export default function LoginForm() {
     useEffect(() => {
         clearUser();
     }, [clearUser]);
-
-    // Real-time validation hook
-    const { errors: fieldErrors, validateField } = useFormValidation();
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -59,25 +55,6 @@ export default function LoginForm() {
         }
     }
 
-    // Real-time validation handlers
-    function handleFieldValidation(name, value) {
-        switch (name) {
-            case "identifier":
-                validateField("identifier", value, (val) => {
-                    if (!val.trim()) return "Email or Username is required.";
-                    return null;
-                });
-                break;
-
-            case "password":
-                validateField("password", value, (val) => {
-                    if (!val) return "Password is required.";
-                    return null;
-                });
-                break;
-        }
-    }
-
     return (
         <form onSubmit={handleSubmit} className="w-full space-y-6">
             {/* Email/Username Field */}
@@ -92,12 +69,8 @@ export default function LoginForm() {
                     required
                     className="form-input"
                     placeholder="Enter your email or username"
-                    onChange={(e) => handleFieldValidation("identifier", e.target.value)}
                     disabled={isLoading}
                 />
-                {fieldErrors.identifier && (
-                    <div className="form-error pl-4">{fieldErrors.identifier}</div>
-                )}
             </div>
 
             {/* Password Field */}
@@ -113,7 +86,6 @@ export default function LoginForm() {
                         required
                         className="form-input pr-12"
                         placeholder="Enter your password"
-                        onChange={(e) => handleFieldValidation("password", e.target.value)}
                         disabled={isLoading}
                     />
                     <button
@@ -125,9 +97,6 @@ export default function LoginForm() {
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                 </div>
-                {fieldErrors.password && (
-                    <div className="form-error">{fieldErrors.password}</div>
-                )}
             </div>
 
             {/* Error Message */}

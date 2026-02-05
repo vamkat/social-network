@@ -21,8 +21,22 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
 
-    const MAX_TITLE_CHARS = 100;
-    const MAX_BODY_CHARS = 1000;
+    const EVENT_TITLE_MIN = 1;
+    const EVENT_TITLE_MAX = 150;
+    const EVENT_DESCRIPTION_MIN = 3;
+    const EVENT_DESCRIPTION_MAX = 2000;
+
+    const titleError = title.length > 0 && title.trim().length < EVENT_TITLE_MIN
+        ? `Event title must be at least ${EVENT_TITLE_MIN} character.`
+        : title.length > EVENT_TITLE_MAX
+            ? `Event title must be at most ${EVENT_TITLE_MAX} characters.`
+            : null;
+
+    const descriptionError = body.length > 0 && body.trim().length < EVENT_DESCRIPTION_MIN
+        ? `Description must be at least ${EVENT_DESCRIPTION_MIN} characters.`
+        : body.length > EVENT_DESCRIPTION_MAX
+            ? `Description must be at most ${EVENT_DESCRIPTION_MAX} characters.`
+            : null;
 
     const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
@@ -194,7 +208,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
         return now.toISOString().slice(0, 16);
     };
 
-    const isValid = title.trim() && body.trim() && eventDate;
+    const isValid = title.trim() && body.trim() && eventDate && !titleError && !descriptionError;
 
     return (
         <>
@@ -222,9 +236,14 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                 <div className="space-y-4">
                 {/* Title Input */}
                 <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                        Event Title <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-foreground">
+                            Event Title <span className="text-red-500">*</span>
+                        </label>
+                        <span className={`text-xs font-medium ${title.length > EVENT_TITLE_MAX ? "text-red-500" : title.length > EVENT_TITLE_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                            {title.length > 0 && `${title.length}/${EVENT_TITLE_MAX}`}
+                        </span>
+                    </div>
                     <input
                         type="text"
                         value={title}
@@ -232,18 +251,23 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                         placeholder="Enter event title"
                         disabled={isSubmitting}
                         className="w-full rounded-xl border border-(--muted)/30 px-4 py-2.5 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all disabled:opacity-50"
-                        maxLength={MAX_TITLE_CHARS}
+                        maxLength={EVENT_TITLE_MAX}
                     />
-                    <div className="text-xs text-(--muted) mt-1 text-right pr-3">
-                        {title.length}/{MAX_TITLE_CHARS}
-                    </div>
+                    {titleError && (
+                        <div className="content-error">{titleError}</div>
+                    )}
                 </div>
 
                 {/* Description Input */}
                 <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                        Description <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-foreground">
+                            Description <span className="text-red-500">*</span>
+                        </label>
+                        <span className={`text-xs font-medium ${body.length > EVENT_DESCRIPTION_MAX ? "text-red-500" : body.length > EVENT_DESCRIPTION_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                            {body.length > 0 && `${body.length}/${EVENT_DESCRIPTION_MAX}`}
+                        </span>
+                    </div>
                     <textarea
                         value={body}
                         onChange={(e) => setBody(e.target.value)}
@@ -251,11 +275,11 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                         disabled={isSubmitting}
                         rows={3}
                         className="w-full rounded-xl border border-(--muted)/30 px-4 py-2.5 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none disabled:opacity-50"
-                        maxLength={MAX_BODY_CHARS}
+                        maxLength={EVENT_DESCRIPTION_MAX}
                     />
-                    <div className="text-xs text-(--muted) text-right pr-3">
-                        {body.length}/{MAX_BODY_CHARS}
-                    </div>
+                    {descriptionError && (
+                        <div className="content-error">{descriptionError}</div>
+                    )}
                 </div>
 
                 {/* Date and Time Input */}
@@ -337,20 +361,22 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                     >
                         Cancel
                     </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || !isValid}
-                        className="px-5 py-2 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Creating...
-                            </>
-                        ) : (
-                            "Create Event"
-                        )}
-                    </button>
+                    {isValid && (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className="px-5 py-2 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                "Create Event"
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
         </Modal>

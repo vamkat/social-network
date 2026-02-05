@@ -23,6 +23,9 @@ export default function RegisterForm() {
     const setUser = useStore((state) => state.setUser);
     const clearUser = useStore((state) => state.clearUser);
 
+    const BIO_MIN=3
+    const BIO_MAX=5000
+
     // Clear any stale user data when register page loads
     useEffect(() => {
         clearUser();
@@ -31,6 +34,8 @@ export default function RegisterForm() {
     // Real-time validation state
     const { errors: fieldErrors, validateField } = useFormValidation();
     const [aboutCount, setAboutCount] = useState(0);
+
+    console.log("FISLJFN", fieldErrors)
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -230,9 +235,15 @@ export default function RegisterForm() {
             case "about":
                 setAboutCount(value.length);
                 validateField("about", value, (val) => {
-                    if (val.length > 400) return "About me must be at most 400 characters.";
+                    if (val.length > BIO_MAX) return `About me must be at most ${BIO_MAX} characters.`;
                     return null;
                 });
+                if (value.length > 0) {
+                    validateField("about", value, (val) => {
+                    if (val.length < BIO_MIN) return `About me must be at at least ${BIO_MIN} characters.`;
+                    return null;
+                });
+                }
                 break;
         }
     }
@@ -454,14 +465,14 @@ export default function RegisterForm() {
                         <div className="flex items-center justify-between mb-2">
                             <label htmlFor="about" className="form-label pl-4 mb-0">About Me (Optional)</label>
                             <span className="text-xs text-muted">
-                                {aboutCount}/400
+                                {aboutCount}/{BIO_MAX}
                             </span>
                         </div>
                         <textarea
                             id="about"
                             name="about"
                             rows={5}
-                            maxLength={400}
+                            maxLength={BIO_MAX}
                             className="form-input resize-none"
                             placeholder="Tell us a bit about yourself..."
                             onChange={(e) => handleFieldValidation("about", e.target.value)}
@@ -483,8 +494,8 @@ export default function RegisterForm() {
             {/* Submit Button */}
             <button
                 type="submit"
-                disabled={isLoading}
-                className="w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-12"
+                disabled={isLoading || Object.keys(fieldErrors).length > 0}
+                className={`w-1/3 mx-auto flex justify-center items-center btn btn-primary mt-12 transition-opacity ${Object.keys(fieldErrors).length > 0 ? "opacity-0 pointer-events-none" : "opacity-100"}`}
             >
                 {isLoading ? <LoadingThreeDotsJumping /> : "Create Account"}
             </button>

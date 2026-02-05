@@ -8,6 +8,7 @@ import { User, Send, MessageCircle, Loader2, ChevronLeft, Smile } from "lucide-r
 import { motion } from "motion/react";
 import { useLiveSocket } from "@/context/LiveSocketContext";
 import { useConversations } from "@/context/ConversationsContext";
+import { getConvByID } from "@/actions/chat/get-conv-by-id";
 import EmojiPicker from "emoji-picker-react";
 import { useMsgReceiver } from "@/store/store";
 import Link from "next/link";
@@ -41,9 +42,6 @@ export default function MessagesContent({
         interlocutorIdRef.current = interlocutorId;
     }, [interlocutorId]);
 
-    // Find selected conversation from conversations list
-    const selectedConv = conversations.find((conv) => conv.Interlocutor?.id === interlocutorId) || null;
-
     // Handle new message flow - add conversation to list if receiver exists
     useEffect(() => {
         if (firstMessage && receiver) {
@@ -59,6 +57,22 @@ export default function MessagesContent({
             clearMsgReceiver();
         }
     }, [firstMessage, receiver, addConversation, clearMsgReceiver]);
+
+    // Find selected conversation from conversations list
+    const selectedConv = conversations.find((conv) => conv.Interlocutor?.id === interlocutorId) || null;
+
+    // Fetch conversation metadata if not in loaded list (e.g. direct URL to an older conversation)
+    useEffect(() => {
+        if (!selectedConv && !receiver && initialMessages.length > 0) {
+            const lastMsg = initialMessages[initialMessages.length - 1];
+            getConvByID({ interlocutorId, convId: lastMsg.conversation_id })
+                .then((result) => {
+                    if (result.success && result.data) {
+                        addConversation(result.data);
+                    }
+                });
+        }
+    }, []);
 
     const hasMessageText = messageText.length > 0;
 

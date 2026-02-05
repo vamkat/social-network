@@ -105,7 +105,7 @@ export default function CreatePost({ onPostCreated=null }) {
     }, []);
 
     const MAX_CHARS = 5000;
-    const MIN_CHARS = 1;
+    const MIN_CHARS = 3;
 
     const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
@@ -291,7 +291,11 @@ export default function CreatePost({ onPostCreated=null }) {
 
     const charCount = content.length;
     const isOverLimit = charCount > MAX_CHARS;
-    const isValid = content.trim().length >= MIN_CHARS && !isOverLimit;
+    const contentError = content.length > 0 && content.trim().length < MIN_CHARS
+        ? `Post must be at least ${MIN_CHARS} characters.`
+        : isOverLimit
+            ? `Post must be at most ${MAX_CHARS} characters.`
+            : null;
 
     return (
         <div className="bg-background rounded-2xl p-3">
@@ -320,6 +324,11 @@ export default function CreatePost({ onPostCreated=null }) {
                     </div>
                 </div>
 
+                {/* Content Validation Error */}
+                {contentError && (
+                    <div className="content-error">{contentError}</div>
+                )}
+
                 {/* Image Preview */}
                 {imagePreview && (
                     <div className="relative inline-block mt-3">
@@ -340,7 +349,7 @@ export default function CreatePost({ onPostCreated=null }) {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="text-red-500 text-sm bg-background border border-red-200 rounded-lg px-4 py-2.5 animate-fade-in">
+                    <div className="text-red-500 text-sm bg-background rounded-lg px-4 py-2.5 animate-fade-in">
                         {error}
                     </div>
                 )}
@@ -516,13 +525,14 @@ export default function CreatePost({ onPostCreated=null }) {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={!isValid}
-                                    className="px-5 py-1.5 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                >
-                                    Post
-                                </button>
+                                {!contentError && (
+                                    <button
+                                        type="submit"
+                                        className="px-5 py-1.5 text-sm font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors cursor-pointer"
+                                    >
+                                        Post
+                                    </button>
+                                )}
                             </>
                         )}
                     </div>

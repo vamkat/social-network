@@ -76,6 +76,29 @@ export default function SinglePostCard({ post }) {
         post.post_user.id === user.id
     );
 
+    const POST_MIN = 3;
+    const POST_MAX = 5000;
+    const COMMENT_MIN = 3;
+    const COMMENT_MAX = 3000;
+
+    const postDraftError = postDraft.length > 0 && postDraft.trim().length < POST_MIN
+        ? `Post must be at least ${POST_MIN} characters.`
+        : postDraft.length > POST_MAX
+            ? `Post must be at most ${POST_MAX} characters.`
+            : null;
+
+    const commentError = draftComment.length > 0 && draftComment.trim().length < COMMENT_MIN
+        ? `Comment must be at least ${COMMENT_MIN} characters.`
+        : draftComment.length > COMMENT_MAX
+            ? `Comment must be at most ${COMMENT_MAX} characters.`
+            : null;
+
+    const editCommentError = editingText.length > 0 && editingText.trim().length < COMMENT_MIN
+        ? `Comment must be at least ${COMMENT_MIN} characters.`
+        : editingText.length > COMMENT_MAX
+            ? `Comment must be at most ${COMMENT_MAX} characters.`
+            : null;
+
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
@@ -850,12 +873,25 @@ export default function SinglePostCard({ post }) {
             <div className="px-5 pb-3">
                 {isEditingPost ? (
                     <div className="space-y-3 mb-4">
-                        <textarea
-                            className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
-                            rows={4}
-                            value={postDraft}
-                            onChange={(e) => setPostDraft(e.target.value)}
-                        />
+                        <div className="relative">
+                            <textarea
+                                className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 pr-20 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
+                                rows={4}
+                                maxLength={POST_MAX}
+                                value={postDraft}
+                                onChange={(e) => setPostDraft(e.target.value)}
+                            />
+                            <div className="absolute bottom-3 right-3 text-xs">
+                                <span className={`font-medium ${postDraft.length > POST_MAX ? "text-red-500" : postDraft.length > POST_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                                    {postDraft.length > 0 && `${postDraft.length}/${POST_MAX}`}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Content Validation Error */}
+                        {postDraftError && (
+                            <div className="content-error">{postDraftError}</div>
+                        )}
 
                         {/* Privacy Selector */}
                         <div className="relative" ref={dropdownRef}>
@@ -999,14 +1035,15 @@ export default function SinglePostCard({ post }) {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    type="button"
-                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer" 
-                                    disabled={!postDraft.trim()}
-                                    onClick={handleSaveEditPost}
-                                >
-                                    Save Changes
-                                </button>
+                                {!postDraftError && postDraft.trim() && (
+                                    <button
+                                        type="button"
+                                        className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors cursor-pointer"
+                                        onClick={handleSaveEditPost}
+                                    >
+                                        Save Changes
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1092,12 +1129,25 @@ export default function SinglePostCard({ post }) {
                                         <div className="flex-1 min-w-0">
                                             {isEditing ? (
                                                 <div className="space-y-2">
-                                                    <textarea
-                                                        className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
-                                                        rows={3}
-                                                        value={editingText}
-                                                        onChange={(e) => setEditingText(e.target.value)}
-                                                    />
+                                                    <div className="relative">
+                                                        <textarea
+                                                            className="w-full rounded-xl border border-(--muted)/30 px-4 py-3 pr-20 text-sm bg-(--muted)/5 focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none"
+                                                            rows={3}
+                                                            maxLength={COMMENT_MAX}
+                                                            value={editingText}
+                                                            onChange={(e) => setEditingText(e.target.value)}
+                                                        />
+                                                        <div className="absolute bottom-3 right-3 text-xs">
+                                                            <span className={`font-medium ${editingText.length > COMMENT_MAX ? "text-red-500" : editingText.length > COMMENT_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                                                                {editingText.length > 0 && `${editingText.length}/${COMMENT_MAX}`}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Edit Comment Validation Error */}
+                                                    {editCommentError && (
+                                                        <div className="content-error">{editCommentError}</div>
+                                                    )}
 
                                                     {/* Image Preview for Edit - New Image */}
                                                     {editingCommentImagePreview && (
@@ -1158,19 +1208,20 @@ export default function SinglePostCard({ post }) {
                                                         <div className="flex items-center gap-2">
                                                             <button
                                                                 type="button"
-                                                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors"
+                                                                className="px-3 py-1.5 text-xs font-medium text-(--muted) hover:text-foreground hover:bg-(--muted)/10 rounded-full transition-colors cursor-pointer"
                                                                 onClick={handleCancelEditComment}
                                                             >
                                                                 Cancel
                                                             </button>
-                                                            <button
-                                                                type="button"
-                                                                className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50"
-                                                                disabled={!editingText.trim()}
-                                                                onClick={() => handleSaveEditComment(comment)}
-                                                            >
-                                                                Save
-                                                            </button>
+                                                            {!editCommentError && editingText.trim() && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors cursor-pointer"
+                                                                    onClick={() => handleSaveEditComment(comment)}
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1255,14 +1306,27 @@ export default function SinglePostCard({ post }) {
                             )}
                         </div>
                         <div className="flex-1 space-y-2">
-                            <textarea
-                                ref={composerRef}
-                                value={draftComment}
-                                onChange={(e) => setDraftComment(e.target.value)}
-                                rows={1}
-                                className="w-full rounded-2xl border border-(--muted)/30 px-4 py-2.5 text-sm bg-transparent focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none min-h-[42px]"
-                                placeholder="Write a comment..."
-                            />
+                            <div className="relative">
+                                <textarea
+                                    ref={composerRef}
+                                    value={draftComment}
+                                    onChange={(e) => setDraftComment(e.target.value)}
+                                    rows={1}
+                                    maxLength={COMMENT_MAX}
+                                    className="w-full rounded-2xl border border-(--muted)/30 px-4 py-2.5 pr-20 text-sm bg-transparent focus:outline-none focus:border-(--accent) focus:ring-2 focus:ring-(--accent)/10 transition-all resize-none min-h-[42px]"
+                                    placeholder="Write a comment..."
+                                />
+                                <div className="absolute bottom-2 right-3 text-xs">
+                                    <span className={`font-medium ${draftComment.length > COMMENT_MAX ? "text-red-500" : draftComment.length > COMMENT_MAX * 0.9 ? "text-orange-500" : "text-(--muted)/60"}`}>
+                                        {draftComment.length > 0 && `${draftComment.length}/${COMMENT_MAX}`}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Comment Validation Error */}
+                            {commentError && (
+                                <div className="content-error">{commentError}</div>
+                            )}
 
                             {/* Image Preview */}
                             {commentImagePreview && (
@@ -1310,14 +1374,15 @@ export default function SinglePostCard({ post }) {
                                     >
                                         Cancel
                                     </button>
-                                    <button
-                                        type="button"
-                                        disabled={!draftComment.trim()}
-                                        onClick={handleSubmitComment}
-                                        className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors disabled:opacity-50 cursor-pointer"
-                                    >
-                                        Reply
-                                    </button>
+                                    {!commentError && draftComment.trim() && (
+                                        <button
+                                            type="button"
+                                            onClick={handleSubmitComment}
+                                            className="px-4 py-1.5 text-xs font-medium bg-(--accent) text-white hover:bg-(--accent-hover) rounded-full transition-colors cursor-pointer"
+                                        >
+                                            Reply
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
