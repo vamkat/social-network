@@ -15,9 +15,7 @@ data:
         <AllowedMethod>PUT</AllowedMethod>
 
         <AllowedHeader>Content-Type</AllowedHeader>
-        <AllowedHeader>Authorization</AllowedHeader>
-        <AllowedHeader>x-amz-date</AllowedHeader>
-        <AllowedHeader>x-amz-content-sha256</AllowedHeader>
+
 
         <ExposeHeader>ETag</ExposeHeader>
         <MaxAgeSeconds>3000</MaxAgeSeconds>
