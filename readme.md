@@ -2,72 +2,95 @@
 
 ## Overview
 
-This project involves a **cloud-native microservices backend and frontend** built in **Go** and **Next.js**, designed with scalability, observability, and maintainability in mind. It demonstrates modern backend engineering practices including **gRPC communication**, **replicated services and databases**, **messaging**, **Kubernetes orchestration**, and **metrics-driven design**.
+Social-sphere is an typical forum that has posts, comments, real time chat and notifications. It is powered by a cloud-native distributed platform built in Go and Next.js, designed with scalability, observability, availability and maintainability in mind. 
 
-The system was developed as part of a **Zone01 team project** with a focus on robust service design and future scalability.
+The platform was developed as part of a **Zone01 Athens** team project with a focus on robust service design and future scalability.
+
+## Team
+- Aleksis Gioldaseas
+- Katerina Vamvasaki
+- Ypatios Chaniotakos
+- Vagelis Stefanopoulos
+- Magnus Edvall
+
+//**TODO link to hosted website (may be down)**
 
 ---
 
-## Features
+## Main Design Elements
 
-* **Microservices architecture**
+* **Distributed architecture**
+  * Core business services communicate via gRPC, NATS and Kafka
+  * Optimization of communication using Redis caching
+  * TLS termination on platforms surface
+  * Fully scalable stateless services separated based on business domains
+  * HTTP API + SSR for responsible User Experience
+  * File Hosting with Minio, emulating CDN-like asset delivery
 
-  * Services communicate via **gRPC**
-  * Clean, interface-driven design to support future scaling
-  * Decoupled modules for maintainability
-
-* **Databases**
-
-  * **PostgreSQL (Cloud Native PG operator)** with replication
-  * **Redis with Sentinel** for caching and failover
+* **Scalable Databases**
+  * PostgreSQL (Cloud Native PG operator) for core business CRUD, with replication (and sharding?)
+  * Redis with Sentinel for High Availability caching/rate limiting
 
 * **Messaging / Event Streaming**
-
-  * **NATS** for lightweight pub/sub communication
-  * **Kafka** for event-driven workflows
+  * NATS for lightweight pub/sub communication for live events
+  * KRaft Kafka for High Availability and reliable inter-service communication of business critical events
 
 * **Observability & Monitoring**
-
-  * **VictoriaMetrics** for metrics
-  * **Grafana dashboards** for visualization
-  * **Tracing** and logs for debugging and performance analysis
+  * OpenTelemetry standard
+  * Full VictoriaMetrics stack for metrics, traces and logs
+  * Grafana Alloy for routing telemetry
+  * Grafana dashboards for visualizations, monitoring and alerts
 
 * **Security**
-
   * JWT-based authentication with expiration
   * Encrypted IDs exposed to front-end
-  * Input validation using custom typed validators
   * Rate limiting and paginated requests
+  * Authentication for access to databases
 
 * **Cloud-Native Deployment**
+  * Fully containerized using Docker
+  * Deployed and orchestrated with Kubernetes
 
-  * Fully containerized using **Docker**
-  * Deployed and orchestrated with **Kubernetes**
-  * Automatic handling of database secrets via K8s secrets
-  * Health checks, readiness probes, and failover support
+* **Go Services Code Architecture**
+  * Shared business logic promoted to generic library-like packages
+  * Wrappers around most 3rd party services, for imposing business rules through types and decoupling using interfaces
+  * Composition based code organization with Dependency Injection
+  * Clean and convinient telemetry functionality using Otel, with autoinstrumentaion of communication layers
+  * Model based validation and encryption system
+  * Advanced custom error handling system that also integrates gRpc and HTTP error codes
+  * Custom built http middleware system
+
+* **Developer Environments**
+  * Run go and node.js services locally and 3rd party services with Docker, for the most lightweight DX
+  * Run the full platform locally using K8s on Minikube
+  * Run full platform on AKS (TODO)
+
+* **CI/CD**
+  //EXPLAIN HOW WE DEPLOY TO AKS AND UPDATE THE PLATFORM AFTER MAKING CHANGES
+
+* **Testing**
+  * End-to-end testing using containerized service that tests the api gateway, the services directly, and generates load for benchmarking.
+  * Integration testing for complex libraries and inter-service features
+  * Fuck unit tests!
 
 ---
 
 ## Architecture
 ![Page 1](./graph.png)
 
-* Services are designed for **horizontal scaling** and **stateless operations** wherever possible.
-* Database and messaging systems are **replicated** for resilience.
-* Observability stack collects **metrics, logs, and traces** for performance and debugging.
-
+//**TODO indepth breakdown of the platform atlas, moved into another readme**
 ---
 
 ## Getting Started
 
 ### Prerequisites
 
-* Go 1.25.5+
-* Docker & Docker Compose
-* Kubernetes cluster (Colima / Minikube / kind / cloud provider)
+* Docker & Docker Compose (or Colima)
+* Kubernetes (Minikube / kind / cloud provider)
 
 
 ### Deployment Steps
-
+//**TODO details like these should be moved and integrated into the makefile**
 1. Install cloud native operator
 2. Build docker base for golang and cloudnative image for Postgress
 3. Build Docker images for services
@@ -113,7 +136,7 @@ This allows **data-driven improvements** and performance optimization.
 * JWT authentication with expiration
 * Input validation for all endpoints
 * Rate limiting for API requests
-* Secrets are stored securely in Kubernetes secrets
+* Secrets are stored securely in Kubernetes secrets //TODO kubernetes secrets are not secure, aks vault is probably what we'll mention here
 * Services insulated via gRPC endpoints
 
 ---
@@ -125,19 +148,7 @@ This allows **data-driven improvements** and performance optimization.
 * Multi-region deployments for high availability
 * Load testing and performance tuning using pprof
 
----
 
-## Team
-
-Developed by
-
-- Alexis Gioldaseas
-- Katerina Vamvasaki
-- Ypatios Chaniotakos
-- Vagelis Stefanopoulos
-- Magnus Edvall
-
-as a **cloud-native Go microservices project**.
 
 ---
 
