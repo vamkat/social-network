@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const API_BASE = process.env.GATEWAY
 
@@ -39,10 +40,10 @@ export async function serverApiRequest(endpoint, options = {}) {
 
                     if (name && value !== undefined) {
                         const cookieOptions = {
-                            secure: true,
+                            secure: false,
                             httpOnly: true,
                             path: '/',
-                            sameSite: 'lax', // Default safe value
+                            sameSite: 'lax',
                         };
 
                         optionsParts.forEach(part => {
@@ -75,6 +76,11 @@ export async function serverApiRequest(endpoint, options = {}) {
             if (res.status === 400) {
                 return {ok: false, status: res.status, message: err.error || err.message || "Bad request"}
             }
+            if (res.status === 401) {
+                console.log({ok: false, status: res.status, message: err.error || err.message || "Expired"})
+                cookieStore.delete("jwt");
+                redirect("/login");
+            }
 
             return {ok: false, status: res.status, message: err.error || err.message || "Unknown error"}
         }
@@ -89,7 +95,7 @@ export async function serverApiRequest(endpoint, options = {}) {
         }
         
     } catch (e) {
-        console.error('Failed to parse JSON response:', text);
-        //throw new Error('Invalid JSON response from server');
+        if (e?.digest?.startsWith("NEXT_REDIRECT")) throw e;
+        return {ok: false, message: "Network error"}
     }
 }

@@ -22,7 +22,7 @@ spec:
       containers:
         - name: notifications
           image: social-network/notifications:dev
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50051
           resources:

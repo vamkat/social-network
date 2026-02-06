@@ -18,7 +18,7 @@ spec:
       containers:
         - name: api-gateway
           image: social-network/api-gateway:dev
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
           resources:

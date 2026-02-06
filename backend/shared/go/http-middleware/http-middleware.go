@@ -231,13 +231,14 @@ func (m *MiddleSystem) Finalize(next http.HandlerFunc) {
 
 			for i, mw := range m.middlewareChain {
 				ctx, span := tele.Trace(r.Context(), "start of middleware step", "stepIndex", i)
-				defer span.End()
 				r = r.WithContext(ctx)
 				proceed, newReq := mw(w, r)
 				r = newReq
 				if !proceed {
+					span.End()
 					return
 				}
+				span.End()
 			}
 
 			tele.Info(r.Context(), "middleware finished, calling @1", "endpoint", r.URL)

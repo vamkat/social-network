@@ -105,7 +105,7 @@ build-all:
 
 # 1.
 apply-kafka:
-	kubectl create namespace kafka
+	kubectl create namespace kafka || true
 	kubectl apply -f "https://strimzi.io/install/latest?namespace=kafka" -n kafka
 
 # 1.1
@@ -164,6 +164,7 @@ port-forward:
 		kubectl port-forward -n live svc/live 8082:8082 & \
 		kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
 		kubectl port-forward -n monitoring svc/victoria-logs 9428:9428 & \
+		kubectl port-forward -n monitoring svc/victoria-traces 10428:10428 & \
 		wait'
 
 
@@ -228,26 +229,6 @@ smart-build-and-deploy:
 	$(MAKE) smart-full-deploy
 
 smart-full-deploy:
-	@ifeq ($(OS),Windows_NT)
-	$(info    ======                                    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	$(info    ======     DID YOU FORGET TO USE BASH?    ======    )
-	$(info     ======                                     ======    )
-	exit
-	endif
-
 	$(MAKE) load-images
 	@sleep 2
 
@@ -330,7 +311,7 @@ smart-apply-monitoring:
 	@echo " "
 	@echo " --- APPLYING MONITORING ---"
 	@echo " "
-	kubectl create namespace monitoring
+	kubectl create namespace monitoring || true
 	@kubectl get secret posts-db-app -n posts -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
 	@kubectl get secret chat-db-app -n chat -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
 	@kubectl get secret users-db-app -n users -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
@@ -386,4 +367,55 @@ smart-port-forward:
 	kubectl port-forward -n live svc/live 8082:8082 & \
 	kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
 	kubectl port-forward -n monitoring svc/victoria-logs 9428:9428 & \
+	kubectl port-forward -n monitoring svc/victoria-traces 10428:10428 & \
 	wait'
+
+rollout-all:
+	kubectl rollout restart deployment -n chat
+	kubectl rollout restart deployment -n posts
+	kubectl rollout restart deployment -n users
+	kubectl rollout restart deployment -n frontend
+	kubectl rollout restart deployment -n notifications
+	kubectl rollout restart deployment -n gateway
+	kubectl rollout restart deployment -n live
+	kubectl rollout restart deployment -n media
+
+refresh-gateway:
+	docker build -f backend/docker/services/api-gateway.Dockerfile -t social-network/api-gateway:dev .
+	minikube image load social-network/api-gateway:dev
+	kubectl rollout restart deployment -n api-gateway
+
+refresh-chat:
+	docker build -f backend/docker/services/chat.Dockerfile -t social-network/chat:dev .
+	minikube image load social-network/chat:dev
+	kubectl rollout restart deployment -n chat
+
+refresh-live:
+	docker build -f backend/docker/services/live.Dockerfile -t social-network/live:dev .
+	minikube image load social-network/live:dev
+	kubectl rollout restart deployment -n live
+
+refresh-media:
+	docker build -f backend/docker/services/media.Dockerfile -t social-network/media:dev .
+	minikube image load social-network/media:dev
+	kubectl rollout restart deployment -n media
+
+refresh-notifications:
+	docker build -f backend/docker/services/notifications.Dockerfile -t social-network/notifications:dev .
+	minikube image load social-network/notifications:dev
+	kubectl rollout restart deployment -n notifications
+
+refresh-posts:
+	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
+	minikube image load social-network/posts:dev
+	kubectl rollout restart deployment -n posts
+
+refresh-users:
+	docker build -f backend/docker/services/users.Dockerfile -t social-network/users:dev .
+	minikube image load social-network/users:dev
+	kubectl rollout restart deployment -n users
+
+refresh-front:
+	docker build -f backend/docker/front/front.Dockerfile -t social-network/front:dev .
+	minikube image load social-network/front:dev
+	kubectl rollout restart deployment -n frontend

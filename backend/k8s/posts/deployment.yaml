@@ -18,7 +18,7 @@ spec:
       containers:
         - name: posts
           image: social-network/posts:dev
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50051
           resources:

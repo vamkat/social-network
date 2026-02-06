@@ -18,7 +18,7 @@ spec:
       containers:
         - name: users
           image: social-network/users:dev
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50051
           resources:
