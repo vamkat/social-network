@@ -4,13 +4,30 @@ import { NextResponse } from "next/server";
 const protectedRoutes = ["/feed", "/groups", "/posts", "/profile"];
 
 // Routes that should NOT be accessible when logged in
-const authRoutes = ["/login", "/register"];
+const authRoutes = ["/login", "/register", "/"];
+
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp && payload.exp < Math.floor(Date.now() / 1000);
+  } catch {
+    return true;
+  }
+}
 
 export function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // Check if user has JWT cookie (is logged in)
   const token = request.cookies.get("jwt")?.value;
+
+  // If token exists but is expired, delete it and redirect to login
+  if (token && isTokenExpired(token)) {
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.delete("jwt");
+    return response;
+  }
+
   const isAuthenticated = !!token;
 
   // Check if current path is a protected route
@@ -20,7 +37,8 @@ export function proxy(request) {
 
   // Check if current path is an auth route (login/register)
   const isAuthRoute = authRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
+    (route) =>
+      pathname === route || (route !== "/" && pathname.startsWith(`${route}/`))
   );
 
   // If user is NOT authenticated and trying to access protected route
