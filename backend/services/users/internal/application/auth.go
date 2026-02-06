@@ -92,7 +92,7 @@ func (s *Application) LoginUser(ctx context.Context, req models.LoginRequest) (m
 
 	err := s.txRunner.RunTx(ctx, func(q *ds.Queries) error {
 		row, err := q.GetUserForLogin(ctx, ds.GetUserForLoginParams{
-			Username:     req.Identifier.String(),
+			Email:        req.Email.String(),
 			PasswordHash: req.Password.String(),
 		})
 		if err != nil {

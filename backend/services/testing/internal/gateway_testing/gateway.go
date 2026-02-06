@@ -57,8 +57,8 @@ func testAuthFlow(ctx context.Context) error {
 
 	// 2. Login
 	loginData := map[string]any{
-		"identifier": email,
-		"password":   pass,
+		"email":    email,
+		"password": pass,
 	}
 	resp, err = postJSON(client, "http://api-gateway:8081/login", loginData)
 	if err != nil {
@@ -113,8 +113,8 @@ func newRegisterReq() *map[string]any {
 
 func newLoginReq() *map[string]any {
 	login := map[string]any{
-		"identifier": utils.Title(utils.RandomString(10, false)),
-		"password":   utils.RandomString(10, true),
+		"email":    utils.Title(utils.RandomString(10, false)),
+		"password": utils.RandomString(10, true),
 	}
 	return &login
 }
@@ -142,8 +142,8 @@ func testPostsFlow(ctx context.Context) error {
 	email, _ := (*registerData)["email"].(string)
 	pass, _ := (*registerData)["password"].(string)
 	loginData := map[string]any{
-		"identifier": email,
-		"password":   pass,
+		"email":    email,
+		"password": pass,
 	}
 	loginResp, err := client.DoRequest("POST", "/login", []int{200, 201}, "login", loginData)
 	if err != nil {

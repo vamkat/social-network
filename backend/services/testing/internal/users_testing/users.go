@@ -86,7 +86,7 @@ func registerLogin(ctx context.Context) error {
 	}
 
 	log := newLoginReq()
-	log.Identifier = reg.Email
+	log.Email = reg.Email
 	log.Password = reg.Password
 
 	resp, err := UsersService.LoginUser(ctx, log)
@@ -122,8 +122,8 @@ func newRegisterReq() *users.RegisterUserRequest {
 
 func newLoginReq() *users.LoginRequest {
 	req := users.LoginRequest{
-		Identifier: utils.Title(utils.RandomString(10, false)),
-		Password:   utils.Title(utils.RandomString(10, false)),
+		Email:    utils.Title(utils.RandomString(10, false)),
+		Password: utils.Title(utils.RandomString(10, false)),
 	}
 	return &req
 }

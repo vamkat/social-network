@@ -26,8 +26,8 @@ type RegisterUserResponse struct {
 }
 
 type LoginRequest struct {
-	Identifier ct.Identifier     `json:"identifier"`
-	Password   ct.HashedPassword `json:"password"`
+	Email    ct.Email          `json:"email"`
+	Password ct.HashedPassword `json:"password"`
 }
 
 type UpdatePasswordRequest struct {

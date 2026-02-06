@@ -21,8 +21,8 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 
 		//READ REQUEST BODY
 		type loginHttpRequest struct {
-			Identifier ct.Identifier `json:"identifier"`
-			Password   ct.Password   `json:"password"`
+			Email    ct.Email    `json:"email"`
+			Password ct.Password `json:"password"`
 		}
 
 		httpReq := loginHttpRequest{}
@@ -50,8 +50,8 @@ func (h *Handlers) loginHandler() http.HandlerFunc {
 		tele.Debug(ctx, "login password:", "password", httpReq.Password.String())
 		//MAKE GRPC REQUEST
 		gRpcReq := users.LoginRequest{
-			Identifier: httpReq.Identifier.String(),
-			Password:   httpReq.Password.String(),
+			Email:    httpReq.Email.String(),
+			Password: httpReq.Password.String(),
 		}
 
 		tele.Debug(ctx, "login password request:", "password", httpReq.Password.String())

@@ -25,12 +25,12 @@ export default function LoginForm() {
         setError("");
 
         const formData = new FormData(event.currentTarget);
-        const identifier = formData.get("identifier");
+        const email = formData.get("email");
         const password = formData.get("password");
 
         try {
             // call API to login
-            const resp = await login({ identifier, password });
+            const resp = await login({ email, password });
             // check err
             if (!resp.success || resp.error) {
                 setError(resp.error || "Invalid credentials");
@@ -59,13 +59,13 @@ export default function LoginForm() {
         <form onSubmit={handleSubmit} className="w-full space-y-6">
             {/* Email/Username Field */}
             <div>
-                <label htmlFor="identifier" className="form-label pl-4 text-(--accent)">
+                <label htmlFor="email" className="form-label pl-4 text-(--accent)">
                     Email or Username
                 </label>
                 <input
-                    id="identifier"
-                    name="identifier"
-                    type="text"
+                    id="email"
+                    name="email"
+                    type="email"
                     required
                     className="form-input"
                     placeholder="Enter your email or username"

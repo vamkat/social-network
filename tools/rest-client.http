@@ -43,7 +43,7 @@ POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "identifier": "johndoe",
+  "email": "john.doe@example.com",
   "password": "StrongPassword123!"
 }
 
@@ -52,7 +52,7 @@ POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "identifier": "johnfoe",
+  "email": "john.foe@example.com",
   "password": "StrongPassword123!"
 }
 

@@ -218,10 +218,10 @@ export async function validateProfileForm(profileData, avatarFile = null) {
  * @returns {{valid: boolean, error: string}} Validation result
  */
 export function validateLoginForm(formData) {
-    // Identifier validation
-    const identifier = formData.get("identifier")?.trim() || "";
-    if (!identifier) {
-        return { valid: false, error: "Email or username is required." };
+    // email validation
+        const email = formData.get("email")?.trim() || "";
+    if (!isValidEmail(email)) {
+        return { valid: false, error: "Please enter a valid email address." };
     }
 
     // Password validation

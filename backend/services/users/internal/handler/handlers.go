@@ -58,19 +58,19 @@ func (s *UsersHandler) LoginUser(ctx context.Context, req *pb.LoginRequest) (*cm
 		return nil, status.Error(codes.InvalidArgument, "LoginUser: request is nil")
 	}
 
-	Identifier := req.GetIdentifier()
-	if err := invalidString("ident", Identifier); err != nil {
+	email := req.GetEmail()
+	if err := invalidString("email", email); err != nil {
 		return nil, err
 	}
 
-	Password := req.GetPassword()
-	if err := invalidString("pass", Password); err != nil {
+	password := req.GetPassword()
+	if err := invalidString("pass", password); err != nil {
 		return nil, err
 	}
 
 	user, err := s.Application.LoginUser(ctx, models.LoginRequest{
-		Identifier: ct.Identifier(Identifier),
-		Password:   ct.HashedPassword(Password),
+		Email:    ct.Email(email),
+		Password: ct.HashedPassword(password),
 	})
 	if err != nil {
 		tele.Warn(ctx, "Error in LoginUser. @1", "error", err.Error(), "request", req.String())

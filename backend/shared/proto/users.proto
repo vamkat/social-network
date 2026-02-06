@@ -15,11 +15,11 @@ service UserService {
   // Returns already exists if email is already in the database.
   rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
 
-  // Authenticates by username/email identifier and hashed password.
+  // Authenticates by email and hashed password.
   // Avoid using username as it's not unique, only email is.
   // Returns basic user info (id, username, avatar url).
   // Calls users and media service for user info and avatar url.
-  // Returns invalid argument if identifier and password don't return any rows.
+  // Returns invalid argument if email and password don't return any rows.
   rpc LoginUser (LoginRequest) returns (common.User);
 
   // Updates a user's password after verifying the current password.
@@ -266,7 +266,7 @@ message RegisterUserResponse {
 
 //Request message for user login
 message LoginRequest {
-  string identifier = 1; //email or username (avoid username as it's not unique)
+  string email = 1; //email
   string password   = 2; //already hashed
 }
 
