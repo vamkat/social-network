@@ -172,6 +172,8 @@ func Run() error {
 		tele.Fatalf("failed to create server: %s", err.Error())
 	}
 
+	gorpc.StartPprof("127.0.0.1:6060")
+
 	go func() {
 		tele.Info(ctx, "Starting grpc server at port: @1", "port", cfgs.GrpcServerPort)
 		err := startServerFunc()

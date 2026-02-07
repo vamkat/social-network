@@ -2,7 +2,11 @@ package gorpc
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"net/http"
+
+	_ "net/http/pprof"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -46,4 +50,13 @@ func CreateGRpcServer[T any](register func(grpc.ServiceRegistrar, T), handler T,
 	startServer := func() error { return grpcServer.Serve(listener) }
 	stopServer := func() { grpcServer.GracefulStop() }
 	return startServer, stopServer, nil
+}
+
+// http://<port>/debug/pprof/
+func StartPprof(port string) {
+	go func() {
+		if err := http.ListenAndServe(port, nil); err != nil {
+			log.Fatalf("pprof error: %v", err)
+		}
+	}()
 }
