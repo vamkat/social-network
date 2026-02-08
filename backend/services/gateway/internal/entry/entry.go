@@ -44,9 +44,9 @@ func Run() {
 	}
 	defer closeTelemetry()
 	tele.Info(ctx, "initialized telemetry")
+	tele.Info(ctx, "This is a test 2")
 
-	// _, initSpan := tele.Trace(ctx, "gateway initializing")
-	// ctx = newCtx //this might be a bad idea
+	_, initSpan := tele.Trace(ctx, "gateway initializing")
 
 	//
 	//
@@ -158,7 +158,7 @@ func Run() {
 	}
 
 	srvErr := make(chan error, 1)
-	// initSpan.End()
+	initSpan.End()
 	go func() {
 		tele.Info(ctx, "Starting server at @1", "address", server.Addr)
 		srvErr <- server.ListenAndServe()

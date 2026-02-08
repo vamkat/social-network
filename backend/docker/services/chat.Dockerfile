@@ -4,9 +4,13 @@ WORKDIR /app/backend
 
 COPY backend/ .
 
-RUN go build -o chat_service ./services/chat/cmd/server
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    go build -o chat_service ./services/chat/cmd/server
 
-RUN go build -o migrate ./services/chat/cmd/migrate
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    go build -o migrate ./services/chat/cmd/migrate
 
 FROM alpine:3.20
 

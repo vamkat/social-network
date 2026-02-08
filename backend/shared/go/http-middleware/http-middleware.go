@@ -230,7 +230,7 @@ func (m *MiddleSystem) Finalize(next http.HandlerFunc) {
 			}()
 
 			for i, mw := range m.middlewareChain {
-				ctx, span := tele.Trace(r.Context(), "start of middleware step", "stepIndex", i)
+				ctx, span := tele.Trace(r.Context(), fmt.Sprint(m.middlewareNames[i], " middleware"), "middleware", m.middlewareNames[i])
 				r = r.WithContext(ctx)
 				proceed, newReq := mw(w, r)
 				r = newReq

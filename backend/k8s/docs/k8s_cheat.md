@@ -54,7 +54,7 @@ kubectl get pvc -n <namespace>
 
 ### **Force Kubernetes to pull new image**
 
-If using `imagePullPolicy: Always`, just redeploy:
+If using `imagePullPolicy: IfNotPresent`, just redeploy:
 
 ```sh
 kubectl rollout restart deployment users -n users

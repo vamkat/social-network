@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// deleteme
 func main() {
 	ctx := context.Background()
 	var pool *pgxpool.Pool

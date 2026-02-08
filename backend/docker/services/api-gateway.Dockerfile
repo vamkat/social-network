@@ -4,7 +4,9 @@ WORKDIR /app/backend
 
 COPY backend/ .
 
-RUN go build -o api_gateway ./services/gateway/cmd
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    go build -o api_gateway ./services/gateway/cmd
 
 FROM alpine:3.20
 

@@ -229,9 +229,6 @@ smart-build-and-deploy:
 	$(MAKE) smart-full-deploy
 
 smart-full-deploy:
-	$(MAKE) load-images
-	@sleep 2
-
 	$(MAKE) smart-apply-kafka; 
 	@sleep 2
 
@@ -247,9 +244,6 @@ smart-full-deploy:
 	$(MAKE) smart-apply-pvc; 
 	@sleep 2
 
-	$(MAKE) smart-apply-monitoring; 
-	@sleep 2
-
 	$(call retry, $(MAKE) smart-apply-db1); 
 	@sleep 2
 
@@ -262,6 +256,9 @@ smart-full-deploy:
 	@SLEEP=60; echo "Sleeping for $${SLEEP}s so that db's are ready before starting core services..."; echo -e "\n\n\n"; sleep $$SLEEP
 
 	$(call retry, $(MAKE) smart-apply-apps); 
+	@sleep 2
+
+	$(MAKE) smart-apply-monitoring; 
 	@sleep 2
 
 	$(call retry, $(MAKE) smart-apply-cors); 
@@ -370,7 +367,7 @@ smart-port-forward:
 	kubectl port-forward -n monitoring svc/victoria-traces 10428:10428 & \
 	wait'
 
-rollout-all:
+refresh-all:
 	kubectl rollout restart deployment -n chat
 	kubectl rollout restart deployment -n posts
 	kubectl rollout restart deployment -n users
@@ -381,41 +378,49 @@ rollout-all:
 	kubectl rollout restart deployment -n media
 
 refresh-gateway:
+	kubectl delete -n api-gateway -f backend/k8s/gateway/deployment.yaml || true
 	docker build -f backend/docker/services/api-gateway.Dockerfile -t social-network/api-gateway:dev .
 	minikube image load social-network/api-gateway:dev
-	kubectl rollout restart deployment -n api-gateway
+	kubectl apply -f backend/k8s/gateway/deployment.yaml -n api-gateway
 
 refresh-chat:
+	kubectl delete -f backend/k8s/chat/deployment.yaml -n chat || true
 	docker build -f backend/docker/services/chat.Dockerfile -t social-network/chat:dev .
 	minikube image load social-network/chat:dev
-	kubectl rollout restart deployment -n chat
+	kubectl apply -f backend/k8s/chat/deployment.yaml -n chat
 
 refresh-live:
+	kubectl delete -f backend/k8s/live/deployment.yaml -n live || true
 	docker build -f backend/docker/services/live.Dockerfile -t social-network/live:dev .
 	minikube image load social-network/live:dev
-	kubectl rollout restart deployment -n live
+	kubectl apply -f backend/k8s/live/deployment.yaml -n live
 
 refresh-media:
+	kubectl delete -f backend/k8s/media/deployment.yaml -n media || true
 	docker build -f backend/docker/services/media.Dockerfile -t social-network/media:dev .
 	minikube image load social-network/media:dev
-	kubectl rollout restart deployment -n media
+	kubectl apply -f backend/k8s/media/deployment.yaml -n media
 
 refresh-notifications:
+	kubectl delete -f backend/k8s/notifications/deployment.yaml -n notifications || true
 	docker build -f backend/docker/services/notifications.Dockerfile -t social-network/notifications:dev .
 	minikube image load social-network/notifications:dev
-	kubectl rollout restart deployment -n notifications
+	kubectl apply -f backend/k8s/notifications/deployment.yaml -n notifications
 
 refresh-posts:
+	kubectl delete -f backend/k8s/posts/deployment.yaml -n posts || true
 	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
 	minikube image load social-network/posts:dev
-	kubectl rollout restart deployment -n posts
+	kubectl apply -f backend/k8s/posts/deployment.yaml -n posts
 
 refresh-users:
+	kubectl delete -f backend/k8s/users/deployment.yaml -n users || true
 	docker build -f backend/docker/services/users.Dockerfile -t social-network/users:dev .
 	minikube image load social-network/users:dev
-	kubectl rollout restart deployment -n users
+	kubectl apply -f backend/k8s/users/deployment.yaml -n users
 
 refresh-front:
+	kubectl delete -f backend/k8s/frontend/deployment.yaml -n frontend || true
 	docker build -f backend/docker/front/front.Dockerfile -t social-network/front:dev .
 	minikube image load social-network/front:dev
-	kubectl rollout restart deployment -n frontend
+	kubectl apply -f backend/k8s/frontend/deployment.yaml -n frontend
