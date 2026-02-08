@@ -5,7 +5,9 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build -o live ./services/live/cmd
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    go build -o live ./services/live/cmd
 
 FROM alpine:3.20
 

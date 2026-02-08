@@ -8,8 +8,8 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/log"
@@ -62,13 +62,13 @@ func SetupOTelSDK(ctx context.Context, collectorAddress string, serviceName stri
 	otel.SetTracerProvider(tracerProvider)
 
 	// // Set up meter provider.
-	// meterProvider, err := NewMeterProvider()
-	// if err != nil {
-	// 	handleErr(err)
-	// 	return shutdown, err
-	// }
-	// shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
-	// otel.SetMeterProvider(meterProvider)
+	meterProvider, err := NewMeterProvider(ctx, collectorAddress, serviceName)
+	if err != nil {
+		handleErr(err)
+		return shutdown, err
+	}
+	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	otel.SetMeterProvider(meterProvider)
 
 	// Set up logger provider.
 	loggerProvider, err := NewLoggerProvider(ctx, collectorAddress, serviceName)
@@ -89,18 +89,30 @@ func NewPropagator() propagation.TextMapPropagator {
 		propagation.Baggage{},
 	)
 }
+func NewMeterProvider(ctx context.Context, collectorAddress string, serviceName string) (*metric.MeterProvider, error) {
 
-func NewMeterProvider() (*metric.MeterProvider, error) {
-	metricExporter, err := stdoutmetric.New()
+	exporter, err := otlpmetricgrpc.New(ctx,
+		otlpmetricgrpc.WithEndpointURL("dns://"+collectorAddress),
+		otlpmetricgrpc.WithInsecure(),
+		otlpmetricgrpc.WithTimeout(5*time.Second))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create exporter: %w", err)
 	}
 
-	meterProvider := metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(metricExporter,
-			// Default is 1m. Set to 3s for demonstrative purposes.
-			metric.WithInterval(time.Minute*2))), //reduce once
+	resource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion("my_version_TBD"),
+		semconv.HostName("host_TBD"),
 	)
+
+	meterProvider := metric.NewMeterProvider(
+		metric.WithReader(metric.NewPeriodicReader(exporter,
+			metric.WithInterval(time.Second*3),
+		)),
+		metric.WithResource(resource),
+	)
+
 	return meterProvider, nil
 }
 

@@ -44,7 +44,7 @@ func Run() {
 	}
 	defer closeTelemetry()
 	tele.Info(ctx, "initialized telemetry")
-	tele.Info(ctx, "This is a test 2")
+	tele.Info(ctx, "metrics activated")
 
 	_, initSpan := tele.Trace(ctx, "gateway initializing")
 

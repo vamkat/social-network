@@ -12,6 +12,12 @@ data:
       format = "logfmt"
     }
 
+    otelcol.exporter.otlphttp "victoriametrics" {
+      client {
+        endpoint = "http://victoria-metrics.monitoring.svc.cluster.local:8428/opentelemetry/"
+      }
+    }
+
     otelcol.exporter.otlphttp "victoriaLogs" {
       client {
         endpoint = "http://victoria-logs.monitoring.svc.cluster.local:9428/insert/opentelemetry/"
@@ -24,17 +30,11 @@ data:
       }
     }
 
-    otelcol.exporter.otlphttp "victoriaMetrics" {
-      client {
-        endpoint = "http://victoria-metrics.monitoring.svc.cluster.local:8428/api/v1/import"
-      }
-    }
-
     otelcol.processor.batch "default" {
       output {
+        metrics = [otelcol.exporter.otlphttp.victoriametrics.input]
         logs    = [otelcol.exporter.otlphttp.victoriaLogs.input]
         traces  = [otelcol.exporter.otlphttp.victoriaTraces.input]
-        metrics = [otelcol.exporter.otlphttp.victoriaMetrics.input]
       }
     }
 
@@ -43,9 +43,9 @@ data:
       limit          = "512MiB"
 
       output {
+        metrics = [otelcol.processor.batch.default.input]
         logs    = [otelcol.processor.batch.default.input]
         traces  = [otelcol.processor.batch.default.input]
-        metrics = []
       }
     }
 
@@ -59,9 +59,23 @@ data:
       }
 
       output {
+        metrics = [otelcol.processor.memory_limiter.default.input]
         logs    = [otelcol.processor.memory_limiter.default.input]
         traces  = [otelcol.processor.memory_limiter.default.input]
-        metrics = []
       }
     }
 
+
+
+      
+
+
+
+
+
+
+
+
+
+
+    

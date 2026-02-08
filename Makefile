@@ -155,17 +155,18 @@ apply-cors:
 	kubectl apply -f backend/k8s/ --recursive --selector stage=cors
 
 # 9.
-port-forward:
-	@echo "Starting port-forwards..."
-	@bash -c '\
-		trap "echo Cleaning up port-forwards; pkill -f \"kubectl port-forward\"" EXIT SIGINT; \
-		kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 & \
-		kubectl port-forward -n storage svc/minio 9000:9000 & \
-		kubectl port-forward -n live svc/live 8082:8082 & \
-		kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
-		kubectl port-forward -n monitoring svc/victoria-logs 9428:9428 & \
-		kubectl port-forward -n monitoring svc/victoria-traces 10428:10428 & \
-		wait'
+# port-forward:
+# 	@echo "Starting port-forwards..."
+# 	@bash -c '\
+# 		trap "echo Cleaning up port-forwards; pkill -f \"kubectl port-forward\"" EXIT SIGINT; \
+# 		kubectl port-forward -n frontend svc/nextjs-frontend 3000:80 & \
+# 		kubectl port-forward -n storage svc/minio 9000:9000 & \
+# 		kubectl port-forward -n live svc/live 8082:8082 & \
+# 		kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
+# 		kubectl port-forward -n monitoring svc/victoria-logs 9428:9428 & \
+# 		kubectl port-forward -n monitoring svc/victoria-traces 10428:10428 & \
+# 		kubectl port-forward -n monitoring svc/victoria-metrics 8428:8428 & \
+# 		wait'
 
 
 # 10.
@@ -245,15 +246,15 @@ smart-full-deploy:
 	@sleep 2
 
 	$(call retry, $(MAKE) smart-apply-db1); 
-	@sleep 2
+	@sleep 20
 
 	$(call retry, $(MAKE) smart-apply-db2); 
 	@sleep 2
-	@SLEEP=60; echo "Sleeping for $${SLEEP}s to wait for db's to start before migrations..."; echo -e "\n\n\n"; sleep $$SLEEP
+	@SLEEP=80; echo "Sleeping for $${SLEEP}s to wait for db's to start before migrations..."; echo -e "\n\n\n"; sleep $$SLEEP
 
 	$(call retry, $(MAKE) smart-run-migrations); 
 	@sleep 2
-	@SLEEP=60; echo "Sleeping for $${SLEEP}s so that db's are ready before starting core services..."; echo -e "\n\n\n"; sleep $$SLEEP
+	@SLEEP=80; echo "Sleeping for $${SLEEP}s so that db's are ready before starting core services..."; echo -e "\n\n\n"; sleep $$SLEEP
 
 	$(call retry, $(MAKE) smart-apply-apps); 
 	@sleep 2
@@ -352,7 +353,7 @@ smart-apply-cors:
 	@echo " "
 	kubectl apply -R -f backend/k8s/ --selector stage=cors
 
-smart-port-forward:
+port-forward:
 	@echo " "
 	@echo " "
 	@echo " --- STARTING PORT FORWARDS ---"
@@ -365,62 +366,110 @@ smart-port-forward:
 	kubectl port-forward -n monitoring svc/grafana 3001:3001 & \
 	kubectl port-forward -n monitoring svc/victoria-logs 9428:9428 & \
 	kubectl port-forward -n monitoring svc/victoria-traces 10428:10428 & \
+	kubectl port-forward -n monitoring svc/victoria-metrics 8428:8428 & \
+	kubectl port-forward -n monitoring svc/alloy 12345:12345 & \
 	wait'
 
-refresh-all:
-	kubectl rollout restart deployment -n chat
-	kubectl rollout restart deployment -n posts
-	kubectl rollout restart deployment -n users
-	kubectl rollout restart deployment -n frontend
-	kubectl rollout restart deployment -n notifications
-	kubectl rollout restart deployment -n gateway
-	kubectl rollout restart deployment -n live
-	kubectl rollout restart deployment -n media
+refresh-app:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING ALL APPLICATIONS ---"
+	@echo " "
+	$(MAKE) refresh-gateway
+	$(MAKE) refresh-chat
+	$(MAKE) refresh-live
+	$(MAKE) refresh-media
+	$(MAKE) refresh-notifications
+	$(MAKE) refresh-posts
+	$(MAKE) refresh-users
+	$(MAKE) refresh-front
 
 refresh-gateway:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING API GATEWAY ---"
+	@echo " "
 	kubectl delete -n api-gateway -f backend/k8s/gateway/deployment.yaml || true
 	docker build -f backend/docker/services/api-gateway.Dockerfile -t social-network/api-gateway:dev .
 	minikube image load social-network/api-gateway:dev
 	kubectl apply -f backend/k8s/gateway/deployment.yaml -n api-gateway
 
 refresh-chat:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING CHAT SERVICE ---"
+	@echo " "
 	kubectl delete -f backend/k8s/chat/deployment.yaml -n chat || true
 	docker build -f backend/docker/services/chat.Dockerfile -t social-network/chat:dev .
 	minikube image load social-network/chat:dev
 	kubectl apply -f backend/k8s/chat/deployment.yaml -n chat
 
 refresh-live:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING LIVE SERVICE ---"
+	@echo " "
 	kubectl delete -f backend/k8s/live/deployment.yaml -n live || true
 	docker build -f backend/docker/services/live.Dockerfile -t social-network/live:dev .
 	minikube image load social-network/live:dev
 	kubectl apply -f backend/k8s/live/deployment.yaml -n live
 
 refresh-media:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING MEDIA SERVICE ---"
+	@echo " "
 	kubectl delete -f backend/k8s/media/deployment.yaml -n media || true
 	docker build -f backend/docker/services/media.Dockerfile -t social-network/media:dev .
 	minikube image load social-network/media:dev
 	kubectl apply -f backend/k8s/media/deployment.yaml -n media
 
 refresh-notifications:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING NOTIFICATIONS SERVICE ---"
+	@echo " "
 	kubectl delete -f backend/k8s/notifications/deployment.yaml -n notifications || true
 	docker build -f backend/docker/services/notifications.Dockerfile -t social-network/notifications:dev .
 	minikube image load social-network/notifications:dev
 	kubectl apply -f backend/k8s/notifications/deployment.yaml -n notifications
 
 refresh-posts:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING POSTS SERVICE ---"
+	@echo " "
 	kubectl delete -f backend/k8s/posts/deployment.yaml -n posts || true
 	docker build -f backend/docker/services/posts.Dockerfile -t social-network/posts:dev .
 	minikube image load social-network/posts:dev
 	kubectl apply -f backend/k8s/posts/deployment.yaml -n posts
 
 refresh-users:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING USERS SERVICE ---"
+	@echo " "
 	kubectl delete -f backend/k8s/users/deployment.yaml -n users || true
 	docker build -f backend/docker/services/users.Dockerfile -t social-network/users:dev .
 	minikube image load social-network/users:dev
 	kubectl apply -f backend/k8s/users/deployment.yaml -n users
 
 refresh-front:
-	kubectl delete -f backend/k8s/frontend/deployment.yaml -n frontend || true
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING FRONTEND ---"
+	@echo " "
+	kubectl delete -f backend/k8s/front/deployment.yaml -n frontend || true
 	docker build -f backend/docker/front/front.Dockerfile -t social-network/front:dev .
 	minikube image load social-network/front:dev
-	kubectl apply -f backend/k8s/frontend/deployment.yaml -n frontend
+	kubectl apply -f backend/k8s/front/deployment.yaml -n frontend
+
+refresh-monitoring:
+	@echo " "
+	@echo " "
+	@echo " --- REFRESHING MONITORING STACK ---"
+	@echo " "
+	kubectl delete -R -f backend/k8s/ --selector stage=monitoring
+	kubectl delete -R -f backend/k8s/ --selector stage=config
+	kubectl apply -R -f backend/k8s/ --selector stage=config
+	kubectl apply -R -f backend/k8s/ --selector stage=monitoring

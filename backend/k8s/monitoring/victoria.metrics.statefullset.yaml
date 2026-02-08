@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: victoria-metrics
-          image: victoriametrics/victoria-metrics:v1.97.0
+          image: victoriametrics/victoria-metrics:latest
           args:
             - -storageDataPath=/victoria-metrics-data
           ports:
