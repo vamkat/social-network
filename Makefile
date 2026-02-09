@@ -261,12 +261,9 @@ smart-full-deploy:
 
 	$(MAKE) smart-apply-monitoring; 
 	@sleep 2
-
-	$(call retry, $(MAKE) smart-apply-cors); 
-	@sleep 2
 	@SLEEP=100; echo "Sleeping for $${SLEEP}s to wait for pods to be ready before port forwarding them"; echo -e "\n\n\n"; sleep $$SLEEP
 
-	$(MAKE) smart-port-forward
+	$(MAKE) port-forward
 
 smart-apply-kafka:
 	@echo " "
@@ -346,12 +343,6 @@ smart-apply-apps:
 	@echo " "
 	kubectl apply -R -f backend/k8s/ --selector stage=app
 
-smart-apply-cors:
-	@echo " "
-	@echo " "
-	@echo " --- TRYING TO APPLY CORS ---"
-	@echo " "
-	kubectl apply -R -f backend/k8s/ --selector stage=cors
 
 port-forward:
 	@echo " "
