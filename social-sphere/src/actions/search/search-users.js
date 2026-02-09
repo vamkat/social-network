@@ -16,7 +16,6 @@ export async function SearchUsers({ query, limit }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error searching users:", error);
         return { success: false, error: error.message };
     }
 }

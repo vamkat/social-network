@@ -35,8 +35,6 @@ export default function RegisterForm() {
     const { errors: fieldErrors, validateField } = useFormValidation();
     const [aboutCount, setAboutCount] = useState(0);
 
-    console.log("FISLJFN", fieldErrors)
-
     async function handleSubmit(event) {
         event.preventDefault();
         setIsLoading(true);
@@ -105,11 +103,9 @@ export default function RegisterForm() {
                         }
                     } else {
                         const errorText = await uploadRes.text();
-                        console.error(`Storage error (${uploadRes.status}): ${errorText}`);
                         imageUploadFailed = true;
                     }
                 } catch (uploadError) {
-                    console.error("Avatar upload error:", uploadError);
                     imageUploadFailed = true;
                 }
             }
@@ -129,7 +125,6 @@ export default function RegisterForm() {
             }
 
         } catch (error) {
-            console.error("Registration exception:", error);
             setError("An unexpected error occurred");
             setIsLoading(false);
         }

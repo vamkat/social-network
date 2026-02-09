@@ -19,7 +19,6 @@ export async function removeEventResponse({id}) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Remove Event Response Action Error:", error);
         return { success: false, error: error.message };
     }
 }

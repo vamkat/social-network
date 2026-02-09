@@ -17,7 +17,6 @@ export async function getProfileInfo(userId) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching profile info:", error);
         return { success: false, error: error.message };
     }
 }

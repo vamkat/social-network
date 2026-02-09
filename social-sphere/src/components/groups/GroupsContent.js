@@ -66,7 +66,7 @@ export default function GroupsContent() {
                 }
             }
         } catch (error) {
-            console.error("Error fetching user groups:", error);
+            return
         } finally {
             setIsLoadingUserGroups(false);
         }
@@ -93,7 +93,7 @@ export default function GroupsContent() {
                 }
             }
         } catch (error) {
-            console.error("Error fetching all groups:", error);
+            return
         } finally {
             setIsLoadingAllGroups(false);
             setInitialLoadDone(true);
@@ -128,7 +128,6 @@ export default function GroupsContent() {
                         setSearchResults([]);
                     }
                 } catch (error) {
-                    console.error("Search error:", error);
                     setSearchResults([]);
                 } finally {
                     setIsSearching(false);

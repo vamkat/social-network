@@ -166,7 +166,6 @@ export default function SinglePostCard({ post }) {
                 setHasMore(commentsCount > 3);
             }
         } catch (error) {
-            console.error("Failed to fetch comments:", error);
         } finally {
             setLoading(false);
         }
@@ -204,7 +203,6 @@ export default function SinglePostCard({ post }) {
                 setHasMore(comments.length + result.data.length < commentsCount);
             }
         } catch (error) {
-            console.error("Failed to load more comments:", error);
         } finally {
             setLoadingMore(false);
         }
@@ -371,7 +369,6 @@ export default function SinglePostCard({ post }) {
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
 
@@ -386,7 +383,6 @@ export default function SinglePostCard({ post }) {
             //window.location.reload();
 
         } catch (err) {
-            console.error("Failed to edit post:", err);
             setError("Failed to edit post. Please try again.");
         }
     };
@@ -415,7 +411,6 @@ export default function SinglePostCard({ post }) {
             router.push("/feed/public");
 
         } catch (err) {
-            console.error("Failed to delete post:", err);
             setError("Failed to delete post. Please try again.");
             setIsDeleting(false);
             setShowDeleteModal(false);
@@ -443,13 +438,11 @@ export default function SinglePostCard({ post }) {
                 // Revert on error
                 setLikedByUser(previousLiked);
                 setReactionsCount(previousCount);
-                console.error("Failed to toggle reaction:", resp.error);
             }
         } catch (err) {
             // Revert on error
             setLikedByUser(previousLiked);
             setReactionsCount(previousCount);
-            console.error("Failed to toggle reaction:", err);
         } finally {
             setIsReactionPending(false);
         }
@@ -499,7 +492,6 @@ export default function SinglePostCard({ post }) {
                         commentImageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Comment image upload failed:", uploadErr);
                     commentImageUploadFailed = true;
                 }
             }
@@ -524,7 +516,6 @@ export default function SinglePostCard({ post }) {
                 setTimeout(() => setWarning(""), 3000);
             }
         } catch (err) {
-            console.error("Failed to create comment:", err);
             setError("Failed to create comment. Please try again.");
         }
     };
@@ -680,7 +671,6 @@ export default function SinglePostCard({ post }) {
                         editCommentImageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Edit comment image upload failed:", uploadErr);
                     editCommentImageUploadFailed = true;
                 }
 
@@ -706,7 +696,6 @@ export default function SinglePostCard({ post }) {
                 fetchLatestComments();
             }
         } catch (err) {
-            console.error("Failed to edit comment:", err);
             setError("Failed to edit comment. Please try again.");
         }
     };
@@ -726,8 +715,6 @@ export default function SinglePostCard({ post }) {
 
         try {
             const resp = await deleteComment(commentToDelete.comment_id);
-            console.log("Comment to delete: ", commentToDelete.comment_id)
-
             if (!resp.success) {
                 setError(resp.error || "Failed to delete comment");
                 setIsDeletingComment(false);
@@ -741,7 +728,6 @@ export default function SinglePostCard({ post }) {
             setShowDeleteCommentModal(false);
             setCommentToDelete(null);
         } catch (err) {
-            console.error("Failed to delete comment:", err);
             setError("Failed to delete comment. Please try again.");
         } finally {
             setIsDeletingComment(false);
@@ -781,7 +767,6 @@ export default function SinglePostCard({ post }) {
                         pending: false
                     }
                 }));
-                console.error("Failed to toggle comment reaction:", resp.error);
             } else {
                 // Update pending state
                 setCommentReactions(prev => ({
@@ -802,7 +787,6 @@ export default function SinglePostCard({ post }) {
                     pending: false
                 }
             }));
-            console.error("Failed to toggle comment reaction:", err);
         }
     };
 
@@ -821,7 +805,6 @@ export default function SinglePostCard({ post }) {
                 setLikesModalUsers([]);
             }
         } catch (err) {
-            console.error("Failed to fetch likes:", err);
             setLikesModalUsers([]);
         } finally {
             setLikesModalLoading(false);
@@ -844,7 +827,6 @@ export default function SinglePostCard({ post }) {
                 setLikesModalUsers([]);
             }
         } catch (err) {
-            console.error("Failed to fetch comment likes:", err);
             setLikesModalUsers([]);
         } finally {
             setLikesModalLoading(false);

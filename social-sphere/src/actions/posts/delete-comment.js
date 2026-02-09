@@ -16,7 +16,6 @@ export async function deleteComment(commentId) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Delete Comment Action Error:", error);
         return { success: false, error: error.message };
     }
 }

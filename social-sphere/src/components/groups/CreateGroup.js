@@ -94,8 +94,6 @@ export default function CreateGroup({ isOpen, onClose }) {
 
             const response = await createGroup(groupData);
 
-            console.log("RESPONSE", response)
-
             if (!response.success) {
                 setError(response.error || "Failed to create group");
                 setIsSubmitting(false);
@@ -116,30 +114,22 @@ export default function CreateGroup({ isOpen, onClose }) {
                         const validateResp = await validateUpload(response.FileId);
                         if (!validateResp.success) {
                             imageUploadFailed = true;
-                            console.log("no success")
                         }
-                        console.log("IMAGE SUCCESS")
                     } else {
-                        console.log("not ok")
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
             }
-
-            console.log("No image")
 
             // Navigate to group page (group was created successfully)
             setIsSubmitting(false);
             const url = imageUploadFailed
                 ? `/groups/${response.GroupId}?imageUploadFailed=true`
                 : `/groups/${response.GroupId}`;
-            console.log("Navigating to:", url, "GroupId:", response.GroupId);
             router.push(url);
         } catch (err) {
-            console.error("Failed to create group:", err);
             setError("Failed to create group. Please try again.");
             setIsSubmitting(false);
         }

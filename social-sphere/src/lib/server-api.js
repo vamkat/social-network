@@ -2,16 +2,26 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { propagation, context } from "@opentelemetry/api";
+import * as logger from "@/lib/logger.server";
 
 const API_BASE = process.env.GATEWAY
 
 export async function serverApiRequest(endpoint, options = {}) {
+    const method = options.method || "GET";
+    const start = performance.now();
+
+    logger.info("outgoing request @1 @2", "method", method, "url", endpoint);
+
     try {
         const cookieStore = await cookies();
         const jwt = cookieStore.get("jwt")?.value;
 
         const headers = { ...(options.headers || {}) };
         if (jwt) headers["Cookie"] = `jwt=${jwt}`;
+
+        // Inject W3C trace context (traceparent/tracestate) for distributed tracing
+        propagation.inject(context.active(), headers);
 
         const res = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
@@ -65,11 +75,12 @@ export async function serverApiRequest(endpoint, options = {}) {
 
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            // show error
-            console.log("ERROR: ", err);
+            const duration = Math.round(performance.now() - start);
+            const errMsg = err.error || err.message || "Unknown error";
 
-            // show response status
-            console.log("STATUS: ", res.status);
+            logger.error("request failed @1 @2 @3 @4 @5",
+                "method", method, "url", endpoint, "status", res.status, "error", errMsg, "duration_ms", duration);
+
             if (res.status === 403) {
                 return {ok: false, status: res.status, message: err.error || err.message || "Forbidden"}
             }
@@ -77,25 +88,32 @@ export async function serverApiRequest(endpoint, options = {}) {
                 return {ok: false, status: res.status, message: err.error || err.message || "Bad request"}
             }
             if (res.status === 401) {
-                console.log({ok: false, status: res.status, message: err.error || err.message || "Expired"})
                 cookieStore.delete("jwt");
                 redirect("/login");
             }
 
-            return {ok: false, status: res.status, message: err.error || err.message || "Unknown error"}
+            return {ok: false, status: res.status, message: errMsg}
         }
+
+        const duration = Math.round(performance.now() - start);
 
         // Handle empty response bodies (like delete endpoints)
         const text = await res.text();
         if (!text || text.trim() === '') {
+            logger.info("request succeeded @1 @2 @3 @4",
+                "method", method, "url", endpoint, "status", res.status, "duration_ms", duration);
             return {ok: true, data: null};
         } else {
-            console.log("Data: ", JSON.parse(text))
+            logger.info("request succeeded @1 @2 @3 @4",
+                "method", method, "url", endpoint, "status", res.status, "duration_ms", duration);
             return {ok: true, data: JSON.parse(text)};
         }
-        
+
     } catch (e) {
         if (e?.digest?.startsWith("NEXT_REDIRECT")) throw e;
+        const duration = Math.round(performance.now() - start);
+        logger.error("request exception @1 @2 @3 @4",
+            "method", method, "url", endpoint, "error", e?.message || "unknown", "duration_ms", duration);
         return {ok: false, message: "Network error"}
     }
 }

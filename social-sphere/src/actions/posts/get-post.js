@@ -17,7 +17,6 @@ export async function getPost(postId) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching post:", error);
         return { success: false, error: error.message };
     }
 }

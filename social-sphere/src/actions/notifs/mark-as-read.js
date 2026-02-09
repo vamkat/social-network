@@ -11,7 +11,6 @@ export async function markNotificationAsRead(notificationId) {
         });
         return { success: true };
     } catch (error) {
-        console.error("Error marking notification as read:", error);
         return { success: false, error: error.message };
     }
 }

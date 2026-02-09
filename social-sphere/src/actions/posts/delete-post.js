@@ -19,7 +19,6 @@ export async function deletePost(postId) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Delete Post Action Error:", error);
         return { success: false, error: error.message };
     }
 }

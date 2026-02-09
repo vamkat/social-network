@@ -22,7 +22,6 @@ export async function handleJoinRequest({ groupId, requesterId, accepted }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error handling join request:", error);
         return { success: false, error: error.message };
     }
 }

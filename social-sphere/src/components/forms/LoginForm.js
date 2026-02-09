@@ -49,7 +49,6 @@ export default function LoginForm() {
             window.location.href = "/feed/public";
 
         } catch (error) {
-            console.error("Login exception:", error);
             setError("An unexpected error occurred");
             setIsLoading(false);
         }
@@ -60,7 +59,7 @@ export default function LoginForm() {
             {/* Email/Username Field */}
             <div>
                 <label htmlFor="email" className="form-label pl-4 text-(--accent)">
-                    Email or Username
+                    Email
                 </label>
                 <input
                     id="email"
@@ -68,7 +67,7 @@ export default function LoginForm() {
                     type="email"
                     required
                     className="form-input"
-                    placeholder="Enter your email or username"
+                    placeholder="Enter your email"
                     disabled={isLoading}
                 />
             </div>

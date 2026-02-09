@@ -23,7 +23,6 @@ export async function markAsRead({convID , lastMsgID}) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Mark as read error: ", error);
         return { success: false, error: error.message };
     }
 }

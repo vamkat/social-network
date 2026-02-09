@@ -19,7 +19,6 @@ export async function deleteEvent(eventId) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Delete Event Action Error:", error);
         return { success: false, error: error.message };
     }
 }

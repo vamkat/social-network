@@ -20,7 +20,6 @@ export async function createPost(postData) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Create Post Action Error:", error);
         return { success: false, error: error.message };
     }
 }

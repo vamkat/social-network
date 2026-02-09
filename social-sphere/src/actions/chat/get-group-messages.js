@@ -28,7 +28,6 @@ export async function getGroupMessages({ groupId, boundary = null, limit = 50, g
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching group messages:", error);
         return { success: false, error: error.message };
     }
 }

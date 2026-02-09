@@ -85,7 +85,7 @@ export default function Navbar() {
                 const notifArrayBuffer = await notifResponse.arrayBuffer();
                 notifAudioBufferRef.current = await audioContextRef.current.decodeAudioData(notifArrayBuffer);
             } catch (err) {
-                console.error("Failed to load audio:", err);
+                return
             }
         };
 
@@ -150,7 +150,6 @@ export default function Navbar() {
 
     // Handle incoming private messages - update conversations in real-time
     const handleNewMessage = useCallback(async (msg) => {
-        console.log("New message received:", msg);
 
         // if the message is not mine, sound alert and glow
         if (msg.sender.id !== user.id) {
@@ -348,7 +347,7 @@ export default function Navbar() {
                     setConversations(result.data);
                 }
             } catch (error) {
-                console.error("Error fetching conversations:", error);
+                return
             } finally {
                 setIsLoadingConversations(false);
             }
@@ -413,7 +412,6 @@ export default function Navbar() {
                         setSearchResults([]);
                     }
                 } catch (error) {
-                    console.error("Search error:", error);
                     setSearchResults([]);
                 } finally {
                     setIsSearching(false);
@@ -446,7 +444,7 @@ export default function Navbar() {
             // redirect() in server actions throws a NEXT_REDIRECT error
             // which is handled by Next.js, so we can safely ignore it here
             if (!error?.message?.includes('NEXT_REDIRECT')) {
-                console.error('Logout error:', error);
+                return
             }
         }
     }

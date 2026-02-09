@@ -174,7 +174,7 @@ export default function MessagesContent({
                 });
             }
         } catch (error) {
-            console.error("Error loading more messages:", error);
+            return
         } finally {
             setIsLoadingMoreMessages(false);
             isLoadingMoreRef.current = false;
@@ -223,7 +223,6 @@ export default function MessagesContent({
         try {
             await sendPrivateMessage(interlocutorId, msgToSend);
         } catch (error) {
-            console.error("Error sending message:", error);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
             setMessageText(msgToSend);
         }

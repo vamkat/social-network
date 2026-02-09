@@ -118,7 +118,6 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
             }
@@ -157,7 +156,6 @@ export default function CreatePostGroup({ onPostCreated=null, groupId=null }) {
             }
             
         } catch (err) {
-            console.error("Failed to create post:", err);
             setError("Failed to create post. Please try again.");
         }
     };

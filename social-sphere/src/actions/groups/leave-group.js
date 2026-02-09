@@ -19,7 +19,6 @@ export async function leaveGroup({ groupId }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error leaving group:", error);
         return { success: false, error: error.message };
     }
 }

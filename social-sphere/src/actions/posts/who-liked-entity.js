@@ -17,7 +17,6 @@ export async function getWhoLikedEntity(entityID) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching user posts:", error);
         return { success: false, error: error.message };
     }
 }

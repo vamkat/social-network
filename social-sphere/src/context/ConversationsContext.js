@@ -75,7 +75,6 @@ export function ConversationsProvider({ initialConversations = [], children }) {
                 setHasMore(result.data.length >= 15);
             }
         } catch (error) {
-            console.error("Error loading more conversations:", error);
         } finally {
             setIsLoadingMore(false);
         }

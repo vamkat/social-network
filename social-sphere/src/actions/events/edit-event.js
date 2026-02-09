@@ -20,7 +20,6 @@ export async function editEvent({id , data}) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Edit Event Action Error:", error);
         return { success: false, error: error.message };
     }
 }

@@ -29,7 +29,6 @@ export async function createComment({ postId, commentBody, imageName, imageSize,
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error creating comment:", error);
         return { success: false, error: error.message };
     }
 }

@@ -16,7 +16,6 @@ export async function deleteNotification(notificationId) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error deleting notification:", error);
         return { success: false, error: error.message };
     }
 }

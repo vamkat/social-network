@@ -26,7 +26,6 @@ export async function getConv({first=false, beforeDate=null, limit}) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching groups:", error);
         return { success: false, error: error.message };
     }
 }

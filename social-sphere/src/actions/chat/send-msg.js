@@ -22,7 +22,6 @@ export async function sendMsg({interlocutor , msg}) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Create Event Action Error:", error);
         return { success: false, error: error.message };
     }
 }

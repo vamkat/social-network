@@ -35,7 +35,7 @@ export default function FriendsFeedContent({ initialPosts }) {
                 setHasMore(false);
             }
         } catch (error) {
-            console.error("Failed to load more posts:", error);
+            return
         } finally {
             setLoading(false);
         }

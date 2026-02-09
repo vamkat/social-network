@@ -21,7 +21,6 @@ export async function handleFollowRequest({ requesterId, accept }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error handling follow request:", error);
         return { success: false, error: error.message };
     }
 }

@@ -17,7 +17,6 @@ export async function getGroupPosts({ groupId, limit, offset= 0 }) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching groups:", error);
         return { success: false, error: error.message };
     }
 }

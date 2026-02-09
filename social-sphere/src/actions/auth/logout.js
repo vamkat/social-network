@@ -14,7 +14,6 @@ export async function logout() {
             return {success: false, status: res.status, error: res.message}
         }
     } catch (error) {
-        console.error("Logout Action Error:", error);
         return { success: false, error: error.message };
     }
 

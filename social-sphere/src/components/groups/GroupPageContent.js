@@ -121,7 +121,7 @@ export default function GroupPageContent({ group, firstPosts }) {
                 const arrayBuffer = await response.arrayBuffer();
                 audioBufferRef.current = await audioContextRef.current.decodeAudioData(arrayBuffer);
             } catch (err) {
-                console.error("Failed to load group message audio:", err);
+                return
             }
         };
 
@@ -276,7 +276,7 @@ export default function GroupPageContent({ group, firstPosts }) {
             }
             setMessagesFetched(true);
         } catch (error) {
-            console.error("Failed to fetch messages:", error);
+            return
         } finally {
             setIsLoadingMessages(false);
         }
@@ -309,7 +309,6 @@ export default function GroupPageContent({ group, firstPosts }) {
             // Server will send the confirmed message back through WebSocket
             // The handleGroupMessage callback will update the message to remove _pending
         } catch (error) {
-            console.error("Error sending message:", error);
             // Remove optimistic message and restore text on WebSocket error
             setMessages((prev) => prev.filter((m) => m.Id !== tempId));
             setMessageText(msgToSend);
@@ -431,7 +430,7 @@ export default function GroupPageContent({ group, firstPosts }) {
             }
             setEventsFetched(true);
         } catch (error) {
-            console.error("Failed to fetch events:", error);
+            return
         } finally {
             setLoadingEvents(false);
         }
@@ -491,7 +490,7 @@ export default function GroupPageContent({ group, firstPosts }) {
                 setHasMore(false);
             }
         } catch (error) {
-            console.error("Failed to load more posts:", error);
+            return
         } finally {
             setLoading(false);
         }

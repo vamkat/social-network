@@ -17,7 +17,6 @@ export async function searchGroups({ query, limit = 10, offset = 0 }) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error searching groups:", error);
         return { success: false, error: error.message };
     }
 }

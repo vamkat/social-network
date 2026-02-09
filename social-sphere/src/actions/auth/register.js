@@ -24,7 +24,6 @@ export async function register(userData) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Register Action Error:", error);
         return { success: false, error: error.message };
     }
 }

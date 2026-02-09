@@ -166,7 +166,6 @@ export default function PostCard({ post, onDelete }) {
                 setHasMore(commentsCount > 1);
             }
         } catch (error) {
-            console.error("Failed to fetch last comment:", error);
         } finally {
             setLoading(false);
         }
@@ -204,7 +203,7 @@ export default function PostCard({ post, onDelete }) {
                 setHasMore(comments.length + result.data.length < commentsCount);
             }
         } catch (error) {
-            console.error("Failed to load more comments:", error);
+            return
         } finally {
             setLoadingMore(false);
         }
@@ -380,7 +379,6 @@ export default function PostCard({ post, onDelete }) {
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
 
@@ -399,7 +397,6 @@ export default function PostCard({ post, onDelete }) {
             // window.location.reload();
 
         } catch (err) {
-            console.error("Failed to edit post:", err);
             setError("Failed to edit post. Please try again.");
         }
     };
@@ -437,7 +434,6 @@ export default function PostCard({ post, onDelete }) {
             }
 
         } catch (err) {
-            console.error("Failed to delete post:", err);
             setError("Failed to delete post. Please try again.");
             setIsDeleting(false);
             setShowDeleteModal(false);
@@ -465,13 +461,11 @@ export default function PostCard({ post, onDelete }) {
                 // Revert on error
                 setLikedByUser(previousLiked);
                 setReactionsCount(previousCount);
-                console.error("Failed to toggle reaction:", resp.error);
             }
         } catch (err) {
             // Revert on error
             setLikedByUser(previousLiked);
             setReactionsCount(previousCount);
-            console.error("Failed to toggle reactions:", err);
         } finally {
             setIsReactionPending(false);
         }
@@ -492,7 +486,6 @@ export default function PostCard({ post, onDelete }) {
                 setLikesModalUsers([]);
             }
         } catch (err) {
-            console.error("Failed to fetch likes:", err);
             setLikesModalUsers([]);
         } finally {
             setLikesModalLoading(false);
@@ -549,7 +542,6 @@ export default function PostCard({ post, onDelete }) {
                         commentImageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Comment image upload failed:", uploadErr);
                     commentImageUploadFailed = true;
                 }
             }
@@ -574,7 +566,6 @@ export default function PostCard({ post, onDelete }) {
                 setTimeout(() => setWarning(""), 3000);
             }
         } catch (err) {
-            console.error("Failed to create comment:", err);
             setError("Failed to create comment. Please try again.");
         }
     };
@@ -730,7 +721,6 @@ export default function PostCard({ post, onDelete }) {
                         editCommentImageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Edit comment image upload failed:", uploadErr);
                     editCommentImageUploadFailed = true;
                 }
 
@@ -756,7 +746,6 @@ export default function PostCard({ post, onDelete }) {
                 fetchLastComment();
             }
         } catch (err) {
-            console.error("Failed to edit comment:", err);
             setError("Failed to edit comment. Please try again.");
         }
     };
@@ -790,7 +779,6 @@ export default function PostCard({ post, onDelete }) {
             setShowDeleteCommentModal(false);
             setCommentToDelete(null);
         } catch (err) {
-            console.error("Failed to delete comment:", err);
             setError("Failed to delete comment. Please try again.");
         } finally {
             setIsDeletingComment(false);
@@ -830,7 +818,6 @@ export default function PostCard({ post, onDelete }) {
                         pending: false
                     }
                 }));
-                console.error("Failed to toggle comment reaction:", resp.error);
             } else {
                 // Update pending state
                 setCommentReactions(prev => ({
@@ -851,7 +838,6 @@ export default function PostCard({ post, onDelete }) {
                     pending: false
                 }
             }));
-            console.error("Failed to toggle comment reaction:", err);
         }
     };
 
@@ -871,7 +857,6 @@ export default function PostCard({ post, onDelete }) {
                 setLikesModalUsers([]);
             }
         } catch (err) {
-            console.error("Failed to fetch comment likes:", err);
             setLikesModalUsers([]);
         } finally {
             setLikesModalLoading(false);
