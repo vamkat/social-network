@@ -32,7 +32,6 @@ export async function login(credentials) {
         };
 
     } catch (error) {
-        console.error("Login Action Error:", error);
         return { success: false, error: error.message };
     }
 }

@@ -22,7 +22,6 @@ export async function removeFromGroup({ groupId, memberId }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error removing member from group:", error);
         return { success: false, error: error.message };
     }
 }

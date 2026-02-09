@@ -4,6 +4,7 @@ const nextConfig = {
   reactStrictMode: false,
   reactCompiler: true,
   output: 'standalone',
+  serverExternalPackages: ["@grpc/grpc-js"],
   images: {
     remotePatterns: [
       {

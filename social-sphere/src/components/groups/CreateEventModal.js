@@ -137,7 +137,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Event image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
             }
@@ -177,7 +176,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess, groupId }
                 onSuccess(newEvent);
             }
         } catch (err) {
-            console.error("Failed to create event:", err);
             setError("Failed to create event. Please try again.");
             setIsSubmitting(false);
         }

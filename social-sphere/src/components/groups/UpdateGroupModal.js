@@ -137,7 +137,6 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Group image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
             }
@@ -156,7 +155,6 @@ export default function UpdateGroupModal({ isOpen, onClose, onSuccess, group }) 
                 onSuccess();
             }
         } catch (err) {
-            console.error("Failed to update group:", err);
             setError("Failed to update group. Please try again.");
             setIsSubmitting(false);
         }

@@ -188,7 +188,6 @@ export default function ProfileForm({ user }) {
                         imageUploadFailed = true;
                     }
                 } catch (uploadError) {
-                    console.error("Avatar upload failed:", uploadError);
                     imageUploadFailed = true;
                 }
             }
@@ -212,7 +211,6 @@ export default function ProfileForm({ user }) {
             }
 
         } catch (error) {
-            console.error("Profile update error:", error);
             setMessage({ success: false, text: error.message || "An unexpected error occurred" });
         } finally {
             setIsLoading(false);

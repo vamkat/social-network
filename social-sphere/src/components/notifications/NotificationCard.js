@@ -44,12 +44,8 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
     const handleAction = async (content, accept) => {
         setIsActing(true);
         try {
-            console.log(`calling ${content.callback} with value ${accept}`)
             const result = await content.callback(accept);
-            console.log("result from acting", result)
             if (result?.success) {
-
-                console.log("Updating optimistically")
                 // optimistically update acted state
                 setActed(true);
 
@@ -59,7 +55,7 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                 onUpdate?.(notification.id, { acted: true, seen: true });
             }
         } catch (error) {
-            console.error("Error handling notification action:", error);
+            return
         } finally {
             setIsActing(false);
         }
@@ -74,7 +70,7 @@ export default function NotificationCard({ notification, onDelete, onUpdate }) {
                 onDelete?.(notification.id);
             }
         } catch (error) {
-            console.error("Error deleting notification:", error);
+            return
         } finally {
             setIsDeleting(false);
         }

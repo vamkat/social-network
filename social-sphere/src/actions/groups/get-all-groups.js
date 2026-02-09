@@ -17,7 +17,6 @@ export async function getAllGroups({ limit, offset }) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching groups:", error);
         return { success: false, error: error.message };
     }
 }

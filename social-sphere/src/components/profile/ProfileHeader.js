@@ -72,11 +72,9 @@ export function ProfileHeader({ user, onUnfollow=null }) {
             const response = await handleFollowRequest({ requesterId: user.user_id, accept: true });
             if (response.success) {
                 setUserAskedToFollow(false);
-            } else {
-                console.error("Error accepting follow request:", response.error);
             }
         } catch (error) {
-            console.error("Unexpected error accepting follow request:", error);
+            return
         } finally {
             setRequestLoading(false);
         }
@@ -89,11 +87,9 @@ export function ProfileHeader({ user, onUnfollow=null }) {
             const response = await handleFollowRequest({ requesterId: user.user_id, accept: false });
             if (response.success) {
                 setUserAskedToFollow(false);
-            } else {
-                console.error("Error declining follow request:", response.error);
             }
         } catch (error) {
-            console.error("Unexpected error declining follow request:", error);
+            return
         } finally {
             setRequestLoading(false);
         }
@@ -110,16 +106,12 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                 if (response.success) {
                     setIsFollowing(false);
                     if (onUnfollow) onUnfollow({isPublic, isFollowing: false});
-                } else {
-                    console.error("Error unfollowing user:", response.error);
                 }
             } else if (isPending) {
                 const response = await unfollowUser(user.user_id);
                 if (response.success) {
                     setIsPending(false);
-                } else {
-                    console.error("Error cancelling follow request:", response.error);
-                }
+                } 
             } else {
                 // Handle Follow
                 const response = await followUser(user.user_id);
@@ -133,14 +125,12 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                         setIsPending(false);
                     } else {
                         // Fallback logic if needed, or error state
-                        console.error("Unexpected follow state:", response.data);
+                        return
                     }
-                } else {
-                    console.error("Error following user:", response.error);
                 }
             }
         } catch (error) {
-            console.error("Unexpected error handling follow action:", error);
+            return
         } finally {
             setIsLoading(false);
         }
@@ -161,11 +151,9 @@ export function ProfileHeader({ user, onUnfollow=null }) {
             if (response.success) {
                 setIsPublic(newPrivacyState);
                 setShowPrivacyModal(false);
-            } else {
-                console.error("Failed to update privacy settings");
-            }
+            } 
         } catch (error) {
-            console.error("Error updating privacy:", error);
+            return
         } finally {
             setIsLoading(false);
         }
@@ -203,7 +191,7 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                 setStatsModalHasMore(resp.data.length < totalCount);
             }
         } catch (err) {
-            console.error(`Failed to fetch ${type}:`, err);
+            return
         } finally {
             setStatsModalLoading(false);
         }
@@ -233,7 +221,7 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                 setStatsModalHasMore(newItems.length < totalCount);
             }
         } catch (err) {
-            console.error(`Failed to load more ${statsModalType}:`, err);
+            return
         } finally {
             setStatsModalLoadingMore(false);
         }

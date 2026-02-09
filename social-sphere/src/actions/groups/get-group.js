@@ -16,7 +16,6 @@ export async function getGroup(groupId) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error getting group:", error);
         return { success: false, error: error.message };
     }
 }

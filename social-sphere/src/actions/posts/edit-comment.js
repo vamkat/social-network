@@ -20,7 +20,6 @@ export async function editComment(commentData) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Edit Comment Action Error:", error);
         return { success: false, error: error.message };
     }
 }

@@ -20,7 +20,6 @@ export async function toggleReaction(postId) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Toggle Reaction Action Error:", error);
         return { success: false, error: error.message };
     }
 }

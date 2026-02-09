@@ -18,7 +18,6 @@ export async function cancelJoinRequest({ groupId }) {
 
         return { success: true, data: response };
     } catch (error) {
-        console.error("Error canceling join request:", error);
         return { success: false, error: error.message };
     }
 }

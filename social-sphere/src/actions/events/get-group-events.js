@@ -16,7 +16,6 @@ export async function getGroupEvents({ groupId, limit = 10, offset = 0 }) {
         return { success: true, data: apiResp.data };
 
     } catch (error) {
-        console.error("Get Group Events Action Error:", error);
         return { success: false, error: error.message };
     }
 }

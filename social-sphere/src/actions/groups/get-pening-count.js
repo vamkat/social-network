@@ -17,7 +17,6 @@ export async function getPendingRequestsCount({ groupId }) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching user groups: ", error);
         return { success: false, error: error.message };
     }
 }

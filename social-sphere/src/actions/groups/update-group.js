@@ -26,7 +26,6 @@ export async function updateGroup({groupId ,data}) {
             UploadUrl: response.data.UploadUrl
         };
     } catch (error) {
-        console.error("Error updating group:", error);
         return { success: false, error: error.message };
     }
 }

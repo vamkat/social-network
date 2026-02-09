@@ -42,7 +42,7 @@ export default function PublicFeedContent({ initialPosts }) {
                 setHasMore(false);
             }
         } catch (error) {
-            console.error("Failed to load more posts:", error);
+            return
         } finally {
             setLoading(false);
         }

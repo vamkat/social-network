@@ -158,7 +158,6 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
                         newImageUrl = existingImageUrl;
                     }
                 } catch (uploadErr) {
-                    console.error("Event image upload failed:", uploadErr);
                     imageUploadFailed = true;
                     newImageUrl = existingImageUrl;
                 }
@@ -190,7 +189,6 @@ export default function EditEventModal({ isOpen, onClose, onSuccess, event }) {
                 onSuccess(updatedEvent);
             }
         } catch (err) {
-            console.error("Failed to update event:", err);
             setError("Failed to update event. Please try again.");
             setIsSubmitting(false);
         }

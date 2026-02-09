@@ -16,7 +16,6 @@ export async function unfollowUser(userId) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error unfollowing user:", error);
         return { success: false, error: error.message };
     }
 }

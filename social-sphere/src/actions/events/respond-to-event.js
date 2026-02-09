@@ -8,7 +8,6 @@ export async function respondToEvent({id, going}) {
         
         const url = `/events/${id}/response`;
 
-        console.log("answering: ", url , going)
         const apiResp = await serverApiRequest(url, {
             method: "POST",
             body: JSON.stringify({ going }),
@@ -24,7 +23,6 @@ export async function respondToEvent({id, going}) {
         return { success: true };
 
     } catch (error) {
-        console.error("Respond to Event Action Error:", error);
         return { success: false, error: error.message };
     }
 }

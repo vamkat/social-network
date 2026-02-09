@@ -17,7 +17,6 @@ export async function getGroupMembers({ group_id, limit, offset }) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching group members: ", error);
         return { success: false, error: error.message };
     }
 }

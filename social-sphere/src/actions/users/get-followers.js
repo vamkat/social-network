@@ -19,7 +19,6 @@ export async function getFollowers({ userId, limit = 100, offset = 0 } = {}) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching followers:", error);
         return { success: false, error: error.message };
     }
 }

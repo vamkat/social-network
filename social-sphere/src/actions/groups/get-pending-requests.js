@@ -15,7 +15,6 @@ export async function getPendingRequests({ groupId, limit = 20, offset = 0 }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error fetching pending requests:", error);
         return { success: false, error: error.message };
     }
 }

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useStore } from "@/store/store";
+import * as logger from "@/lib/logger.client";
 
 const LiveSocketContext = createContext(null);
 
@@ -36,7 +37,7 @@ export function LiveSocketProvider({ children, wsUrl }) {
         }
 
         if (wsRef.current?.readyState === WebSocket.OPEN) {
-            console.log("[LiveSocket] Already connected");
+            logger.debug("already connected");
             return;
         }
 
@@ -56,13 +57,13 @@ export function LiveSocketProvider({ children, wsUrl }) {
             wsRef.current = ws;
 
             ws.onopen = () => {
-                console.log("[LiveSocket] Connected");
+                logger.info("connected");
                 setConnectionState(ConnectionState.CONNECTED);
                 reconnectAttemptsRef.current = 0;
 
                 // Re-subscribe to any groups we were subscribed to (for reconnections)
                 if (subscribedGroupsRef.current.size > 0) {
-                    console.log("[LiveSocket] Re-subscribing to groups:", [...subscribedGroupsRef.current]);
+                    logger.info("re-subscribing to groups @1", "count", subscribedGroupsRef.current.size);
                     subscribedGroupsRef.current.forEach((groupId) => {
                         ws.send(`sub:${groupId}`);
                     });
@@ -84,11 +85,11 @@ export function LiveSocketProvider({ children, wsUrl }) {
                     for (const msg of messages) {
                         if (msg.group_id || msg.GroupId) {
                             // Group message (handle both snake_case and PascalCase)
-                            console.log("[LiveSocket] Group message received:", msg);
+                            logger.info("group message received @1", "group_id", msg.group_id || msg.GroupId);
                             groupMessageListenersRef.current.forEach((listener) => listener(msg));
                         } else if (msg.conversation_id || msg.ConversationId) {
                             // Private message (handle both snake_case and PascalCase)
-                            console.log("[LiveSocket] Private message received:", msg);
+                            logger.info("private message received @1", "conversation_id", msg.conversation_id || msg.ConversationId);
 
                             // Add to unread if not from current user
                             const senderId = msg.sender?.id || msg.Sender?.id;
@@ -102,24 +103,24 @@ export function LiveSocketProvider({ children, wsUrl }) {
                             privateMessageListenersRef.current.forEach((listener) => listener(msg));
                         } else if (msg.notification_type || msg.type) {
                             // Notification
-                            console.log("[LiveSocket] Notification received:", msg);
+                            logger.info("notification received @1", "type", msg.notification_type || msg.type);
                             setUnreadNotifications((prev) => [...prev, msg]);
                             notificationListenersRef.current.forEach((listener) => listener(msg));
                         } else {
-                            console.log("[LiveSocket] Unknown message type:", msg);
+                            logger.warn("unknown message type received");
                         }
                     }
                 } catch (err) {
-                    console.error("[LiveSocket] Failed to parse message:", err);
+                    logger.error("failed to parse message @1", "error", err.message);
                 }
             };
 
-            ws.onerror = (error) => {
-                console.error("[LiveSocket] Error:", error);
+            ws.onerror = () => {
+                logger.error("connection error");
             };
 
             ws.onclose = (event) => {
-                console.log("[LiveSocket] Disconnected:", event.code, event.reason);
+                logger.info("disconnected @1 @2", "code", event.code, "reason", event.reason || "none");
                 setConnectionState(ConnectionState.DISCONNECTED);
 
                 // Reconnect if not a clean close and user is still logged in
@@ -127,7 +128,7 @@ export function LiveSocketProvider({ children, wsUrl }) {
                     const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
                     reconnectAttemptsRef.current++;
 
-                    console.log(`[LiveSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`);
+                    logger.info("reconnecting @1 @2", "delay_ms", delay, "attempt", reconnectAttemptsRef.current);
 
                     reconnectTimeoutRef.current = setTimeout(() => {
                         connect();
@@ -135,13 +136,13 @@ export function LiveSocketProvider({ children, wsUrl }) {
                 }
             };
         } catch (err) {
-            console.error("[LiveSocket] Failed to create connection:", err);
+            logger.error("failed to create connection @1", "error", err.message);
             setConnectionState(ConnectionState.DISCONNECTED);
         }
     }, [user]);
 
     const disconnect = useCallback((clearSubscriptions = true) => {
-        console.log("[LiveSocket] Disconnecting...");
+        logger.info("disconnecting");
 
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
@@ -180,7 +181,7 @@ export function LiveSocketProvider({ children, wsUrl }) {
         // Send immediately (caller should ensure WS is connected)
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(`sub:${groupId}`);
-            console.log("[LiveSocket] Subscribed to group:", groupId);
+            logger.info("subscribed to group @1", "group_id", groupId);
         }
     }, []);
 
@@ -192,7 +193,7 @@ export function LiveSocketProvider({ children, wsUrl }) {
         subscribedGroupsRef.current.delete(groupId);
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(`unsub:${groupId}`);
-            console.log("[LiveSocket] Unsubscribed from group:", groupId);
+            logger.info("unsubscribed from group @1", "group_id", groupId);
         }
     }, []);
 
@@ -244,7 +245,7 @@ export function LiveSocketProvider({ children, wsUrl }) {
             });
 
             wsRef.current.send(`private_chat:${payload}`);
-            console.log("[LiveSocket] Sent private message");
+            logger.info("sent private message @1", "interlocutor_id", interlocutorId);
 
             // The server will send the created message back directly to the sender
             // We'll resolve immediately since the message will come through onmessage
@@ -266,7 +267,7 @@ export function LiveSocketProvider({ children, wsUrl }) {
             });
 
             wsRef.current.send(`group_chat:${payload}`);
-            console.log("[LiveSocket] Sent group message");
+            logger.info("sent group message @1", "group_id", groupId);
 
             // The server will send the created message back directly to the sender
             resolve({ sent: true });

@@ -28,7 +28,6 @@ export default function NotificationsContent({ initialNotifications }) {
         setIsMarkingAll(true);
         try {
             const result = await markAllNotificationsAsRead();
-            console.log("resowdjncjkqenvfjn", result)
             if (result.success) {
                 // Optionally update UI to reflect all read
                 setNotifications((prev) =>
@@ -38,7 +37,7 @@ export default function NotificationsContent({ initialNotifications }) {
                 setUnreadNotifs(0)
             }
         } catch (error) {
-            console.error("Error marking all as read:", error);
+            return
         } finally {
             setIsMarkingAll(false);
         }
@@ -58,7 +57,7 @@ export default function NotificationsContent({ initialNotifications }) {
                 setHasMore(false);
             }
         } catch (error) {
-            console.error("Error loading more notifications:", error);
+            return
         } finally {
             setIsLoadingMore(false);
         }

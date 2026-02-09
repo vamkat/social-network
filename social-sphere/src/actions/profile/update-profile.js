@@ -20,7 +20,6 @@ export async function updateProfileInfo(data) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error updating profile info:", error);
         return { success: false, error: error.message };
     }
 }
@@ -45,7 +44,6 @@ export async function updateProfilePrivacy({ bool }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error updating profile privacy:", error);
         return { success: false, error: error.message };
     }
 }
@@ -70,7 +68,6 @@ export async function updateProfileEmail({ email }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error updating profile email:", error);
         return { success: false, error: error.message };
     }
 }
@@ -96,7 +93,6 @@ export async function updateProfilePassword({ oldPassword, newPassword }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error updating profile password:", error);
         return { success: false, error: error.message };
     }
 }

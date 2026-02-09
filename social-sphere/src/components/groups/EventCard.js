@@ -161,7 +161,6 @@ export default function EventCard({ event, onDelete, onEdit }) {
                 onDelete(event.event_id);
             }
         } catch (err) {
-            console.error("Failed to delete event:", err);
             setError("Failed to delete event. Please try again.");
             setIsDeleting(false);
             setShowDeleteModal(false);

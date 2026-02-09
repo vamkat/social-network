@@ -17,7 +17,6 @@ export async function getNotifCount() {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching notif count:", error);
         return { success: false, error: error.message };
     }
 }

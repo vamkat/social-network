@@ -20,7 +20,6 @@ export async function editPost(postData) {
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Edit Post Action Error:", error);
         return { success: false, error: error.message };
     }
 }

@@ -19,7 +19,6 @@ export async function requestJoinGroup({ groupId }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error requesting to join group:", error);
         return { success: false, error: error.message };
     }
 }

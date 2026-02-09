@@ -16,7 +16,6 @@ export async function getComments({ postId, limit = 10, offset = 0 }) {
 
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("Error fetching comments:", error);
         return { success: false, error: error.message };
     }
 }

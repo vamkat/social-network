@@ -31,7 +31,6 @@ export async function getMessages({ interlocutorId, boundary = null, limit = 50,
         return { success: true, data: response.data };
 
     } catch (error) {
-        console.error("Error fetching messages:", error);
         return { success: false, error: error.message };
     }
 }

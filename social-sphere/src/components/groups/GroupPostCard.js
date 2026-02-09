@@ -149,7 +149,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 setHasMore(commentsCount > 1);
             }
         } catch (error) {
-            console.error("Failed to fetch last comment:", error);
         } finally {
             setLoading(false);
         }
@@ -187,7 +186,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 setHasMore(comments.length + result.comments.length < commentsCount);
             }
         } catch (error) {
-            console.error("Failed to load more comments:", error);
         } finally {
             setLoadingMore(false);
         }
@@ -302,7 +300,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                         imageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Image upload failed:", uploadErr);
                     imageUploadFailed = true;
                 }
 
@@ -329,7 +326,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             }
 
         } catch (err) {
-            console.error("Failed to edit post:", err);
             setError("Failed to edit post. Please try again.");
         }
     };
@@ -345,9 +341,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
         setError("");
 
         try {
-            console.log("deleting: ", post.post_id)
             const resp = await deletePost(post.post_id);
-            console.log("delete resp: ", resp)
             if (!resp.success) {
                 setError(resp.error || "Failed to delete post");
                 setIsDeleting(false);
@@ -368,7 +362,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             }
 
         } catch (err) {
-            console.error("Failed to delete post:", err);
             setError("Failed to delete post. Please try again.");
             setIsDeleting(false);
             setShowDeleteModal(false);
@@ -456,7 +449,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                         commentImageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Comment image upload failed:", uploadErr);
                     commentImageUploadFailed = true;
                 }
             }
@@ -481,7 +473,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 setTimeout(() => setWarning(""), 3000);
             }
         } catch (err) {
-            console.error("Failed to create comment:", err);
             setError("Failed to create comment. Please try again.");
         }
     };
@@ -637,7 +628,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                         editCommentImageUploadFailed = true;
                     }
                 } catch (uploadErr) {
-                    console.error("Edit comment image upload failed:", uploadErr);
                     editCommentImageUploadFailed = true;
                 }
 
@@ -663,7 +653,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 fetchLastComment();
             }
         } catch (err) {
-            console.error("Failed to edit comment:", err);
             setError("Failed to edit comment. Please try again.");
         }
     };
@@ -697,7 +686,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             setShowDeleteCommentModal(false);
             setCommentToDelete(null);
         } catch (err) {
-            console.error("Failed to delete comment:", err);
             setError("Failed to delete comment. Please try again.");
         } finally {
             setIsDeletingComment(false);
@@ -737,7 +725,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                         pending: false
                     }
                 }));
-                console.error("Failed to toggle comment reaction:", resp.error);
             } else {
                 // Update pending state
                 setCommentReactions(prev => ({
@@ -758,7 +745,7 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                     pending: false
                 }
             }));
-            console.error("Failed to toggle comment reaction:", err);
+            ror("Failed to toggle comment reaction:", err);
         }
     };
 
@@ -777,7 +764,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 setLikesModalUsers([]);
             }
         } catch (err) {
-            console.error("Failed to fetch likes:", err);
             setLikesModalUsers([]);
         } finally {
             setLikesModalLoading(false);
@@ -800,7 +786,6 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                 setLikesModalUsers([]);
             }
         } catch (err) {
-            console.error("Failed to fetch comment likes:", err);
             setLikesModalUsers([]);
         } finally {
             setLikesModalLoading(false);

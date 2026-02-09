@@ -101,7 +101,6 @@ export function GroupHeader({ group }) {
                     setPendingCount(null);
                 }
             } catch (error) {
-                console.error("Error fetching pending count:", error);
                 setPendingCount(null);
             }
         };
@@ -118,11 +117,9 @@ export function GroupHeader({ group }) {
             const response = await requestJoinGroup({ groupId: group.group_id });
             if (response.success) {
                 setPendingRequest(true);
-            } else {
-                console.error("Error requesting to join:", response.error);
             }
         } catch (error) {
-            console.error("Error requesting to join:", error);
+            return
         } finally {
             setIsLoading(false);
         }
@@ -136,11 +133,9 @@ export function GroupHeader({ group }) {
             const response = await cancelJoinRequest({ groupId: group.group_id });
             if (response.success) {
                 setPendingRequest(false);
-            } else {
-                console.error("Error canceling request:", response.error);
-            }
+            } 
         } catch (error) {
-            console.error("Error canceling request:", error);
+            return
         } finally {
             setIsLoading(false);
         }
@@ -161,11 +156,9 @@ export function GroupHeader({ group }) {
                     setMembersCount(prev => prev + 1);
                     setIsMember(true);
                 }
-            } else {
-                console.error("Error responding to invite:", response.error);
-            }
+            } 
         } catch (error) {
-            console.error("Error responding to invite:", error);
+            return
         } finally {
             setIsLoading(false);
         }
@@ -181,11 +174,9 @@ export function GroupHeader({ group }) {
                 setIsMember(false);
                 setMembersCount(prev => prev - 1);
                 setShowLeaveModal(false);
-            } else {
-                console.error("Error leaving group:", response.error);
             }
         } catch (error) {
-            console.error("Error leaving group:", error);
+            return
         } finally {
             setIsLoading(false);
         }
@@ -216,7 +207,6 @@ export function GroupHeader({ group }) {
                     setHasMore(false);
                 }
             } catch (error) {
-                console.error("Error fetching followers:", error);
                 setFollowers([]);
                 setHasMore(false);
             } finally {
@@ -252,7 +242,7 @@ export function GroupHeader({ group }) {
                 setHasMore(false);
             }
         } catch (error) {
-            console.error("Error loading more followers:", error);
+            return
         } finally {
             setIsLoadingMore(false);
         }
@@ -288,11 +278,9 @@ export function GroupHeader({ group }) {
                 setTimeout(() => {
                     handleCloseInviteModal();
                 }, 1500);
-            } else {
-                console.error("Error inviting users:", response.error);
-            }
+            } 
         } catch (error) {
-            console.error("Error inviting users:", error);
+            return
         } finally {
             setIsInviting(false);
         }
@@ -325,7 +313,6 @@ export function GroupHeader({ group }) {
                 setHasMorePending(false);
             }
         } catch (error) {
-            console.error("Error fetching pending requests:", error);
             setPendingUsers([]);
             setHasMorePending(false);
         } finally {
@@ -359,7 +346,7 @@ export function GroupHeader({ group }) {
                 setHasMorePending(false);
             }
         } catch (error) {
-            console.error("Error loading more pending users:", error);
+            return
         } finally {
             setIsLoadingMorePending(false);
         }
@@ -393,11 +380,9 @@ export function GroupHeader({ group }) {
                     setMembersCount((prev) => prev + 1);
                 }
 
-            } else {
-                console.error("Error handling request:", response.error);
             }
         } catch (error) {
-            console.error("Error handling request:", error);
+            return
         } finally {
             setProcessingUser(null);
         }
@@ -427,7 +412,6 @@ export function GroupHeader({ group }) {
                 setHasMoreMembers(false);
             }
         } catch (error) {
-            console.error("Error fetching members:", error);
             setMembers([]);
             setHasMoreMembers(false);
         } finally {
@@ -461,7 +445,7 @@ export function GroupHeader({ group }) {
                 setHasMoreMembers(false);
             }
         } catch (error) {
-            console.error("Error loading more members:", error);
+            return
         } finally {
             setIsLoadingMoreMembers(false);
         }
@@ -484,11 +468,9 @@ export function GroupHeader({ group }) {
             if (response.success) {
                 setMembers((prev) => prev.filter((m) => m.user_id !== memberId));
                 setMembersCount((prev) => prev - 1);
-            } else {
-                console.error("Error removing member:", response.error);
             }
         } catch (error) {
-            console.error("Error removing member:", error);
+            return
         } finally {
             setRemovingMember(null);
         }
