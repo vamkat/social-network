@@ -17,6 +17,7 @@ import (
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	"social-network/shared/go/models"
+	"social-network/shared/go/pprof"
 	redis_connector "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
 	"social-network/shared/go/retrieveusers"
@@ -163,6 +164,12 @@ func Run() {
 		tele.Info(ctx, "Starting server at @1", "address", server.Addr)
 		srvErr <- server.ListenAndServe()
 	}()
+
+	//
+	//
+	//
+	// pprof
+	pprof.StartPprof("127.0.0.1:6061")
 
 	//
 	//

@@ -766,5 +766,13 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.UpdateLastRead())
 
+	mux.HandleFunc("/testing/nomid", h.NoMid)
+
+	SetEndpoint("/testing/withmid").
+		AllowedMethod("GET").
+		RateLimit(IP, 1_000_000_000, 1).
+		EnrichContext().
+		Finalize(h.WithMid)
+
 	return mux
 }

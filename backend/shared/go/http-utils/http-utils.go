@@ -65,7 +65,7 @@ func WriteJSON(ctx context.Context, w http.ResponseWriter, code int, v any) erro
 		return err
 	}
 
-	tele.Info(ctx, "sending this: @1", "data", string(b))
+	// tele.Info(ctx, "sending this: @1", "data", string(b))
 
 	_, err = w.Write(b)
 	return err

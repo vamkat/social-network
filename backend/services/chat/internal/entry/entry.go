@@ -17,6 +17,7 @@ import (
 	"social-network/shared/go/gorpc"
 	"social-network/shared/go/models"
 	postgresql "social-network/shared/go/postgre"
+	"social-network/shared/go/pprof"
 	rds "social-network/shared/go/redis"
 	"social-network/shared/go/retrievemedia"
 	"social-network/shared/go/retrieveusers"
@@ -172,7 +173,7 @@ func Run() error {
 		tele.Fatalf("failed to create server: %s", err.Error())
 	}
 
-	gorpc.StartPprof("127.0.0.1:6060")
+	pprof.StartPprof("127.0.0.1:6060")
 
 	go func() {
 		tele.Info(ctx, "Starting grpc server at port: @1", "port", cfgs.GrpcServerPort)

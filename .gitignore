@@ -8,6 +8,10 @@
 __debug_bin*
 backend/test.jpg
 
+backend/shared/go/commonerrors/commonerrors.test
+backend/shared/go/commonerrors/cpu.out
+backend/shared/go/commonerrors/mem.out
+
 test_output
 downloads
 .idea

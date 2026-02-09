@@ -24,6 +24,13 @@ func FormatValue(v any) string {
 	return formatValueIndented(v, 0, make(map[uintptr]bool))
 }
 
+const (
+	repeatedSpaces string = "" +
+		"                                                                " +
+		"                                                                "
+	indentUnit int = 3
+)
+
 // formatValueIndented recursively formats a value with indentation.
 //
 // Parameters:
@@ -111,8 +118,10 @@ func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 		return out
 	}
 
-	indent := strings.Repeat("   ", depth)
-	nextIndent := strings.Repeat("   ", depth+1)
+	// indent := strings.Repeat("   ", depth)
+	// nextIndent := strings.Repeat("   ", depth+1)
+	indent := repeatedSpaces[:depth*indentUnit]
+	nextIndent := repeatedSpaces[:(depth+1)*indentUnit]
 
 	switch val.Kind() {
 
@@ -129,7 +138,9 @@ func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 			fieldType := typ.Field(i)
 			fieldVal := val.Field(i)
 
-			b.WriteString(nextIndent + fieldType.Name + ": ")
+			b.WriteString(nextIndent)
+			b.WriteString(fieldType.Name)
+			b.WriteString(": ")
 
 			if fieldVal.CanInterface() {
 				b.WriteString(formatValueIndented(
@@ -152,6 +163,7 @@ func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 
 		for _, key := range val.MapKeys() {
 			b.WriteString(nextIndent)
+			// TODO: Check this for heap alloc
 			b.WriteString(fmt.Sprintf(
 				"%v: %s\n",
 				key.Interface(),
@@ -159,7 +171,8 @@ func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 			))
 		}
 
-		b.WriteString(indent + "}")
+		b.WriteString(indent)
+		b.WriteString("}")
 		return b.String()
 
 	case reflect.Slice, reflect.Array:
@@ -177,7 +190,8 @@ func formatValueIndented(v any, depth int, seen map[uintptr]bool) (out string) {
 			}
 		}
 
-		b.WriteString(indent + " ]")
+		b.WriteString(indent)
+		b.WriteString(" ]")
 		return b.String()
 
 	default:

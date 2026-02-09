@@ -46,6 +46,9 @@ func StartTest(ctx context.Context, cfgs configs.Configs) error {
 		cfgs.ChatGRPCAddr,
 		ct.CommonKeys(),
 	)
+	if err != nil {
+		return fmt.Errorf("failed to connect to chat service: %s", err.Error())
+	}
 	// Set Up Users.
 	// Start with a clean users db or make sure the users.json exists and has valid user A, B and C ids
 	// 	[
@@ -227,7 +230,7 @@ func FollowUser(ctx context.Context) error {
 
 func TestCreateMessage(ctx context.Context) error {
 	count := 0
-	for range 3 {
+	for range 10000 {
 		count++
 		msg, err := ChatService.CreatePrivateMessage(ctx, &chat.CreatePrivateMessageRequest{
 			SenderId:       usrA.UserId,

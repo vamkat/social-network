@@ -10,14 +10,11 @@ data:
     <CORSConfiguration>
       <CORSRule>
         <AllowedOrigin>*</AllowedOrigin>
-
         <AllowedMethod>GET</AllowedMethod>
         <AllowedMethod>PUT</AllowedMethod>
-
         <AllowedHeader>Content-Type</AllowedHeader>
-
-
         <ExposeHeader>ETag</ExposeHeader>
         <MaxAgeSeconds>3000</MaxAgeSeconds>
       </CORSRule>
     </CORSConfiguration>
+    

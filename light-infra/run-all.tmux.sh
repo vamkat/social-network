@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SESSION="social-backend"
+SESSION="sn-back"
 
 ######################################
 # Kill existing session if exists

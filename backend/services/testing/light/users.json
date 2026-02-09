@@ -34,5 +34,17 @@
   {
     "user_id": 3,
     "username": "testUserC"
+  },
+  {
+    "user_id": 3,
+    "username": "testUserA"
+  },
+  {
+    "user_id": 4,
+    "username": "testUserB"
+  },
+  {
+    "user_id": 5,
+    "username": "testUserC"
   }
 ]
