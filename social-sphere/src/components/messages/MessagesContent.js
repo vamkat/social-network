@@ -23,7 +23,8 @@ export default function MessagesContent({
     const receiver = useMsgReceiver((state) => state.msgReceiver);
     const clearMsgReceiver = useMsgReceiver((state) => state.clearMsgReceiver);
 
-    const { conversations, addConversation, updateConversation } = useConversations();
+    const { conversations, addConversation, updateConversation, markAsRead } = useConversations();
+    const decrementUnreadCount = useStore((state) => state.decrementUnreadCount);
 
     const [messages, setMessages] = useState(initialMessages);
     const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
@@ -60,6 +61,14 @@ export default function MessagesContent({
 
     // Find selected conversation from conversations list
     const selectedConv = conversations.find((conv) => conv.Interlocutor?.id === interlocutorId) || null;
+
+    // When viewing a conversation with unread messages, immediately clear them
+    useEffect(() => {
+        if (selectedConv && selectedConv.UnreadCount > 0) {
+            decrementUnreadCount(selectedConv.UnreadCount);
+            markAsRead(interlocutorId);
+        }
+    }, [interlocutorId]);
 
     // Fetch conversation metadata if not in loaded list (e.g. direct URL to an older conversation)
     useEffect(() => {
@@ -198,6 +207,11 @@ export default function MessagesContent({
 
         const msgToSend = messageText.trim();
         setMessageText("");
+
+        // Clear unread count for this conversation if it has unread messages
+        if (selectedConv?.UnreadCount > 0) {
+            decrementUnreadCount(selectedConv.UnreadCount);
+        }
 
         const tempId = `temp-${Date.now()}`;
 

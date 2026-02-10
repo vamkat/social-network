@@ -273,10 +273,9 @@ export default function RegisterForm() {
                                 id="first_name"
                                 name="first_name"
                                 type="text"
-                                defaultValue="hello"
                                 required
                                 className="form-input"
-                                placeholder="Jane"
+                                placeholder="Ypatios"
                                 onChange={(e) => handleFieldValidation("first_name", e.target.value)}
                             />
                             {fieldErrors.first_name && (
@@ -289,10 +288,9 @@ export default function RegisterForm() {
                                 id="last_name"
                                 name="last_name"
                                 type="text"
-                                defaultValue="world"
                                 required
                                 className="form-input"
-                                placeholder="Doe"
+                                placeholder="Chaniotakos"
                                 onChange={(e) => handleFieldValidation("last_name", e.target.value)}
                             />
                             {fieldErrors.last_name && (
@@ -308,10 +306,9 @@ export default function RegisterForm() {
                             id="email"
                             name="email"
                             type="email"
-                            defaultValue="hello@world.com"
                             required
                             className="form-input"
-                            placeholder="jane@example.com"
+                            placeholder="ypatios@example.com"
                             onChange={(e) => handleFieldValidation("email", e.target.value)}
                         />
                         {fieldErrors.email && (
@@ -327,7 +324,6 @@ export default function RegisterForm() {
                                 id="password"
                                 name="password"
                                 type={showPassword ? "text" : "password"}
-                                defaultValue="Hello12!"
                                 required
                                 className="form-input pr-12"
                                 placeholder="HelloWorld123!"
@@ -355,7 +351,6 @@ export default function RegisterForm() {
                                 id="confirmPassword"
                                 name="confirmPassword"
                                 type={showConfirmPassword ? "text" : "password"}
-                                defaultValue="Hello12!"
                                 required
                                 className="form-input pr-12"
                                 placeholder="Confirm password"
@@ -382,7 +377,6 @@ export default function RegisterForm() {
                             id="date_of_birth"
                             name="date_of_birth"
                             type="date"
-                            defaultValue="2000-01-01"
                             required
                             className="form-input focus:outline-none"
                             onChange={(e) => handleFieldValidation("date_of_birth", e.target.value)}
@@ -441,13 +435,13 @@ export default function RegisterForm() {
 
                     {/* Username */}
                     <div>
-                        <label htmlFor="username" className="form-label pl-4">Username (Optional)</label>
+                        <label htmlFor="username" className="form-label pl-4">Display Name (Optional)</label>
                         <input
                             id="username"
                             name="username"
                             type="text"
                             className="form-input"
-                            placeholder="@janed"
+                            placeholder="@ychaniot"
                             onChange={(e) => handleFieldValidation("username", e.target.value)}
                         />
                         {fieldErrors.username && (

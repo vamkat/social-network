@@ -22,7 +22,7 @@ export const useStore = create(
       unreadCount: 0,
       setUnreadCount: (count) => set({ unreadCount: count }),
       incrementUnreadCount: () => set((state) => ({ unreadCount: state.unreadCount + 1 })),
-      decrementUnreadCount: () => set((state) => ({ unreadCount: Math.max(0, state.unreadCount - 1) })),
+      decrementUnreadCount: (n = 1) => set((state) => ({ unreadCount: Math.max(0, state.unreadCount - n) })),
 
       // unread notifs
       unreadNotifs: 0,

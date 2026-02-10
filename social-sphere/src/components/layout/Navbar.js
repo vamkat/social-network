@@ -356,8 +356,7 @@ export default function Navbar() {
 
     const clicked = (conv) => {
         if (hasUnreadMessages(conv)) {
-            decrementUnreadCount();
-            // Reset UnreadCount in local state so future messages increment correctly
+            decrementUnreadCount(conv.UnreadCount);
             setConversations((prev) =>
                 prev.map((c) =>
                     c.ConversationId === conv.ConversationId

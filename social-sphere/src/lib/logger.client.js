@@ -52,7 +52,7 @@ const CONSOLE_MAP = {
     DEBUG: console.debug,
     INFO: console.log,
     WARN: console.warn,
-    ERROR: console.error,
+    ERROR: console.warn,
 };
 
 function log(levelName, msg, args) {
