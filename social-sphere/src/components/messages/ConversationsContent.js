@@ -62,7 +62,7 @@ function ConversationsSidebar() {
         // Mark as read ONLY if it has unread messages
         if (hasUnreadMessages(conv)) {
             markAsRead(id);
-            decrementUnreadCount();
+            decrementUnreadCount(conv.UnreadCount);
         }
 
         router.push(`/messages/${id}`);
