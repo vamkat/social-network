@@ -127,9 +127,9 @@ service PostsService {
     // Returns permission denied if requester is not allowed to view parent entity.
   rpc ToggleOrInsertReaction (GenericReq) returns (google.protobuf.Empty);
 
-  // Returns a list of users who liked given entity id.
+  // Returns a paginated list of users who liked given entity id.
   // A call to users and media service is made for user information and images.
-  rpc GetWhoLikedEntityId (GenericReq) returns (common.ListUsers);
+  rpc GetWhoLikedEntityId (GenericEntityPaginatedReq) returns (common.ListUsers);
 }
 
 // COMMON & GENERIC
@@ -175,6 +175,15 @@ message EntityIdPaginatedReq {
 // and pagination information
 message GenericPaginatedReq {
   int64 requester_id = 1;
+  int32 limit        = 2;
+  int32 offset       = 3;
+}
+
+// generic request message that includes
+// the entity id (eg post, comment)
+// and pagination information
+message GenericEntityPaginatedReq {
+  int64 entity_id = 1;
   int32 limit        = 2;
   int32 offset       = 3;
 }

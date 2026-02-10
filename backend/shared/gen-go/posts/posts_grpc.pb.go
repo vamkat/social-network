@@ -146,9 +146,9 @@ type PostsServiceClient interface {
 	// Toggles or inserts a reaction for the requester on a post/comment.
 	// Returns permission denied if requester is not allowed to view parent entity.
 	ToggleOrInsertReaction(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Returns a list of users who liked given entity id.
+	// Returns a paginated list of users who liked given entity id.
 	// A call to users and media service is made for user information and images.
-	GetWhoLikedEntityId(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*common.ListUsers, error)
+	GetWhoLikedEntityId(ctx context.Context, in *GenericEntityPaginatedReq, opts ...grpc.CallOption) (*common.ListUsers, error)
 }
 
 type postsServiceClient struct {
@@ -379,7 +379,7 @@ func (c *postsServiceClient) ToggleOrInsertReaction(ctx context.Context, in *Gen
 	return out, nil
 }
 
-func (c *postsServiceClient) GetWhoLikedEntityId(ctx context.Context, in *GenericReq, opts ...grpc.CallOption) (*common.ListUsers, error) {
+func (c *postsServiceClient) GetWhoLikedEntityId(ctx context.Context, in *GenericEntityPaginatedReq, opts ...grpc.CallOption) (*common.ListUsers, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.ListUsers)
 	err := c.cc.Invoke(ctx, PostsService_GetWhoLikedEntityId_FullMethodName, in, out, cOpts...)
@@ -489,9 +489,9 @@ type PostsServiceServer interface {
 	// Toggles or inserts a reaction for the requester on a post/comment.
 	// Returns permission denied if requester is not allowed to view parent entity.
 	ToggleOrInsertReaction(context.Context, *GenericReq) (*emptypb.Empty, error)
-	// Returns a list of users who liked given entity id.
+	// Returns a paginated list of users who liked given entity id.
 	// A call to users and media service is made for user information and images.
-	GetWhoLikedEntityId(context.Context, *GenericReq) (*common.ListUsers, error)
+	GetWhoLikedEntityId(context.Context, *GenericEntityPaginatedReq) (*common.ListUsers, error)
 	mustEmbedUnimplementedPostsServiceServer()
 }
 
@@ -568,7 +568,7 @@ func (UnimplementedPostsServiceServer) SuggestUsersByPostActivity(context.Contex
 func (UnimplementedPostsServiceServer) ToggleOrInsertReaction(context.Context, *GenericReq) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method ToggleOrInsertReaction not implemented")
 }
-func (UnimplementedPostsServiceServer) GetWhoLikedEntityId(context.Context, *GenericReq) (*common.ListUsers, error) {
+func (UnimplementedPostsServiceServer) GetWhoLikedEntityId(context.Context, *GenericEntityPaginatedReq) (*common.ListUsers, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWhoLikedEntityId not implemented")
 }
 func (UnimplementedPostsServiceServer) mustEmbedUnimplementedPostsServiceServer() {}
@@ -989,7 +989,7 @@ func _PostsService_ToggleOrInsertReaction_Handler(srv interface{}, ctx context.C
 }
 
 func _PostsService_GetWhoLikedEntityId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenericReq)
+	in := new(GenericEntityPaginatedReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1001,7 +1001,7 @@ func _PostsService_GetWhoLikedEntityId_Handler(srv interface{}, ctx context.Cont
 		FullMethod: PostsService_GetWhoLikedEntityId_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostsServiceServer).GetWhoLikedEntityId(ctx, req.(*GenericReq))
+		return srv.(PostsServiceServer).GetWhoLikedEntityId(ctx, req.(*GenericEntityPaginatedReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

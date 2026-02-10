@@ -26,6 +26,12 @@ type GenericPaginatedReq struct {
 	Offset      ct.Offset `json:"offset"`
 }
 
+type GenericEntityPaginatedReq struct {
+	EntityId ct.Id
+	Limit    ct.Limit  `json:"limit"`
+	Offset   ct.Offset `json:"offset"`
+}
+
 // -------------------------------------------
 // Posts
 // -------------------------------------------

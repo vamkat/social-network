@@ -8,10 +8,18 @@ const getWhoLikedEntityId = `-- name: GetWhoLikedEntityId :many
 SELECT user_id
 FROM reactions
 WHERE content_id = $1 AND deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
 `
 
-func (q *Queries) GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]int64, error) {
-	rows, err := q.db.Query(ctx, getWhoLikedEntityId, contentID)
+type GetWhoLikedEntityIdParams struct {
+	ContentID int64
+	Limit     int32
+	Offset    int32
+}
+
+func (q *Queries) GetWhoLikedEntityId(ctx context.Context, arg GetWhoLikedEntityIdParams) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getWhoLikedEntityId, arg.ContentID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

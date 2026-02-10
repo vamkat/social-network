@@ -80,7 +80,7 @@ func (s *Application) ToggleOrInsertReaction(ctx context.Context, req models.Gen
 	return nil
 }
 
-func (s *Application) GetWhoLikedEntityId(ctx context.Context, req models.GenericReq) ([]models.User, error) {
+func (s *Application) GetWhoLikedEntityId(ctx context.Context, req models.GenericEntityPaginatedReq) ([]models.User, error) {
 	input := fmt.Sprintf("%#v", req)
 
 	if err := ct.ValidateStruct(req); err != nil {
@@ -88,7 +88,11 @@ func (s *Application) GetWhoLikedEntityId(ctx context.Context, req models.Generi
 
 	}
 
-	userIDs, err := s.db.GetWhoLikedEntityId(ctx, req.EntityId.Int64())
+	userIDs, err := s.db.GetWhoLikedEntityId(ctx, ds.GetWhoLikedEntityIdParams{
+		ContentID: req.EntityId.Int64(),
+		Limit:     req.Limit.Int32(),
+		Offset:    req.Offset.Int32(),
+	})
 	if err != nil {
 		return nil, ce.New(ce.ErrInternal, err, input).WithPublic(genericPublic)
 	}

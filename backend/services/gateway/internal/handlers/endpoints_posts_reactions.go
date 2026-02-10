@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"social-network/shared/gen-go/posts"
 	ct "social-network/shared/go/ct"
@@ -42,20 +43,28 @@ func (s *Handlers) toggleOrInsertReaction() http.HandlerFunc {
 func (s *Handlers) getWhoLikedEntityId() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
-		if !ok {
-			panic(1)
-		}
+		// claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		// if !ok {
+		// 	panic(1)
+		// }
 
-		entityId, err := utils.PathValueGet(r, "entity_id", ct.Id(0), true)
-		if err != nil {
+		v := r.URL.Query()
+
+		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
+
+		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
+
+		entityId, err3 := utils.PathValueGet(r, "entity_id", ct.Id(0), true)
+
+		if err := errors.Join(err1, err2, err3); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
-		req := posts.GenericReq{
-			RequesterId: claims.UserId,
-			EntityId:    int64(entityId),
+		req := posts.GenericEntityPaginatedReq{
+			EntityId: int64(entityId),
+			Limit:    limit,
+			Offset:   offset,
 		}
 
 		grpcResp, err := s.PostsService.GetWhoLikedEntityId(ctx, &req)

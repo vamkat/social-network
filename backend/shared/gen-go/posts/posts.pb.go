@@ -352,6 +352,69 @@ func (x *GenericPaginatedReq) GetOffset() int32 {
 	return 0
 }
 
+// generic request message that includes
+// the entity id (eg post, comment)
+// and pagination information
+type GenericEntityPaginatedReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EntityId      int64                  `protobuf:"varint,1,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenericEntityPaginatedReq) Reset() {
+	*x = GenericEntityPaginatedReq{}
+	mi := &file_posts_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenericEntityPaginatedReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenericEntityPaginatedReq) ProtoMessage() {}
+
+func (x *GenericEntityPaginatedReq) ProtoReflect() protoreflect.Message {
+	mi := &file_posts_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenericEntityPaginatedReq.ProtoReflect.Descriptor instead.
+func (*GenericEntityPaginatedReq) Descriptor() ([]byte, []int) {
+	return file_posts_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GenericEntityPaginatedReq) GetEntityId() int64 {
+	if x != nil {
+		return x.EntityId
+	}
+	return 0
+}
+
+func (x *GenericEntityPaginatedReq) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GenericEntityPaginatedReq) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
 // Response message that describes a post
 type Post struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
@@ -375,7 +438,7 @@ type Post struct {
 
 func (x *Post) Reset() {
 	*x = Post{}
-	mi := &file_posts_proto_msgTypes[6]
+	mi := &file_posts_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -387,7 +450,7 @@ func (x *Post) String() string {
 func (*Post) ProtoMessage() {}
 
 func (x *Post) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[6]
+	mi := &file_posts_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -400,7 +463,7 @@ func (x *Post) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Post.ProtoReflect.Descriptor instead.
 func (*Post) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{6}
+	return file_posts_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Post) GetPostId() int64 {
@@ -511,7 +574,7 @@ type ListPosts struct {
 
 func (x *ListPosts) Reset() {
 	*x = ListPosts{}
-	mi := &file_posts_proto_msgTypes[7]
+	mi := &file_posts_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +586,7 @@ func (x *ListPosts) String() string {
 func (*ListPosts) ProtoMessage() {}
 
 func (x *ListPosts) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[7]
+	mi := &file_posts_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +599,7 @@ func (x *ListPosts) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPosts.ProtoReflect.Descriptor instead.
 func (*ListPosts) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{7}
+	return file_posts_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListPosts) GetPosts() []*Post {
@@ -561,7 +624,7 @@ type CreatePostReq struct {
 
 func (x *CreatePostReq) Reset() {
 	*x = CreatePostReq{}
-	mi := &file_posts_proto_msgTypes[8]
+	mi := &file_posts_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +636,7 @@ func (x *CreatePostReq) String() string {
 func (*CreatePostReq) ProtoMessage() {}
 
 func (x *CreatePostReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[8]
+	mi := &file_posts_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +649,7 @@ func (x *CreatePostReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePostReq.ProtoReflect.Descriptor instead.
 func (*CreatePostReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{8}
+	return file_posts_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreatePostReq) GetCreatorId() int64 {
@@ -647,7 +710,7 @@ type EditPostReq struct {
 
 func (x *EditPostReq) Reset() {
 	*x = EditPostReq{}
-	mi := &file_posts_proto_msgTypes[9]
+	mi := &file_posts_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -659,7 +722,7 @@ func (x *EditPostReq) String() string {
 func (*EditPostReq) ProtoMessage() {}
 
 func (x *EditPostReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[9]
+	mi := &file_posts_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -672,7 +735,7 @@ func (x *EditPostReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditPostReq.ProtoReflect.Descriptor instead.
 func (*EditPostReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{9}
+	return file_posts_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EditPostReq) GetRequesterId() int64 {
@@ -737,7 +800,7 @@ type GetUserPostsReq struct {
 
 func (x *GetUserPostsReq) Reset() {
 	*x = GetUserPostsReq{}
-	mi := &file_posts_proto_msgTypes[10]
+	mi := &file_posts_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -749,7 +812,7 @@ func (x *GetUserPostsReq) String() string {
 func (*GetUserPostsReq) ProtoMessage() {}
 
 func (x *GetUserPostsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[10]
+	mi := &file_posts_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +825,7 @@ func (x *GetUserPostsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserPostsReq.ProtoReflect.Descriptor instead.
 func (*GetUserPostsReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{10}
+	return file_posts_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetUserPostsReq) GetCreatorId() int64 {
@@ -806,7 +869,7 @@ type GetPersonalizedFeedReq struct {
 
 func (x *GetPersonalizedFeedReq) Reset() {
 	*x = GetPersonalizedFeedReq{}
-	mi := &file_posts_proto_msgTypes[11]
+	mi := &file_posts_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -818,7 +881,7 @@ func (x *GetPersonalizedFeedReq) String() string {
 func (*GetPersonalizedFeedReq) ProtoMessage() {}
 
 func (x *GetPersonalizedFeedReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[11]
+	mi := &file_posts_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -831,7 +894,7 @@ func (x *GetPersonalizedFeedReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPersonalizedFeedReq.ProtoReflect.Descriptor instead.
 func (*GetPersonalizedFeedReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{11}
+	return file_posts_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetPersonalizedFeedReq) GetRequesterId() int64 {
@@ -868,7 +931,7 @@ type GetGroupPostsReq struct {
 
 func (x *GetGroupPostsReq) Reset() {
 	*x = GetGroupPostsReq{}
-	mi := &file_posts_proto_msgTypes[12]
+	mi := &file_posts_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -880,7 +943,7 @@ func (x *GetGroupPostsReq) String() string {
 func (*GetGroupPostsReq) ProtoMessage() {}
 
 func (x *GetGroupPostsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[12]
+	mi := &file_posts_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -893,7 +956,7 @@ func (x *GetGroupPostsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGroupPostsReq.ProtoReflect.Descriptor instead.
 func (*GetGroupPostsReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{12}
+	return file_posts_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetGroupPostsReq) GetRequesterId() int64 {
@@ -943,7 +1006,7 @@ type Comment struct {
 
 func (x *Comment) Reset() {
 	*x = Comment{}
-	mi := &file_posts_proto_msgTypes[13]
+	mi := &file_posts_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -955,7 +1018,7 @@ func (x *Comment) String() string {
 func (*Comment) ProtoMessage() {}
 
 func (x *Comment) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[13]
+	mi := &file_posts_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -968,7 +1031,7 @@ func (x *Comment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Comment.ProtoReflect.Descriptor instead.
 func (*Comment) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{13}
+	return file_posts_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Comment) GetCommentId() int64 {
@@ -1051,7 +1114,7 @@ type ListComments struct {
 
 func (x *ListComments) Reset() {
 	*x = ListComments{}
-	mi := &file_posts_proto_msgTypes[14]
+	mi := &file_posts_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1063,7 +1126,7 @@ func (x *ListComments) String() string {
 func (*ListComments) ProtoMessage() {}
 
 func (x *ListComments) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[14]
+	mi := &file_posts_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1076,7 +1139,7 @@ func (x *ListComments) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListComments.ProtoReflect.Descriptor instead.
 func (*ListComments) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{14}
+	return file_posts_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListComments) GetComments() []*Comment {
@@ -1099,7 +1162,7 @@ type CreateCommentReq struct {
 
 func (x *CreateCommentReq) Reset() {
 	*x = CreateCommentReq{}
-	mi := &file_posts_proto_msgTypes[15]
+	mi := &file_posts_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +1174,7 @@ func (x *CreateCommentReq) String() string {
 func (*CreateCommentReq) ProtoMessage() {}
 
 func (x *CreateCommentReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[15]
+	mi := &file_posts_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,7 +1187,7 @@ func (x *CreateCommentReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCommentReq.ProtoReflect.Descriptor instead.
 func (*CreateCommentReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{15}
+	return file_posts_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateCommentReq) GetCreatorId() int64 {
@@ -1169,7 +1232,7 @@ type EditCommentReq struct {
 
 func (x *EditCommentReq) Reset() {
 	*x = EditCommentReq{}
-	mi := &file_posts_proto_msgTypes[16]
+	mi := &file_posts_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1181,7 +1244,7 @@ func (x *EditCommentReq) String() string {
 func (*EditCommentReq) ProtoMessage() {}
 
 func (x *EditCommentReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[16]
+	mi := &file_posts_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1194,7 +1257,7 @@ func (x *EditCommentReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditCommentReq.ProtoReflect.Descriptor instead.
 func (*EditCommentReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{16}
+	return file_posts_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *EditCommentReq) GetCreatorId() int64 {
@@ -1254,7 +1317,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_posts_proto_msgTypes[17]
+	mi := &file_posts_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1266,7 +1329,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[17]
+	mi := &file_posts_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1279,7 +1342,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{17}
+	return file_posts_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Event) GetEventId() int64 {
@@ -1383,7 +1446,7 @@ type ListEvents struct {
 
 func (x *ListEvents) Reset() {
 	*x = ListEvents{}
-	mi := &file_posts_proto_msgTypes[18]
+	mi := &file_posts_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1395,7 +1458,7 @@ func (x *ListEvents) String() string {
 func (*ListEvents) ProtoMessage() {}
 
 func (x *ListEvents) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[18]
+	mi := &file_posts_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1408,7 +1471,7 @@ func (x *ListEvents) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEvents.ProtoReflect.Descriptor instead.
 func (*ListEvents) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{18}
+	return file_posts_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListEvents) GetEvents() []*Event {
@@ -1433,7 +1496,7 @@ type CreateEventReq struct {
 
 func (x *CreateEventReq) Reset() {
 	*x = CreateEventReq{}
-	mi := &file_posts_proto_msgTypes[19]
+	mi := &file_posts_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1445,7 +1508,7 @@ func (x *CreateEventReq) String() string {
 func (*CreateEventReq) ProtoMessage() {}
 
 func (x *CreateEventReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[19]
+	mi := &file_posts_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1458,7 +1521,7 @@ func (x *CreateEventReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateEventReq.ProtoReflect.Descriptor instead.
 func (*CreateEventReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{19}
+	return file_posts_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreateEventReq) GetTitle() string {
@@ -1519,7 +1582,7 @@ type EditEventReq struct {
 
 func (x *EditEventReq) Reset() {
 	*x = EditEventReq{}
-	mi := &file_posts_proto_msgTypes[20]
+	mi := &file_posts_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1531,7 +1594,7 @@ func (x *EditEventReq) String() string {
 func (*EditEventReq) ProtoMessage() {}
 
 func (x *EditEventReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[20]
+	mi := &file_posts_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1544,7 +1607,7 @@ func (x *EditEventReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditEventReq.ProtoReflect.Descriptor instead.
 func (*EditEventReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{20}
+	return file_posts_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *EditEventReq) GetEventId() int64 {
@@ -1608,7 +1671,7 @@ type RespondToEventReq struct {
 
 func (x *RespondToEventReq) Reset() {
 	*x = RespondToEventReq{}
-	mi := &file_posts_proto_msgTypes[21]
+	mi := &file_posts_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1620,7 +1683,7 @@ func (x *RespondToEventReq) String() string {
 func (*RespondToEventReq) ProtoMessage() {}
 
 func (x *RespondToEventReq) ProtoReflect() protoreflect.Message {
-	mi := &file_posts_proto_msgTypes[21]
+	mi := &file_posts_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1633,7 +1696,7 @@ func (x *RespondToEventReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToEventReq.ProtoReflect.Descriptor instead.
 func (*RespondToEventReq) Descriptor() ([]byte, []int) {
-	return file_posts_proto_rawDescGZIP(), []int{21}
+	return file_posts_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *RespondToEventReq) GetEventId() int64 {
@@ -1679,6 +1742,10 @@ const file_posts_proto_rawDesc = "" +
 	"\x06offset\x18\x04 \x01(\x05R\x06offset\"f\n" +
 	"\x13GenericPaginatedReq\x12!\n" +
 	"\frequester_id\x18\x01 \x01(\x03R\vrequesterId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"f\n" +
+	"\x19GenericEntityPaginatedReq\x12\x1b\n" +
+	"\tentity_id\x18\x01 \x01(\x03R\bentityId\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\xca\x04\n" +
 	"\x04Post\x12\x17\n" +
@@ -1806,7 +1873,7 @@ const file_posts_proto_rawDesc = "" +
 	"\x11RespondToEventReq\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\x03R\aeventId\x12!\n" +
 	"\fresponder_id\x18\x02 \x01(\x03R\vresponderId\x12\x14\n" +
-	"\x05going\x18\x03 \x01(\bR\x05going2\xae\v\n" +
+	"\x05going\x18\x03 \x01(\bR\x05going2\xbd\v\n" +
 	"\fPostsService\x12-\n" +
 	"\vGetPostById\x12\x11.posts.GenericReq\x1a\v.posts.Post\x121\n" +
 	"\n" +
@@ -1831,8 +1898,8 @@ const file_posts_proto_rawDesc = "" +
 	"\x0eRespondToEvent\x12\x18.posts.RespondToEventReq\x1a\x16.google.protobuf.Empty\x12@\n" +
 	"\x13RemoveEventResponse\x12\x11.posts.GenericReq\x1a\x16.google.protobuf.Empty\x12C\n" +
 	"\x1aSuggestUsersByPostActivity\x12\x12.posts.SimpleIdReq\x1a\x11.common.ListUsers\x12C\n" +
-	"\x16ToggleOrInsertReaction\x12\x11.posts.GenericReq\x1a\x16.google.protobuf.Empty\x12;\n" +
-	"\x13GetWhoLikedEntityId\x12\x11.posts.GenericReq\x1a\x11.common.ListUsersB*Z(social-network/shared/gen-go/posts;postsb\x06proto3"
+	"\x16ToggleOrInsertReaction\x12\x11.posts.GenericReq\x1a\x16.google.protobuf.Empty\x12J\n" +
+	"\x13GetWhoLikedEntityId\x12 .posts.GenericEntityPaginatedReq\x1a\x11.common.ListUsersB*Z(social-network/shared/gen-go/posts;postsb\x06proto3"
 
 var (
 	file_posts_proto_rawDescOnce sync.Once
@@ -1846,104 +1913,105 @@ func file_posts_proto_rawDescGZIP() []byte {
 	return file_posts_proto_rawDescData
 }
 
-var file_posts_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_posts_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_posts_proto_goTypes = []any{
-	(*SimpleIdReq)(nil),            // 0: posts.SimpleIdReq
-	(*IdResp)(nil),                 // 1: posts.IdResp
-	(*AudienceResp)(nil),           // 2: posts.AudienceResp
-	(*GenericReq)(nil),             // 3: posts.GenericReq
-	(*EntityIdPaginatedReq)(nil),   // 4: posts.EntityIdPaginatedReq
-	(*GenericPaginatedReq)(nil),    // 5: posts.GenericPaginatedReq
-	(*Post)(nil),                   // 6: posts.Post
-	(*ListPosts)(nil),              // 7: posts.ListPosts
-	(*CreatePostReq)(nil),          // 8: posts.CreatePostReq
-	(*EditPostReq)(nil),            // 9: posts.EditPostReq
-	(*GetUserPostsReq)(nil),        // 10: posts.GetUserPostsReq
-	(*GetPersonalizedFeedReq)(nil), // 11: posts.GetPersonalizedFeedReq
-	(*GetGroupPostsReq)(nil),       // 12: posts.GetGroupPostsReq
-	(*Comment)(nil),                // 13: posts.Comment
-	(*ListComments)(nil),           // 14: posts.ListComments
-	(*CreateCommentReq)(nil),       // 15: posts.CreateCommentReq
-	(*EditCommentReq)(nil),         // 16: posts.EditCommentReq
-	(*Event)(nil),                  // 17: posts.Event
-	(*ListEvents)(nil),             // 18: posts.ListEvents
-	(*CreateEventReq)(nil),         // 19: posts.CreateEventReq
-	(*EditEventReq)(nil),           // 20: posts.EditEventReq
-	(*RespondToEventReq)(nil),      // 21: posts.RespondToEventReq
-	(*common.User)(nil),            // 22: common.User
-	(*timestamppb.Timestamp)(nil),  // 23: google.protobuf.Timestamp
-	(*common.ListUsers)(nil),       // 24: common.ListUsers
-	(*common.UserIds)(nil),         // 25: common.UserIds
-	(*wrapperspb.BoolValue)(nil),   // 26: google.protobuf.BoolValue
-	(*emptypb.Empty)(nil),          // 27: google.protobuf.Empty
+	(*SimpleIdReq)(nil),               // 0: posts.SimpleIdReq
+	(*IdResp)(nil),                    // 1: posts.IdResp
+	(*AudienceResp)(nil),              // 2: posts.AudienceResp
+	(*GenericReq)(nil),                // 3: posts.GenericReq
+	(*EntityIdPaginatedReq)(nil),      // 4: posts.EntityIdPaginatedReq
+	(*GenericPaginatedReq)(nil),       // 5: posts.GenericPaginatedReq
+	(*GenericEntityPaginatedReq)(nil), // 6: posts.GenericEntityPaginatedReq
+	(*Post)(nil),                      // 7: posts.Post
+	(*ListPosts)(nil),                 // 8: posts.ListPosts
+	(*CreatePostReq)(nil),             // 9: posts.CreatePostReq
+	(*EditPostReq)(nil),               // 10: posts.EditPostReq
+	(*GetUserPostsReq)(nil),           // 11: posts.GetUserPostsReq
+	(*GetPersonalizedFeedReq)(nil),    // 12: posts.GetPersonalizedFeedReq
+	(*GetGroupPostsReq)(nil),          // 13: posts.GetGroupPostsReq
+	(*Comment)(nil),                   // 14: posts.Comment
+	(*ListComments)(nil),              // 15: posts.ListComments
+	(*CreateCommentReq)(nil),          // 16: posts.CreateCommentReq
+	(*EditCommentReq)(nil),            // 17: posts.EditCommentReq
+	(*Event)(nil),                     // 18: posts.Event
+	(*ListEvents)(nil),                // 19: posts.ListEvents
+	(*CreateEventReq)(nil),            // 20: posts.CreateEventReq
+	(*EditEventReq)(nil),              // 21: posts.EditEventReq
+	(*RespondToEventReq)(nil),         // 22: posts.RespondToEventReq
+	(*common.User)(nil),               // 23: common.User
+	(*timestamppb.Timestamp)(nil),     // 24: google.protobuf.Timestamp
+	(*common.ListUsers)(nil),          // 25: common.ListUsers
+	(*common.UserIds)(nil),            // 26: common.UserIds
+	(*wrapperspb.BoolValue)(nil),      // 27: google.protobuf.BoolValue
+	(*emptypb.Empty)(nil),             // 28: google.protobuf.Empty
 }
 var file_posts_proto_depIdxs = []int32{
-	22, // 0: posts.Post.user:type_name -> common.User
-	23, // 1: posts.Post.last_commented_at:type_name -> google.protobuf.Timestamp
-	23, // 2: posts.Post.created_at:type_name -> google.protobuf.Timestamp
-	23, // 3: posts.Post.updated_at:type_name -> google.protobuf.Timestamp
-	24, // 4: posts.Post.selected_audience_users:type_name -> common.ListUsers
-	6,  // 5: posts.ListPosts.posts:type_name -> posts.Post
-	25, // 6: posts.CreatePostReq.audience_ids:type_name -> common.UserIds
-	25, // 7: posts.EditPostReq.audience_ids:type_name -> common.UserIds
-	22, // 8: posts.Comment.user:type_name -> common.User
-	23, // 9: posts.Comment.created_at:type_name -> google.protobuf.Timestamp
-	23, // 10: posts.Comment.updated_at:type_name -> google.protobuf.Timestamp
-	13, // 11: posts.ListComments.comments:type_name -> posts.Comment
-	22, // 12: posts.Event.user:type_name -> common.User
-	23, // 13: posts.Event.event_date:type_name -> google.protobuf.Timestamp
-	23, // 14: posts.Event.created_at:type_name -> google.protobuf.Timestamp
-	23, // 15: posts.Event.updated_at:type_name -> google.protobuf.Timestamp
-	26, // 16: posts.Event.user_response:type_name -> google.protobuf.BoolValue
-	17, // 17: posts.ListEvents.events:type_name -> posts.Event
-	23, // 18: posts.CreateEventReq.event_date:type_name -> google.protobuf.Timestamp
-	23, // 19: posts.EditEventReq.event_date:type_name -> google.protobuf.Timestamp
+	23, // 0: posts.Post.user:type_name -> common.User
+	24, // 1: posts.Post.last_commented_at:type_name -> google.protobuf.Timestamp
+	24, // 2: posts.Post.created_at:type_name -> google.protobuf.Timestamp
+	24, // 3: posts.Post.updated_at:type_name -> google.protobuf.Timestamp
+	25, // 4: posts.Post.selected_audience_users:type_name -> common.ListUsers
+	7,  // 5: posts.ListPosts.posts:type_name -> posts.Post
+	26, // 6: posts.CreatePostReq.audience_ids:type_name -> common.UserIds
+	26, // 7: posts.EditPostReq.audience_ids:type_name -> common.UserIds
+	23, // 8: posts.Comment.user:type_name -> common.User
+	24, // 9: posts.Comment.created_at:type_name -> google.protobuf.Timestamp
+	24, // 10: posts.Comment.updated_at:type_name -> google.protobuf.Timestamp
+	14, // 11: posts.ListComments.comments:type_name -> posts.Comment
+	23, // 12: posts.Event.user:type_name -> common.User
+	24, // 13: posts.Event.event_date:type_name -> google.protobuf.Timestamp
+	24, // 14: posts.Event.created_at:type_name -> google.protobuf.Timestamp
+	24, // 15: posts.Event.updated_at:type_name -> google.protobuf.Timestamp
+	27, // 16: posts.Event.user_response:type_name -> google.protobuf.BoolValue
+	18, // 17: posts.ListEvents.events:type_name -> posts.Event
+	24, // 18: posts.CreateEventReq.event_date:type_name -> google.protobuf.Timestamp
+	24, // 19: posts.EditEventReq.event_date:type_name -> google.protobuf.Timestamp
 	3,  // 20: posts.PostsService.GetPostById:input_type -> posts.GenericReq
-	8,  // 21: posts.PostsService.CreatePost:input_type -> posts.CreatePostReq
+	9,  // 21: posts.PostsService.CreatePost:input_type -> posts.CreatePostReq
 	3,  // 22: posts.PostsService.DeletePost:input_type -> posts.GenericReq
-	9,  // 23: posts.PostsService.EditPost:input_type -> posts.EditPostReq
+	10, // 23: posts.PostsService.EditPost:input_type -> posts.EditPostReq
 	0,  // 24: posts.PostsService.GetMostPopularPostInGroup:input_type -> posts.SimpleIdReq
-	11, // 25: posts.PostsService.GetPersonalizedFeed:input_type -> posts.GetPersonalizedFeedReq
+	12, // 25: posts.PostsService.GetPersonalizedFeed:input_type -> posts.GetPersonalizedFeedReq
 	5,  // 26: posts.PostsService.GetPublicFeed:input_type -> posts.GenericPaginatedReq
-	10, // 27: posts.PostsService.GetUserPostsPaginated:input_type -> posts.GetUserPostsReq
-	12, // 28: posts.PostsService.GetGroupPostsPaginated:input_type -> posts.GetGroupPostsReq
-	15, // 29: posts.PostsService.CreateComment:input_type -> posts.CreateCommentReq
-	16, // 30: posts.PostsService.EditComment:input_type -> posts.EditCommentReq
+	11, // 27: posts.PostsService.GetUserPostsPaginated:input_type -> posts.GetUserPostsReq
+	13, // 28: posts.PostsService.GetGroupPostsPaginated:input_type -> posts.GetGroupPostsReq
+	16, // 29: posts.PostsService.CreateComment:input_type -> posts.CreateCommentReq
+	17, // 30: posts.PostsService.EditComment:input_type -> posts.EditCommentReq
 	3,  // 31: posts.PostsService.DeleteComment:input_type -> posts.GenericReq
 	4,  // 32: posts.PostsService.GetCommentsByParentId:input_type -> posts.EntityIdPaginatedReq
 	0,  // 33: posts.PostsService.GetPostAudienceForComment:input_type -> posts.SimpleIdReq
-	19, // 34: posts.PostsService.CreateEvent:input_type -> posts.CreateEventReq
+	20, // 34: posts.PostsService.CreateEvent:input_type -> posts.CreateEventReq
 	3,  // 35: posts.PostsService.DeleteEvent:input_type -> posts.GenericReq
-	20, // 36: posts.PostsService.EditEvent:input_type -> posts.EditEventReq
+	21, // 36: posts.PostsService.EditEvent:input_type -> posts.EditEventReq
 	4,  // 37: posts.PostsService.GetEventsByGroupId:input_type -> posts.EntityIdPaginatedReq
-	21, // 38: posts.PostsService.RespondToEvent:input_type -> posts.RespondToEventReq
+	22, // 38: posts.PostsService.RespondToEvent:input_type -> posts.RespondToEventReq
 	3,  // 39: posts.PostsService.RemoveEventResponse:input_type -> posts.GenericReq
 	0,  // 40: posts.PostsService.SuggestUsersByPostActivity:input_type -> posts.SimpleIdReq
 	3,  // 41: posts.PostsService.ToggleOrInsertReaction:input_type -> posts.GenericReq
-	3,  // 42: posts.PostsService.GetWhoLikedEntityId:input_type -> posts.GenericReq
-	6,  // 43: posts.PostsService.GetPostById:output_type -> posts.Post
+	6,  // 42: posts.PostsService.GetWhoLikedEntityId:input_type -> posts.GenericEntityPaginatedReq
+	7,  // 43: posts.PostsService.GetPostById:output_type -> posts.Post
 	1,  // 44: posts.PostsService.CreatePost:output_type -> posts.IdResp
-	27, // 45: posts.PostsService.DeletePost:output_type -> google.protobuf.Empty
-	27, // 46: posts.PostsService.EditPost:output_type -> google.protobuf.Empty
-	6,  // 47: posts.PostsService.GetMostPopularPostInGroup:output_type -> posts.Post
-	7,  // 48: posts.PostsService.GetPersonalizedFeed:output_type -> posts.ListPosts
-	7,  // 49: posts.PostsService.GetPublicFeed:output_type -> posts.ListPosts
-	7,  // 50: posts.PostsService.GetUserPostsPaginated:output_type -> posts.ListPosts
-	7,  // 51: posts.PostsService.GetGroupPostsPaginated:output_type -> posts.ListPosts
+	28, // 45: posts.PostsService.DeletePost:output_type -> google.protobuf.Empty
+	28, // 46: posts.PostsService.EditPost:output_type -> google.protobuf.Empty
+	7,  // 47: posts.PostsService.GetMostPopularPostInGroup:output_type -> posts.Post
+	8,  // 48: posts.PostsService.GetPersonalizedFeed:output_type -> posts.ListPosts
+	8,  // 49: posts.PostsService.GetPublicFeed:output_type -> posts.ListPosts
+	8,  // 50: posts.PostsService.GetUserPostsPaginated:output_type -> posts.ListPosts
+	8,  // 51: posts.PostsService.GetGroupPostsPaginated:output_type -> posts.ListPosts
 	1,  // 52: posts.PostsService.CreateComment:output_type -> posts.IdResp
-	27, // 53: posts.PostsService.EditComment:output_type -> google.protobuf.Empty
-	27, // 54: posts.PostsService.DeleteComment:output_type -> google.protobuf.Empty
-	14, // 55: posts.PostsService.GetCommentsByParentId:output_type -> posts.ListComments
+	28, // 53: posts.PostsService.EditComment:output_type -> google.protobuf.Empty
+	28, // 54: posts.PostsService.DeleteComment:output_type -> google.protobuf.Empty
+	15, // 55: posts.PostsService.GetCommentsByParentId:output_type -> posts.ListComments
 	2,  // 56: posts.PostsService.GetPostAudienceForComment:output_type -> posts.AudienceResp
 	1,  // 57: posts.PostsService.CreateEvent:output_type -> posts.IdResp
-	27, // 58: posts.PostsService.DeleteEvent:output_type -> google.protobuf.Empty
-	27, // 59: posts.PostsService.EditEvent:output_type -> google.protobuf.Empty
-	18, // 60: posts.PostsService.GetEventsByGroupId:output_type -> posts.ListEvents
-	27, // 61: posts.PostsService.RespondToEvent:output_type -> google.protobuf.Empty
-	27, // 62: posts.PostsService.RemoveEventResponse:output_type -> google.protobuf.Empty
-	24, // 63: posts.PostsService.SuggestUsersByPostActivity:output_type -> common.ListUsers
-	27, // 64: posts.PostsService.ToggleOrInsertReaction:output_type -> google.protobuf.Empty
-	24, // 65: posts.PostsService.GetWhoLikedEntityId:output_type -> common.ListUsers
+	28, // 58: posts.PostsService.DeleteEvent:output_type -> google.protobuf.Empty
+	28, // 59: posts.PostsService.EditEvent:output_type -> google.protobuf.Empty
+	19, // 60: posts.PostsService.GetEventsByGroupId:output_type -> posts.ListEvents
+	28, // 61: posts.PostsService.RespondToEvent:output_type -> google.protobuf.Empty
+	28, // 62: posts.PostsService.RemoveEventResponse:output_type -> google.protobuf.Empty
+	25, // 63: posts.PostsService.SuggestUsersByPostActivity:output_type -> common.ListUsers
+	28, // 64: posts.PostsService.ToggleOrInsertReaction:output_type -> google.protobuf.Empty
+	25, // 65: posts.PostsService.GetWhoLikedEntityId:output_type -> common.ListUsers
 	43, // [43:66] is the sub-list for method output_type
 	20, // [20:43] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name
@@ -1962,7 +2030,7 @@ func file_posts_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_posts_proto_rawDesc), len(file_posts_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -35,7 +35,7 @@ type Querier interface {
 	GetPublicFeed(ctx context.Context, arg GetPublicFeedParams) ([]GetPublicFeedRow, error)
 	// pagination
 	GetUserPostsPaginated(ctx context.Context, arg GetUserPostsPaginatedParams) ([]GetUserPostsPaginatedRow, error)
-	GetWhoLikedEntityId(ctx context.Context, contentID int64) ([]int64, error)
+	GetWhoLikedEntityId(ctx context.Context, arg GetWhoLikedEntityIdParams) ([]int64, error)
 	InsertPostAudience(ctx context.Context, arg InsertPostAudienceParams) (int64, error)
 	// U1: Users who liked one or more of *your public posts*
 	// U2: Users who commented on your public posts

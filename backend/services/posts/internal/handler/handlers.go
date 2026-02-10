@@ -595,14 +595,15 @@ func (s *PostsHandler) ToggleOrInsertReaction(ctx context.Context, req *pb.Gener
 	return &emptypb.Empty{}, nil
 }
 
-func (s *PostsHandler) GetWhoLikedEntityId(ctx context.Context, req *pb.GenericReq) (*cm.ListUsers, error) {
+func (s *PostsHandler) GetWhoLikedEntityId(ctx context.Context, req *pb.GenericEntityPaginatedReq) (*cm.ListUsers, error) {
 	tele.Info(ctx, "GetWhoLikedEntityId gRPC method called. @1", "request", req.String())
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	users, err := s.Application.GetWhoLikedEntityId(ctx, models.GenericReq{
-		RequesterId: ct.Id(req.RequesterId),
-		EntityId:    ct.Id(req.EntityId),
+	users, err := s.Application.GetWhoLikedEntityId(ctx, models.GenericEntityPaginatedReq{
+		EntityId: ct.Id(req.EntityId),
+		Limit:    ct.Limit(req.Limit),
+		Offset:   ct.Offset(req.Offset),
 	})
 	if err != nil {
 		tele.Error(ctx, "Error in GetWhoLikedEntityId @1 @2", "request", req.String(), "error", err.Error())
