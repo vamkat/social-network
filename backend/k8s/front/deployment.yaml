@@ -38,7 +38,11 @@ spec:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "alloy.monitoring.svc.cluster.local:4317"
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=frontend,service.namespace=social-network,deployment.environment=dev"
+              value: "service.name=social-sphere,service.namespace=social-network,deployment.environment=dev"
+            - name: ENABLE_DEBUG_LOGS
+              value: "false"
+            - name: LOG_LEVEL
+              value: "INFO"
           resources:
             requests:
               cpu: "100m"
