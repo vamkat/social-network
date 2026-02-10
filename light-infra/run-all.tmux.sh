@@ -22,7 +22,7 @@ export NOTIFICATIONS_GRPC_ADDR=localhost:50054
 export MEDIA_GRPC_ADDR=localhost:50055
 
 export SHUTDOWN_TIMEOUT_SECONDS=5
-export ENABLE_DEBUG_LOGS=true
+export ENABLE_DEBUG_LOGS=false
 export ENABLE_SIMPLE_PRINT=true
 export KAFKA_BROKERS=localhost:29092
 export NATS_CLUSTER=nats://localhost:4222

@@ -304,17 +304,38 @@ smart-apply-pvc:
 	@echo " "
 	kubectl apply -R -f backend/k8s/ --selector stage=pvc
 
+# 	!!! Install 'yq' extension first !!!
 smart-apply-monitoring:
 	@echo " "
 	@echo " "
 	@echo " --- APPLYING MONITORING ---"
 	@echo " "
 	kubectl create namespace monitoring || true
-	@kubectl get secret posts-db-app -n posts -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
-	@kubectl get secret chat-db-app -n chat -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
-	@kubectl get secret users-db-app -n users -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
-	@kubectl get secret notifications-db-app -n notifications -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
-	@kubectl get secret media-db-app -n media -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+# 	@kubectl get secret posts-db-app -n posts -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+# 	@kubectl get secret chat-db-app -n chat -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+# 	@kubectl get secret users-db-app -n users -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+# 	@kubectl get secret notifications-db-app -n notifications -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+# 	@kubectl get secret media-db-app -n media -o yaml | sed '/^\s*namespace:/d;/^\s*resourceVersion:/d;/^\s*uid:/d;/^\s*creationTimestamp:/d;/^\s*ownerReferences:/,/^[^ ]/d' | kubectl apply -n monitoring -f -
+	
+	@kubectl get secret posts-db-app -n posts -o yaml \
+	| yq 'del(.metadata.namespace, .metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.ownerReferences)' \
+	| kubectl apply -n monitoring -f -
+
+	@kubectl get secret chat-db-app -n chat -o yaml \
+	| yq 'del(.metadata.namespace, .metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.ownerReferences)' \
+	| kubectl apply -n monitoring -f -
+
+	@kubectl get secret users-db-app -n users -o yaml \
+	| yq 'del(.metadata.namespace, .metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.ownerReferences)' \
+	| kubectl apply -n monitoring -f -
+
+	@kubectl get secret notifications-db-app -n notifications -o yaml \
+	| yq 'del(.metadata.namespace, .metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.ownerReferences)' \
+	| kubectl apply -n monitoring -f -
+
+	@kubectl get secret media-db-app -n media -o yaml \
+	| yq 'del(.metadata.namespace, .metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.ownerReferences)' \
+	| kubectl apply -n monitoring -f -
 
 	kubectl apply -R -f backend/k8s/ --selector stage=monitoring
 
