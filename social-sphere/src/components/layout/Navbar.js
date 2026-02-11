@@ -478,15 +478,14 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16 gap-2 sm:gap-3">
                     {/* Left Section: Logo */}
                     <div className="flex items-center shrink-0">
-                        <Link
+                        <a
                             href="/feed/public"
                             className="flex items-center"
-                            prefetch={false}
                         >
                             <span className="text-sm sm:text-base font-medium tracking-tight text-foreground hover:text-(--muted) transition-colors">
                                 SocialSphere
                             </span>
-                        </Link>
+                        </a>
                     </div>
 
                     {/* Center Section: Search Bar - Grows to fill available space */}
@@ -556,16 +555,15 @@ export default function Navbar() {
                                 const active = isActive(item.href);
                                 return (
                                     <Tooltip key={item.href} content={item.label}>
-                                        <Link
+                                        <a
                                             href={item.href}
-                                            prefetch={false}
                                             className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all ${active
                                                 ? "bg-(--accent)/10 text-(--accent)"
                                                 : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
                                                 }`}
                                         >
                                             <Icon className="w-[18px] h-[18px]" strokeWidth={active ? 2.5 : 2} />
-                                        </Link>
+                                        </a>
                                     </Tooltip>
                                 );
                             })}
@@ -578,16 +576,15 @@ export default function Navbar() {
                                 const active = isActive(item.href);
                                 return (
                                     <Tooltip key={item.href} content={item.label}>
-                                        <Link
+                                        <a
                                             href={item.href}
-                                            prefetch={false}
                                             className={`p-2 sm:p-2.5 rounded-full transition-all ${active
                                                 ? "bg-(--accent)/10 text-(--accent)"
                                                 : "text-(--muted) hover:text-foreground hover:bg-(--muted)/10"
                                                 }`}
                                         >
                                             <Icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={active ? 2.5 : 2} />
-                                        </Link>
+                                        </a>
                                     </Tooltip>
                                 );
                             })}
@@ -697,7 +694,7 @@ export default function Navbar() {
 
                         {/* Notifications */}
                         <Tooltip content="Notifications">
-                            <Link
+                            <a
                                 href="/notifications"
                                 className={`relative p-2 sm:p-2.5 rounded-full transition-all ${isActive('/notifications')
                                     ? "bg-(--accent)/10 text-(--accent)"
@@ -709,7 +706,7 @@ export default function Navbar() {
                                         <span className={`absolute top-0.5 right-0.5 min-w-1 h-1 sm:min-w-1 sm:h-1 bg-foreground rounded-full flex items-center justify-center border-2 border-foreground ${isNotifAlerting ? "animate-pulse-glow-foreground" : ""}`}>
                                         </span>
                                 )}
-                            </Link>
+                            </a>
                         </Tooltip>
 
                         {/* User Dropdown */}

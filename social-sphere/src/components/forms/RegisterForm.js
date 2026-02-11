@@ -164,6 +164,7 @@ export default function RegisterForm() {
                 validateField("first_name", value, (val) => {
                     if (!val.trim()) return "First name is required.";
                     if (val.trim().length < 2) return "First name must be at least 2 characters.";
+                    if (!/^[A-Za-z]+$/.test(val.trim())) return "First name can only contain letters.";
                     return null;
                 });
                 break;
@@ -172,6 +173,7 @@ export default function RegisterForm() {
                 validateField("last_name", value, (val) => {
                     if (!val.trim()) return "Last name is required.";
                     if (val.trim().length < 2) return "Last name must be at least 2 characters.";
+                    if (!/^[A-Za-z]+$/.test(val.trim())) return "Last name can only contain letters.";
                     return null;
                 });
                 break;
@@ -220,7 +222,7 @@ export default function RegisterForm() {
                 validateField("username", value, (val) => {
                     if (val.trim()) {
                         const usernamePattern = /^[A-Za-z0-9_.-]+$/;
-                        if (val.trim().length < 4) return "Username must be at least 4 characters.";
+                        if (val.trim().length < 3) return "Username must be at least 3 characters.";
                         if (!usernamePattern.test(val.trim())) return "Username can only use letters, numbers, dots, underscores, or dashes.";
                     }
                     return null;

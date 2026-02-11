@@ -2,9 +2,9 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function getWhoLikedEntity(entityID) {
+export async function getWhoLikedEntity(entityID, limit, offset) {
     try {
-        const url = `/reactions/${entityID}`;
+        const url = `/reactions/${entityID}?limit=${limit}&offset=${offset}`;
         const response = await serverApiRequest(url, {
             method: "GET",
             forwardCookies: true

@@ -63,11 +63,16 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
     const [showLikesModal, setShowLikesModal] = useState(false);
     const [likesModalUsers, setLikesModalUsers] = useState([]);
     const [likesModalLoading, setLikesModalLoading] = useState(false);
+    const [likesModalEntityId, setLikesModalEntityId] = useState(null);
+    const [likesModalHasMore, setLikesModalHasMore] = useState(false);
+    const [likesModalLoadingMore, setLikesModalLoadingMore] = useState(false);
     const composerRef = useRef(null);
     const cardRef = useRef(null);
     const fileInputRef = useRef(null);
     const commentFileInputRef = useRef(null);
     const editingCommentFileInputRef = useRef(null);
+    const likesEndRef = useRef(null);
+    const handleLoadMoreLikesRef = useRef(null);
     const privacy = "group";
 
     const isOwnPost = Boolean(
@@ -756,15 +761,20 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
 
         setShowLikesModal(true);
         setLikesModalLoading(true);
+        setLikesModalEntityId(post.post_id);
+        setLikesModalUsers([]);
         try {
-            const resp = await getWhoLikedEntity(post.post_id);
+            const resp = await getWhoLikedEntity(post.post_id, 15, 0);
             if (resp.success && resp.data) {
                 setLikesModalUsers(resp.data);
+                setLikesModalHasMore(resp.data.length >= 15);
             } else {
                 setLikesModalUsers([]);
+                setLikesModalHasMore(false);
             }
         } catch (err) {
             setLikesModalUsers([]);
+            setLikesModalHasMore(false);
         } finally {
             setLikesModalLoading(false);
         }
@@ -778,19 +788,60 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
 
         setShowLikesModal(true);
         setLikesModalLoading(true);
+        setLikesModalEntityId(commentId);
+        setLikesModalUsers([]);
         try {
-            const resp = await getWhoLikedEntity(commentId);
+            const resp = await getWhoLikedEntity(commentId, 15, 0);
             if (resp.success && resp.data) {
                 setLikesModalUsers(resp.data);
+                setLikesModalHasMore(resp.data.length >= 15);
             } else {
                 setLikesModalUsers([]);
+                setLikesModalHasMore(false);
             }
         } catch (err) {
             setLikesModalUsers([]);
+            setLikesModalHasMore(false);
         } finally {
             setLikesModalLoading(false);
         }
     };
+
+    const handleLoadMoreLikes = async () => {
+        if (likesModalLoadingMore || !likesModalHasMore || !likesModalEntityId) return;
+        setLikesModalLoadingMore(true);
+        try {
+            const resp = await getWhoLikedEntity(likesModalEntityId, 10, likesModalUsers.length);
+            if (resp.success && resp.data) {
+                setLikesModalUsers(prev => [...prev, ...resp.data]);
+                setLikesModalHasMore(resp.data.length >= 10);
+            } else {
+                setLikesModalHasMore(false);
+            }
+        } catch (err) {
+            setLikesModalHasMore(false);
+        } finally {
+            setLikesModalLoadingMore(false);
+        }
+    };
+
+    handleLoadMoreLikesRef.current = handleLoadMoreLikes;
+
+    useEffect(() => {
+        if (!showLikesModal || !likesModalHasMore || likesModalLoadingMore || likesModalLoading) return;
+        const el = likesEndRef.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    handleLoadMoreLikesRef.current?.();
+                }
+            },
+            { threshold: 0.1 }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [showLikesModal, likesModalHasMore, likesModalLoadingMore, likesModalLoading, likesModalUsers.length]);
 
     return (
         <div
@@ -1374,7 +1425,12 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
             {/* Likes Modal */}
             <Modal
                 isOpen={showLikesModal}
-                onClose={() => setShowLikesModal(false)}
+                onClose={() => {
+                    setShowLikesModal(false);
+                    setLikesModalEntityId(null);
+                    setLikesModalHasMore(false);
+                    setLikesModalUsers([]);
+                }}
                 title="Likes"
             >
                 {likesModalLoading ? (
@@ -1402,6 +1458,11 @@ export default function GroupPostCard({ post, onDelete, allowed = true }) {
                                 <span className="text-sm font-medium text-foreground hover:text-(--accent)">@{u.username}</span>
                             </Link>
                         ))}
+                        {likesModalHasMore && (
+                            <div ref={likesEndRef} className="py-3 text-center">
+                                <div className="w-5 h-5 border-2 border-(--accent) border-t-transparent rounded-full animate-spin mx-auto" />
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <p className="text-sm text-(--muted) text-center py-4">No likes yet.</p>
