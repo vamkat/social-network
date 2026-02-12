@@ -51,12 +51,13 @@ export default function CreatePost({ onPostCreated=null }) {
     };
 
     // Load more followers
+    const userId = user?.id;
     const loadMoreFollowers = useCallback(async () => {
-        if (!user?.id || isLoadingFollowers || !hasMoreFollowers) return;
+        if (!userId || isLoadingFollowers || !hasMoreFollowers) return;
 
         setIsLoadingFollowers(true);
         const followersResult = await getFollowers({
-            userId: user.id,
+            userId,
             limit: FOLLOWERS_LIMIT,
             offset: followersOffset
         });
@@ -70,7 +71,7 @@ export default function CreatePost({ onPostCreated=null }) {
             setHasMoreFollowers(false);
         }
         setIsLoadingFollowers(false);
-    }, [user?.id, isLoadingFollowers, hasMoreFollowers, followersOffset]);
+    }, [userId, isLoadingFollowers, hasMoreFollowers, followersOffset]);
 
     // Handle scroll for infinite loading
     useEffect(() => {
@@ -212,9 +213,9 @@ export default function CreatePost({ onPostCreated=null }) {
             // Step 2: Upload image if needed (non-blocking)
             let imageUrl = null;
             let imageUploadFailed = false;
-            if (imageFile && resp.FileId && resp.UploadUrl) {
+            if (imageFile && resp.data.FileId && resp.data.UploadUrl) {
                 try {
-                    const url = `${resp.UploadUrl}hee`
+                    const url = `${resp.data.UploadUrl}`
                     const uploadRes = await fetch(url, {
                         method: "PUT",
                         body: imageFile,
@@ -222,7 +223,7 @@ export default function CreatePost({ onPostCreated=null }) {
 
                     if (uploadRes.ok) {
                         // Step 3: Validate the upload
-                        const validateResp = await validateUpload(resp.FileId);
+                        const validateResp = await validateUpload(resp.data.FileId);
                         if (validateResp.success) {
                             imageUrl = validateResp.data?.download_url;
                         } else {

@@ -11,7 +11,7 @@ import { unfollowUser } from "@/actions/requests/unfollow-user";
 import { handleFollowRequest } from "@/actions/requests/handle-request";
 import { updatePrivacyAction } from "@/actions/profile/settings";
 import { getFollowers } from "@/actions/users/get-followers";
-import { getFollowers as getFollowing } from "@/actions/users/get-following";
+import { getFollowing } from "@/actions/users/get-following";
 import { getUserGroups } from "@/actions/groups/get-user-groups";
 import Tooltip from "../ui/Tooltip";
 import { useRouter } from "next/navigation";
@@ -179,6 +179,7 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                 resp = await getFollowers({ userId: user.user_id, limit: PAGE_SIZE, offset: 0 });
             } else if (type === "following") {
                 resp = await getFollowing({ userId: user.user_id, limit: PAGE_SIZE, offset: 0 });
+                resp.data = resp.data.users;
             } else {
                 resp = await getUserGroups({ limit: PAGE_SIZE, offset: 0 });
             }

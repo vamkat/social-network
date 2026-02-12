@@ -2,7 +2,7 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function getFollowers({ userId, limit = 100, offset = 0 } = {}) {
+export async function getFollowing({ userId, limit = 100, offset = 0 } = {}) {
     try {
         if (!userId) {
             return { success: false, error: "User ID is required" };
