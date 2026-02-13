@@ -341,21 +341,22 @@ func (s *Handlers) getGroupMembers() http.HandlerFunc {
 func (s *Handlers) getUserGroupsPaginated() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
-		if !ok {
-			panic(1)
-		}
+		// claims, ok := utils.GetValue[jwt.Claims](r, ct.ClaimsKey)
+		// if !ok {
+		// 	panic(1)
+		// }
 
 		v := r.URL.Query()
-		limit, err1 := utils.ParamGet(v, "limit", int32(1), false)
-		offset, err2 := utils.ParamGet(v, "offset", int32(0), false)
-		if err := errors.Join(err1, err2); err != nil {
+		userId, err1 := utils.PathValueGet(r, "user_id", ct.Id(0), true)
+		limit, err2 := utils.ParamGet(v, "limit", int32(1), false)
+		offset, err3 := utils.ParamGet(v, "offset", int32(0), false)
+		if err := errors.Join(err1, err2, err3); err != nil {
 			utils.ErrorJSON(ctx, w, http.StatusBadRequest, "bad url params: "+err.Error())
 			return
 		}
 
 		req := &users.Pagination{
-			UserId: claims.UserId,
+			UserId: userId.Int64(),
 			Limit:  limit,
 			Offset: offset,
 		}

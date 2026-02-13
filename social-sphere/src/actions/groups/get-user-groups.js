@@ -2,9 +2,9 @@
 
 import { serverApiRequest } from "@/lib/server-api";
 
-export async function getUserGroups({ limit, offset }) {
+export async function getUserGroups({ userId,limit, offset }) {
     try {
-        const url = `/my/groups?limit=${limit}&offset=${offset}`;
+        const url = `/users/${userId}/groups?limit=${limit}&offset=${offset}`;
         const response = await serverApiRequest(url, {
             method: "GET",
             forwardCookies: true

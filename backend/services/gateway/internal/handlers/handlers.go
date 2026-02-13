@@ -85,7 +85,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 5, 5).
 		Finalize(h.validateFileUpload())
 
-		//image id variant from url --DONE
+	//image id variant from url --DONE
 
 	SetEndpoint("/files/images/{image_id}/{variant}").
 		AllowedMethod("GET").
@@ -115,7 +115,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.createGroup())
 
-		//TODO make params --DONE
+	//TODO make params --DONE
 
 	SetEndpoint("/groups").
 		AllowedMethod("GET").
@@ -125,7 +125,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getAllGroupsPaginated())
 
-		//TODO cut url, and json --DONE
+	//TODO cut url, and json --DONE
 
 	SetEndpoint("/groups/{group_id}").
 		AllowedMethod("POST").
@@ -145,7 +145,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getGroupInfo())
 
-		//TODO group id from url --DONE
+	//TODO group id from url --DONE
 
 	SetEndpoint("/groups/{group_id}/popular-post").
 		AllowedMethod("GET").
@@ -155,7 +155,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 5, 5).
 		Finalize(h.getMostPopularPostInGroup())
 
-		//TODO get params, and groupid from url --DONE
+	//TODO get params, and groupid from url --DONE
 
 	SetEndpoint("/groups/{group_id}/members").
 		AllowedMethod("GET").
@@ -165,7 +165,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getGroupMembers())
 
-		//TODO group id from url --DONE
+	//TODO group id from url --DONE
 
 	SetEndpoint("/groups/{group_id}/join-response").
 		AllowedMethod("POST").
@@ -185,7 +185,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.inviteToGroup())
 
-		//TODO get group id from url --DONE
+	//TODO get group id from url --DONE
 
 	SetEndpoint("/groups/{group_id}/leave").
 		AllowedMethod("POST").
@@ -195,7 +195,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.leaveGroup())
 
-		//TODO get group id from url --DONE
+	//TODO get group id from url --DONE
 
 	SetEndpoint("/groups/{group_id}/remove-member").
 		AllowedMethod("POST").
@@ -205,7 +205,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.removeFromGroup())
 
-		//TODO group id url --DONE
+	//TODO group id url --DONE
 
 	SetEndpoint("/groups/{group_id}/join-request").
 		AllowedMethod("POST").
@@ -215,7 +215,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.requestJoinGroup())
 
-		//TODO group id url --DONE
+	//TODO group id url --DONE
 
 	SetEndpoint("/groups/{group_id}/cancel-join-request").
 		AllowedMethod("POST").
@@ -225,7 +225,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.cancelGroupJoinRequest())
 
-		//groupid from url --DONE
+	//groupid from url --DONE
 
 	SetEndpoint("/groups/{group_id}/invite-response").
 		AllowedMethod("POST").
@@ -235,7 +235,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.respondToGroupInvite())
 
-		//todo params and groupid from url --DONE
+	//todo params and groupid from url --DONE
 
 	SetEndpoint("/groups/{group_id}/pending-requests").
 		AllowedMethod("GET").
@@ -245,7 +245,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getPendingGroupJoinRequests())
 
-		//TODO group id, params --DONE
+	//TODO group id, params --DONE
 
 	SetEndpoint("/groups/{group_id}/pending-count").
 		AllowedMethod("GET").
@@ -255,7 +255,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getPendingGroupJoinRequestsCount())
 
-		//group id from url, params --DONE
+	//group id from url, params --DONE
 
 	SetEndpoint("/groups/{group_id}/invitable-followers").
 		AllowedMethod("GET").
@@ -275,7 +275,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.searchGroups())
 
-		//params, groupid url --DONE
+	//params, groupid url --DONE
 
 	SetEndpoint("/groups/{group_id}/posts").
 		AllowedMethod("GET").
@@ -285,17 +285,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getGroupPostsPaginated())
 
-		//TODO get params --DONE
-
-	SetEndpoint("/my/groups").
-		AllowedMethod("GET").
-		RateLimit(IP, 20, 5).
-		Auth().
-		EnrichContext().
-		RateLimit(USERID, 20, 5).
-		Finalize(h.getUserGroupsPaginated())
-
-		//params, groupid url --DONE
+	//TODO get params --DONE
 
 	SetEndpoint("/groups/{group_id}/events").
 		AllowedMethod("GET").
@@ -305,7 +295,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getEventsByGroupId())
 
-		//groupid param --DONE
+	//groupid param --DONE
 
 	SetEndpoint("/groups/{group_id}/events").
 		AllowedMethod("POST").
@@ -329,7 +319,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.followUser())
 
-		//params, userid url --DONE
+	//params, userid url --DONE
 
 	SetEndpoint("/users/{user_id}/followers").
 		AllowedMethod("GET").
@@ -339,7 +329,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getFollowersPaginated())
 
-		//TODO currently unused in front
+	//TODO currently unused in front
 
 	SetEndpoint("/my/follow-suggestions").
 		AllowedMethod("GET").
@@ -349,8 +339,18 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getFollowSuggestions())
 
-		//TODO not used by front yet
-		//params, userid url --DONE
+	//TODO not used by front yet
+	//params, userid url --DONE
+
+	SetEndpoint("/users/{user_id}/groups").
+		AllowedMethod("GET").
+		RateLimit(IP, 20, 5).
+		Auth().
+		EnrichContext().
+		RateLimit(USERID, 20, 5).
+		Finalize(h.getUserGroupsPaginated())
+
+		//params, groupid url --DONE
 
 	SetEndpoint("/users/{user_id}/following").
 		AllowedMethod("GET").
@@ -360,7 +360,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.getFollowingPaginated())
 
-		//get user id url --DONE
+	//get user id url --DONE
 
 	SetEndpoint("/users/{user_id}/follow-response").
 		AllowedMethod("POST").
@@ -370,7 +370,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.handleFollowRequest())
 
-		//params --DONE
+	//params --DONE
 
 	SetEndpoint("/users/search").
 		AllowedMethod("GET").
@@ -380,7 +380,7 @@ func (h *Handlers) BuildMux(serviceName string) *http.ServeMux {
 		RateLimit(USERID, 20, 5).
 		Finalize(h.searchUsers())
 
-		//userid url --DONE
+	//userid url --DONE
 
 	SetEndpoint("/users/{user_id}/unfollow").
 		AllowedMethod("POST").

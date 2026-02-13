@@ -50,6 +50,8 @@ BEGIN
     ) INTO v_was_soft_deleted;
 
     IF v_was_soft_deleted THEN
+    -- If target is public, we can instantly refollow
+     IF v_is_public THEN
         UPDATE follows
         SET deleted_at = NULL
         WHERE follower_id = p_follower
@@ -60,6 +62,19 @@ BEGIN
         WHERE requester_id = p_follower AND target_id = p_target;
 
         RETURN 'refollowed';
+
+        -- If target is private, require a new request (do NOT reactivate follow)
+    ELSE
+        -- Create/reset request to pending
+        INSERT INTO follow_requests (requester_id, target_id, status, updated_at)
+        VALUES (p_follower, p_target, 'pending', CURRENT_TIMESTAMP)
+        ON CONFLICT (requester_id, target_id) DO UPDATE
+        SET status = 'pending',
+            updated_at = CURRENT_TIMESTAMP,
+            deleted_at = NULL;
+
+        RETURN 'requested';
+    END IF;
     END IF;
 
 

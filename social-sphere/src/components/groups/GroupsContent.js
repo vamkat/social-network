@@ -50,7 +50,7 @@ export default function GroupsContent() {
         try {
             const offset = (userGroupsPage - 1) * groupsPerPage;
             // Fetch one extra to check if there are more
-            const userGroupsRes = await getUserGroups({ limit: groupsPerPage + 1, offset });
+            const userGroupsRes = await getUserGroups({ userId: user.user_id,limit: groupsPerPage + 1, offset });
 
             if (userGroupsRes.success && userGroupsRes.data) {
                 const hasMore = userGroupsRes.data.length > groupsPerPage;

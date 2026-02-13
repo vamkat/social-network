@@ -181,7 +181,7 @@ export function ProfileHeader({ user, onUnfollow=null }) {
                 resp = await getFollowing({ userId: user.user_id, limit: PAGE_SIZE, offset: 0 });
                 resp.data = resp.data.users;
             } else {
-                resp = await getUserGroups({ limit: PAGE_SIZE, offset: 0 });
+                resp = await getUserGroups({ userId: user.user_id,limit: PAGE_SIZE, offset: 0 });
             }
 
             if (resp.success && resp.data) {
@@ -210,7 +210,7 @@ export function ProfileHeader({ user, onUnfollow=null }) {
             } else if (statsModalType === "following") {
                 resp = await getFollowing({ userId: user.user_id, limit: PAGE_SIZE, offset });
             } else {
-                resp = await getUserGroups({ limit: PAGE_SIZE, offset });
+                resp = await getUserGroups({ userId: user.user_id, limit: PAGE_SIZE, offset });
             }
 
             if (resp.success && resp.data) {
