@@ -38,7 +38,7 @@ func (m *MediaService) UploadImage(ctx context.Context,
 		exp,
 		variants,
 	); err != nil {
-		return 0, "", ce.Wrap(ce.ErrInvalidArgument, err)
+		return 0, "", ce.Wrap(nil, err, req, variants)
 	}
 
 	objectKey := uuid.NewString()
@@ -142,7 +142,7 @@ func (m *MediaService) GetPublicImage(
 			return mapDBError(err)
 		}
 
-		return validateFileStatus(fm)
+		return parseFileStatus(fm)
 	})
 
 	if err != nil {
@@ -211,7 +211,7 @@ func (m *MediaService) GetImages(ctx context.Context,
 
 	downUrls = make(map[ct.Id]string, len(fms))
 	for _, fm := range fms {
-		if err := validateFileStatus(fm); err != nil {
+		if err := parseFileStatus(fm); err != nil {
 			failedIds = append(failedIds, FailedId{Id: fm.Id, Status: fm.Status})
 			tele.Warn(ctx,
 				"failed to validate file status. @1", "error", err.Error())

@@ -11,41 +11,39 @@ import (
 )
 
 var (
-	ErrReqValidation    = errors.New("request validation error")               // invalid arguments
-	ErrNotValidated     = errors.New("file not yet validated")                 // means that validation is pending
-	ErrFailed           = errors.New("file has permanently failed validation") // means that file validation has failed permanently
-	ErrNotFound         = errors.New("not found")                              // Usually equivalent to sql.ErrNoRows
-	ErrInternal         = errors.New("internal error")
-	ErrValidateStatus   = errors.New("validate status error")
-	ErrPermissionDenied = errors.New("permission denied")
+	ErrReqValidation     = errors.New("request validation error")               // invalid arguments
+	ErrNotValidated      = errors.New("file not yet validated")                 // means that validation is pending
+	ErrFailed            = errors.New("file has permanently failed validation") // means that file validation has failed permanently
+	ErrNotFound          = errors.New("not found")                              // Usually equivalent to sql.ErrNoRows
+	ErrInternal          = errors.New("internal error")
+	ErrValidateStatus    = errors.New("validate status error")
+	ErrPermissionDenied  = errors.New("permission denied")
+	ErrInvalidFileName   = errors.New("invalid filename")
+	ErrInvalidMime       = errors.New("invalid mime")
+	ErrInvalidSize       = errors.New("invalid size")
+	ErrInvalidVisibility = errors.New("invalid visibility")
+	ErrInvalidExpiration = errors.New("invalid expiration")
+	ErrInvalidVariant    = errors.New("invalid variant")
 )
 
-// Maps a file status to application errors and returns error.
-// Caller decides if adding extra info about the file
-func validateFileStatus(fm dbservice.File) error {
-	errMsg := fmt.Sprintf(
-		"file id %v file name %v status %v",
-		fm.Id,
-		fm.Filename,
-		fm.Status,
-	)
-
+// Maps a file status to common errors and returns error with public message.
+func parseFileStatus(fm dbservice.File) error {
 	if fm.Status == ct.Complete {
 		return nil
 	}
 
 	if err := fm.Status.Validate(); err != nil {
-		return ce.Wrap(ce.ErrDataLoss, err, errMsg)
+		return ce.Wrap(ce.ErrDataLoss, err, fm)
 	}
 
 	if fm.Status == ct.Failed {
-		return ce.Wrap(ce.ErrNotFound, ErrValidateStatus, errMsg).
+		return ce.Wrap(ce.ErrNotFound, ErrValidateStatus, fm).
 			WithPublic("file permenantly failed")
 	}
 
 	if fm.Status == ct.Pending || fm.Status == ct.Processing {
 		// TODO: Think if I should validate here
-		return ce.Wrap(ce.ErrFailedPrecondition, ErrValidateStatus, errMsg).
+		return ce.Wrap(ce.ErrFailedPrecondition, ErrValidateStatus, fm).
 			WithPublic("file not yet validated")
 	}
 
@@ -85,38 +83,46 @@ func (m *MediaService) validateUploadRequest(
 	req UploadImageReq,
 	exp time.Duration,
 	variants []ct.FileVariant,
-) error {
+) *ce.Error {
 
 	if req.Filename == "" {
-		return fmt.Errorf("upload image: invalid filename %q", req.Filename)
+		return ce.New(ce.ErrInvalidArgument, ErrInvalidFileName, req).
+			WithPublic(fmt.Sprintf("invalid filename %q", req.Filename))
 	}
 
 	if req.MimeType == "" {
-		return fmt.Errorf("upload image: missing mime type for file %v", req.Filename)
+		return ce.New(ce.ErrInvalidArgument, ErrInvalidMime, req).
+			WithPublic(fmt.Sprintf("missing mime type for file %v", req.Filename))
 	}
 
 	if !m.Cfgs.FileService.FileConstraints.AllowedMIMEs[req.MimeType] {
-		return fmt.Errorf("upload image: mime type %q not allowed  for file %v", req.MimeType, req.Filename)
+		return ce.New(ce.ErrInvalidArgument, ErrInvalidMime, req).
+			WithPublic(fmt.Sprintf("mime type %q not allowed", req.MimeType))
 	}
 
 	if req.SizeBytes < 1 || req.SizeBytes > m.Cfgs.FileService.FileConstraints.MaxImageUpload {
-		return fmt.Errorf("upload image: invalid size %d for file %v", req.SizeBytes, req.Filename)
+		return ce.New(ce.ErrInvalidArgument, ErrInvalidSize, req).
+			WithPublic(fmt.Sprintf("file size %v exceeds allowed size %v", req.SizeBytes, m.Cfgs.FileService.FileConstraints.MaxImageUpload))
 	}
 
 	if err := req.Visibility.Validate(); err != nil {
-		return fmt.Errorf("upload image: invalid visibility %v for file %v", req.Visibility, req.Filename)
+		return ce.New(ce.ErrInvalidArgument, ErrInvalidVisibility, req).
+			WithPublic(fmt.Sprintf("invalid visibility %v", req.Visibility))
 	}
 
 	if exp < time.Minute || exp > 24*time.Hour {
-		return fmt.Errorf("upload image: invalid expiration %v for file %v", exp, req.Filename)
+		return ce.New(ce.ErrInvalidArgument, ErrInvalidExpiration, req).
+			WithPublic(fmt.Sprintf("invalid expiration %v", exp))
 	}
 
 	for _, v := range variants {
 		if err := v.Validate(); err != nil {
-			return fmt.Errorf("invalid variant %v for file %v", v, req.Filename)
+			return ce.New(ce.ErrInvalidArgument, ErrInvalidVariant, req).
+				WithPublic(fmt.Sprintf("invalid variant %v", v))
 		}
 		if v == ct.Original {
-			return fmt.Errorf("original is not a variant %v for file %v", v, req.Filename)
+			return ce.New(ce.ErrInvalidArgument, ErrInvalidVariant, req).
+				WithPublic("original is not a variant")
 		}
 	}
 

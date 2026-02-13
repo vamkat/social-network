@@ -53,9 +53,19 @@ func TestError_Error(t *testing.T) {
 	}
 }
 
-func TestError_Is(t *testing.T) {
+func TestError_Is_class(t *testing.T) {
 	err := &Error{class: ErrNotFound}
 
+	assert.True(t, errors.Is(err, ErrNotFound))
+	assert.False(t, errors.Is(err, ErrInternal))
+}
+
+func TestError_Is_Err(t *testing.T) {
+	err := New(nil, ErrNotFound)
+
+	// Class is should be set as Unknow not nil
+	assert.True(t, errors.Is(err, ErrUnknown))
+	// Should match the underlying error.
 	assert.True(t, errors.Is(err, ErrNotFound))
 	assert.False(t, errors.Is(err, ErrInternal))
 }
@@ -71,7 +81,7 @@ func TestNew(t *testing.T) {
 	err := New(nil, root())
 	assert.Equal(t, `
    class: unknown error
-  origin: level 1 -> commonerrors.TestNew at l. 71
+  origin: level 1 -> commonerrors.TestNew at l. 81
           level 2 -> testing.tRunner at l. 1934
    Generic Error: sql: no rows
 `, err.Error())
@@ -268,7 +278,7 @@ func Test_ErrorFormating(t *testing.T) {
 	assert.Equal(t, `
    class: internal error
    input: handler
-  origin: level 1 -> commonerrors.Test_ErrorFormating at l. 266
+  origin: level 1 -> commonerrors.Test_ErrorFormating at l. 276
           level 2 -> testing.tRunner at l. 1934
    Generic Error: panic
 `, s)
@@ -281,10 +291,10 @@ func Test_Stack(t *testing.T) {
 	e3 := Wrap(ErrInternal, e2)
 	stack := e3.Stack()
 	assert.Equal(t, `
-        -> commonerrors.Test_Stack at l. 281 class: internal error
-        -> commonerrors.Test_Stack at l. 280 class: not found
-        -> commonerrors.Test_Stack at l. 279 class: not found
-        -> commonerrors.Test_Stack at l. 278 class: not found error: sql: no rows`, stack)
+        -> commonerrors.Test_Stack at l. 291 class: internal error
+        -> commonerrors.Test_Stack at l. 290 class: not found
+        -> commonerrors.Test_Stack at l. 289 class: not found
+        -> commonerrors.Test_Stack at l. 288 class: not found error: sql: no rows`, stack)
 }
 
 func Test_Source(t *testing.T) {
@@ -495,4 +505,16 @@ func TestErrFormating(t *testing.T) {
 	err := errors.New("error")
 	n := FormatValue(err)
 	assert.Equal(t, err.Error(), n)
+}
+
+func TestMultiInput(t *testing.T) {
+	type req struct {
+		arg1 string
+		arg2 int
+	}
+	input1 := "hello"
+	input2 := "world"
+	input3 := &req{arg1: "hello", arg2: 42}
+	err := New(nil, ErrNotFound, input1, input2, input3)
+	assert.Equal(t, err.input, "hello\nworld\nreq {\n   arg1: <unexported>\n   arg2: <unexported>\n}")
 }

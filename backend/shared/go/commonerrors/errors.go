@@ -101,22 +101,11 @@ func Source(err error) string {
 	}
 }
 
-// Checks 'class' then 'err'.
+// Checks 'Error class'. If not found error.Is calls unwrap.
 func (e *Error) Is(target error) bool {
-	// 1. Check if the target matches the classification (e.g., ErrNotFound)
-	// using strict equality (standard for sentinels).
 	if e.class == target {
 		return true
 	}
-
-	// 2. Check if the target matches the specific Error instance pointer.
-	if e == target {
-		return true
-	}
-
-	// 3. Return false.
-	// This signals the `errors` package to call e.Unwrap()
-	// and check the underlying e.err automatically.
 	return false
 }
 
@@ -151,8 +140,6 @@ func (e *Error) Unwrap() error {
 //   - The resulting Error supports errors.Is (matches Kind) and errors.As (type assertion) and preserves the wrapped cause.
 //   - If kind is nil and the err is not media error or lacks kind then kind is set to ErrUnknownClass.
 //   - Logs the stack origin with depth 2 from Error creation
-//
-// TODO: Maybe simply call wrap ??
 func New(class error, err error, input ...any) *Error {
 	if err == nil {
 		return nil

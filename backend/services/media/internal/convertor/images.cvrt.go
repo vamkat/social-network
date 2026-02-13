@@ -42,12 +42,17 @@ func (i *ImageConvertor) ConvertImageToVariant(
 		return out, fmt.Errorf("image size exceeds limit")
 	}
 
-	img, _, err := image.Decode(bytes.NewReader(buf))
+	_, format, err := image.DecodeConfig(bytes.NewReader(buf))
 	if err != nil {
 		return out, fmt.Errorf("failed to decode image: %w", err)
 	}
 
-	img, err = decodeWithOrientation(buf)
+	// TODO: On upscale convert gifs to mp4
+	if format == "gif" {
+		return *bytes.NewBuffer(buf), nil
+	}
+
+	img, err := decodeWithOrientation(buf)
 	if err != nil {
 		return out, fmt.Errorf("failed to decode with orientation %w", err)
 	}
