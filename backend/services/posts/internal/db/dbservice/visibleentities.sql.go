@@ -51,6 +51,7 @@ SELECT EXISTS (
                 OR (e.audience = 'followers' AND $2::bool = TRUE)
                 OR (
                     e.audience = 'selected'
+                    AND $2::bool = TRUE
                     AND EXISTS (
                         SELECT 1 FROM post_audience pa
                         WHERE pa.post_id = e.id

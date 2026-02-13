@@ -143,10 +143,14 @@ COALESCE(
 
 WHERE p.deleted_at IS NULL
   AND (
-       -- SELECTED audience → only manually approved viewers
-       (p.audience = 'selected' AND EXISTS (
-           SELECT 1 FROM post_audience pa
-           WHERE pa.post_id = p.id AND pa.allowed_user_id = $1
+      -- SELECTED audience → must be selected AND still following creator
+       (p.audience = 'selected' 
+           AND p.creator_id = ANY($2::bigint[])
+        AND EXISTS (
+           SELECT 1
+           FROM post_audience pa
+           WHERE pa.post_id = p.id
+             AND pa.allowed_user_id = $1
        ))
 
        -- FOLLOWERS → allowed if creator ∈ list passed in
@@ -339,8 +343,10 @@ WHERE p.creator_id = $1                      -- target user we are viewing
   AND (                    
         p.creator_id = $2    -- If viewer *is* the creator — show all posts                
         OR p.audience = 'everyone' -- followers must be checked in users service
+		OR (p.audience = 'followers' AND $3::bool = TRUE)
         OR (
             p.audience = 'selected'            -- must be specifically allowed
+			AND $3::bool = TRUE
             AND EXISTS (
                 SELECT 1
                 FROM post_audience pa
@@ -348,7 +354,6 @@ WHERE p.creator_id = $1                      -- target user we are viewing
                   AND pa.allowed_user_id = $2
             )
         )
-         OR (p.audience = 'followers' AND $3::bool = TRUE)
      )
 
 GROUP BY p.id
