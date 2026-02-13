@@ -101,7 +101,7 @@ build-all:
 	$(MAKE) op-manifest 
 	$(MAKE) build-cnpg 
 	$(MAKE) build-services 
-	$(MAKE) load-images 
+# 	$(MAKE) load-images 
 
 # 1.
 apply-kafka:
@@ -214,10 +214,13 @@ first-time:
 	$(MAKE) deploy-all
 	
 
-.PHONY: smart-full-start smart-apply-kafka smart-op-manifest smart-apply-namespace smart-apply-configs smart-apply-pvc smart-apply-monitoring smart-apply-db1 smart-apply-db2 smart-run-migrations smart-apply-apps smart-apply-cors smart-port-forward
+.PHONY: big-mk start-colima install-prometheus smart-full-start smart-apply-kafka smart-op-manifest smart-apply-namespace smart-apply-configs smart-apply-pvc smart-apply-monitoring smart-apply-db1 smart-apply-db2 smart-run-migrations smart-apply-apps smart-apply-cors smart-port-forward
 
 big-mk:
 	minikube start --cpus=10 --memory=12192m
+
+start-colima:
+	colima start --kubernetes --cpu 6 --memory 8
 
 define retry
 	@for i in {1..100}; do \
@@ -225,11 +228,26 @@ define retry
 	done || (echo "All retries failed"; exit 1)
 endef
 
-smart-build-and-deploy:
+smart-build-and-deploy-minikube:
+	$(MAKE) big-mk
+	$(MAKE) build-all
+	$(MAKE) load-images
+	$(MAKE) smart-full-deploy
+
+smart-build-and-deploy-colima:
+	$(MAKE) start-colima
 	$(MAKE) build-all
 	$(MAKE) smart-full-deploy
 
+install-prometheus:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	helm repo update
+	helm install monitoring prometheus-community/kube-prometheus-stack
+
 smart-full-deploy:
+	$(MAKE) install-prometheus
+	@sleep 2
+
 	$(MAKE) smart-apply-kafka; 
 	@sleep 2
 
