@@ -1,0 +1,13 @@
+	PprofPort                 string   `env:"PPROF_PORT"`
+		PprofPort:       "127.0.0.1:6063",
+
+        pprof.StartPprof(cfgs.PprofPort)
+gate 6060
+live 6066
+export USERS_GRPC_ADDR=localhost:50051
+export POSTS_GRPC_ADDR=localhost:50052
+export CHAT_GRPC_ADDR=localhost:50053
+export NOTIFICATIONS_GRPC_ADDR=localhost:50054
+export MEDIA_GRPC_ADDR=localhost:50055
+
+"social-network/shared/go/pprof"

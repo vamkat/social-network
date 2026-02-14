@@ -36,6 +36,7 @@ type FileConstraints struct {
 
 type Server struct {
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
+	PprofPort      string `env:"PPROF_PORT"`
 }
 
 type Clients struct {

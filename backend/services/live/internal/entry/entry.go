@@ -13,6 +13,7 @@ import (
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
+	"social-network/shared/go/pprof"
 	redis_connector "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 	testnats "social-network/shared/go/test-nats"
@@ -111,6 +112,8 @@ func Run() {
 		srvErr <- server.ListenAndServe()
 	}()
 
+	pprof.StartPprof(cfgs.PprofPort)
+
 	//
 	//
 	//
@@ -146,6 +149,7 @@ type configs struct {
 	RedisDB         int      `env:"REDIS_DB"`
 
 	HTTPAddr        string `env:"HTTP_ADDR"`
+	PprofPort       string `env:"PPROF_PORT"`
 	ShutdownTimeout int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
 
 	EnableDebugLogs bool `env:"ENABLE_DEBUG_LOGS"`
@@ -180,6 +184,7 @@ func getConfigs() configs { // sensible defaults
 		NatsHost:                  "nats",
 		NatsCluster:               "NATS_CLUSTER",
 		ChatGRPCAddr:              "chat:50051",
+		PprofPort:                 "127.0.0.1:6063",
 	}
 
 	// load environment variables if present

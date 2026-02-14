@@ -169,7 +169,7 @@ func Run() {
 	//
 	//
 	// pprof
-	pprof.StartPprof("127.0.0.1:6061")
+	pprof.StartPprof(cfgs.PprofPort)
 
 	//
 	//
@@ -221,6 +221,7 @@ type configs struct {
 	TelemetryCollectorAddress string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	PassSecret                string `env:"PASSWORD_SECRET"`
 	EncrytpionKey             string `env:"ENC_KEY"`
+	PprofPort                 string `env:"PPROF_PORT"`
 }
 
 func getConfigs() configs { // sensible defaults
@@ -246,6 +247,7 @@ func getConfigs() configs { // sensible defaults
 		TelemetryCollectorAddress: "alloy:4317",
 		PassSecret:                "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
 		EncrytpionKey:             "a2F0LWFsZXgtdmFnLXlwYXQtc3RhbS16b25lMDEtZ28=",
+		PprofPort:                 "127.0.0.1:6060",
 	}
 
 	// load environment variables if present

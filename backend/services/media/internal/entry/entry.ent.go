@@ -18,6 +18,7 @@ import (
 	"social-network/shared/go/ct"
 	"social-network/shared/go/gorpc"
 	postgresql "social-network/shared/go/postgre"
+	"social-network/shared/go/pprof"
 	tele "social-network/shared/go/telemetry"
 
 	"syscall"
@@ -122,6 +123,8 @@ func Run() error {
 		tele.Info(ctx, "server finished")
 	}()
 
+	pprof.StartPprof(cfgs.Server.PprofPort)
+
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -138,6 +141,7 @@ func getConfigs() configs.Config {
 	return configs.Config{
 		Server: configs.Server{
 			GrpcServerPort: os.Getenv("GRPC_SERVER_PORT"),
+			PprofPort:      os.Getenv("PPROF_PORT"),
 		},
 		DB: configs.Db{
 			URL:                      os.Getenv("DATABASE_URL"),

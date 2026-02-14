@@ -216,7 +216,9 @@ boom:
 
 tmux:
 	$(MAKE) docker-up
+	sleep 5
 	$(MAKE) run-migrations
+	sleep 5
 	./run-all.tmux.sh
 
 stop:

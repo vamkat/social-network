@@ -46,7 +46,8 @@ type configs struct {
 	TelemetryCollectorAddress string   `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	NatsHost                  string   `env:"NATS_HOST"`
 	NatsCluster               string   `env:"NATS_CLUSTER"`
-	KafkaBrokers              []string `end:"KAFKA_BROKERS"`
+	KafkaBrokers              []string `env:"KAFKA_BROKERS"`
+	PprofPort                 string   `env:"PPROF_PORT"`
 }
 
 var cfgs configs
@@ -63,6 +64,7 @@ func init() {
 		NatsCluster:     "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222",
 		KafkaBrokers:    []string{"kafka:9092"},
 		SentinelAddrs:   []string{"26379"},
+		PprofPort:       "127.0.0.1:6063",
 	}
 	configutil.LoadConfigs(&cfgs)
 }
@@ -173,7 +175,7 @@ func Run() error {
 		tele.Fatalf("failed to create server: %s", err.Error())
 	}
 
-	pprof.StartPprof("127.0.0.1:6060")
+	pprof.StartPprof(cfgs.PprofPort)
 
 	go func() {
 		tele.Info(ctx, "Starting grpc server at port: @1", "port", cfgs.GrpcServerPort)

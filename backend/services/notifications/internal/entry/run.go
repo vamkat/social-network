@@ -17,6 +17,7 @@ import (
 	"social-network/shared/gen-go/users"
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
+	"social-network/shared/go/pprof"
 	tele "social-network/shared/go/telemetry"
 
 	"social-network/shared/go/gorpc"
@@ -110,6 +111,8 @@ func Run() error {
 		fmt.Println("server finished")
 	}()
 
+	pprof.StartPprof(cfgs.PprofPort)
+
 	// wait here for process termination signal to initiate graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -134,6 +137,7 @@ type configs struct {
 	PostsGRPCAddr  string `env:"POSTS_GRPC_ADDR"`
 	ChatGRPCAddr   string `env:"CHAT_GRPC_ADDR"`
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
+	PprofPort      string `env:"PPROF_PORT"`
 
 	KafkaBrokers []string `env:"KAFKA_BROKERS"` // Comma-separated list of Kafka brokers
 	NatsCluster  string   `env:"NATS_CLUSTER"`  // NATS cluster connection string
@@ -151,6 +155,7 @@ func getConfigs() configs { // sensible defaults
 		UsersGRPCAddr:   "users:50051",
 		PostsGRPCAddr:   "posts:50051",
 		ChatGRPCAddr:    "chat:50051",
+		PprofPort:       "127.0.0.1:6064",
 		KafkaBrokers:    []string{"kafka:9092"},                                                  // Default Kafka broker
 		NatsCluster:     "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4222", // Default NATS cluster
 	}

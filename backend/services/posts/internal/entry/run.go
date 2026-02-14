@@ -17,6 +17,7 @@ import (
 	"social-network/shared/go/ct"
 	"social-network/shared/go/kafgo"
 	"social-network/shared/go/models"
+	"social-network/shared/go/pprof"
 	rds "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 
@@ -158,6 +159,8 @@ func Run() error {
 		tele.Info(ctx, "server finished")
 	}()
 
+	pprof.StartPprof(cfgs.PprofPort)
+
 	//
 	//
 	//
@@ -188,6 +191,7 @@ type configs struct {
 	MediaGRPCAddr  string `env:"MEDIA_GRPC_ADDR"`
 	NotifGRPCAddr  string `env:"NOTIFICATIONS_GRPC_ADDR"`
 	GrpcServerPort string `env:"GRPC_SERVER_PORT"`
+	PprofPort      string `env:"PPROF_PORT"`
 
 	KafkaBrokers string `env:"KAFKA_BROKERS"`
 
@@ -220,6 +224,7 @@ func getConfigs() configs { // sensible defaults
 		HTTPAddr:        "0.0.0.0:8081",
 		ShutdownTimeout: 5,
 		GrpcServerPort:  ":50051",
+		PprofPort:       "127.0.0.1:6062",
 
 		KafkaBrokers: "kafka:9092",
 

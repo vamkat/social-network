@@ -55,6 +55,8 @@ spec:
               value: "notifications.notifications.svc.cluster.local:50051"
             - name: MEDIA_GRPC_ADDR
               value: "media.media.svc.cluster.local:50051"
+            - name: PPROF_PORT
+              value: "127.0.0.1:6061"
 
             - name: SHUTDOWN_TIMEOUT_SECONDS
               value: "5"

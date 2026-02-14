@@ -16,6 +16,7 @@ import (
 	configutil "social-network/shared/go/configs"
 	"social-network/shared/go/ct"
 	"social-network/shared/go/kafgo"
+	"social-network/shared/go/pprof"
 	rds "social-network/shared/go/redis"
 	tele "social-network/shared/go/telemetry"
 
@@ -135,6 +136,8 @@ func Run() error {
 		tele.Info(ctx, "server finished")
 	}()
 
+	pprof.StartPprof(cfgs.PprofPort)
+
 	//
 	//
 	//
@@ -166,6 +169,7 @@ type configs struct {
 	NotificationsGRPCAddr string `env:"NOTIFICATIONS_GRPC_ADDR"`
 	ShutdownTimeout       int    `env:"SHUTDOWN_TIMEOUT_SECONDS"`
 	GrpcServerPort        string `env:"GRPC_SERVER_PORT"`
+	PprofPort             string `env:"PPROF_PORT"`
 
 	KafkaBrokers string `env:"KAFKA_BROKERS"`
 
@@ -186,6 +190,7 @@ func getConfigs() configs {
 		ChatGRPCAddr:              "chat:50051",
 		MediaGRPCAddr:             "media:50051",
 		NotificationsGRPCAddr:     "notifications:50051",
+		PprofPort:                 "127.0.0.1:6063",
 		ShutdownTimeout:           5,
 		KafkaBrokers:              "kafka:9092",
 		OtelResourceAttributes:    "service.name=users,service.namespace=social-network,deployment.environment=dev",
