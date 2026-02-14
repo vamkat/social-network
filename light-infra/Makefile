@@ -220,6 +220,6 @@ tmux:
 	./run-all.tmux.sh
 
 stop:
-	tmux kill-session -t social-backend
+	tmux kill-session -t sn-back
 	docker compose -f docker-compose.infra.yml down
 

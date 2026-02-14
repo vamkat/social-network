@@ -19,7 +19,7 @@ Starts the gRPC server with database connection, MinIO client initialization, an
 - **MediaService**: Main business logic orchestrator
 - **UploadImage**: Creates file metadata, generates pre-signed upload URLs, and schedules variant creation
 - **GetImage/GetImages**: Provides pre-signed download URLs for images and variants
-- **ValidateUpload**: Verifies uploaded files against constraints and marks as complete
+- **ValidateUpload**: Verifies uploaded files against constraints and marks as complete. In addition it creates all the variants requested by the client.
 - **Variant Worker**: Background process that generates image variants asynchronously
 
 ### 3. Handler Layer (`internal/handler/`)

@@ -272,7 +272,7 @@ smart-full-deploy:
 
 	$(call retry, $(MAKE) smart-run-migrations); 
 	@sleep 2
-	@SLEEP=80; echo "Sleeping for $${SLEEP}s so that db's are ready before starting core services..."; echo -e "\n\n\n"; sleep $$SLEEP
+	@SLEEP=30; echo "Sleeping for $${SLEEP}s so that db's are ready before starting core services..."; echo -e "\n\n\n"; sleep $$SLEEP
 
 	$(call retry, $(MAKE) smart-apply-apps); 
 	@sleep 2

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/gif"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -49,7 +50,14 @@ func (i *ImageConvertor) ConvertImageToVariant(
 
 	// TODO: On upscale convert gifs to mp4
 	if format == "gif" {
-		return *bytes.NewBuffer(buf), nil
+		isAnimated, err := decodeGif(buf)
+		if err != nil {
+			return out, fmt.Errorf("failed to decode gif %w", err)
+		}
+		if isAnimated {
+			out.Write(buf)
+			return out, nil
+		}
 	}
 
 	img, err := decodeWithOrientation(buf)
@@ -63,6 +71,17 @@ func (i *ImageConvertor) ConvertImageToVariant(
 		return out, err
 	}
 	return out, nil
+}
+
+func decodeGif(buf []byte) (isAnimated bool, err error) {
+	g, err := gif.DecodeAll(bytes.NewReader(buf))
+	if err != nil {
+		return false, err
+	}
+	if len(g.Image) > 1 {
+		return true, nil
+	}
+	return false, nil
 }
 
 // Extracts orientation meta data and applies it to image
