@@ -14,6 +14,7 @@ x-env: &common-env
   SENTINEL_ADDRS: "sentinel-1:26379"
   REDIS_MASTER_SET: mymaster
   NATS_CLUSTER: "nats://ruser:T0pS3cr3t@nats-1:4222,nats://ruser:T0pS3cr3t@nats-2:4223"
+  PPROF_PORT: "127.0.0.1:6061"
 
 services:
   # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
