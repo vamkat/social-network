@@ -47,6 +47,7 @@ services:
         condition: service_healthy
     ports:
       - "50051:50051" # If the users service exposes an HTTP API
+      - "6061:6061"
 
 
   users-db:
@@ -97,7 +98,8 @@ services:
       posts-db:
         condition: service_healthy
     ports:
-      - "50052:50051" 
+      - "50052:50051"
+      - "6062:6061" 
 
 
   posts-db:
@@ -148,7 +150,8 @@ services:
       chat-db:
         condition: service_healthy
     ports:
-      - "50053:50051" 
+      - "50053:50051"
+      - "6063:6061" 
 
 
   chat-db: 
@@ -200,7 +203,8 @@ services:
       notifications-db:
         condition: service_healthy
     ports:
-      - "50054:50051" 
+      - "50054:50051"
+      - "6064:6061" 
 
   notifications-db:
     networks:
@@ -258,7 +262,8 @@ services:
       minio:
         condition: service_healthy
     ports:
-      - "50055:50051" 
+      - "50055:50051"
+      - "6065:6061" 
 
   media-db:
     networks:
@@ -485,6 +490,7 @@ services:
       
     ports:
       - "8082:8082"
+      - "6066:6061"
     depends_on:
       sentinel-1:
         condition: service_started
@@ -593,6 +599,7 @@ services:
       
     ports:
       - "8081:8081"
+      - "6060:6061"
     depends_on:
       sentinel-1:
         condition: service_started
