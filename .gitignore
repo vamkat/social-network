@@ -82,3 +82,5 @@ next-env.d.ts
 *.DS_Store
 
 audit.md
+
+Frontend-todos.txt
