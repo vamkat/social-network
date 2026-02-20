@@ -22,4 +22,4 @@ COPY --from=build /app/media_service .
 COPY --from=build /app/migrate .
 COPY --from=build /app/services/media/internal/db/migrations ./migrations
 
-CMD ["./media_service"]
+CMD ["sh", "-c", "set -e; echo 'Running migrations...' && ./migrate; echo 'Running seeds...' && ./seeds/seed.sh || true; echo 'Starting service...' && exec ./media_service"]
