@@ -63,7 +63,7 @@ export default function ProfileForm({ user }) {
                 validateField("username", value, (val) => {
                     if (val.trim()) {
                         const usernamePattern = /^[A-Za-z0-9_.-]+$/;
-                        if (val.trim().length < 4) return "Username must be at least 4 characters.";
+                        if (val.trim().length < 3) return "Username must be at least 3 characters.";
                         if (!usernamePattern.test(val.trim())) return "Username can only use letters, numbers, dots, underscores, or dashes.";
                     }
                     return null;

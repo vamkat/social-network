@@ -32,8 +32,8 @@ export async function updateProfileAction(prevState, formData) {
     }
 
     if (username) {
-        if (username.length < 4) {
-            return { success: false, message: "Username must be at least 4 characters." };
+        if (username.length < 3) {
+            return { success: false, message: "Username must be at least 3 characters." };
         }
         if (!USERNAME_PATTERN.test(username)) {
             return { success: false, message: "Invalid username format." };

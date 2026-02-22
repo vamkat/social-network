@@ -124,8 +124,8 @@ export async function validateRegistrationForm(formData, avatarFile = null) {
     // username validation (optional)
     const username = formData.get("username")?.trim() || "";
     if (username) {
-        if (username.length < 4) {
-            return { valid: false, error: "Username must be at least 4 characters." };
+        if (username.length < 3) {
+            return { valid: false, error: "Username must be at least 3 characters." };
         }
         if (!USERNAME_PATTERN.test(username)) {
             return { valid: false, error: "Username can only use letters, numbers, dots, underscores, or dashes." };
@@ -187,8 +187,8 @@ export async function validateProfileForm(profileData, avatarFile = null) {
     // Username validation (optional)
     const username = profileData.username?.trim() || "";
     if (username) {
-        if (username.length < 4) {
-            return { valid: false, error: "Username must be at least 4 characters." };
+        if (username.length < 3) {
+            return { valid: false, error: "Username must be at least 3 characters." };
         }
         if (!USERNAME_PATTERN.test(username)) {
             return { valid: false, error: "Username can only use letters, numbers, dots, underscores, or dashes." };
