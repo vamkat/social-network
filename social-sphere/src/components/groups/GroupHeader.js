@@ -155,6 +155,7 @@ export function GroupHeader({ group }) {
                 if (accept) {
                     setMembersCount(prev => prev + 1);
                     setIsMember(true);
+                    router.refresh();
                 }
             } 
         } catch (error) {
