@@ -881,6 +881,13 @@ WHERE f.following_id = $1          -- people who follow the given user
   AND u.deleted_at IS NULL
   AND u.current_status = 'active'
   AND gi.receiver_id IS NULL      -- exclude anyone already invited
+  AND NOT EXISTS (                      -- not already a member
+      SELECT 1
+      FROM group_members gm
+      WHERE gm.group_id = $2
+        AND gm.user_id = u.id
+        AND gm.deleted_at IS NULL
+  )
   ORDER BY f.created_at DESC
   LIMIT $3 OFFSET $4;
   `
