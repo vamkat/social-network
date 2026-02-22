@@ -1,16 +1,19 @@
 package pprof
 
 import (
-	"log"
+	"context"
 	"net/http"
 	_ "net/http/pprof"
+	tele "social-network/shared/go/telemetry"
 )
 
 // http://<port>/debug/pprof/
 func StartPprof(port string) {
 	go func() {
 		if err := http.ListenAndServe(port, nil); err != nil {
-			log.Fatalf("pprof error: %v", err)
+			tele.Fatalf("pprof error: %v", err)
+		} else {
+			tele.Info(context.Background(), "prof server running: @1", "port", port)
 		}
 	}()
 }
