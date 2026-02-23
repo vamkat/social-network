@@ -301,8 +301,8 @@ CREATE OR REPLACE FUNCTION update_reactions_count()
 RETURNS TRIGGER AS $$
 DECLARE
     cid BIGINT;
-    ctype content_type;
     delta INT;
+    ctype content_type;
 BEGIN
     IF TG_OP = 'INSERT' THEN
         cid := NEW.content_id;
@@ -310,6 +310,18 @@ BEGIN
     ELSIF TG_OP = 'DELETE' THEN
         cid := OLD.content_id;
         delta := -1;
+    ELSIF TG_OP = 'UPDATE' THEN
+        cid := NEW.content_id;
+
+        -- Soft delete (unlike)
+        IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+            delta := -1;
+        -- Restore like
+        ELSIF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
+            delta := 1;
+        ELSE
+            RETURN NULL;
+        END IF;
     ELSE
         RETURN NULL;
     END IF;
@@ -343,6 +355,11 @@ EXECUTE FUNCTION update_reactions_count();
 
 CREATE TRIGGER trg_reactions_delete
 AFTER DELETE ON reactions
+FOR EACH ROW
+EXECUTE FUNCTION update_reactions_count();
+
+CREATE TRIGGER trg_reactions_update
+AFTER UPDATE ON reactions
 FOR EACH ROW
 EXECUTE FUNCTION update_reactions_count();
 
