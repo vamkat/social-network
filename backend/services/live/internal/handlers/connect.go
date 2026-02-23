@@ -89,7 +89,7 @@ func (h *Handlers) Connect() http.HandlerFunc {
 
 		var wg sync.WaitGroup
 		wg.Go(func() { h.websocketSender(ctx, wsChannel, websocketConn) })
-		h.websocketListener(ctx, websocketConn, clientId, connectionId, natsHandler)
+		h.websocketListener(ctx, websocketConn, clientId, connectionId, natsHandler, wsChannel)
 
 		wg.Wait()
 
@@ -98,7 +98,7 @@ func (h *Handlers) Connect() http.HandlerFunc {
 }
 
 // routine that reads data coming from this client connection, reads the message and decides what to do with it
-func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websocket.Conn, clientId int64, connectionId string, handler nats.MsgHandler) {
+func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websocket.Conn, clientId int64, connectionId string, handler nats.MsgHandler, wsWriter chan []byte) {
 	defer catchPanic(ctx, "listener")
 	subcriptions := make(map[string]*nats.Subscription)
 	tele.Info(ctx, "websocket listener started for connection @1", "connection", connectionId)
@@ -225,14 +225,16 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			})
 			if err != nil {
 				tele.Error(ctx, msgType+", failed to create private message @1", "error", err.Error())
-				err = websocketConn.WriteJSON(ce.DecodeProto(err, payload).Error())
+				bytes, err := json.Marshal(ce.DecodeProto(err, payload).Error())
+				wsWriter <- bytes
 				if err != nil {
 					tele.Error(ctx, msgType+", sent error back to caller @1", "payload", payload)
 				}
 				continue
 			}
 
-			err = websocketConn.WriteJSON(mapping.MapPMFromProto(res))
+			bytes, err := json.Marshal(mapping.MapPMFromProto(res))
+			wsWriter <- bytes
 			if err != nil {
 				tele.Error(ctx, msgType+", failed to write back to caller @1 @2", "payload", payload, "error", err.Error())
 			} else {
@@ -258,14 +260,15 @@ func (h *Handlers) websocketListener(ctx context.Context, websocketConn *websock
 			})
 			if err != nil {
 				tele.Error(ctx, msgType+", failed to create group message @1", "error", err.Error())
-				err = websocketConn.WriteJSON(ce.DecodeProto(err, payload).Error())
+				bytes, err := json.Marshal(ce.DecodeProto(err, payload).Error())
+				wsWriter <- bytes
 				if err != nil {
 					tele.Error(ctx, msgType+", sent error back to caller @1", "payload", payload)
 				}
 				continue
 			}
-
-			err = websocketConn.WriteJSON(mapping.MapGroupMessageFromProto(res))
+			bytes, err := json.Marshal(mapping.MapGroupMessageFromProto(res))
+			wsWriter <- bytes
 			if err != nil {
 				tele.Error(ctx, msgType+", failed to write back to caller @1 @2", "payload", payload, "error", err.Error())
 			} else {
